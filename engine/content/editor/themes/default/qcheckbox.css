@@ -1,0 +1,24 @@
+
+QCheckBox::indicator
+{
+	width: 15px;
+	height: 15px;
+	border: 1px solid #333;
+	border-radius: 3px;
+	background-color: #111;
+}
+
+QCheckBox::indicator:unchecked
+{
+	image: url(":/icons/uncheck.svg");
+}
+
+QCheckBox::indicator:checked
+{
+	image: url(":/icons/check.svg");
+}
+
+QCheckBox::indicator:hover
+{
+	border-color: #555;
+}

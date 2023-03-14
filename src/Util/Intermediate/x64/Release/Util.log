@@ -1,0 +1,8 @@
+﻿  Assert.cpp
+  FStream.cpp
+F:\MyProjects\VS_Projects\Util\src\FStream.cpp(46,20): warning C4267: 'argument': conversion from 'size_t' to 'long', possible loss of data
+  Guid.cpp
+  KeyValue.cpp
+  MemStream.cpp
+  String.cpp
+  Util.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\dep\build\x64-Release\Util.lib

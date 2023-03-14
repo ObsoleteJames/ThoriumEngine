@@ -1,0 +1,3 @@
+[INF]	CEngine Initializing...
+[INF]	Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
+[INF]	Found 22 assets in 'Engine'

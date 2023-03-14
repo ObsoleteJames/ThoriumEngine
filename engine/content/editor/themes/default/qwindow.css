@@ -1,0 +1,108 @@
+/*
+QMainWindow
+{
+	background: #111415; 
+}
+
+QMainWindow::separator
+{ 
+	width: 4px; 
+	height: 4px;
+	background: #333;
+	border-left: 4px solid black;
+	border-right: 4px solid black;
+}
+
+QMainWindow > QToolBar
+{
+	padding: 5px;
+	border-style: outset;
+}
+
+*/
+
+QDialog
+{
+	background: #111;
+	border: 1px solid #222;
+}
+
+QMainWindow
+{
+	background: #1B1B1B; 
+	border: 1px solid #222;
+}
+
+QMainWindow:active
+{
+	background: #151515; 
+	border: 1px solid #373737;
+}
+
+QMainWindow::separator
+{ 
+	width: 4px; 
+	background: transparent;
+}
+
+QMainWindow::separator:hover, QMainWindow::separator:pressed
+{ 
+	background: #2a5f7d;
+}
+
+
+QSplitter 
+{
+	margin: 0px;
+	background: transparent; 
+}
+
+QSplitter::handle:horizontal 
+{ 
+	width: 4px; 
+	background-color: #1a191a; 
+}
+
+QSplitter::handle:vertical 
+{ 
+	height:6px; 
+	background-color: #1a191a; 
+}
+
+QSplitter::handle:hover, QSplitter::handle:pressed
+{
+	background: #2a5f7d;
+}
+
+QToolTip
+{
+	background: #333;
+	color: #e0e0e0;
+}
+
+QFrame
+{
+	background: #151515;
+	color: #ccc;
+	border: 0px;
+}
+
+QFrame[type="1"]
+{
+	background: #242424;
+	color: #ccc;
+	border: 0px;
+}
+
+QFrame[type="1"] QLabel
+{
+	background: #242424;
+}
+
+QFrame[type="2"]
+{
+	background: #242424;
+	color: #ccc;
+	border: 0px;
+	border-bottom: 1px solid #1A1A1A;
+}

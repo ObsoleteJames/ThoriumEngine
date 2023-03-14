@@ -1,0 +1,49 @@
+
+Shader
+{
+    Name = "Error";
+    Type = SHADER_DEBUG;
+}
+
+Global
+{
+    #include "common/common.hlsl"
+
+	struct VS_Input
+	{
+		#include "common/vertex_input.hlsl"
+	};
+
+	struct PS_Input
+	{
+		#include "common/pixel_input.hlsl"
+	};
+
+    Property<int> vType(Name = "Draw Type");
+}
+
+VS
+{
+	#include "common/vertex.hlsl"
+	
+    PS_Input Main(VS_Input input)
+    {
+		PS_Input output = ProcessVertex(input);
+
+		FinalizeVertex(input, output);
+        return output;
+    }
+}
+
+PS
+{
+    float4 Main(PS_Input input) : SV_TARGET
+    {
+		float r = 0.6f;
+		r -= ((sin(vCurTime * 10.f) + 1.f) / 2) * 0.25f;
+
+		float shade = max(0.0, dot(input.vNormalWs, float3(0.61237f, 0.5f, -0.61237f)));
+
+        return float4(r + (shade * 0.5f), 0.f, 0.f, 1.f);
+    }
+}

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+<Type Name="TVector&lt;*&gt;">
+    <DisplayString>{Size={_size}}</DisplayString>
+    <Expand>
+      <Item Name="Size">_size</Item>
+      <Item Name="Capcity">_capacity</Item>
+      <ArrayItems>
+        <Size>_size</Size>
+        <ValuePointer>_data</ValuePointer>
+      </ArrayItems>
+    </Expand>
+</Type>
+<Type Name="TStringBase&lt;wchar_t,*&gt;">
+  <DisplayString>{_data,su}</DisplayString>
+  <StringView>_data,su</StringView>
+</Type>
+</AutoVisualizer>

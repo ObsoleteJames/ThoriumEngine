@@ -1,0 +1,358 @@
+
+#include <string>
+#include "ModelAsset.h"
+#include "Rendering/Renderer.h"
+#include "Console.h"
+#include "Material.h"
+#include "Math/Math.h"
+
+#define THMDL_VERSION 0x0003
+
+#define THMDL_MAGIC_SIZE 27
+static const char* thmdlMagicStr = "\0\0ThoriumEngine Model File\0";
+
+CModelAsset::~CModelAsset()
+{
+	ClearMeshes();
+}
+
+void CModelAsset::Init()
+{
+	TUniquePtr<IBaseFStream> stream = file->GetStream("rb");
+	if (!stream || !stream->IsOpen())
+	{
+		CONSOLE_LogError(FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
+		return;
+	}
+
+	char magicStr[THMDL_MAGIC_SIZE];
+	stream->Read(magicStr, THMDL_MAGIC_SIZE);
+
+	if (memcmp(thmdlMagicStr, magicStr, THMDL_MAGIC_SIZE) != 0)
+	{
+		CONSOLE_LogError(FString("Invalid Model file '") + ToFString(file->Path()) + "'");
+		return;
+	}
+
+	uint16 version;
+	*stream >> &version;
+
+	if (version != THMDL_VERSION)
+	{
+		CONSOLE_LogError(FString("Invalid Model file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THMDL_VERSION) + "'");
+		return;
+	}
+
+	uint numMeshes;
+	uint numMaterials;
+	uint numBodyGroups;
+
+	*stream >> &numMeshes >> &numMaterials >> &numLODs >> &numBodyGroups;
+
+	meshes.Resize(numMeshes);
+	materials.Resize(numMaterials);
+	bodyGroups.Resize(numBodyGroups);
+
+	for (uint i = 0; i < numMeshes; i++)
+	{
+		meshes[i].meshDataOffset = stream->Tell();
+
+		SizeType nextMesh;
+		*stream >> &nextMesh;
+
+		stream->Seek(nextMesh, SEEK_SET);
+	}
+
+	for (uint i = 0; i < numMaterials; i++)
+	{
+		*stream >> materials[i].name;
+		*stream >> materials[i].path;
+	}
+
+	for (uint i = 0; i < numLODs; i++)
+	{
+		uint32 numIndices;
+		*stream >> &numIndices;
+
+		LODs[i].meshIndices.Resize(numIndices);
+
+		for (uint32 x = 0; x < numIndices; x++)
+			*stream >> &LODs[i].meshIndices[x];
+	}
+
+	for (uint i = 0; i < numBodyGroups; i++)
+	{
+		FBodyGroup& bg = bodyGroups[i];
+
+		*stream >> bg.name;
+
+		uint32 numOptions;
+		*stream >> &numOptions;
+
+		bg.options.Resize(numOptions);
+
+		for (uint32 x = 0; x < numOptions; x++)
+		{
+			*stream >> bg.options[x].name;
+
+			uint32 numIndices;
+			*stream >> &numIndices;
+
+			bg.options[x].meshIndices.Resize(numIndices);
+
+			for (uint32 y = 0; y < numIndices; y++)
+			{
+				*stream >> &bg.options[x].meshIndices[y];
+			}
+		}
+	}
+
+	uint32 numBones;
+	*stream >> &numBones;
+
+	skeleton.bones.Resize(numBones);
+
+	for (uint32 i = 0; i < numBones; i++)
+	{
+		FBone& bone = skeleton.bones[i];
+
+		*stream >> bone.name;
+		*stream >> &bone.parent;
+		*stream >> &bone.position >> &bone.direction;
+	}
+
+	bInitialized = true;
+}
+
+void CModelAsset::Init(const TArray<FMesh>& m)
+{
+	numLODs = 0;
+	meshes = m;
+}
+
+void CModelAsset::Save()
+{
+	// first check if we have any data to save.
+	for (auto& mesh : meshes)
+	{
+		if (!mesh.indexData || !mesh.vertexData)
+		{
+			CONSOLE_LogError("Attempted to save ModelAsset but no mesh data was provided.");
+			return;
+		}
+
+		if (mesh.numIndexData % 3 != 0)
+		{
+			CONSOLE_LogError("Attempted to save ModelAsset with an invalid number of indices.");
+			return;
+		}
+	}
+
+	TUniquePtr<IBaseFStream> stream = file->GetStream("wb");
+	if (!stream || !stream->IsOpen())
+	{
+		CONSOLE_LogError(FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
+		return;
+	}
+
+	stream->Write((void*)thmdlMagicStr, THMDL_MAGIC_SIZE);
+
+	uint16 version = THMDL_VERSION;
+	*stream << &version;
+
+	uint numMeshes = (uint)meshes.Size();
+	uint numMaterials = (uint)materials.Size();
+	uint numBodyGroups = (uint)bodyGroups.Size();
+
+	*stream << &numMeshes << &numMaterials << &numLODs << &numBodyGroups;
+
+	for (auto& mesh : meshes)
+	{
+		SizeType prevOffset = stream->Tell();
+		*stream << &prevOffset; // just write anything for now.
+
+		mesh.meshDataOffset = prevOffset;
+
+		*stream << &mesh.numVertexData << & mesh.numIndexData;
+
+		for (SizeType i = 0; i < mesh.numVertexData; i++)
+			*stream << &mesh.vertexData[i];
+
+		for (SizeType i = 0; i < mesh.numIndexData; i++)
+			*stream << &mesh.indexData[i];
+
+		*stream << &mesh.materialIndex;
+
+		SizeType curOffset = stream->Tell();
+		stream->Seek(prevOffset, SEEK_SET);
+		*stream << &curOffset;
+		stream->Seek(curOffset, SEEK_SET);
+	}
+
+	for (uint i = 0; i < numMaterials; i++)
+	{
+		*stream << materials[i].name;
+		*stream << materials[i].path;
+	}
+
+	for (uint i = 0; i < numLODs; i++)
+	{
+		uint32 numIndices = (uint)LODs[i].meshIndices.Size();
+		*stream << &numIndices;
+
+		for (uint32 x = 0; x < numIndices; x++)
+			*stream << &LODs[i].meshIndices[x];
+	}
+
+	for (uint i = 0; i < numBodyGroups; i++)
+	{
+		FBodyGroup& bg = bodyGroups[i];
+
+		*stream << bg.name;
+
+		uint32 numOptions = (uint)bg.options.Size();
+		*stream << &numOptions;
+
+		for (uint32 x = 0; x < numOptions; x++)
+		{
+			*stream << bg.options[x].name;
+
+			uint32 numIndices = (uint)bg.options[x].meshIndices.Size();
+			*stream << &numIndices;
+
+			for (uint32 y = 0; y < numIndices; y++)
+			{
+				*stream << &bg.options[x].meshIndices[y];
+			}
+		}
+	}
+
+	uint32 numBones = (uint32)skeleton.bones.Size();
+	*stream << &numBones;
+
+	for (uint32 i = 0; i < numBones; i++)
+	{
+		FBone& bone = skeleton.bones[i];
+
+		*stream << bone.name;
+		*stream << &bone.parent;
+		*stream << &bone.position << &bone.direction;
+	}
+}
+
+void CModelAsset::Load(uint8 lodLevel)
+{
+	if (!bRegistered)
+		return;
+
+	if (!bInitialized)
+	{
+		//CONSOLE_LogError("Attempted to load ModelAsset while asset was not initialized properly");
+		return;
+	}
+
+	if (IsLodLoaded(lodLevel))
+		return;
+
+	TUniquePtr<IBaseFStream> stream = file->GetStream("rb");
+	if (!stream || !stream->IsOpen())
+	{
+		CONSOLE_LogError(FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
+		return;
+	}
+
+	TArray<uint32> meshesToLoad;
+
+	if (numLODs == 0)
+	{
+		meshesToLoad.Resize(meshes.Size());
+		for (SizeType i = 0; i < meshesToLoad.Size(); i++)
+			meshesToLoad[i] = (uint32)i;
+	}
+	else
+	{
+		uint8 lod = FMath::Clamp(lodLevel, (uint8)0, numLODs);
+
+		meshesToLoad.Reserve(LODs[lod].meshIndices.Size());
+
+		for (auto& index : LODs[lod].meshIndices)
+			meshesToLoad.Add(index);
+	}
+
+	for (auto it : meshesToLoad)
+	{
+		stream->Seek(meshes[it].meshDataOffset, SEEK_SET);
+
+		SizeType nextOffset;
+
+		SizeType numVertices;
+		SizeType numIndices;
+		TArray<FVertex> vertices;
+		TArray<uint> indices;
+
+		*stream >> &nextOffset >> &numVertices >> &numIndices;
+
+		vertices.Resize(numVertices);
+		indices.Resize(numIndices);
+
+		for (SizeType i = 0; i < numVertices; i++)
+			*stream >> &vertices[i];
+
+		for (SizeType i = 0; i < numIndices; i++)
+			*stream >> &indices[i];
+
+		meshes[it].vertexBuffer = Renderer::CreateVertexBuffer(vertices);
+		meshes[it].indexBuffer = Renderer::CreateIndexBuffer(indices);
+		meshes[it].numVertices = (uint)numVertices;
+		meshes[it].numIndices = (uint)numIndices;
+
+		*stream >> &meshes[it].materialIndex;
+
+		FMaterial& mat = materials[meshes[it].materialIndex];
+		mat.obj = CResourceManager::GetResource<CMaterial>(mat.path);
+	}
+
+	SetLodLevel(lodLevel, true);
+}
+
+void CModelAsset::Unload(uint8 lodLevel)
+{
+	if (!IsLodLoaded(lodLevel) || numLODs == 0)
+		return;
+
+	for (auto it : LODs[FMath::Clamp(lodLevel, (uint8)0, numLODs)].meshIndices)
+	{
+		meshes[it].vertexBuffer->Delete();
+		meshes[it].indexBuffer->Delete();
+	}
+}
+
+int CModelAsset::GetLodFromDistance(float distance)
+{
+	for (int8 i = numLODs; i > 0; i--)
+	{
+		if (LODs[i - 1].distanceBias <= distance)
+		{
+			if (IsLodLoaded(i - 1))
+				return i - 1;
+		}
+	}
+	return FMath::Max(0, (int)numLODs - 1);
+}
+
+void CModelAsset::ClearMeshes()
+{
+	for (auto& mesh : meshes)
+	{
+		if (mesh.vertexBuffer)
+			mesh.vertexBuffer->Delete();
+		if (mesh.indexBuffer)
+			mesh.indexBuffer->Delete();
+
+		if (mesh.vertexData)
+			delete[] mesh.vertexData;
+		if (mesh.indexData)
+			delete[] mesh.indexData;
+	}
+	meshes.Clear();
+}

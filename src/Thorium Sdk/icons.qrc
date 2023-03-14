@@ -1,0 +1,31 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/check.svg</file>
+        <file>icons/uncheck.svg</file>
+        <file>icons/radio.svg</file>
+        <file>icons/unradio.svg</file>
+        <file>icons/cross.svg</file>
+        <file>icons/cross-white.svg</file>
+        <file>icons/arrow-down.svg</file>
+        <file>icons/arrow-down-white.svg</file>
+        <file>icons/arrow-up.svg</file>
+        <file>icons/arrow-up-white.svg</file>
+        <file>icons/triangle-down.svg</file>
+        <file>icons/triangle-down-white.svg</file>
+        <file>icons/triangle-right.svg</file>
+        <file>icons/triangle-right-white.svg</file>
+        <file>icons/progress-pattern.svg</file>
+        <file>icons/folder.svg</file>
+        <file>icons/arrow-left.svg</file>
+        <file>icons/arrow-right.svg</file>
+        <file>icons/arrow-return.svg</file>
+        <file>icons/filter-dropdown.svg</file>
+        <file>icons/folder-blue.svg</file>
+        <file>icons/gears.svg</file>
+        <file>icons/file.svg</file>
+        <file>icons/dropdown.svg</file>
+        <file>icons/grid-view.svg</file>
+        <file>icons/assets/vfx.svg</file>
+        <file>icons/thorium engine icon.svg</file>
+    </qresource>
+</RCC>

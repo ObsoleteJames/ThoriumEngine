@@ -1,0 +1,10 @@
+﻿  CppParser.cpp
+  CppWriter.cpp
+  main.cpp
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 1098 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  HeaderTool.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Release\HeaderTool.exe
+  F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Release\HeaderTool.exe
+  1 File(s) copied

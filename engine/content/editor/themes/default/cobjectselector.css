@@ -1,0 +1,25 @@
+
+CObjectSelectorWidget
+{
+	color: #ccc;
+	background-color: #111;
+  
+	height: 20px;
+	padding-left: 6px;
+  
+	border-radius: 3px;
+	border: 1px solid #333;
+
+	text-align: left;
+}
+
+CObjectSelectorWidget:hover
+{
+	border-color: #555;
+}
+
+CObjectSelectorWidget:disabled
+{
+	color: #555;
+	border-color: #222;
+}

@@ -1,0 +1,11 @@
+﻿  launcher.cpp
+     Creating library F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\Launcher.lib and object F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\Launcher.exp
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 20 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  LauncherDll.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\Launcher.dll
+  F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\Launcher.dll
+  1 File(s) copied
+  F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\Launcher.pdb
+  1 File(s) copied

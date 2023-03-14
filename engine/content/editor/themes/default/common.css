@@ -1,0 +1,111 @@
+
+QLabel {
+  color: #ccc;
+  background-color: transparent;
+}
+
+QSlider::groove:horizontal
+{
+  background-color: #111;
+  border-radius: 3px;
+  height: 6px;
+  margin: 4px 6px;
+}
+
+QSlider::handle:horizontal 
+{
+  background: #888;
+  width: 6px;
+  margin: -4px 0;
+  border-radius: 2px;
+}
+
+QSlider::handle:horizontal:disabled
+{
+  background: #555;
+  width: 6px;
+  margin: -4px 0;
+  border-radius: 2px;
+}
+
+QSlider::handle:horizontal:hover
+{
+  background: rgb(81, 103, 145);
+}
+
+QToolTip
+{
+  background: #111;
+  border: 1px solid #333;
+  color: #ccc;
+}
+
+QComboBox,
+QSpinBox,
+QDoubleSpinBox {
+  color: #ccc;
+  background-color: #111;
+
+  height: 20px;
+  padding-left: 6px;
+
+  border-radius: 3px;
+  border: 1px solid #333;
+}
+
+QLineEdit:hover,
+QSpinBox:hover,
+QComboBox:hover {
+  border-color: #555;
+}
+
+QLineEdit:focus {
+  border-color: rgb(69, 87, 119);
+}
+
+QComboBox::drop-down {
+  border: none;
+  padding-right: 5px;
+}
+
+QComboBox::drop-down {
+  border: none;
+  padding-right: 5px;
+}
+  
+QComboBox::down-arrow {
+  image: url(:/icons/arrow-down.svg);
+  width: 15px;
+}
+
+QComboBox::down-arrow:hover {
+  image: url(:/icons/arrow-down-white.svg);
+}
+
+QSpinBox::up-button,
+QDoubleSpinBox::up-button {
+  image: url(:/icons/arrow-up.svg);
+
+  subcontrol-position: top right;
+  padding: 2px 2px 0px 0px;
+  width: 15px;
+}
+
+QSpinBox::up-button:hover,
+QDoubleSpinBox::up-button:hover {
+  image: url(:/icons/arrow-up-white.svg);
+}
+
+QSpinBox::down-button,
+QDoubleSpinBox::down-button {
+  image: url(:/icons/arrow-down.svg);
+
+  subcontrol-position: bottom right;
+  padding: 0px 2px 2px 0px;
+  width: 15px;
+}
+
+QSpinBox::down-button:hover,
+QDoubleSpinBox::down-button:hover {
+  image: url(:/icons/arrow-down-white.svg);
+}

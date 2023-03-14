@@ -1,0 +1,182 @@
+
+Shader
+{
+    Name = "Simple";
+    Type = SHADER_FORWARD;
+}
+
+Global
+{
+	#include "common/common.hlsl"
+
+	struct VS_Input
+	{
+		#include "common/vertex_input.hlsl"
+	};
+
+	struct PS_Input
+	{
+		#include "common/pixel_input.hlsl"
+	};
+	
+	Property<float> vRoughness(Name = "Roughness", UiGroup = "Specular");
+	Property<float> vMetallic(Name = "Metallic", UiGroup = "Specular");
+}
+
+VS
+{
+	#include "common/vertex.hlsl"
+	
+    PS_Input Main(VS_Input input)
+    {
+		PS_Input output = ProcessVertex(input);
+
+		FinalizeVertex(input, output);
+		return output;
+    }
+}
+
+PS
+{
+	#include "common/forward_light_data.hlsl"
+
+	static const float PI = 3.14159265359;
+
+	float3 CalculateNormal(PS_Input input)
+	{
+		float3 normalMap = SampleTexture2D(vNormalMap, input.vTextureCoords).xyz * 2 - 1;
+		normalMap = normalize(lerp(float3(0, 1, 0), normalMap, vNormalIntensity));
+		if (vNormalIntensity == 0)
+			return normalize(input.vNormalWs);
+
+		float3x3 TBN = float3x3(input.vTangentUWs, input.vTangentVWs, input.vNormalWs);
+		return normalize(mul(TBN, normalMap));
+	}
+
+	float DistributionGGX(float3 N, float3 H, float roughness)
+	{
+		float a = roughness * roughness;
+		float a2 = a * a;
+		float NdotH = max(dot(N, H), 0.0);
+		float NdotH2 = NdotH * NdotH;
+
+		float nom = a2;
+		float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+		denom = PI * denom * denom;
+
+		return nom / denom;
+	}
+
+	float GeometrySchlickGGX(float NdotV, float roughness)
+	{
+		float r = (roughness + 1.0);
+		float k = (r*r) / 8.0;
+
+		float nom   = NdotV;
+		float denom = NdotV * (1.0 - k) + k;
+
+		return nom / denom;
+	}
+
+	float3 divide(float a, float3 b)
+	{
+		float x = b.x / a;
+		float y = b.y / a;
+		float z = b.z / a;
+		return float3(x, y, z);
+	}
+
+	float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
+	{
+		float NdotV = max(dot(N, V), 0.0);
+		float NdotL = max(dot(N, L), 0.0);
+		float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+		float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+		return ggx1 * ggx2;
+	}
+	
+	float3 fresnelSchlick(float cosTheta, float3 F0)
+	{
+		//return F0 + mul(pow(max(1.0 - cosTheta, 0.0), 5.0), (1.0 - F0));
+		return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+	}
+
+	float3 fresnelSchlickRoughness(float cosTheta, float3 F0, float roughness)
+	{
+		return F0 + mul(pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0), max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0);
+	}   
+
+	float3 PointLight(float3 posWs, float3 normal, float3 diffuse, FPointLight light)
+	{
+		float3 V = normalize(vCameraPos - posWs);
+		float3 L = normalize(light.position - posWs);
+		float3 H = normalize(V + L);
+
+		float distance = length(light.position - posWs);
+		float attenuation = 1 / (distance * distance);
+		float3 radiance = light.color * attenuation * light.intensity;
+
+		float3 F0 = float3(0.04, 0.04, 0.04);
+		F0 = lerp(F0, diffuse, vMetallic);
+		float3 F = fresnelSchlick(max(dot(H, V), 0), F0);
+
+		float NDF = DistributionGGX(normal, H, vRoughness);
+		float G = GeometrySmith(normal, V, L, vRoughness);
+
+		float3 numerator = NDF * G * F;
+		float denominator = 4.0 * max(dot(normal, V), 0.0) * max(dot(normal, L), 0.0)  + 0.0001;
+		float3 specular = numerator / denominator;
+
+		float3 kS = F;
+		float3 kD = float3(1, 1, 1) - kS;
+		kD = kD * 1.0 - vMetallic;
+
+		float NdotL = max(dot(normal, L), 0);
+
+		return (kD * diffuse / PI + specular) * radiance * NdotL;
+	}
+
+    float4 Main(PS_Input input) : SV_TARGET
+    {
+		float4 diffuse = SampleTexture2D(vBaseColor, input.vTextureCoords) /*  * vColorTint */;
+		//float4 diffuse = float4(1, 1, 1, 1);
+		float3 d2 = diffuse.xyz;
+		float3 normal = CalculateNormal(input);
+		//float3 normal = normalize(input.vNormalWs);
+
+		float3 outColor = float3(0, 0, 0);
+
+		// FPointLight l;
+		// l.range = 10;
+		// l.intensity = 15;
+		// l.position = float3(2, 2, 0);
+		// l.color = float3(1, 1, 1);
+		// outColor = outColor + (PointLight(input.vPositionWs, normal, d2, l));
+
+		// l.intensity = 5;
+		// l.position = float3(1.5, -0.5, 0.5);
+		// l.color = float3(1, 0, 0);
+		// outColor = outColor + (PointLight(input.vPositionWs, normal, d2, l));
+
+		// l.position = float3(1.5, -0.5, -0.5);
+		// l.color = float3(0, 0, 1);
+		// outColor = outColor + (PointLight(input.vPositionWs, normal, d2, l));
+
+		for (int i = 0; i < numPointLights; i++)
+		{
+			outColor = outColor + PointLight(input.vPositionWs, normal, d2, pointLights[i]);
+		}
+
+		//float3 amb = float3(0.01, 0.01, 0.01) * d2;
+		//float3 color = amb + outColor;
+		float3 color = outColor;
+
+		const float gamma = 1.6;
+
+		//color = color / (color + float3(1, 1, 1));
+		color = pow(abs(color), abs(float3(1 / gamma, 1 / gamma, 1 / gamma)));
+
+        return float4(color, diffuse.a * vAlpha);
+    }
+}

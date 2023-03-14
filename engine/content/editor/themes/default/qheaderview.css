@@ -1,0 +1,13 @@
+
+
+QHeaderView::section
+{
+	color: #ccc;
+	min-height: 20px;
+	max-height: 20px;
+	padding: 1px 10px;
+	background-color: #2F2F2F;
+	border-right: 1px solid #1A1A1A;
+	border-bottom: 1px solid #1A1A1A;
+	border-top: 0px;
+}

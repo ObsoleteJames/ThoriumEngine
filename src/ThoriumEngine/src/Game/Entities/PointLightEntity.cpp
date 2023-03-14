@@ -1,0 +1,17 @@
+
+#include "PointLightEntity.h"
+#include "Resources/Texture.h"
+#include "Game/Components/PointLightComponent.h"
+#include "Game/Components/BillboardComponent.h"
+
+void CPointLightEntity::Init()
+{
+	light = AddComponent<CPointLightComponent>("Point Light");
+	light->AttachTo(RootComponent());
+
+	TObjectPtr<CBillboardComponent> billboard = AddComponent<CBillboardComponent>("Billboard");
+	billboard->AttachTo(light);
+	billboard->sprite = CResourceManager::GetResource<CTexture>(L"editor\\icons\\PointLight.thtex");
+	billboard->SetScale(FVector(0.36f));
+	billboard->bEditorOnly = true;
+}

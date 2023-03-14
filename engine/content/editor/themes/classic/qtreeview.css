@@ -1,0 +1,37 @@
+
+QTreeView
+{
+    background: #3E4637;
+    border: 1px solid;
+    border-top-color: #282E22;
+    border-left-color: #282E22;
+    border-bottom-color: #808080;
+    border-right-color: #808080;
+
+    color: #aaa;
+    font-size: 12px;
+}
+
+QTreeView::item 
+{
+    padding: 2px 0px;
+    padding-right: 5px;
+}
+
+QTreeView::item:hover 
+{
+    color: #ddd;
+    background-color: transparent;
+}
+
+QTreeView::item:selected
+{
+    color: #fff;
+    background-color:#91863C;
+}
+
+QHeaderView::section
+{
+    color: #BACCB9;
+    background: #4C5844;
+}

@@ -1,0 +1,211 @@
+
+#include "ModelComponent.h"
+#include "Rendering/RenderScene.h"
+#include "Rendering/RenderProxies.h"
+#include "Game/World.h"
+
+class CModelComponentProxy : public CPrimitiveProxy
+{
+public:
+	CModelComponentProxy(CModelComponent* mdl) : model(mdl)
+	{
+	}
+
+	void FetchData() override
+	{
+		meshes.Clear();
+		bVisible = model->IsVisible() && model->GetModel();
+		if (!bVisible)
+			return;
+
+		//float distanceFromCamera = FVector::Distance(scene->GetCamera()->GetWorldPosition(), model->GetWorldPosition());
+		float distanceFromCamera = 0;
+		int lodLevel = model->GetModel()->GetLodFromDistance(distanceFromCamera);
+		model->GetModel()->Load(lodLevel);
+
+		position = model->GetWorldPosition();
+		transform = FMatrix(1.f).Translate(position).Scale(model->GetWorldScale()) * model->GetWorldRotation();
+		meshes = model->GetVisibleMeshes(lodLevel);
+		materials.Resize(model->GetMaterials().Size());
+		
+		for (SizeType i = 0; i < materials.Size(); i++)
+		{
+			materials[i] = model->GetMaterial(i);
+			if (materials[i])
+				materials[i]->Load(lodLevel);
+		}
+	}
+
+	void GetDynamicMeshes(FMeshBuilder& out) override
+	{
+		for (auto& m : meshes)
+		{
+			TObjectPtr<CMaterial> mat = materials[m.materialIndex] ? materials[m.materialIndex] : CResourceManager::GetResource<CMaterial>(L"materials\\error.thmat");
+			out.DrawMesh(m, mat, transform, skeletonMatrices);
+		}
+	}
+
+public:
+	CModelComponent* model;
+
+	TArray<TObjectPtr<CMaterial>> materials;
+	TArray<FMesh> meshes;
+	FMatrix transform;
+	TArray<FMatrix> skeletonMatrices;
+
+};
+
+CModelComponent::CModelComponent()
+{
+}
+
+void CModelComponent::SetModel(const WString& file)
+{
+	TObjectPtr<CModelAsset> mdl = CResourceManager::GetResource<CModelAsset>(file);
+	if (!mdl)
+		mdl = CResourceManager::GetResource<CModelAsset>(L"models\\error.thmdl");
+
+	SetModel(mdl);
+}
+
+void CModelComponent::SetModel(TObjectPtr<CModelAsset> m)
+{
+	activeBodyGroups.Clear();
+	materials.Clear();
+
+	model = m;
+
+	if (!model)
+		return;
+
+	activeBodyGroups.Resize(model->GetBodyGroups().Size());
+	for (auto& i : activeBodyGroups)
+		i = 0;
+
+	const TArray<FMaterial>& mats = model->GetMaterials();
+	materials.Resize(mats.Size());
+
+	//for (auto& matPath : mats)
+	//{
+	//	TObjectPtr<CMaterial> material = CResourceManager::GetResource<CMaterial>(matPath.path);
+	//	//if (!material)
+	//	//{
+	//	//	material = CreateObject<CMaterial>();
+	//	//	material->SetShader("Error");
+	//	//}
+
+	//	materials.Add(material);
+	//}
+}
+
+void CModelComponent::SetAnimationGraph(CAnimationGraph* animGraph)
+{
+
+}
+
+CMaterial* CModelComponent::GetMaterial(SizeType slot)
+{
+	if (slot < model->GetMaterials().Size())
+	{
+		if (slot >= materials.Size() || !materials[slot])
+			return model->GetMaterials()[slot].obj;
+	}
+
+	if (slot >= materials.Size())
+		return nullptr;
+
+	return materials[slot];
+}
+
+void CModelComponent::SetMaterial(CMaterial* mat, SizeType slot /*= 0*/)
+{
+	if (materials.Size() < slot + 1)
+		materials.Resize(slot + 1);
+
+	materials[slot] = mat;
+}
+
+void CModelComponent::Init()
+{
+	//FWorldRegisterer::RegisterModelComponent(GetWorld(), this);
+	if (GetWorld())
+	{
+		renderProxy = new CModelComponentProxy(this);
+		GetWorld()->RegisterPrimitive(renderProxy);
+	}
+
+	BaseClass::Init();
+}
+
+void CModelComponent::OnDelete()
+{
+	//FWorldRegisterer::UnregisterModelComponent(GetWorld(), this);
+	if (renderProxy)
+	{
+		GetWorld()->UnregisterPrimitve(renderProxy);
+		delete renderProxy;
+	}
+
+	model = nullptr;
+	materials.Clear();
+
+	BaseClass::OnDelete();
+}
+
+TArray<FMesh> CModelComponent::GetVisibleMeshes(uint8 lodLevel /*= 0*/)
+{
+	TArray<FMesh> meshes;
+	if (!model)
+		return meshes;
+
+	if (model->LodCount() > 0)
+	{
+		const TArray<FBodyGroup>& bodyGroups = model->GetBodyGroups();
+		for (int i = 0; i < bodyGroups.Size(); i++)
+		{
+			const FBodyGroupOption& bgOption = bodyGroups[i].options[activeBodyGroups[i]];
+			for (auto& bgMeshI : bgOption.meshIndices)
+			{
+				bool bIsVisible = false;
+				for (auto& mI : model->GetLODs()[lodLevel].meshIndices)
+				{
+					if (mI == bgMeshI)
+					{
+						bIsVisible = true;
+						break;
+					}
+				}
+
+				if (bIsVisible)
+					meshes.Add((model->GetMeshes()[bgMeshI]));
+			}
+		}
+		if (bodyGroups.Size() == 0)
+		{
+			for (auto& mi : model->GetLODs()[lodLevel].meshIndices)
+				meshes.Add((model->GetMeshes()[mi]));
+		}
+	}
+	else
+	{
+		const TArray<FBodyGroup>& bodyGroups = model->GetBodyGroups();
+		for (int i = 0; i < bodyGroups.Size(); i++)
+		{
+			const FBodyGroupOption& bgOption = bodyGroups[i].options[activeBodyGroups[i]];
+			for (auto& bgMeshI : bgOption.meshIndices)
+				meshes.Add((model->GetMeshes()[bgMeshI]));
+		}
+		if (bodyGroups.Size() == 0)
+		{
+			for (auto& mesh : model->GetMeshes())
+				meshes.Add(mesh);
+		}
+	}
+
+	return meshes;
+}
+
+void CModelComponent::OnModelEdit()
+{
+	SetModel(model);
+}

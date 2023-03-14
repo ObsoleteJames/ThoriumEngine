@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Development|x64">
+      <Configuration>Development</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{44EE8B65-1575-4728-8E3C-62A1E839C290}</ProjectGuid>
+    <RootNamespace>ThoriumEngine</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>Engine</TargetName>
+    <OutDir>$(SolutionDir)build\$(Platform)-$(Configuration)\</OutDir>
+    <IntDir>Intermediate\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir)Intermediate\generated\;$(IncludePath)</IncludePath>
+    <SourcePath>$(SourcePath)</SourcePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
+    <TargetName>Engine</TargetName>
+    <OutDir>$(SolutionDir)build\$(Platform)-$(Configuration)\</OutDir>
+    <IntDir>Intermediate\$(Platform)\$(Configuration)\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+    <SourcePath>$(SourcePath)</SourcePath>
+    <IncludePath>$(ProjectDir)Intermediate\generated\;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>Engine</TargetName>
+    <OutDir>$(SolutionDir)build\$(Platform)-$(Configuration)\</OutDir>
+    <IntDir>Intermediate\$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(ProjectDir)Intermediate\generated\;$(IncludePath)</IncludePath>
+    <SourcePath>$(SourcePath)</SourcePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>PLATFORM_WINDOWS;ENGINE_DLL;_WINDLL;%(PreprocessorDefinitions);CONFIG_$(Configuration);IS_DEV</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(UTIL_INCLUDE);$(ProjectDir)src\;$(SolutionDir)dep\glm;$(SolutionDir)dep\DirectXTK\;$(SolutionDir)dep\glfw\;C:\VulkanSDK\1.2.170.0\Include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>EnginePch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <AdditionalLibraryDirectories>$(SolutionDir)dep\build\$(Platform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3x64.lib;DirectXTK.lib;Util.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>
+      </DelayLoadDLLs>
+    </Link>
+    <PreBuildEvent>
+      <Command>"$(OutputPath)HeaderTool.exe" "$(ProjectDir)" -pt 0</Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>XCOPY $(TargetPath) $(SolutionDir)..\engine\bin\ /y
+XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>PLATFORM_WINDOWS;ENGINE_DLL;_WINDLL;%(PreprocessorDefinitions);CONFIG_$(Configuration);</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(UTIL_INCLUDE);$(ProjectDir)src\;$(SolutionDir)dep\glm;$(SolutionDir)dep\DirectXTK\;$(SolutionDir)dep\glfw\;</AdditionalIncludeDirectories>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>EnginePch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SolutionDir)dep\build\$(Platform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3x64.lib;DirectXTK.lib;Util.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>
+      </DelayLoadDLLs>
+    </Link>
+    <PreBuildEvent>
+      <Command>"$(OutputPath)HeaderTool.exe" "$(ProjectDir)" -pt 0</Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>XCOPY $(TargetPath) $(SolutionDir)..\engine\bin\ /y
+XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>PLATFORM_WINDOWS;ENGINE_DLL;_WINDLL;%(PreprocessorDefinitions);CONFIG_$(Configuration);IS_DEV</PreprocessorDefinitions>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <SupportJustMyCode>true</SupportJustMyCode>
+      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(UTIL_INCLUDE);$(ProjectDir)src\;$(SolutionDir)dep\glm;$(SolutionDir)dep\DirectXTK\;$(SolutionDir)dep\glfw\;</AdditionalIncludeDirectories>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>EnginePch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>
+      </EnableCOMDATFolding>
+      <OptimizeReferences>
+      </OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SolutionDir)dep\build\$(Platform)-$(Configuration)\</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
+      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+      <AdditionalDependencies>glfw3x64.lib;DirectXTK.lib;Util.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>
+      </DelayLoadDLLs>
+    </Link>
+    <PreBuildEvent>
+      <Command>"$(OutputPath)HeaderTool.exe" "$(ProjectDir)" -pt 0</Command>
+    </PreBuildEvent>
+    <PostBuildEvent>
+      <Command>XCOPY $(TargetPath) $(SolutionDir)..\engine\bin\ /y
+XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Intermediate\generated\Asset.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\BillboardComponent.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Buffers.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\CameraComponent.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Engine.init.cpp" />
+    <ClCompile Include="Intermediate\generated\Entity.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\EntityComponent.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\GameInstance.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\GameMode.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Material.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\ModelAsset.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\ModelComponent.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\ModelEntity.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Object.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Pawn.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\PawnController.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Player.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\PlayerController.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\PointLightComponent.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\PointLightEntity.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Scene.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\SceneComponent.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Shader.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\SkyboxComponent.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Texture.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\TransformGizmoEntity.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Vectors.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Window.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\World.generated.cpp" />
+    <ClCompile Include="src\Console.cpp" />
+    <ClCompile Include="src\Engine.cpp" />
+    <ClCompile Include="src\Game\Components\BillboardComponent.cpp" />
+    <ClCompile Include="src\Game\Components\CameraComponent.cpp" />
+    <ClCompile Include="src\Game\Components\ModelComponent.cpp" />
+    <ClCompile Include="src\Game\Components\PointLightComponent.cpp" />
+    <ClCompile Include="src\Game\Components\SceneComponent.cpp" />
+    <ClCompile Include="src\Game\Components\SkyboxComponent.cpp" />
+    <ClCompile Include="src\Game\Entities\PointLightEntity.cpp" />
+    <ClCompile Include="src\Game\Entities\ModelEntity.cpp" />
+    <ClCompile Include="src\Game\Entity.cpp" />
+    <ClCompile Include="src\Game\EntityComponent.cpp" />
+    <ClCompile Include="src\Game\Events.cpp" />
+    <ClCompile Include="src\Game\GameInstance.cpp" />
+    <ClCompile Include="src\Game\GameMode.cpp" />
+    <ClCompile Include="src\Game\Misc\TransformGizmoEntity.cpp" />
+    <ClCompile Include="src\Game\Player.cpp" />
+    <ClCompile Include="src\Game\World.cpp" />
+    <ClCompile Include="src\Math\Math.cpp" />
+    <ClCompile Include="src\Math\Vectors.cpp" />
+    <ClCompile Include="src\Platform\Windows\DirectX\DirectXBuffers.cpp" />
+    <ClCompile Include="src\Platform\Windows\DirectX\DirectXFrameBuffer.cpp" />
+    <ClCompile Include="src\Platform\Windows\DirectX\DirectXRenderer.cpp" />
+    <ClCompile Include="src\Platform\Windows\DirectX\DirectXShader.cpp" />
+    <ClCompile Include="src\Platform\Windows\DirectX\DirectXTexture.cpp" />
+    <ClCompile Include="src\Profiler\Profiler.cpp" />
+    <ClCompile Include="src\Registry\FileSystem.cpp" />
+    <ClCompile Include="src\Misc\FileHelper.cpp" />
+    <ClCompile Include="src\Misc\CommandLine.cpp" />
+    <ClCompile Include="src\Module.cpp" />
+    <ClCompile Include="src\Object\Object.cpp" />
+    <ClCompile Include="src\Object\ObjectManager.cpp" />
+    <ClCompile Include="src\Rendering\RenderCommands.cpp" />
+    <ClCompile Include="src\Rendering\Renderer.cpp" />
+    <ClCompile Include="src\Rendering\RenderProxies.cpp" />
+    <ClCompile Include="src\Rendering\Shader.cpp" />
+    <ClCompile Include="src\Rendering\ShaderParser.cpp" />
+    <ClCompile Include="src\Resources\Asset.cpp" />
+    <ClCompile Include="src\Resources\Material.cpp" />
+    <ClCompile Include="src\Resources\ModelAsset.cpp" />
+    <ClCompile Include="src\Resources\ResourceManager.cpp" />
+    <ClCompile Include="src\Resources\Scene.cpp" />
+    <ClCompile Include="src\Resources\Texture.cpp" />
+    <ClCompile Include="src\ThirdParty\stb.cpp" />
+    <ClCompile Include="src\Window.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Console.h" />
+    <ClInclude Include="src\Game\Components\BillboardComponent.h" />
+    <ClInclude Include="src\Game\Components\CameraComponent.h" />
+    <ClInclude Include="src\Game\Components\ModelComponent.h" />
+    <ClInclude Include="src\Game\Components\PointLightComponent.h" />
+    <ClInclude Include="src\Game\Components\SkyboxComponent.h" />
+    <ClInclude Include="src\Game\Entities\ModelEntity.h" />
+    <ClInclude Include="src\Game\Entities\PointLightEntity.h" />
+    <ClInclude Include="src\Game\Events.h" />
+    <ClInclude Include="src\Game\GameInstance.h" />
+    <ClInclude Include="src\Game\GameMode.h" />
+    <ClInclude Include="src\Game\Input\InputManager.h" />
+    <ClInclude Include="src\Game\Misc\TransformGizmoEntity.h" />
+    <ClInclude Include="src\Game\Pawn.h" />
+    <ClInclude Include="src\Game\PawnController.h" />
+    <ClInclude Include="src\Game\PlayerController.h" />
+    <ClInclude Include="src\Game\Player.h" />
+    <ClInclude Include="src\Object\ObjectSelector.h" />
+    <ClInclude Include="src\Profiler\Profiler.h" />
+    <ClInclude Include="src\Rendering\RenderProxies.h" />
+    <ClInclude Include="src\Resources\Scene.h" />
+    <ClInclude Include="src\Math\Math.h" />
+    <ClInclude Include="src\Math\Vectors.h" />
+    <ClInclude Include="src\Misc\Script.h" />
+    <ClInclude Include="src\Object\PropertyTypes.h" />
+    <ClInclude Include="src\Platform\Windows\DirectX\DirectXBuffers.h" />
+    <ClInclude Include="src\Platform\Windows\DirectX\DirectXFrameBuffer.h" />
+    <ClInclude Include="src\Platform\Windows\DirectX\DirectXRenderer.h" />
+    <ClInclude Include="src\Platform\Windows\DirectX\DirectXShader.h" />
+    <ClInclude Include="src\Platform\Windows\DirectX\DirectXTexture.h" />
+    <ClInclude Include="src\Rendering\Buffers.h" />
+    <ClInclude Include="src\Rendering\Framebuffer.h" />
+    <ClInclude Include="src\Rendering\RenderCommands.h" />
+    <ClInclude Include="src\Rendering\RenderScene.h" />
+    <ClInclude Include="src\Rendering\ShaderGlobalData.h" />
+    <ClInclude Include="src\Rendering\ShaderParser.h" />
+    <ClInclude Include="src\Rendering\Texture.h" />
+    <ClInclude Include="src\Resources\Asset.h" />
+    <ClInclude Include="src\Misc\FileHelper.h" />
+    <ClInclude Include="src\Registry\FileSystem.h" />
+    <ClInclude Include="src\Game\Components\SceneComponent.h" />
+    <ClInclude Include="src\Game\Entity.h" />
+    <ClInclude Include="src\Game\EntityComponent.h" />
+    <ClInclude Include="src\Misc\CommandLine.h" />
+    <ClInclude Include="src\EngineCore.h" />
+    <ClInclude Include="src\Engine.h" />
+    <ClInclude Include="src\Misc\ProjectStructure.h" />
+    <ClInclude Include="src\Module.h" />
+    <ClInclude Include="src\Object\Class.h" />
+    <ClInclude Include="src\Object\Object.h" />
+    <ClInclude Include="src\Object\ObjectMacros.h" />
+    <ClInclude Include="src\Object\ObjectManager.h" />
+    <ClInclude Include="src\Object\ObjectTypes.h" />
+    <ClInclude Include="src\Registry\RegistryBase.h" />
+    <ClInclude Include="src\Rendering\Renderer.h" />
+    <ClInclude Include="src\Rendering\Shader.h" />
+    <ClInclude Include="src\Resources\Material.h" />
+    <ClInclude Include="src\Resources\ModelAsset.h" />
+    <ClInclude Include="src\Resources\ResourceManager.h" />
+    <ClInclude Include="src\Resources\Texture.h" />
+    <ClInclude Include="src\ThirdParty\stb_dxt.h" />
+    <ClInclude Include="src\ThirdParty\stb_image.h" />
+    <ClInclude Include="src\ThirdParty\stb_image_resize.h" />
+    <ClInclude Include="src\Window.h" />
+    <ClInclude Include="src\Game\World.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

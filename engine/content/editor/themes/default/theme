@@ -1,0 +1,21 @@
+{
+	name:	"Default"
+	
+	include [
+		"qwindow.css",
+		"qmenu.css",
+		"qcheckbox.css",
+		"qstatusbar.css",
+		"qtabbar.css",
+		"qdockwidget.css",
+		"qscrollbar.css",
+		"qtextedit.css",
+		"qtoolbar.css",
+		"qtreeview.css",
+		"qpushbutton.css",
+		"qheaderview.css",
+		"qlistview.css",
+		"cobjectselector.css",
+		"common.css"
+	]
+}

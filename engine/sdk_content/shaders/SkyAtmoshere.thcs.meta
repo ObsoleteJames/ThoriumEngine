@@ -1,0 +1,62 @@
+
+Shader
+{
+	Name = "SkyAtmoshere";
+	Type = SHADER_FORWARD;
+}
+
+Global
+{
+	#include "common/common.hlsl"
+
+	struct VS_Input
+	{
+		#include "common/vertex_input.hlsl"
+	};
+
+	struct PS_Input
+	{
+		#include "common/pixel_input.hlsl"
+	};
+
+	Property<float3> zenithColor(Name = "Zenith Color", UiGroup = "Atmopshere");
+	Property<float3> horizonColor(Name = "Horizon Color", UiGroup = "Atmosphere");
+	Property<float> horizonFalloff(Name = "Falloff", UiGroup = "Atmosphere");
+
+}
+
+VS
+{
+	#include "common/vertex.hlsl"
+
+	PS_Input Main(VS_Input input)
+	{
+		PS_Input output = ProcessVertex(input);
+
+		FinalizeVertex(input, output);
+		return output;
+	}
+}
+
+PS
+{
+	static const float maxFloat = 3.402823466e+38;
+
+	float3 Atmosphere(float3 normal)
+	{
+		float p = max(0, dot(normalize(normal), float3(0, -1, 0)));
+		p = 1 - p;
+		float p2 = clamp(pow(abs(p), horizonFalloff), 0, 1);
+		
+		float3 col = lerp(zenithColor, horizonColor, p2);
+		return col;
+	}
+
+	float4 Main(PS_Input input) : SV_TARGET
+	{			
+		//float3 finalColor = lerp(vColor1, vColor2, d);
+		float3 finalColor = Atmosphere(input.vNormalWs);
+		
+		return float4(finalColor, 1.f);
+	}
+}
