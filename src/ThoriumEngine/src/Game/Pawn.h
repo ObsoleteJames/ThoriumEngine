@@ -11,7 +11,7 @@ class ENGINE_API CPawn : public CEntity
 	GENERATED_BODY()
 
 public:
-	virtual void OnPossessed(const TObjectPtr<CPlayerController>& player);
+	virtual void OnPossessed(const TObjectPtr<CPawnController>& player);
 	virtual void OnUnposses();
 
 	inline CPawnController* GetController() const { return controller; }

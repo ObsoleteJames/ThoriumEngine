@@ -4,6 +4,7 @@
 #include "World.h"
 #include "Engine.h"
 #include "Game/Events.h"
+#include "Game/GameInstance.h"
 #include "Game/Components/ModelComponent.h"
 #include "Rendering/RenderScene.h"
 #include "Rendering/RenderProxies.h"
@@ -168,11 +169,39 @@ CEntity* CWorld::CreateEntity(FClass* classType, const FString& name)
 	return r;
 }
 
+void CWorld::SetGameMode(const TObjectPtr<CGameMode>& gm)
+{
+	if (bActive)
+	{
+		CONSOLE_LogWarning("Cannot set gamemode while world is active!");
+		return;
+	}
+
+	if (!gm)
+		return;
+
+	if (gamemode)
+		gamemode->Delete();
+
+	gamemode = gm;
+	gamemode->Init();
+}
+
 void CWorld::Start()
 {
 	THORIUM_ASSERT(bInitialized, "Cannot start world when world isn't initialized");
 
-	bActive = true;
+	if (!gamemode)
+	{
+		FClass* gmClass = (scene.IsValid() ? scene->gamemodeClass.Get() : CGameMode::StaticClass());
+		gamemode = (CGameMode*)CreateObject(gmClass, FString());
+		gamemode->Init();
+	}
+
+	gEngine->GameInstance()->OnStart();
+	gamemode->OnStart();
+
+	gEngine->GameInstance()->SpawnLocalPlayers();
 
 	for (auto* sub : subWorlds)
 		sub->Start();
@@ -180,6 +209,26 @@ void CWorld::Start()
 	for (auto& ent : entities)
 		ent->OnStart();
 
+	bActive = true;
+	time = 0.f;
+}
+
+void CWorld::Stop()
+{
+	if (!bActive)
+		return;
+
+	for (auto& ent : entities)
+		ent->OnStop();
+
+	for (auto& sub : subWorlds)
+		sub->Stop();
+
+	gEngine->GameInstance()->OnStop();
+	gamemode->Delete();
+	gamemode = nullptr;
+
+	bActive = false;
 	time = 0.f;
 }
 
@@ -237,6 +286,9 @@ void CWorld::Render()
 	renderScene->SetPrimitives(primitives);
 	renderScene->SetLights(lights);
 
+	renderScene->SetCameras(cameras);
+	renderScene->SetPrimaryCamera(primaryCamera);
+
 	//for (CModelComponent* mdl : models)
 	//{
 	//	CEntity* ent = mdl->GetEntity();
@@ -284,7 +336,12 @@ void CWorld::OnDelete()
 	for (CWorld* w : subWorlds)
 		w->Delete();
 
+	delete renderScene;
+
 	subWorlds.Clear();
+
+	if (gamemode)
+		gamemode->Delete();
 
 	for (CEntity* ent : entities)
 		ent->Delete();

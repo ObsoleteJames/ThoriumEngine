@@ -78,7 +78,7 @@ DirectXVertexShader::DirectXVertexShader(CShaderSource* in)
 		{ "COLOR",			0, DXGI_FORMAT_R32G32B32_FLOAT,		0, offsetof(FVertex, color),			D3D11_INPUT_PER_VERTEX_DATA, 0  },
 		{ "TEXCOORD",		0, DXGI_FORMAT_R32G32_FLOAT,		0, offsetof(FVertex, uv1),				D3D11_INPUT_PER_VERTEX_DATA, 0  },
 		{ "TEXCOORD",		1, DXGI_FORMAT_R32G32_FLOAT,		0, offsetof(FVertex, uv2),				D3D11_INPUT_PER_VERTEX_DATA, 0  },
-		{ "BONEINDICES",	0, DXGI_FORMAT_R32G32B32A32_UINT,	0, offsetof(FVertex, bones),			D3D11_INPUT_PER_VERTEX_DATA, 0  },
+		{ "BONEINDICES",	0, DXGI_FORMAT_R32G32B32A32_SINT,	0, offsetof(FVertex, bones),			D3D11_INPUT_PER_VERTEX_DATA, 0  },
 		{ "BONEWEIGHT",		0, DXGI_FORMAT_R32G32B32A32_FLOAT,	0, offsetof(FVertex, boneInfluence),	D3D11_INPUT_PER_VERTEX_DATA, 0  },
 	};
 	constexpr UINT vertexLayoutSize = ARRAYSIZE(vertexLayout);

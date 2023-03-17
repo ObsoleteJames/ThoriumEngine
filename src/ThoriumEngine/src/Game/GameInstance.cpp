@@ -1,9 +1,31 @@
 
 #include "GameInstance.h"
+#include "World.h"
+#include "GameMode.h"
 
 void CGameInstance::Init()
 {
 	AddLocalPlayer(0);
+}
+
+void CGameInstance::OnStart()
+{
+
+}
+
+void CGameInstance::OnStop()
+{
+
+}
+
+void CGameInstance::SpawnLocalPlayers()
+{
+	CGameMode* gamemode = gWorld->GetGameMode();
+
+	for (auto& lp : localPlayers)
+	{
+		gamemode->OnPlayerJoined(lp.player);
+	}
 }
 
 bool CGameInstance::AddLocalPlayer(uint controllerId)
@@ -14,7 +36,7 @@ bool CGameInstance::AddLocalPlayer(uint controllerId)
 	localPlayers.Add();
 	FLocalPlayer& newPlayer = *localPlayers.last();
 
-	newPlayer.controllerId = controllerId;
+	newPlayer.controllerId = controllerId == -1 ? localPlayers.Size() - 1 : controllerId;
 	newPlayer.playerId = localPlayers.Size() - 1;
 
 	CPlayer* player = CreateObject<CPlayer>();

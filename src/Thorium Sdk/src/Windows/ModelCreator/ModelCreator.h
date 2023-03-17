@@ -11,8 +11,10 @@ class CModelComponent;
 class CWorld;
 class MCSkeletonWidget;
 class CMaterial;
+class QTreeWidget;
 struct FMesh;
 struct aiScene;
+struct aiMesh;
 
 class CMaterialWidget;
 class CMeshWidget;
@@ -69,7 +71,10 @@ private:
 	void UpdateUI();
 	void Compile();
 
+	void CompileMesh(const aiScene* scene, const aiMesh* importMesh, const FVector& offset, const FQuaternion& rotation, const FVector& scale);
+
 	void UpdateMaterials();
+	void UpdateSkeleton();
 
 	void AddMesh();
 	void RemoveMesh(SizeType id);
@@ -104,7 +109,10 @@ private:
 
 private:
 	QDockWidget* detailsWidget;
-	MCSkeletonWidget* skeletonWidget;
+	QDockWidget* skeletonWidget;
+	//MCSkeletonWidget* skeletonWidget;
+
+	QTreeWidget* skeletonTree;
 
 	QWidget* meshesWidget;
 	CCollapsableWidget* meshList;

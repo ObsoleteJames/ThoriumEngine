@@ -222,6 +222,8 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="src\Game\GameInstance.cpp" />
     <ClCompile Include="src\Game\GameMode.cpp" />
     <ClCompile Include="src\Game\Misc\TransformGizmoEntity.cpp" />
+    <ClCompile Include="src\Game\Pawn.cpp" />
+    <ClCompile Include="src\Game\PawnController.cpp" />
     <ClCompile Include="src\Game\Player.cpp" />
     <ClCompile Include="src\Game\World.cpp" />
     <ClCompile Include="src\Math\Math.cpp" />

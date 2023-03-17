@@ -230,7 +230,8 @@ void CEditorWindow::SetupUi()
 
 		QPushButton* saveBtn = new QPushButton(gEditorEngine()->GetIcon(L"floppy.svg"), QString(), toolbar);
 		saveBtn->setProperty("type", QVariant("clear"));
-		saveBtn->setMinimumSize(QSize(24, 24));
+		saveBtn->setMinimumSize(QSize(20, 20));
+		saveBtn->setMaximumSize(QSize(24, 24));
 		connect(saveBtn, &QPushButton::clicked, this, [=]() { SaveScene(); });
 		toolbar->addWidget(saveBtn);
 		toolbar->addSeparator();
@@ -244,6 +245,27 @@ void CEditorWindow::SetupUi()
 		connect(editorModeCB, (void(QComboBox::*)(const QString&)) & QComboBox::currentIndexChanged, this, [=](const QString& t) { gEditorEngine()->SetEditorMode(t.toStdString()); });
 
 		toolbar->addWidget(editorModeCB);
+		toolbar->addSeparator();
+
+		QFrame* worldBtnsFrame = new QFrame(toolbar);
+		QHBoxLayout* l2 = new QHBoxLayout(worldBtnsFrame);
+		worldBtnsFrame->setMaximumHeight(26);
+		worldBtnsFrame->setStyleSheet("QFrame { border-radius: 3px; }");
+		l2->setSpacing(4);
+		l2->setMargin(4);
+
+		QPushButton* btnPlay = new QPushButton(gEditorEngine()->GetIcon(L"btn-play.svg"), QString(), toolbar);
+		QPushButton* btnStop = new QPushButton(gEditorEngine()->GetIcon(L"btn-stop.svg"), QString(), toolbar);
+
+		btnPlay->setMaximumWidth(20);
+		btnPlay->setProperty("type", QVariant("clear"));
+		btnStop->setMaximumWidth(20);
+		btnStop->setProperty("type", QVariant("clear"));
+
+		l2->addWidget(btnPlay);
+		l2->addWidget(btnStop);
+
+		toolbar->addWidget(worldBtnsFrame);
 
 		addToolBar(Qt::TopToolBarArea, toolbar);
 	}

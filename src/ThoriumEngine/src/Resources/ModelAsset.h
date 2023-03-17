@@ -17,7 +17,7 @@ struct FVertex
 	float uv1[2];
 	float uv2[2];
 
-	uint bones[4];
+	int bones[4];
 	float boneInfluence[4];
 };
 

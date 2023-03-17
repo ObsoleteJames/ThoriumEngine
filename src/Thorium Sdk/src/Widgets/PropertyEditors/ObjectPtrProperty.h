@@ -23,6 +23,9 @@ public:
 private:
 	void Init(const QString& name);
 
+	void dragEnterEvent(QDragEnterEvent* event) override;
+	void dropEvent(QDropEvent* event) override;
+
 private:
 	CObjectSelectorWidget* edit;
 	TObjectPtr<CObject>* value;

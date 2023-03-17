@@ -69,6 +69,10 @@ void CEntity::OnStart()
 		comp->OnStart();
 }
 
+void CEntity::OnStop()
+{
+}
+
 void CEntity::Update(double dt)
 {
 	for (auto& comp : components)

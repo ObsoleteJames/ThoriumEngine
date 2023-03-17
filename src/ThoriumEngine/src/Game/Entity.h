@@ -98,6 +98,7 @@ public:
 protected:
 	virtual void Init();
 	virtual void OnStart();
+	virtual void OnStop();
 	virtual void Update(double dt);
 
 	virtual void Serialize(FMemStream& out);

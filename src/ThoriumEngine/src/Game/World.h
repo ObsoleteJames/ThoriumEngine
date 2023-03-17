@@ -13,6 +13,7 @@ class CScene;
 class IBaseWindow;
 class CPrimitiveProxy;
 class CLightProxy;
+class CCameraProxy;
 class CRenderScene;
 class CGameMode;
 
@@ -86,6 +87,7 @@ public:
 	CEntity* CreateEntity(FClass* classType, const FString& name);
 
 	inline CGameMode* GetGameMode() const { return gamemode; }
+	void SetGameMode(const TObjectPtr<CGameMode>& gm);
 
 	inline bool IsInitialized() const { return bInitialized; }
 
@@ -101,6 +103,7 @@ public:
 	inline const TArray<TObjectPtr<CEntity>>& GetEntities() const { return entities; }
 
 	void Start();
+	void Stop();
 	void Update(double dt);
 
 	void Render();
@@ -113,6 +116,13 @@ public:
 	inline void RegisterLight(CLightProxy* proxy) { lights.Add(proxy); }
 	inline void UnregisterLight(CLightProxy* proxy) { if (auto it = lights.Find(proxy); it != lights.end()) lights.Erase(it); }
 	inline const TArray<CLightProxy*>& GetLights() const { return lights; }
+
+	inline void RegisterCamera(CCameraProxy* proxy) { cameras.Add(proxy); }
+	inline void UnregisterCamera(CCameraProxy* proxy) { if (auto it = cameras.Find(proxy); it != cameras.end()) cameras.Erase(it); }
+	inline const TArray<CCameraProxy*>& GetCameras() const { return cameras; }
+	
+	inline CCameraProxy* GetPrimaryCamera() const { return primaryCamera; }
+	inline void SetPrimaryCamera(CCameraProxy* cam) { primaryCamera = cam; }
 
 protected:
 	void OnDelete() override;
@@ -129,10 +139,13 @@ protected:
 	// The window that this scene gets rendered to.
 	IBaseWindow* renderWindow;
 
-	CGameMode* gamemode;
+	TObjectPtr<CGameMode> gamemode;
 
 	TArray<CLightProxy*> lights;
 	TArray<CPrimitiveProxy*> primitives;
+	TArray<CCameraProxy*> cameras;
+
+	CCameraProxy* primaryCamera;
 
 	TObjectPtr<CScene> scene;
 	CRenderScene* renderScene;

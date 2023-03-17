@@ -37,6 +37,9 @@ public:
 	inline const TArray<CCameraProxy*>& GetCameras() const { return cameras; }
 	inline void SetCameras(const TArray<CCameraProxy*>& arr) { cameras = arr; }
 
+	inline CCameraProxy* GetPrimaryCamera() const { return primaryCamera; }
+	inline void SetPrimaryCamera(CCameraProxy* cam) { primaryCamera = cam; }
+
 	inline void RegisterLight(CLightProxy* proxy) { lights.Add(proxy); }
 	inline void UnregisterLight(CLightProxy* proxy) { if (auto it = lights.Find(proxy); it != lights.end()) lights.Erase(it); }
 	inline const TArray<CLightProxy*>& GetLights() const { return lights; }
@@ -49,6 +52,8 @@ private:
 	TArray<CPrimitiveProxy*> primitves;
 	TArray<CCameraProxy*> cameras;
 	TArray<CLightProxy*> lights;
+
+	CCameraProxy* primaryCamera;
 
 	float time;
 

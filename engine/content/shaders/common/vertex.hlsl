@@ -21,10 +21,14 @@
     float4 outPos = float4(output.vPositionWs, 1.f); \
     \
     float4x4 skeletonTransform = float4x4(1.f, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1); \
-    skeletonTransform += mul(vSkeletonMatrix[input.boneIndices[0]], input.boneWeight.x); \
-    skeletonTransform += mul(vSkeletonMatrix[input.boneIndices[1]], input.boneWeight.y); \
-    skeletonTransform += mul(vSkeletonMatrix[input.boneIndices[2]], input.boneWeight.z); \
-    skeletonTransform += mul(vSkeletonMatrix[input.boneIndices[3]], input.boneWeight.w); \
+    if (input.boneIndices[0] != -1) \
+        skeletonTransform += mul(vSkeletonMatrix[input.boneIndices[0]], input.boneWeight.x); \
+    if (input.boneIndices[1] != -1) \
+        skeletonTransform += mul(vSkeletonMatrix[input.boneIndices[1]], input.boneWeight.y); \
+    if (input.boneIndices[2] != -1) \
+        skeletonTransform += mul(vSkeletonMatrix[input.boneIndices[2]], input.boneWeight.z); \
+    if (input.boneIndices[3] != -1) \
+        skeletonTransform += mul(vSkeletonMatrix[input.boneIndices[3]], input.boneWeight.w); \
     \
     outPos = mul(skeletonTransform, outPos); \
     outPos = mul(vObjectMatrix, outPos); \

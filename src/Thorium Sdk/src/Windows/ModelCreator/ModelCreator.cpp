@@ -20,6 +20,7 @@
 #include <QWidget>
 #include <QBoxLayout>
 #include <QMenuBar>
+#include <QTreeWidget>
 #include <QScrollArea>
 
 #include <assimp/Importer.hpp>
@@ -27,19 +28,6 @@
 #include <assimp/postprocess.h>
 
 SDK_REGISTER_WINDOW(CModelCreator, "Model Creator", "Tools", NULL);
-
-class MCSkeletonWidget : public QDockWidget
-{
-public:
-	MCSkeletonWidget(QWidget* parent) : QDockWidget(parent)
-	{
-		setWindowTitle("Skeleton");
-		setObjectName("skeleton_widget");
-
-
-	}
-
-};
 
 bool CModelCreator::Shutdown()
 {
@@ -142,13 +130,23 @@ void CModelCreator::SetupUi()
 		addDockWidget(Qt::LeftDockWidgetArea, detailsWidget);
 	}
 
-	skeletonWidget = new MCSkeletonWidget(this);
-	addDockWidget(Qt::LeftDockWidgetArea, skeletonWidget);
-	
-	camera = CreateObject<CCameraComponent>();
-	viewport->SetControlMode(ECameraControlMode::Orbit);
-	viewport->camera = camera;
-	viewport->GetRenderScene()->SetCamera(camera);
+	{
+		skeletonWidget = new QDockWidget(this);
+		skeletonWidget->setWindowTitle("Skeleton");
+		skeletonWidget->setObjectName("skeleton_widget");
+
+		QWidget* widget = new QWidget(this);
+		QVBoxLayout* layout = new QVBoxLayout(widget);
+		layout->setMargin(0);
+		layout->setSpacing(0);
+		skeletonWidget->setWidget(widget);
+
+		skeletonTree = new QTreeWidget(widget);
+
+		layout->addWidget(skeletonTree);
+
+		addDockWidget(Qt::LeftDockWidgetArea, skeletonWidget);
+	}
 
 	RestoreState();
 	UpdateUI();
@@ -159,8 +157,14 @@ void CModelCreator::SetupUi()
 void CModelCreator::Init()
 {
 	world = CreateObject<CWorld>();
-	world->InitWorld(CWorld::InitializeInfo().CreateAISystems(false).CreatePhyiscsWorld(false).CreateRenderScene(false).RegisterForRendering(false));
-	world->SetRenderScene(viewport->GetRenderScene());
+	world->InitWorld(CWorld::InitializeInfo().CreateAISystems(false).CreatePhyiscsWorld(false).RegisterForRendering(false));
+	//world->SetRenderScene(viewport->GetRenderScene());
+	viewport->SetOverrideScene(world->GetRenderScene());
+
+	camera = CreateObject<CCameraComponent>();
+	viewport->SetControlMode(ECameraControlMode::Orbit);
+	viewport->camera = camera;
+	world->GetRenderScene()->SetCamera(camera);
 
 	TObjectPtr<CEntity> modelEnt = world->CreateEntity<CEntity>();
 	modelComp = modelEnt->AddComponent<CModelComponent>("Model");
@@ -243,6 +247,7 @@ void CModelCreator::SetModel(CModelAsset* m, bool bNew)
 	modelComp->SetModel(model);
 	UpdateUI();
 	UpdateMaterials();
+	UpdateSkeleton();
 }
 
 void CModelCreator::paintEvent(QPaintEvent* event)
@@ -257,8 +262,8 @@ void CModelCreator::paintEvent(QPaintEvent* event)
 		cmd.transform = FMatrix(1.f);
 		cmd.drawType |= MESH_DRAW_PRIMITIVE_LINES;
 
-		FRenderCommand gridDraw(cmd, R_FORWARD_PASS);
-		viewport->GetRenderScene()->PushCommand(gridDraw);
+		FRenderCommand gridDraw(cmd, R_DEBUG_PASS);
+		world->GetRenderScene()->PushCommand(gridDraw);
 	}
 
 	viewport->Render();
@@ -316,116 +321,168 @@ void CModelCreator::Compile()
 	model->bodyGroups.Clear();
 	model->numLODs = 0;
 	model->ClearMeshes();
-	model->materials.Clear();
+	//model->materials.Clear();
 	model->skeleton.bones.Clear();
 
+	SizeType numMats = 0;
+	SizeType numBones = 0;
 	for (FImportedMesh& mesh : data.importedMeshes)
 	{
 		Assimp::Importer importer;
-		const aiScene* scene = importer.ReadFile(ToFString(mesh.file).c_str(), aiProcess_Triangulate | aiProcess_MakeLeftHanded | aiProcess_CalcTangentSpace | aiProcess_OptimizeMeshes | aiProcess_FlipUVs);
+		const aiScene* scene = importer.ReadFile(ToFString(mesh.file).c_str(), aiProcess_Triangulate | aiProcess_MakeLeftHanded | aiProcess_CalcTangentSpace | aiProcess_OptimizeMeshes | aiProcess_FlipUVs | aiProcess_PopulateArmatureData);
 		if (!scene)
 			continue;
 
 		SizeType numMeshes = model->meshes.Size();
-		SizeType numMaterials = model->materials.Size();
 
 		FQuaternion meshRotate = FQuaternion::EulerAngles(mesh.rotation.Radians());
 
+		model->materials.Resize(scene->mNumMaterials + numMats);
+
 		for (int i = 0; i < scene->mNumMaterials; i++)
 		{
-			bool bExists = false;
-			for (SizeType mat = 0; mat < model->materials.Size(); mat++)
-			{
-				if (model->materials[mat].name == scene->mMaterials[i]->GetName().C_Str())
-				{
-					bExists = true;
-					break;
-				}
-			}
-			if (bExists)
+			if (model->materials[i + numMats].name == scene->mMaterials[i]->GetName().C_Str())
 				continue;
 
-			model->materials.Add({ scene->mMaterials[i]->GetName().C_Str(), L"", nullptr });
-		}
+			FMaterial& m = model->materials[i + numMats];
+			m.name = scene->mMaterials[i]->GetName().C_Str();
+			m.path = L"";
+			m.obj = nullptr;
 
-		for (int i = 0; i < scene->mNumMeshes; i++)
+			//model->materials.Add({ scene->mMaterials[i]->GetName().C_Str(), L"", nullptr });
+		}
+		numMats += scene->mNumMaterials;
+
+		TMap<aiNode*, SizeType> boneIndices;
+
+		for (int i = 0; i < scene->mNumSkeletons; i++)
 		{
-			model->meshes.Add();
-			FMesh& m = *model->meshes.last();
+			aiSkeleton* skel = scene->mSkeletons[i];
 
-			aiMesh* importMesh = scene->mMeshes[i];
-
-			for (SizeType mat = 0; mat < model->materials.Size(); mat++)
+			for (int b = 0; b < skel->mNumBones; b++)
 			{
-				if (model->materials[mat].name == scene->mMaterials[importMesh->mMaterialIndex]->GetName().C_Str())
-				{
-					m.materialIndex = mat;
-					break;
-				}
+				aiSkeletonBone* bone = skel->mBones[b];
+				boneIndices[bone->mNode] = model->skeleton.bones.Size();
+
+				FBone _bone{};
+				_bone.name = bone->mNode->mName.C_Str();
+				_bone.parent = bone->mParent;
+				if (_bone.parent != -1)
+					_bone.parent += numBones;
+
+				aiVector3D bonePos;
+				aiQuaternion boneRot;
+				aiVector3D boneDir = boneRot.Rotate({ 0, 0, -1 });
+				bone->mOffsetMatrix.DecomposeNoScaling(boneRot, bonePos);
+
+				_bone.position = *(FVector*)&bonePos;
+				_bone.direction = *(FVector*)&boneDir;
+
+				model->skeleton.bones.Add(_bone);
 			}
-
-			m.numVertices = importMesh->mNumVertices;
-			m.numIndices = importMesh->mNumFaces * 3;
-			m.numVertexData = m.numVertices;
-			m.numIndexData = m.numIndices;
-			m.vertexData = new FVertex[m.numVertexData];
-			m.indexData = new uint[m.numIndexData];
-
-			m.meshName = mesh.name;
-
-			for (SizeType v = 0; v < m.numVertexData; v++)
-			{
-				FVertex vert;
-				vert.position = *(FVector*)&importMesh->mVertices[v];
-				vert.normal = *(FVector*)&importMesh->mNormals[v];
-				if (importMesh->mTangents)
-					vert.tangent = *(FVector*)&importMesh->mTangents[v];
-
-				if (importMesh->HasVertexColors(v))
-					vert.color = *(FVector*)&importMesh->mColors[v];
-				
-				vert.position = meshRotate.Rotate(vert.position * mesh.scale) + mesh.position;
-				vert.normal = meshRotate.Rotate(vert.normal);
-
-				if (importMesh->GetNumUVChannels() > 0)
-				{
-					vert.uv1[0] = importMesh->mTextureCoords[0][v].x;
-					vert.uv1[1] = importMesh->mTextureCoords[0][v].y;
-				}
-				if (importMesh->GetNumUVChannels() > 1)
-				{
-					vert.uv2[0] = importMesh->mTextureCoords[1][v].x;
-					vert.uv2[1] = importMesh->mTextureCoords[1][v].y;
-				}
-				m.vertexData[v] = vert;
-			}
-			for (int f = 0; f < importMesh->mNumFaces; f++)
-			{
-				m.indexData[f * 3] = importMesh->mFaces[f].mIndices[0];
-				m.indexData[f * 3 + 1] = importMesh->mFaces[f].mIndices[2];
-				m.indexData[f * 3 + 2] = importMesh->mFaces[f].mIndices[1];
-			}
-
-			{
-				TArray<FVertex> vertBuf;
-				vertBuf.Resize(m.numVertices);
-				memcpy(vertBuf.Data(), m.vertexData, m.numVertices * sizeof(FVertex));
-				m.vertexBuffer = gRenderer->CreateVertexBuffer(vertBuf);
-			}
-			{
-				TArray<uint> indexBuf;
-				indexBuf.Resize(m.numIndices);
-				memcpy(indexBuf.Data(), m.indexData, m.numIndices * sizeof(uint));
-				m.indexBuffer = gRenderer->CreateIndexBuffer(indexBuf);
-			}
-
+			numBones += skel->mNumBones;
 		}
+		
+		for (int i = 0; i < scene->mNumMeshes; i++)
+			CompileMesh(scene, scene->mMeshes[i], mesh.position, meshRotate, mesh.scale);
+
+		boneIndices.clear();
 	}
 
 	bRequiresSave = true;
 	modelComp->SetModel(model);
 	UpdateMaterials();
+	UpdateSkeleton();
 	UpdateTitle();
+}
+
+void CModelCreator::CompileMesh(const aiScene* scene, const aiMesh* importMesh, const FVector& offset, const FQuaternion& rotation, const FVector& scale)
+{
+	model->meshes.Add();
+	FMesh& m = *model->meshes.last();
+
+	for (SizeType mat = 0; mat < model->materials.Size(); mat++)
+	{
+		if (model->materials[mat].name == scene->mMaterials[importMesh->mMaterialIndex]->GetName().C_Str())
+		{
+			m.materialIndex = mat;
+			break;
+		}
+	}
+
+	m.numVertices = importMesh->mNumVertices;
+	m.numIndices = importMesh->mNumFaces * 3;
+	m.numVertexData = m.numVertices;
+	m.numIndexData = m.numIndices;
+	m.vertexData = new FVertex[m.numVertexData];
+	m.indexData = new uint[m.numIndexData];
+
+	m.meshName = importMesh->mName.C_Str();
+
+	for (SizeType v = 0; v < m.numVertexData; v++)
+	{
+		FVertex vert{};
+		vert.position = *(FVector*)&importMesh->mVertices[v];
+		vert.normal = *(FVector*)&importMesh->mNormals[v];
+		if (importMesh->mTangents)
+			vert.tangent = *(FVector*)&importMesh->mTangents[v];
+
+		if (importMesh->HasVertexColors(v))
+			vert.color = *(FVector*)&importMesh->mColors[v];
+
+		vert.position = rotation.Rotate(vert.position * scale) + offset;
+		vert.normal = rotation.Rotate(vert.normal);
+
+		for (int b = 0; b < 4; b++)
+			vert.bones[b] = -1;
+
+		if (importMesh->GetNumUVChannels() > 0)
+		{
+			vert.uv1[0] = importMesh->mTextureCoords[0][v].x;
+			vert.uv1[1] = importMesh->mTextureCoords[0][v].y;
+		}
+		if (importMesh->GetNumUVChannels() > 1)
+		{
+			vert.uv2[0] = importMesh->mTextureCoords[1][v].x;
+			vert.uv2[1] = importMesh->mTextureCoords[1][v].y;
+		}
+		m.vertexData[v] = vert;
+	}
+	for (int f = 0; f < importMesh->mNumFaces; f++)
+	{
+		m.indexData[f * 3] = importMesh->mFaces[f].mIndices[0];
+		m.indexData[f * 3 + 1] = importMesh->mFaces[f].mIndices[2];
+		m.indexData[f * 3 + 2] = importMesh->mFaces[f].mIndices[1];
+	}
+
+	{
+		TArray<FVertex> vertBuf;
+		vertBuf.Resize(m.numVertices);
+		memcpy(vertBuf.Data(), m.vertexData, m.numVertices * sizeof(FVertex));
+		m.vertexBuffer = gRenderer->CreateVertexBuffer(vertBuf);
+	}
+	{
+		TArray<uint> indexBuf;
+		indexBuf.Resize(m.numIndices);
+		memcpy(indexBuf.Data(), m.indexData, m.numIndices * sizeof(uint));
+		m.indexBuffer = gRenderer->CreateIndexBuffer(indexBuf);
+	}
+
+	//if (boneIndices.size() > 0)
+	//{
+	//	for (int b = 0; b < importMesh->mNumBones; b++)
+	//	{
+	//		aiBone* importBone = importMesh->mBones[b];
+
+	//		for (int w = 0; w < importBone->mNumWeights; w++)
+	//		{
+	//			aiVertexWeight& weight = importBone->mWeights[w];
+	//			FVertex& v = m.vertexData[weight.mVertexId];
+	//			v.bones[w] = boneIndices[importBone->mNode];
+	//			v.boneInfluence[w] = weight.mWeight;
+	//		}
+	//	}
+	//}
 }
 
 void CModelCreator::UpdateMaterials()
@@ -455,6 +512,26 @@ void CModelCreator::UpdateMaterials()
 		});
 
 		index++;
+	}
+}
+
+void CModelCreator::UpdateSkeleton()
+{
+	TArray<QTreeWidgetItem*> bones;
+	skeletonTree->clear();
+
+	if (!model)
+		return;
+
+	for (auto& b : model->skeleton.bones)
+	{
+		QTreeWidgetItem* item = new QTreeWidgetItem();
+		item->setText(0, b.name.c_str());
+
+		if (b.parent != -1)
+			bones[b.parent]->addChild(item);
+		else
+			skeletonTree->addTopLevelItem(item);
 	}
 }
 

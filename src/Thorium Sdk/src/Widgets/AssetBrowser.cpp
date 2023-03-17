@@ -114,6 +114,7 @@ CAssetBrowserWidget::CAssetBrowserWidget(QWidget* parent /*= nullptr*/) : QWidge
 	
 	fileTree = new QTreeWidget(this);
 	dirView = new CAssetList(this);
+	dirView->setObjectName("CAssetBrowser::dirView");
 	dirView->setContextMenuPolicy(Qt::CustomContextMenu);
 	dirView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 	connect(dirView, &QListWidget::customContextMenuRequested, this, &CAssetBrowserWidget::CreateContextMenu);

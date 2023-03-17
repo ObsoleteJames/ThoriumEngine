@@ -3,6 +3,8 @@
 #include "PawnController.h"
 #include "PlayerController.generated.h"
 
+class CPlayer;
+
 CLASS(Hidden)
 class ENGINE_API CPlayerController : public CPawnController 
 {

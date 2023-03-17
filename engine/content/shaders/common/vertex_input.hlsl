@@ -6,5 +6,5 @@ float3 color : COLOR;
 float2 texCoords : TEXCOORD0;
 float2 texCoords2 : TEXCOORD1;
 
-uint4 boneIndices : BONEINDICES;
+int4 boneIndices : BONEINDICES;
 float4 boneWeight : BONEWEIGHT;

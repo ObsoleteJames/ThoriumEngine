@@ -2,7 +2,7 @@
 #include "Object/Class.h"
 #include "Object/ObjectMacros.h"
 
-#define Engine_PlayerController_h_9_GeneratedBody \
+#define Engine_PlayerController_h_11_GeneratedBody \
 DECLARE_CLASS(CPlayerController, CPawnController, Engine)
 
 

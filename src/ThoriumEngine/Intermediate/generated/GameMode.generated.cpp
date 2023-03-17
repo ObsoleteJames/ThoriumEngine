@@ -9,6 +9,14 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
+DECLARE_PROPERTY(CGameMode, "Player Controller Class", playerControllerClass, "", "CPlayerController", EVT_CLASS_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , CGameMode::__private_playerControllerClass_offset(), sizeof(TClassPtr<CPlayerController>), nullptr, nullptr)
+#undef CLASS_NEXT_PROPERTY
+#define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CGameMode, playerControllerClass)
+
+DECLARE_PROPERTY(CGameMode, "Default Pawn Class", defaultPawnClass, "", "CPawn", EVT_CLASS_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , CGameMode::__private_defaultPawnClass_offset(), sizeof(TClassPtr<CPawn>), nullptr, nullptr)
+#undef CLASS_NEXT_PROPERTY
+#define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CGameMode, defaultPawnClass)
+
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
@@ -20,7 +28,7 @@ public:
 		name = "Game Mode";
 		cppName = "CGameMode";
 		size = sizeof(CGameMode);
-		numProperties = 0;
+		numProperties = 2;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
 		BaseClass = CObject::StaticClass();

@@ -3,11 +3,15 @@
 #include "Resources/Asset.h"
 #include "Widgets/FileDialogs.h"
 #include "Widgets/ObjectSelectorWidget.h"
+#include "ToolsCore.h"
+#include "Console.h"
 
+#include <QMimeData>
 #include <QBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QDragEnterEvent>
 #include <QComboBox>
 
 CObjectPtrProperty::CObjectPtrProperty(void* v, const FProperty* property, QWidget* parent /*= nullptr*/) : IBasePropertyEditor(parent), value((TObjectPtr<CObject>*)v)
@@ -28,6 +32,8 @@ void CObjectPtrProperty::Init(const QString& name)
 {
 	setProperty("type", QVariant(2));
 	auto* layout = new QHBoxLayout(this);
+
+	setAcceptDrops(true);
 
 	QLabel* label = new QLabel(name, this);
 
@@ -98,6 +104,52 @@ void CObjectPtrProperty::Init(const QString& name)
 	}
 
 	Update();
+}
+
+void CObjectPtrProperty::dragEnterEvent(QDragEnterEvent* event)
+{
+	if (!bIsAsset)
+		return;
+
+	QListWidget* lw = qobject_cast<QListWidget*>(event->source());
+	if (!lw)
+		return;
+
+	QListWidgetItem* item = lw->currentItem();
+	if (item && item->type() == EItemTypes_AssetFile)
+	{
+		FFile* file = (FFile*)item->data(257).toULongLong();
+		if (file && file->Extension() == ToWString(((FAssetClass*)_class)->GetExtension()))
+		{
+			event->acceptProposedAction();
+		}
+	}
+	//CONSOLE_LogInfo(event->source()->objectName().toStdString());
+}
+
+void CObjectPtrProperty::dropEvent(QDropEvent* event)
+{
+	if (!bIsAsset)
+		return;
+
+	QListWidget* lw = qobject_cast<QListWidget*>(event->source());
+	if (!lw)
+		return;
+
+	QListWidgetItem* item = lw->currentItem();
+	if (item && item->type() == EItemTypes_AssetFile)
+	{
+		FFile* file = (FFile*)item->data(257).toULongLong();
+		if (file && file->Extension() == ToWString(((FAssetClass*)_class)->GetExtension()))
+		{
+			event->acceptProposedAction();
+
+			TObjectPtr<CAsset> obj = CResourceManager::GetResource((FAssetClass*)_class, file->Path());
+			*value = obj;
+			edit->SetObject(obj);
+			emit(OnValueChanged());
+		}
+	}
 }
 
 void CObjectPtrProperty::Update()

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Object/Object.h"
+#include "Game/PlayerController.h"
 #include "Player.generated.h"
 
 class CPawn;

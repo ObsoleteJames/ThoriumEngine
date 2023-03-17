@@ -20,6 +20,7 @@ public:
 
 protected:
 	FVector position;
+	FQuaternion rotation;
 	FMatrix view;
 	FMatrix projection;
 

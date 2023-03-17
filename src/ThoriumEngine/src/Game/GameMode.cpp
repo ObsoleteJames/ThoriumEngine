@@ -7,7 +7,6 @@
 
 void CGameMode::Init()
 {
-
 }
 
 void CGameMode::OnStart()
@@ -26,6 +25,8 @@ void CGameMode::OnPlayerJoined(CPlayer* player)
 
 	player->SetPlayerController(controller);
 	playerControllers.Add(controller);
+
+	SpawnPlayer(player);
 }
 
 void CGameMode::OnPlayerDisconnect(CPlayer* player)
@@ -35,16 +36,22 @@ void CGameMode::OnPlayerDisconnect(CPlayer* player)
 		return;
 
 	playerControllers.Erase(playerControllers.Find(player->GetPlayerController()));
+
+	player->GetPawn()->Delete();
 	player->GetPlayerController()->Delete();
 }
 
 void CGameMode::SpawnPlayer(CPlayer* player)
 {
+	if (!defaultPawnClass.Get())
+		return;
+
 	// Spawn a pawn for the player.
 	TObjectPtr<CPawn> pawn = (CPawn*)GetWorld()->CreateEntity(defaultPawnClass.Get(), FString());
 	if (!pawn)
 		return;
 
+	// TODO: Find player start entities.
 	player->GetPlayerController()->Possess(pawn);
 }
 
@@ -57,8 +64,6 @@ TObjectPtr<CPlayerController> CGameMode::GetPlayerController(SizeType id)
 
 void CGameMode::OnDelete()
 {
-	for (auto& pc : playerControllers)
-		pc->Delete();
-
-	playerControllers.Clear();
+	for (auto it = playerControllers.rbegin(); it != playerControllers.rend(); it++)
+		OnPlayerDisconnect((*it)->GetPlayer());
 }

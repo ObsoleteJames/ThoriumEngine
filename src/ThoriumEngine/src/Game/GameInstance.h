@@ -13,8 +13,12 @@ class ENGINE_API CGameInstance : public CObject
 public:
 	CGameInstance() = default;
 
-	virtual void PreInit() {}
+	//virtual void PreInit() {}
 	virtual void Init();
+
+	virtual void OnStart();
+	virtual void OnStop();
+	virtual void SpawnLocalPlayers();
 
 public:
 	inline const TArray<CPlayer*>& GetPlayers() const { return players; }
@@ -22,7 +26,7 @@ public:
 
 	inline FLocalPlayer& GetLocalPlayer(int index = 0) { return localPlayers[index]; }
 
-	bool AddLocalPlayer(uint controllerId);
+	bool AddLocalPlayer(uint controllerId = -1);
 
 private:
 	TArray<FLocalPlayer> localPlayers;
