@@ -3,15 +3,15 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerWorkingDirectory>$(SolutionDir)..\engine\bin</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>F:\MyProjects\VS_Projects\ThoriumEngine\projects\MgsDemo\.project\MetalGearSolid.thproj $(QmlDebug)</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(SolutionDir)..\projects\MgsDemo\.project\MetalGearSolid.thproj $(QmlDebug)</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
-    <LocalDebuggerCommandArguments>F:\MyProjects\VS_Projects\ThoriumEngine\projects\MgsDemo\.project\MetalGearSolid.thproj $(QmlDebug)</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(SolutionDir)..\projects\MgsDemo\.project\MetalGearSolid.thproj $(QmlDebug)</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)..\engine\bin</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>F:\MyProjects\VS_Projects\ThoriumEngine\projects\MgsDemo\.project\MetalGearSolid.thproj $(QmlDebug)</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(SolutionDir)..\projects\MgsDemo\.project\MetalGearSolid.thproj $(QmlDebug)</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)..\engine\bin</LocalDebuggerWorkingDirectory>
   </PropertyGroup>

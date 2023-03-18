@@ -37,7 +37,6 @@ void COutlinerTreeWidget::dropEvent(QDropEvent* event)
 	{
 		if (draggedItem)
 		{
-			draggedItem->GetData()->SetOwner(nullptr);
 			draggedItem->GetData()->RootComponent()->Detach();
 		}
 		return;
@@ -48,7 +47,7 @@ void COutlinerTreeWidget::dropEvent(QDropEvent* event)
 		TTreeDataItem<CEntity*>* targetItem = (TTreeDataItem<CEntity*>*)itemFromIndex(index);
 		if (targetItem)
 		{
-			draggedItem->GetData()->SetOwner(targetItem->GetData());
+			//draggedItem->GetData()->SetOwner(targetItem->GetData());
 			draggedItem->GetData()->RootComponent()->AttachTo(targetItem->GetData()->RootComponent());
 		}
 	}
@@ -130,7 +129,7 @@ void COutlinerWidget::Update()
 			entItem->setText(1, ent->GetClass()->GetName().c_str());
 
 			entityItems[ent] = entItem;
-			if (ent->GetOwner() == nullptr)
+			if (ent->RootComponent()->GetParent() == nullptr)
 				outlinerTree->addTopLevelItem(entItem);
 		}
 		else
@@ -139,13 +138,15 @@ void COutlinerWidget::Update()
 			if (entItem->text(0) != ent->Name().c_str())
 				entItem->setText(0, ent->Name().c_str());
 
-			if (!ent->GetOwner() && parentItem)
+			if (!ent->RootComponent()->GetParent() && parentItem)
 			{
 				parentItem->removeChild(entItem);
 				outlinerTree->addTopLevelItem(entItem);
 			}
-			else if (CEntity* owner = ent->GetOwner<CEntity>())
+			else if (CSceneComponent* parent = ent->RootComponent()->GetParent())
 			{
+				CEntity* owner = parent->GetEntity();
+
 				auto newParent = entityItems[owner];
 				if (newParent && newParent != parentItem)
 				{

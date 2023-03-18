@@ -126,7 +126,27 @@ CEditorWindow::CEditorWindow()
 	y /= 2;
 	setGeometry(QRect(x, y, 1600, 900));
 
+	gEditorEngine()->editorWindow = this;
 	gEngine->LoadWorld(L"empty", true);
+
+	connect(&gEditorEngine()->historyBuffer, &CHistoryBuffer::onEventAdded, this, [=]() {
+		gEditorEngine()->bSceneDirty = true;
+		UpdateTitle();
+	});
+	connect(&gEditorEngine()->historyBuffer, &CHistoryBuffer::onUndo, this, [=](SizeType cursor) {
+		if (cursor == gEditorEngine()->savedAtHC)
+			gEditorEngine()->bSceneDirty = false;
+		else
+			gEditorEngine()->bSceneDirty = true;
+		UpdateTitle();
+	});
+	connect(&gEditorEngine()->historyBuffer, &CHistoryBuffer::onRedo, this, [=](SizeType cursor) {
+		if (cursor == gEditorEngine()->savedAtHC)
+			gEditorEngine()->bSceneDirty = false;
+		else
+			gEditorEngine()->bSceneDirty = true;
+		UpdateTitle();
+	});
 }
 
 CEditorWindow::~CEditorWindow()
@@ -176,9 +196,21 @@ void CEditorWindow::SetupUi()
 		menuFile->addSeparator();
 		menuFile->addAction("Quit", this, []() { QApplication::quit(); });
 
+		menuEdit->addAction("Undo", this, [=]() { gEditorEngine()->historyBuffer.Undo(); }, QKeySequence(QKeySequence::Undo));
+		menuEdit->addAction("Redo", this, [=]() { gEditorEngine()->historyBuffer.Redo(); }, QKeySequence(QKeySequence::Redo));
+
+		menuEdit->addSeparator();
+
 		menuEdit->addAction("Create Entity", this, [=]() {
 			CClassSelectorDialog* dialog = new CClassSelectorDialog(this);
-			connect(dialog, &QDialog::finished, this, [=](int result) { if (result) gWorld->CreateEntity(dialog->GetSelectedClass(), ""); });
+			connect(dialog, &QDialog::finished, this, [=](int result) { 
+				if (!result)
+					return;
+				FClass* type = dialog->GetSelectedClass();
+				CEntity* ent = gWorld->CreateEntity(dialog->GetSelectedClass(), FString());
+
+				gEditorEngine()->historyBuffer.AddEvent(FHistoryEvent("Add Entity", [ent]() { ent->Delete(); }, [type]() { gWorld->CreateEntity(type, FString()); }));
+			});
 
 			dialog->SetFilterClass(CEntity::StaticClass());
 			dialog->exec();
@@ -264,6 +296,24 @@ void CEditorWindow::SetupUi()
 
 		l2->addWidget(btnPlay);
 		l2->addWidget(btnStop);
+
+		connect(btnPlay, &QPushButton::clicked, this, [=]() { 
+			if (gEditorEngine()->bIsPlaying)
+				return;
+
+			if ((gEditorEngine()->bSceneDirty || !gWorld->GetScene()->File()) && !SaveScene())
+				return;
+			gEditorEngine()->bIsPlaying = true;
+			gWorld->Start();
+		});
+
+		connect(btnStop, &QPushButton::clicked, this, [=]() {
+			if (!gEditorEngine()->bIsPlaying)
+				return;
+
+			gEditorEngine()->bIsPlaying = false;
+			gWorld->Stop();
+		});
 
 		toolbar->addWidget(worldBtnsFrame);
 
@@ -392,14 +442,16 @@ bool CEditorWindow::AttempSave()
 
 void CEditorWindow::NewScene()
 {
-	if (!bSceneSaved && !AttempSave())
+	if (gEditorEngine()->bSceneDirty && !AttempSave())
 		return;
 	
 	outlinerWidget->Clear();
 	propertiesWidget->SetObject(nullptr);
 	gEngine->LoadWorld(L"empty", true);
 
-	bSceneSaved = false;
+	gEditorEngine()->bSceneDirty = true;
+	gEditorEngine()->savedAtHC = -1;
+	gEditorEngine()->historyBuffer.ClearHistory();
 	worldViewport->SetCamera(gEditorEngine()->editorCamera);
 	gWorld->SetRenderWindow(worldViewport->GetWindow());
 	
@@ -408,7 +460,7 @@ void CEditorWindow::NewScene()
 
 void CEditorWindow::LoadScene()
 {
-	if (!bSceneSaved && !AttempSave())
+	if (gEditorEngine()->bSceneDirty && !AttempSave())
 		return;
 
 	COpenFileDialog* dialog = new COpenFileDialog((FAssetClass*)CScene::StaticClass(), this);
@@ -435,27 +487,29 @@ void CEditorWindow::LoadScene()
 
 	worldViewport->SetCamera(gEditorEngine()->editorCamera);
 	gWorld->SetRenderWindow(worldViewport->GetWindow());
-	bSceneSaved = true;
+	gEditorEngine()->bSceneDirty = false;
+	gEditorEngine()->savedAtHC = -1;
+	gEditorEngine()->historyBuffer.ClearHistory();
 
 	UpdateTitle();
 }
 
-void CEditorWindow::SaveScene(bool bNewPath /*= false*/)
+bool CEditorWindow::SaveScene(bool bNewPath /*= false*/)
 {
 	if (!gWorld->GetScene()->File())
 	{
 		CSaveFileDialog dialog(this);
 		if (!dialog.exec())
-			return;
+			return false;
 
 		CResourceManager::RegisterNewResource(gWorld->GetScene(), dialog.Path());
 		gWorld->Save();
-		return;
+		return true;
 	}
 	if (bNewPath)
 	{
 		// TODO
-		return;
+		return false;
 	}
 
 	CFStream sdkStream = gWorld->GetScene()->File()->GetSdkStream("wb");
@@ -470,13 +524,15 @@ void CEditorWindow::SaveScene(bool bNewPath /*= false*/)
 	}
 
 	gWorld->Save();
-	bSceneSaved = true;
+	gEditorEngine()->bSceneDirty = false;
+	gEditorEngine()->savedAtHC = gEditorEngine()->historyBuffer.cursor;
 	UpdateTitle();
+	return true;
 }
 
 void CEditorWindow::closeEvent(QCloseEvent *event)
 {
-	if (!bSceneSaved && !AttempSave())
+	if (gEditorEngine()->bSceneDirty && !AttempSave())
 	{
 		event->ignore();
 		return;
@@ -568,6 +624,10 @@ void CEditorWindow::UserSaveState(QSettings& out)
 	out.beginGroup("property_editor");
 	out.setValue("splitter_geo", propertiesWidget->split->saveState());
 	out.endGroup();
+
+	out.beginGroup("console_widget");
+	out.setValue("slpitter_state", consoleWidget->Splitter()->saveState());
+	out.endGroup();
 }
 
 void CEditorWindow::UserRestoreState(QSettings& in)
@@ -581,6 +641,10 @@ void CEditorWindow::UserRestoreState(QSettings& in)
 	in.beginGroup("property_editor");
 	propertiesWidget->split->restoreState(in.value("splitter_geo").toByteArray());
 	in.endGroup();
+
+	in.beginGroup("console_widget");
+	consoleWidget->Splitter()->restoreState(in.value("splitter_state").toByteArray());
+	in.endGroup();
 }
 
 void CEditorWindow::UpdateTitle()
@@ -592,7 +656,7 @@ void CEditorWindow::UpdateTitle()
 	else
 		title += L" - New Scene";
 
-	if (!bSceneSaved)
+	if (gEditorEngine()->bSceneDirty)
 		title += L'*';
 
 	setWindowTitle(QString((const QChar*)title.c_str()));

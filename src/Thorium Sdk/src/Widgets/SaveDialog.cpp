@@ -18,7 +18,7 @@ CSaveDialog::CSaveDialog(QWidget* parent /*= nullptr*/, Qt::WindowFlags f /*= Qt
 
 	QHBoxLayout* lButtons = new QHBoxLayout();
 	
-	label = new QLabel("Are you sure you want to exit without saving?", this);
+	label = new QLabel("Continue without saving?", this);
 
 	QPushButton* btnSave = new QPushButton("Save", this);
 	QPushButton* btnDontSave = new QPushButton("Don't Save", this);

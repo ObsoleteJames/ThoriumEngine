@@ -95,6 +95,10 @@ public:
 	inline void SetWorldScale(const FVector& s) { rootComponent->SetWorldScale(s); }
 	inline void SetScale(const FVector& s) { rootComponent->SetScale(s); }
 
+	inline FVector GetWorldPosition() const { return rootComponent->GetWorldPosition(); }
+	inline FQuaternion GetWorldRotation() const { return rootComponent->GetWorldRotation(); }
+	inline FVector GetWorldScale() const { return rootComponent->GetWorldScale(); }
+
 protected:
 	virtual void Init();
 	virtual void OnStart();

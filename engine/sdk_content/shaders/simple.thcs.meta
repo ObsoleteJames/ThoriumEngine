@@ -21,6 +21,9 @@ Global
 	
 	Property<float> vRoughness(Name = "Roughness", UiGroup = "Specular");
 	Property<float> vMetallic(Name = "Metallic", UiGroup = "Specular");
+
+	Property<Texture2D> vEmission(Name = "Emmision", UiGroup = "Color");
+	Property<float> vEmissionIntensity(Name = "Emmision Intensity", UiGroup = "Color");
 }
 
 VS
@@ -140,6 +143,7 @@ PS
     float4 Main(PS_Input input) : SV_TARGET
     {
 		float4 diffuse = SampleTexture2D(vBaseColor, input.vTextureCoords) /*  * vColorTint */;
+		float4 emmision = SampleTexture2D(vEmission, input.vTextureCoords) * vEmissionIntensity;
 		//float4 diffuse = float4(1, 1, 1, 1);
 		float3 d2 = diffuse.xyz;
 		float3 normal = CalculateNormal(input);
@@ -170,7 +174,7 @@ PS
 
 		//float3 amb = float3(0.01, 0.01, 0.01) * d2;
 		//float3 color = amb + outColor;
-		float3 color = outColor;
+		float3 color = outColor + emmision.xyz;
 
 		const float gamma = 1.6;
 

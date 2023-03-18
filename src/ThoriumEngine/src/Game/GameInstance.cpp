@@ -8,12 +8,12 @@ void CGameInstance::Init()
 	AddLocalPlayer(0);
 }
 
-void CGameInstance::OnStart()
+void CGameInstance::Start()
 {
 
 }
 
-void CGameInstance::OnStop()
+void CGameInstance::Stop()
 {
 
 }

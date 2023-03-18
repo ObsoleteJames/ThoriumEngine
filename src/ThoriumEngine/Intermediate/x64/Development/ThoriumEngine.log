@@ -1,42 +1,10 @@
 ﻿  Path: F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\
   Running HeaderTool for project: Engine
-  Writing Generated Header 'F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\Intermediate\generated\World.generated.h'
   Engine.init.cpp
-  Entity.generated.cpp
-  GameInstance.generated.cpp
-  ModelEntity.generated.cpp
-  Pawn.generated.cpp
-  PawnController.generated.cpp
-  Player.generated.cpp
-  PlayerController.generated.cpp
-  PointLightEntity.generated.cpp
-  TransformGizmoEntity.generated.cpp
-  World.generated.cpp
-  Engine.cpp
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\shared\minwindef.h(130,1): warning C4005: 'APIENTRY': macro redefinition
-F:\MyProjects\VS_Projects\ThoriumEngine\src\dep\glfw\GLFW\glfw3.h(123): message : see previous definition of 'APIENTRY'
-  BillboardComponent.cpp
   ModelComponent.cpp
-  PointLightComponent.cpp
-  ModelEntity.cpp
-  PointLightEntity.cpp
-  Entity.cpp
-  EntityComponent.cpp
-  GameInstance.cpp
-F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\GameInstance.cpp(39,86): warning C4267: '=': conversion from 'size_t' to 'uint8', possible loss of data
-F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\GameInstance.cpp(40,46): warning C4267: '=': conversion from 'size_t' to 'uint8', possible loss of data
-F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\GameInstance.cpp(47,52): warning C4267: 'argument': conversion from 'size_t' to 'uint8', possible loss of data
-  Generating Code...
-  Compiling...
+  PlayerStart.cpp
   GameMode.cpp
-  TransformGizmoEntity.cpp
-F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\Misc\TransformGizmoEntity.cpp(125,57): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\Misc\TransformGizmoEntity.cpp(125,43): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-  Pawn.cpp
-  PawnController.cpp
-  Player.cpp
-  World.cpp
-  Scene.cpp
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\GameMode.cpp(78,44): warning C4267: 'argument': conversion from 'size_t' to 'uint', possible loss of data
   Generating Code...
   Util.lib(String.obj) : MSIL .netmodule or module compiled with /GL found; restarting link with /LTCG; add /LTCG to the link command line to improve linker performance
 LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
@@ -46,11 +14,11 @@ LINK : warning LNK4098: defaultlib 'MSVCRTD' conflicts with use of other libs; u
   Finished generating code
 glfw3x64.lib(context.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(context.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
 glfw3x64.lib(init.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(init.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(input.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(input.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(input.obj) : warning LNK4099: PDB '' was not found with 'glfw3x64.lib(input.obj)' or at ''; linking object as if no debug info
 glfw3x64.lib(monitor.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(monitor.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
 glfw3x64.lib(vulkan.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(vulkan.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(window.obj) : warning LNK4099: PDB '' was not found with 'glfw3x64.lib(window.obj)' or at ''; linking object as if no debug info
-glfw3x64.lib(win32_init.obj) : warning LNK4099: PDB '' was not found with 'glfw3x64.lib(win32_init.obj)' or at ''; linking object as if no debug info
+glfw3x64.lib(window.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(window.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(win32_init.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_init.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
 glfw3x64.lib(win32_joystick.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_joystick.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
 glfw3x64.lib(win32_monitor.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_monitor.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
 glfw3x64.lib(win32_time.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_time.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info

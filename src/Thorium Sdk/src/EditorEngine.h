@@ -4,6 +4,7 @@
 #include "ToolsCore.h"
 #include "Rendering/RenderCommands.h"
 #include "Registry/RegistryBase.h"
+#include "HistoryBuffer.h"
 #include <Util/Event.h>
 
 #include <QIcon>
@@ -15,6 +16,7 @@ class CModelAsset;
 class CEditorMode;
 class CTransformGizmoEntity;
 class CObject;
+class CEditorWindow;
 
 struct FMesh;
 
@@ -71,17 +73,23 @@ public:
 private:
 	void __OnObjectSelected(const TArray<TObjectPtr<CObject>>& obj);
 
+	CEditorMode* editorMode = nullptr;
+
 public:
+	CEditorWindow* editorWindow;
+
 	FEditorConfig config;
 	TArray<FEditorTheme> themes;
 	TMap<std::wstring, QIcon> themeIcons;
 
-	CEditorMode* editorMode = nullptr;
-
+	CHistoryBuffer historyBuffer;
 	TEvent<const TArray<TObjectPtr<CObject>>&> OnObjectSelected;
 
-	// Wether the scene needs to be saved.
 	bool bIsPlaying = false;
+
+	// Wether changes have been made to the loaded scene.
+	bool bSceneDirty = false;
+	SizeType savedAtHC = -1;
 
 	FVector gizmoPos;
 

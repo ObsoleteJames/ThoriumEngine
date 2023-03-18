@@ -18,6 +18,7 @@
     <ClCompile Include="src\EditorEngine.cpp" />
     <ClCompile Include="src\EditorMode.cpp" />
     <ClCompile Include="src\EditorSelectMode.cpp" />
+    <ClCompile Include="src\HistoryBuffer.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\ToolsCore.cpp" />
     <ClCompile Include="src\Widgets\FileDialogs.cpp" />
@@ -66,6 +67,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\EditorEngine.h" />
     <ClInclude Include="src\EditorMode.h" />
+    <QtMoc Include="src\HistoryBuffer.h" />
     <ClInclude Include="src\ToolsCore.h" />
     <QtMoc Include="src\Windows\EditorPreferences.h" />
     <QtMoc Include="src\Windows\Editor\OutlinerWidget.h" />

@@ -184,6 +184,7 @@ void CWorld::SetGameMode(const TObjectPtr<CGameMode>& gm)
 		gamemode->Delete();
 
 	gamemode = gm;
+	gamemode->world = this;
 	gamemode->Init();
 }
 
@@ -194,11 +195,11 @@ void CWorld::Start()
 	if (!gamemode)
 	{
 		FClass* gmClass = (scene.IsValid() ? scene->gamemodeClass.Get() : CGameMode::StaticClass());
-		gamemode = (CGameMode*)CreateObject(gmClass, FString());
-		gamemode->Init();
+		auto* gm = (CGameMode*)CreateObject(gmClass, FString());
+		SetGameMode(gm);
 	}
 
-	gEngine->GameInstance()->OnStart();
+	gEngine->GameInstance()->Start();
 	gamemode->OnStart();
 
 	gEngine->GameInstance()->SpawnLocalPlayers();
@@ -224,7 +225,7 @@ void CWorld::Stop()
 	for (auto& sub : subWorlds)
 		sub->Stop();
 
-	gEngine->GameInstance()->OnStop();
+	gEngine->GameInstance()->Stop();
 	gamemode->Delete();
 	gamemode = nullptr;
 

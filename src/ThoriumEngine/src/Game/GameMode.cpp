@@ -5,8 +5,12 @@
 #include "Pawn.h"
 #include "Game/World.h"
 
+#include "Game/Entities/PlayerStart.h"
+
 void CGameMode::Init()
 {
+	playerControllerClass = CPlayerController::StaticClass();
+	defaultPawnClass = CPawn::StaticClass();
 }
 
 void CGameMode::OnStart()
@@ -24,6 +28,7 @@ void CGameMode::OnPlayerJoined(CPlayer* player)
 		return;
 
 	player->SetPlayerController(controller);
+	controller->SetOwner(player);
 	playerControllers.Add(controller);
 
 	SpawnPlayer(player);
@@ -38,7 +43,9 @@ void CGameMode::OnPlayerDisconnect(CPlayer* player)
 	playerControllers.Erase(playerControllers.Find(player->GetPlayerController()));
 
 	player->GetPawn()->Delete();
-	player->GetPlayerController()->Delete();
+	auto oldPC = player->GetPlayerController();
+	player->SetPlayerController(nullptr);
+	oldPC->Delete();
 }
 
 void CGameMode::SpawnPlayer(CPlayer* player)
@@ -53,6 +60,25 @@ void CGameMode::SpawnPlayer(CPlayer* player)
 
 	// TODO: Find player start entities.
 	player->GetPlayerController()->Possess(pawn);
+
+	FVector pos;
+	FQuaternion rot;
+	FindPlayerSpawnPoint(player, pawn, pos, rot);
+
+	pawn->SetWorldPosition(pos);
+	pawn->SetWorldRotation(rot);
+}
+
+void CGameMode::FindPlayerSpawnPoint(CPlayer* player, CPawn* pawn, FVector& outPosition, FQuaternion& outRotation)
+{
+	auto spawnPoints = GetWorld()->FindEntitiesOfType<CPlayerStart>();
+	if (spawnPoints.Size() == 0)
+		return;
+
+	int rng = FMath::Random(spawnPoints.Size());
+
+	outPosition = spawnPoints[rng]->GetWorldPosition();
+	outRotation = spawnPoints[rng]->GetWorldRotation();
 }
 
 TObjectPtr<CPlayerController> CGameMode::GetPlayerController(SizeType id)

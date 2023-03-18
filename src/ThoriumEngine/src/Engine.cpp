@@ -434,5 +434,10 @@ WString CEngine::OSGetEnginePath(const FString& version)
 
 CGameInstance* CEngine::SetGameInstance(FClass* type)
 {
-	return nullptr;
+	if (gameInstance)
+		gameInstance->Delete();
+
+	gameInstance = (CGameInstance*)CreateObject(type);
+	gameInstance->Init();
+	return gameInstance;
 }

@@ -3,9 +3,9 @@
 
 #include "Pawn.h"
 
-void CPawnController::Possess(const TObjectPtr<CPawn>& target)
+void CPawnController::Possess(CPawn* target)
 {
-	if (target->GetController())
+	if (!target || target->HasController())
 		return;
 
 	if (pawn)

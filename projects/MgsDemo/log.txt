@@ -4,3 +4,6 @@
 [INF]	Mounting Mod: MGS
 [INF]	Found 14 assets in 'MGS'
 [INF]	CEditorWindow::SetupUi done
+[ERR]	F:\MyProjects\VS_Projects\ThoriumEngine\projects\MgsDemo\Shader@0x000002447587FAD0(15,2-8): error X3000: unrecognized identifier 'Propery'
+
+[INF]	Compiled shader 'simple'!

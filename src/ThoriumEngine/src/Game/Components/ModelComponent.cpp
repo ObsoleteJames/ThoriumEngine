@@ -15,6 +15,8 @@ public:
 	{
 		meshes.Clear();
 		bVisible = model->IsVisible() && model->GetModel();
+		if (model->GetWorld()->IsActive() && model->bEditorOnly)
+			bVisible = false;
 		if (!bVisible)
 			return;
 

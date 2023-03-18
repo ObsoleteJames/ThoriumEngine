@@ -6,6 +6,7 @@
 #include <Util/KeyValue.h>
 #include "Game/Events.h"
 #include "Game/Misc/TransformGizmoEntity.h"
+#include "Game/GameInstance.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/RenderScene.h"
 #include "Platform/Windows/DirectX/DirectXRenderer.h"
@@ -13,6 +14,8 @@
 #include "Resources/Material.h"
 #include "Resources/ModelAsset.h"
 #include "Resources/Scene.h"
+
+#include <QStandardPaths>
 
 void CEditorEngine::Init()
 {
@@ -44,6 +47,9 @@ void CEditorEngine::Init()
 
 	for (auto* m : CEditorModeRegistry::Get())
 		m->Init();
+
+	if (!gameInstance)
+		SetGameInstance<CGameInstance>();
 
 	gridMesh = new FMesh();
 	GenerateGrid(100.0f, 1.f, gridMesh);
@@ -105,7 +111,9 @@ void CEditorEngine::OnExit()
 
 void CEditorEngine::LoadEditorConfig()
 {
-	FKeyValue kv(L".project\\config\\Editor.cfg");
+	QString appdataPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "\\..\\ThoriumEngine";
+	WString configPath = WString((const wchar_t*)appdataPath.data()) + L"\\EditorConfig\\Editor.cfg";
+	FKeyValue kv(configPath);
 	if (kv.IsOpen())
 	{
 		config.theme = kv.GetValue("theme")->Value;
@@ -117,7 +125,9 @@ void CEditorEngine::LoadEditorConfig()
 
 void CEditorEngine::SaveEditorConfig()
 {
-	FKeyValue kv(L".project\\config\\Editor.cfg");
+	QString appdataPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "\\..\\ThoriumEngine";
+	WString configPath = WString((const wchar_t*)appdataPath.data()) + L"\\EditorConfig\\Editor.cfg";
+	FKeyValue kv(configPath);
 	
 	kv.GetValue("theme")->Value = config.theme;
 

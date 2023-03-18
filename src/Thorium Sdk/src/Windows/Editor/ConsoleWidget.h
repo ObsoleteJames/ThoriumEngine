@@ -16,6 +16,8 @@ public:
 	CConsoleWidget(QWidget* parent = nullptr);
 	virtual ~CConsoleWidget();
 
+	inline QSplitter* Splitter() const { return splitter; }
+
 private:
 	void OnLog(const FConsoleMsg& msg);
 

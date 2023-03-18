@@ -14,6 +14,7 @@
 #include <QBoxLayout>
 #include <QPushButton>
 #include <QSettings>
+#include <QStandardPaths>
 
 //TArray<FToolsWindowClass*> _RegisteredWindows;
 //TArray<FToolsWidgetClass*> _RegisteredWidgets;
@@ -406,7 +407,8 @@ void CToolsWindow::SetupUi()
 
 void CToolsWindow::SaveState()
 {
-	QSettings settings((FString(".project\\config\\") + Name + ".cfg").c_str(), QSettings::Format::IniFormat);
+	QString appdataPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "\\..\\ThoriumEngine";
+	QSettings settings(appdataPath + "\\EditorConfig\\" + Name + ".cfg", QSettings::Format::IniFormat);
 
 	settings.setValue("window_state", saveState());
 	settings.setValue("window_geo", saveGeometry());
@@ -427,7 +429,8 @@ void CToolsWindow::SaveState()
 
 void CToolsWindow::RestoreState()
 {
-	QSettings settings((FString(".project\\config\\") + Name + ".cfg").c_str(), QSettings::Format::IniFormat);
+	QString appdataPath = QStandardPaths::writableLocation(QStandardPaths::DataLocation) + "\\..\\ThoriumEngine";
+	QSettings settings(appdataPath + "\\EditorConfig\\" + Name + ".cfg", QSettings::Format::IniFormat);
 
 	restoreState(settings.value("window_state").toByteArray());
 	restoreGeometry(settings.value("window_geo").toByteArray());

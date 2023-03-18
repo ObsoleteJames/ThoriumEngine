@@ -33,7 +33,7 @@ protected:
 
 	void NewScene();
 	void LoadScene();
-	void SaveScene(bool bNewPath = false);
+	bool SaveScene(bool bNewPath = false);
 
 	void closeEvent(QCloseEvent *event) override;
 	void paintEvent(QPaintEvent *event) override;
@@ -65,7 +65,6 @@ private:
 	QMenu* menuTools;
 	QMenu* menuDebug;
 
-	bool bSceneSaved = true;
 	double fpsAvarage;
 
 };

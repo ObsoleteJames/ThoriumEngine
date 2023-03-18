@@ -2,6 +2,7 @@
 
 #include "EngineCore.h"
 #include "Object/Object.h"
+#include "Math/Vectors.h"
 #include "GameMode.generated.h"
 
 class CPlayer;
@@ -28,6 +29,8 @@ public:
 	virtual void OnPlayerJoined(CPlayer* player);
 	virtual void OnPlayerDisconnect(CPlayer* player);
 	virtual void SpawnPlayer(CPlayer* player);
+
+	virtual void FindPlayerSpawnPoint(CPlayer* player, CPawn* pawn, FVector& outPosition, FQuaternion& outRotation);
 
 public:
 	TObjectPtr<CPlayerController> GetPlayerController(SizeType index);

@@ -15,7 +15,7 @@ public:
 	CPawnController() = default;
 
 public:
-	void Possess(const TObjectPtr<CPawn>& pawn);
+	void Possess(CPawn* pawn);
 	inline CPawn* GetPawn() const { return pawn; }
 
 private:

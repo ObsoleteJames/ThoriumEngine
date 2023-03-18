@@ -16,12 +16,12 @@ public:
 	//virtual void PreInit() {}
 	virtual void Init();
 
-	virtual void OnStart();
-	virtual void OnStop();
+	virtual void Start();
+	virtual void Stop();
 	virtual void SpawnLocalPlayers();
 
 public:
-	inline const TArray<CPlayer*>& GetPlayers() const { return players; }
+	inline const TArray<TObjectPtr<CPlayer>>& GetPlayers() const { return players; }
 	inline const TArray<FLocalPlayer>& GetLocalPlayers() const { return localPlayers; }
 
 	inline FLocalPlayer& GetLocalPlayer(int index = 0) { return localPlayers[index]; }
@@ -30,6 +30,6 @@ public:
 
 private:
 	TArray<FLocalPlayer> localPlayers;
-	TArray<CPlayer*> players;
+	TArray<TObjectPtr<CPlayer>> players;
 
 };

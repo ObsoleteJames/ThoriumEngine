@@ -117,7 +117,7 @@ protected:
 	double _prevTime;
 	double deltaTime;
 
-	CGameInstance* gameInstance;
+	TObjectPtr<CGameInstance> gameInstance;
 
 	FProject projectConfig;
 	FGame activeGame;

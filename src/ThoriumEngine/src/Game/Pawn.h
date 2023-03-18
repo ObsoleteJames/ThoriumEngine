@@ -15,6 +15,7 @@ public:
 	virtual void OnUnposses();
 
 	inline CPawnController* GetController() const { return controller; }
+	inline bool HasController() const { return controller.IsValid(); }
 
 private:
 	TObjectPtr<CPawnController> controller;

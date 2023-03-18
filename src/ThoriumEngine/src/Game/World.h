@@ -100,6 +100,9 @@ public:
 	inline void SetRenderWindow(IBaseWindow* wnd) { renderWindow = wnd; }
 	inline IBaseWindow* GetRenderWindow() const { return renderWindow; }
 
+	template<typename T>
+	TArray<TObjectPtr<T>> FindEntitiesOfType();
+
 	inline const TArray<TObjectPtr<CEntity>>& GetEntities() const { return entities; }
 
 	void Start();
@@ -159,6 +162,19 @@ protected:
 	bool bActive : 1; // Is the world currently active and running.
 
 };
+
+template<typename T>
+TArray<TObjectPtr<T>> CWorld::FindEntitiesOfType()
+{
+	TArray<TObjectPtr<T>> r;
+	for (auto& ent : entities)
+	{
+		if (auto c = Cast<T>(ent); c.IsValid())
+			r.Add(c);
+	}
+
+	return r;
+}
 
 /*
  *	Helper class for registering objects to a world.

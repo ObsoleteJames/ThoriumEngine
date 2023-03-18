@@ -41,6 +41,7 @@
     <ClCompile Include="src\Widgets\WorldViewportWidget.cpp" />
     <ClCompile Include="src\EditorMode.cpp" />
     <ClCompile Include="src\EditorSelectMode.cpp" />
+    <ClCompile Include="src\HistoryBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\EditorEngine.h" />
@@ -52,6 +53,7 @@
     <ClInclude Include="src\Widgets\TreeDataItem.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\EditorMode.h" />
+    <ClInclude Include="src\HistoryBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="src\Windows\Debug\ModuleDebugger.h" />
