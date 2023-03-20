@@ -55,10 +55,12 @@ private:
 	int prevMouseX = 0;
 	int prevMouseY = 0;
 
-	int moveForward : 1;
-	int moveBack : 1;
-	int moveLeft : 1;
-	int moveRight : 1;
+	int8 moveForward : 1;
+	int8 moveBack : 1;
+	int8 moveLeft : 1;
+	int8 moveRight : 1;
+	int8 moveUp : 1;
+	int8 moveDown : 1;
 
 	float mouseDeltaX;
 	float mouseDeltaY;

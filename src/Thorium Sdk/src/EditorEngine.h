@@ -70,6 +70,8 @@ public:
 	void SetEditorMode(const FString& modeName);
 	inline CEditorMode* GetEditorMode() const { return editorMode; }
 
+	void RegisterProject(const FProject& proj);
+
 private:
 	void __OnObjectSelected(const TArray<TObjectPtr<CObject>>& obj);
 
@@ -81,6 +83,8 @@ public:
 	FEditorConfig config;
 	TArray<FEditorTheme> themes;
 	TMap<std::wstring, QIcon> themeIcons;
+
+	TArray<FProject> availableProjects;
 
 	CHistoryBuffer historyBuffer;
 	TEvent<const TArray<TObjectPtr<CObject>>&> OnObjectSelected;

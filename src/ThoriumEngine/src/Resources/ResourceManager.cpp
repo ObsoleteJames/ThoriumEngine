@@ -7,8 +7,18 @@
 #include "Module.h"
 #include "Asset.h"
 
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <chrono>
+
 TUnorderedMap<WString, CAsset*> CResourceManager::allocatedResources;
 TUnorderedMap<WString, FResourceData> CResourceManager::availableResources;
+TArray<IResourceStreamingProxy*> CResourceManager::streamingResources;
+
+static std::mutex resourceMutex;
+static std::thread resourceThread;
+static std::atomic<bool> bResourceRunning;
 
 FAssetClass* GetClassFromExt(const FString& ext)
 {
@@ -62,6 +72,67 @@ void CResourceManager::OnResourceFileDeleted(FFile* file)
 
 	if (availableResources.find(file->Path()) != availableResources.end())
 		availableResources.erase(file->Path());
+}
+
+void CResourceManager::Init()
+{
+	bResourceRunning = true;
+	resourceThread = std::thread(&CResourceManager::StreamResources);
+}
+
+void CResourceManager::Shutdown()
+{
+	bResourceRunning = false;
+	resourceThread.join();
+}
+
+void CResourceManager::Update()
+{
+	resourceMutex.lock();
+	if (streamingResources.Size() == 0)
+	{
+		resourceMutex.unlock();
+		return;
+	}
+
+	IResourceStreamingProxy* obj = streamingResources.first();
+	if (obj->bDirty)
+		obj->PushData();
+
+	if (obj->bFinished)
+	{
+		streamingResources.Erase(streamingResources.first());
+		delete obj;
+	}
+
+	resourceMutex.unlock();
+}
+
+void CResourceManager::StreamResources()
+{
+	using namespace std::chrono_literals;
+	while (bResourceRunning)
+	{
+		resourceMutex.lock();
+		if (streamingResources.Size() == 0)
+		{
+			resourceMutex.unlock();
+			std::this_thread::sleep_for(1ms);
+			continue;
+		}
+
+		IResourceStreamingProxy* obj = streamingResources.first();
+		resourceMutex.unlock();
+
+		if (obj->bFinished)
+		{
+			std::this_thread::sleep_for(1ms);
+			continue;
+		}
+
+		while (!obj->bFinished)
+			obj->Load();
+	}
 }
 
 void CResourceManager::ScanMod(FMod* mod)
@@ -217,6 +288,13 @@ bool CResourceManager::RegisterNewResource(CAsset* resource, const WString& p, c
 	allocatedResources[path] = resource;
 	resource->bRegistered = true;
 	return true;
+}
+
+void CResourceManager::StreamResource(IResourceStreamingProxy* proxy)
+{
+	resourceMutex.lock();
+	streamingResources.Add(proxy);
+	resourceMutex.unlock();
 }
 
 CAsset* CResourceManager::AllocateResource(FAssetClass* type, const WString& path)

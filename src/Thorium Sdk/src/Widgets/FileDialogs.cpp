@@ -50,6 +50,7 @@ CSaveFileDialog::CSaveFileDialog(QWidget* parent /*= nullptr*/) : CFramelessDial
 	connect(nameEdit, &QLineEdit::textEdited, this, [=](const QString& txt) { btnSave->setDisabled(txt.isEmpty()); });
 	connect(btnSave, &QPushButton::clicked, this, &CSaveFileDialog::Save);
 	connect(btnCancel, &QPushButton::clicked, this, [=]() { done(0); deleteLater(); });
+	connect(nameEdit, &QLineEdit::returnPressed, this, &CSaveFileDialog::Save);
 }
 
 void CSaveFileDialog::Save()

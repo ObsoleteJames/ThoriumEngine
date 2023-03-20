@@ -4,14 +4,11 @@
 #include <QObject>
 #include <functional>
 
-class SDK_API FHistoryEvent
+class SDK_API IHistoryEvent
 {
 public:
-	FHistoryEvent(const FString& name, std::function<void()> funUndo, std::function<void()> funRedo);
-	FHistoryEvent(const FString& name, const FString& description, std::function<void()> funUndo, std::function<void()> funRedo);
-
-	inline void Undo() { if (funUndo) funUndo(); }
-	inline void Redo() { if (funRedo) funRedo(); }
+	virtual void Undo() = 0;
+	virtual void Redo() = 0;
 
 	inline const FString& Name() const { return name; }
 	inline const FString& Description() const { return description; }
@@ -20,7 +17,19 @@ protected:
 	FString name;
 	FString description;
 
-	std::function<void()> funUndo; 
+};
+
+class SDK_API FHistoryEvent : IHistoryEvent
+{
+public:
+	FHistoryEvent(const FString& name, std::function<void()> funUndo, std::function<void()> funRedo);
+	FHistoryEvent(const FString& name, const FString& description, std::function<void()> funUndo, std::function<void()> funRedo);
+
+	void Undo() override;
+	void Redo() override;
+
+protected:
+	std::function<void()> funUndo;
 	std::function<void()> funRedo;
 };
 
@@ -33,7 +42,7 @@ public:
 	CHistoryBuffer(const CHistoryBuffer& other) = delete;
 	~CHistoryBuffer() = default;
 
-	void AddEvent(const FHistoryEvent& event);
+	void AddEvent(IHistoryEvent* event);
 	void ClearHistory();
 
 	void Undo();
@@ -45,6 +54,6 @@ Q_SIGNALS:
 	void onRedo(SizeType cursor);
 
 public:
-	TArray<FHistoryEvent> events;
+	TArray<IHistoryEvent*> events;
 	SizeType cursor = -1;
 };

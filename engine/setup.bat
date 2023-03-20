@@ -23,7 +23,7 @@ if '%errorlevel%' NEQ '0' (
     CD /D "%~dp0"
 :--------------------------------------
 
-REG ADD HKEY_CURRENT_USER\SOFTWARE\ThoriumEngine\1.0 /v path /d %cd% /f
+REG ADD HKEY_CURRENT_USER\SOFTWARE\ThoriumEngine\1.0 /v path /d "%cd%" /f
 assoc .thproj=thoriumproject
-ftype throiumproject=%cd%\bin\Thorium Sdk.exe
+ftype throiumproject="%cd%\bin\Thorium Sdk.exe"
 pause

@@ -28,6 +28,7 @@ public:
 	virtual IDepthBuffer* CreateDepthBuffer(int width, int height);
 
 	virtual ITexture2D* CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter);
+	virtual ITexture2D* CreateTexture2D(void** data, int numMipMaps, int width, int height, ETextureFormat format, ETextureFilter filter);
 	virtual ITextureCube* CreateTextureCube(void* data, int width, int height, ETextureFormat format, ETextureFilter filter) { return nullptr; }
 
 	//virtual void BindGlobalData();

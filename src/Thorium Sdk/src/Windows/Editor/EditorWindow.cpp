@@ -209,7 +209,33 @@ void CEditorWindow::SetupUi()
 				FClass* type = dialog->GetSelectedClass();
 				CEntity* ent = gWorld->CreateEntity(dialog->GetSelectedClass(), FString());
 
-				gEditorEngine()->historyBuffer.AddEvent(FHistoryEvent("Add Entity", [ent]() { ent->Delete(); }, [type]() { gWorld->CreateEntity(type, FString()); }));
+				class FEntCreateEvent : public IHistoryEvent
+				{
+				public:
+					FEntCreateEvent(CEntity* _ent) : ent(_ent)
+					{
+						world = ent->GetWorld();
+						type = ent->GetClass();
+						name = "Created Entity: " + _ent->Name();
+					}
+
+					void Undo()
+					{
+						ent->Delete();
+						ent = nullptr;
+					}
+
+					void Redo()
+					{
+						ent = world->CreateEntity(type, FString());
+					}
+
+					CWorld* world;
+					FClass* type;
+					TObjectPtr<CEntity> ent;
+				};
+
+				gEditorEngine()->historyBuffer.AddEvent(new FEntCreateEvent(ent));
 			});
 
 			dialog->SetFilterClass(CEntity::StaticClass());

@@ -129,7 +129,7 @@ void COutlinerWidget::Update()
 			entItem->setText(1, ent->GetClass()->GetName().c_str());
 
 			entityItems[ent] = entItem;
-			if (ent->RootComponent()->GetParent() == nullptr)
+			if (!ent->RootComponent() || ent->RootComponent()->GetParent() == nullptr)
 				outlinerTree->addTopLevelItem(entItem);
 		}
 		else

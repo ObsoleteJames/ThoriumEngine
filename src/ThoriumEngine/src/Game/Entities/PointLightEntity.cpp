@@ -6,6 +6,8 @@
 
 void CPointLightEntity::Init()
 {
+	BaseClass::Init();
+
 	light = AddComponent<CPointLightComponent>("Point Light");
 	light->AttachTo(RootComponent());
 

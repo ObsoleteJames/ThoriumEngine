@@ -1,7 +1,16 @@
-﻿  moc src\Windows\Editor\ConsoleWidget.h
-  ConsoleWidget.cpp
+﻿  EditorEngine.cpp
+  EditorMode.cpp
+  Main.cpp
+  AssetBrowser.cpp
+  TextureImportDialog.cpp
+  ObjectSelectorWidget.cpp
+  ObjectPtrProperty.cpp
+  RenderWidget.cpp
+  WorldViewportWidget.cpp
   EditorWindow.cpp
-  moc_ConsoleWidget.cpp
+  ProjectManagerWindow.cpp
+  ToolsWindow.cpp
+  moc_ModelCreator.cpp
   Util.lib(String.obj) : MSIL .netmodule or module compiled with /GL found; restarting link with /LTCG; add /LTCG to the link command line to improve linker performance
      Creating library F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\Thorium Sdk.lib and object F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\Thorium Sdk.exp
   Generating code

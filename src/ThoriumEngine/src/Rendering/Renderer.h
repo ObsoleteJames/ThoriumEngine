@@ -151,6 +151,7 @@ public:
 	virtual IDepthBuffer* CreateDepthBuffer(int width, int height) = 0;
 
 	virtual ITexture2D* CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter) = 0;
+	virtual ITexture2D* CreateTexture2D(void** data, int numMipMaps, int width, int height, ETextureFormat format, ETextureFilter filter) = 0;
 	virtual ITextureCube* CreateTextureCube(void* data, int width, int height, ETextureFormat format, ETextureFilter filter) = 0;
 
 	virtual void DrawMesh(FMesh* mesh) = 0;

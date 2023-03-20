@@ -226,6 +226,7 @@ void CProjectManagerWnd::OpenProject()
 	if (!gEngine->LoadProject(path))
 		return;
 
+	gEditorEngine()->RegisterProject(gEngine->GetProjectConfig());
 	CToolsWindow::Create<CEditorWindow>();
 
 	close();
@@ -234,25 +235,37 @@ void CProjectManagerWnd::OpenProject()
 
 void CProjectManagerWnd::SearchForProjects()
 {
-	QString doc = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
+	//QString doc = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation);
 
-	if (!FFileHelper::DirectoryExists(doc.toStdString() + "\\Thorium Projects"))
-		return;
+	//if (!FFileHelper::DirectoryExists(doc.toStdString() + "\\Thorium Projects"))
+	//	return;
 
-	for (auto entry : std::filesystem::directory_iterator(doc.toStdString() + "\\Thorium Projects"))
+	//for (auto entry : std::filesystem::directory_iterator(doc.toStdString() + "\\Thorium Projects"))
+	//{
+	//	if (entry.is_regular_file())
+	//		continue;
+
+	//	FKeyValue kv(WString(entry.path().wstring()) + L"\\config\\project.cfg");
+	//	if (kv.IsOpen())
+	//	{
+	//		FProjectDef proj;
+	//		proj.name = *kv.GetValue("displayName");
+	//		proj.path = entry.path().wstring();
+	//		proj.bHasIcon = FFileHelper::FileExists(WString(entry.path().wstring()) + L"\\.project\\icon.png");
+	//		projects.Add(proj);
+	//	}
+	//}
+
+	for (auto& proj : gEditorEngine()->availableProjects)
 	{
-		if (entry.is_regular_file())
-			continue;
-
-		FKeyValue kv(WString(entry.path().wstring()) + L"\\config\\project.cfg");
+		FKeyValue kv(proj.dir + L"\\config\\project.cfg");
 		if (kv.IsOpen())
 		{
-			FProjectDef proj;
-			proj.name = *kv.GetValue("displayName");
-			proj.path = entry.path().wstring();
-			proj.bHasIcon = FFileHelper::FileExists(WString(entry.path().wstring()) + L"\\.project\\icon.png");
-			projects.Add(proj);
+			FProjectDef p;
+			p.name = *kv.GetValue("displayName");
+			p.path = proj.dir;
+			p.bHasIcon = FFileHelper::FileExists(proj.dir + L"\\.project\\icon.png");
+			projects.Add(p);
 		}
 	}
-
 }

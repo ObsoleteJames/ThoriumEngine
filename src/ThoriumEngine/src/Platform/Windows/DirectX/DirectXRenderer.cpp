@@ -289,6 +289,17 @@ ITexture2D* DirectXRenderer::CreateTexture2D(void* data, int width, int height, 
 	return t;
 }
 
+ITexture2D* DirectXRenderer::CreateTexture2D(void** data, int numMipMaps, int width, int height, ETextureFormat format, ETextureFilter filter)
+{
+	auto* t = new DirectXTexture2D(data, numMipMaps, width, height, format, filter);
+	if (!t->tex || !t->view || !t->sampler)
+	{
+		delete t;
+		return nullptr;
+	}
+	return t;
+}
+
 //void DirectXRenderer::BindGlobalData()
 //{
 //	deviceContext->VSSetConstantBuffers(1, 1, &((DirectXShaderBuffer*)&*sceneBuffer)->buffer);

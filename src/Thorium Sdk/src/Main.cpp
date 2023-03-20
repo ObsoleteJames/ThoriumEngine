@@ -92,6 +92,7 @@ int Startup()
 	if (bLoadEditor)
 	{
 		gEngine->LoadProject(ToWString(targetProject) + L"\\..");
+		gEditorEngine()->RegisterProject(gEngine->GetProjectConfig());
 		wnd = CToolsWindow::Create<CEditorWindow>();
 	}
 	else

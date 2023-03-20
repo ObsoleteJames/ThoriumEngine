@@ -46,8 +46,9 @@ void CWorldViewportWidget::Update(double dt)
 		camera->SetRotation(FQuaternion::EulerAngles(FVector(cameraPitch, cameraYaw, 0.f).Radians()));
 
 		FVector move = GetMoveVector();
+		float verticalMove = moveDown + -moveUp;
 
-		if (move.Magnitude() != 0.0f)
+		if (move.Magnitude() != 0.0f || verticalMove != 0.f)
 		{
 			if (curSpeed < GetCameraSpeed(cameraSpeed))
 				curSpeed += (5.f * (float)cameraSpeed) * (float)dt;
@@ -57,6 +58,7 @@ void CWorldViewportWidget::Update(double dt)
 			FVector pos = camera->GetPosition();
 			pos += camera->GetForwardVector() * move.y * curSpeed * dt;
 			pos += camera->GetRightVector() * move.x * curSpeed * dt;
+			pos += FVector(0, verticalMove, 0) * curSpeed * dt;
 			camera->SetPosition(pos);
 		}
 		else
@@ -169,6 +171,12 @@ void CWorldViewportWidget::keyPressEvent(QKeyEvent *event)
 	case Qt::Key_D:
 		moveRight = 1;
 		break;
+	case Qt::Key_Q:
+		moveDown = 1;
+		break;
+	case Qt::Key_E:
+		moveUp = 1;
+		break;
 	}
 	CRenderWidget::keyPressEvent(event);
 }
@@ -188,6 +196,12 @@ void CWorldViewportWidget::keyReleaseEvent(QKeyEvent *event)
 		break;
 	case Qt::Key_D:
 		moveRight = 0;
+		break;
+	case Qt::Key_Q:
+		moveDown = 0;
+		break;
+	case Qt::Key_E:
+		moveUp = 0;
 		break;
 	}
 	CRenderWidget::keyReleaseEvent(event);

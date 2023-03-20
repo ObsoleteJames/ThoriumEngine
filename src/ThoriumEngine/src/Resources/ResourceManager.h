@@ -19,12 +19,31 @@ struct FResourceData
 	FAssetClass* type;
 };
 
+class IResourceStreamingProxy
+{
+public:
+	virtual void Load() = 0;
+	virtual void PushData() = 0;
+
+public:
+	// whether this resource is currently loading.
+	std::atomic<bool> bLoading;
+	// whether this resource has finished loading.
+	std::atomic<bool> bFinished;
+	// whether this object has new data to pushed to the resource.
+	std::atomic<bool> bDirty;
+};
+
 class ENGINE_API CResourceManager
 {
 	friend class CAsset;
 	friend struct FFile;
 
 public:
+	static void Init();
+	static void Shutdown();
+	static void Update();
+
 	static void ScanMod(FMod* mod);
 	static void RegisterNewFile(FFile* file);
 	
@@ -59,6 +78,8 @@ public:
 	 */
 	static bool RegisterNewResource(CAsset* resource, const WString& path, const WString& mod = L"");
 
+	static void StreamResource(IResourceStreamingProxy* proxy);
+
 private:
 	static CAsset* AllocateResource(FAssetClass* type, const WString& path);
 	static int ScanDir(FDirectory* dir);
@@ -66,9 +87,12 @@ private:
 
 	static void OnResourceFileDeleted(FFile* file);
 
+	static void StreamResources();
+
 private:
 	static TUnorderedMap<WString, CAsset*> allocatedResources;
 	static TUnorderedMap<WString, FResourceData> availableResources;
+	static TArray<IResourceStreamingProxy*> streamingResources;
 };
 
 template<typename T>

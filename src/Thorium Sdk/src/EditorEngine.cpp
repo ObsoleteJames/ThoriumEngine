@@ -60,6 +60,7 @@ void CEditorEngine::Init()
 
 int CEditorEngine::Run()
 {
+	CResourceManager::Update();
 	CObjectManager::Update();
 	Events::OnUpdate.Fire();
 
@@ -119,6 +120,15 @@ void CEditorEngine::LoadEditorConfig()
 		config.theme = kv.GetValue("theme")->Value;
 	}
 
+	KVCategory* projs = kv.GetCategory("projects", true);
+	for (auto& v : projs->GetValues())
+	{
+		FProject proj;
+		proj.name = v.Key;
+		proj.dir = ToWString(v.Value.Value);
+		availableProjects.Add(proj);
+	}
+
 	if (config.theme.IsEmpty())
 		config.theme = "default";
 }
@@ -130,6 +140,10 @@ void CEditorEngine::SaveEditorConfig()
 	FKeyValue kv(configPath);
 	
 	kv.GetValue("theme")->Value = config.theme;
+
+	KVCategory* projs = kv.GetCategory("projects", true);
+	for (auto& proj : availableProjects)
+		projs->GetValue(proj.name)->Value = ToFString(proj.dir);
 
 	kv.Save();
 }
@@ -280,6 +294,15 @@ void CEditorEngine::SetEditorMode(const FString& modeName)
 
 	editorMode = *it;
 	editorMode->Open();
+}
+
+void CEditorEngine::RegisterProject(const FProject& proj)
+{
+	for (auto& p : availableProjects)
+		if (p.name == proj.name || p.dir == proj.dir)
+			return;
+
+	availableProjects.Add(proj);
 }
 
 void CEditorEngine::__OnObjectSelected(const TArray<TObjectPtr<CObject>>& obj)

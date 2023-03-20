@@ -43,6 +43,7 @@ void CEngine::InitMinimal()
 	CConsole::Init();
 	CONSOLE_LogInfo("CEngine Initializing...");
 	
+	CResourceManager::Init();
 	CModuleManager::RegisterModule(&GetModule_Engine());
 
 	if (!FFileHelper::DirectoryExists(L".\\core"))
@@ -149,6 +150,7 @@ int CEngine::Run()
 	{
 		CWindow::PollEvents();
 
+		CResourceManager::Update();
 		CObjectManager::Update();
 
 		if (!nextSceneName.IsEmpty())
@@ -239,6 +241,7 @@ void CEngine::OnExit()
 	//	delete obj.second;
 	
 	CConsole::Shutdown();
+	CResourceManager::Shutdown();
 	CModuleManager::Cleanup();
 }
 
