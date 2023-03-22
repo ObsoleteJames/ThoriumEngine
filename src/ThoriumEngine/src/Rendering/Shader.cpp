@@ -35,7 +35,7 @@ void CShaderSource::Init()
 	TUniquePtr<IBaseFStream> stream = file->GetStream("rb");
 	if (!stream->IsOpen())
 	{
-		CONSOLE_LogError(FString("Failed to create filestream for Shader '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CShaderSource", FString("Failed to create filestream for Shader '") + ToFString(file->Path()) + "'");
 		return;
 	}
 
@@ -51,7 +51,7 @@ void CShaderSource::Init()
 				bInitialized = true;
 		}
 		else
-			CONSOLE_LogError(FString("Invalid Shader file '") + ToFString(file->Path()) + "'");
+			CONSOLE_LogError("CShaderSource", FString("Invalid Shader file '") + ToFString(file->Path()) + "'");
 		return;
 	}
 
@@ -67,7 +67,7 @@ void CShaderSource::Init()
 			LoadVersion05(stream);
 			return;
 		}
-		CONSOLE_LogError(FString("Invalid Shader file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THCS_VERSION) + "'");
+		CONSOLE_LogError("CShaderSource", FString("Invalid Shader file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THCS_VERSION) + "'");
 		return;
 	}
 
@@ -119,7 +119,7 @@ void CShaderSource::Save()
 	TUniquePtr<IBaseFStream> stream = file->GetStream("wb");
 	if (!stream->IsOpen())
 	{
-		CONSOLE_LogError(FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CShaderSource", FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
 		return;
 	}
 
@@ -262,7 +262,7 @@ bool CShaderSource::Compile()
 
 	Save();
 
-	CONSOLE_LogInfo(FString("Compiled shader '") + ToFString(file->Name()) + "'!");
+	CONSOLE_LogInfo("CShaderSource", FString("Compiled shader '") + ToFString(file->Name()) + "'!");
 	bCompiled = true;
 
 	delete vsShader;

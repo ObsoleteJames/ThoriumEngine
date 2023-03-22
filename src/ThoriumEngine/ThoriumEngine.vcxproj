@@ -202,6 +202,8 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="Intermediate\generated\SceneComponent.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Shader.generated.cpp" />
     <ClCompile Include="Intermediate\generated\SkyboxComponent.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\SunLightComponent.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\SunLightEntity.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Texture.generated.cpp" />
     <ClCompile Include="Intermediate\generated\TransformGizmoEntity.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Vectors.generated.cpp" />
@@ -215,9 +217,11 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="src\Game\Components\PointLightComponent.cpp" />
     <ClCompile Include="src\Game\Components\SceneComponent.cpp" />
     <ClCompile Include="src\Game\Components\SkyboxComponent.cpp" />
+    <ClCompile Include="src\Game\Components\SunLightComponent.cpp" />
     <ClCompile Include="src\Game\Entities\PlayerStart.cpp" />
     <ClCompile Include="src\Game\Entities\PointLightEntity.cpp" />
     <ClCompile Include="src\Game\Entities\ModelEntity.cpp" />
+    <ClCompile Include="src\Game\Entities\SunLightEntity.cpp" />
     <ClCompile Include="src\Game\Entity.cpp" />
     <ClCompile Include="src\Game\EntityComponent.cpp" />
     <ClCompile Include="src\Game\Events.cpp" />
@@ -263,9 +267,11 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClInclude Include="src\Game\Components\ModelComponent.h" />
     <ClInclude Include="src\Game\Components\PointLightComponent.h" />
     <ClInclude Include="src\Game\Components\SkyboxComponent.h" />
+    <ClInclude Include="src\Game\Components\SunLightComponent.h" />
     <ClInclude Include="src\Game\Entities\ModelEntity.h" />
     <ClInclude Include="src\Game\Entities\PlayerStart.h" />
     <ClInclude Include="src\Game\Entities\PointLightEntity.h" />
+    <ClInclude Include="src\Game\Entities\SunLightEntity.h" />
     <ClInclude Include="src\Game\Events.h" />
     <ClInclude Include="src\Game\GameInstance.h" />
     <ClInclude Include="src\Game\GameMode.h" />

@@ -82,11 +82,14 @@ public:
 
 	inline operator glm::quat() const { return glm::quat(w, x, y, z); }
 
+	inline float Magnitude() const { return FMath::Sqrt(x * x + y * y + z * z + w * w); }
+
 	static FQuaternion EulerAngles(const FVector& angle);
 	inline FVector ToEuler() const { return (FVector)glm::eulerAngles((glm::quat)*this); }
 
 	inline FQuaternion Conjugate() const { return glm::conjugate((glm::quat)*this); }
 	inline FQuaternion Invert() const { return glm::inverse((glm::quat)*this); }
+	FQuaternion Normalized() const;
 
 	FVector Rotate(const FVector& r) const;
 	inline FVector Forward() const { return Rotate({ 0.f, -1.f, 0.f }); }
@@ -110,7 +113,7 @@ public:
 	float w = 1.f;
 };
 
-inline FQuaternion operator*(const FQuaternion& a, const FQuaternion& b) { return FQuaternion(a) *= b; }
+FQuaternion operator*(const FQuaternion& a, const FQuaternion& b);
 inline FQuaternion operator+(const FQuaternion& a, const FQuaternion& b) { return FQuaternion(a) += b; }
 
 STRUCT()

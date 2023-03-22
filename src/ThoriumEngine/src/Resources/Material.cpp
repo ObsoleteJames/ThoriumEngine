@@ -20,7 +20,7 @@ void CMaterial::Init()
 	TUniquePtr<IBaseFStream> stream = file->GetStream("rb");
 	if (!stream || !stream->IsOpen())
 	{
-		CONSOLE_LogError(FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CMaterial", FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
 		if (stream)
 			delete stream;
 
@@ -32,7 +32,7 @@ void CMaterial::Init()
 
 	if (memcmp(thmatMagicStr, magicStr, THMAT_MAGIC_SIZE) != 0)
 	{
-		CONSOLE_LogError(FString("Invalid Material file '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CMaterial", FString("Invalid Material file '") + ToFString(file->Path()) + "'");
 		delete stream;
 		return;
 	}
@@ -42,7 +42,7 @@ void CMaterial::Init()
 
 	if (version != THMAT_VERSION)
 	{
-		CONSOLE_LogError(FString("Invalid Material file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THMAT_VERSION) + "'");
+		CONSOLE_LogError("CMaterial", FString("Invalid Material file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THMAT_VERSION) + "'");
 		delete stream;
 		return;
 	}
@@ -150,7 +150,7 @@ void CMaterial::Save()
 	TUniquePtr<IBaseFStream> stream = file->GetStream("wb");
 	if (!stream || !stream->IsOpen())
 	{
-		CONSOLE_LogError(FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CMaterial", FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
 		if (stream)
 			delete stream;
 
@@ -241,7 +241,7 @@ void CMaterial::SetShader(const FString& shaderName)
 	shader = CShaderSource::GetShader(shaderName);
 	if (!shader || shader->type == CShaderSource::ST_INTERNAL)
 	{
-		CONSOLE_LogError(FString("CMaterial::SetShader - Failed to find shader or shader type was invalid : '") + shaderName + "'!");
+		CONSOLE_LogError("CMaterial", FString("CMaterial::SetShader - Failed to find shader or shader type was invalid : '") + shaderName + "'!");
 		shader = CShaderSource::GetShader("Error");
 	}
 

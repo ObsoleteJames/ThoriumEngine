@@ -1,6 +1,8 @@
-[INF]	CEngine Initializing...
+[INF]	Initializing...
+[INF]	Created resource threads (2)
+[INF]	Initialized
 [INF]	Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
-[INF]	Found 25 assets in 'Engine'
+[INF]	Found 26 assets in 'Engine'
 [INF]	Mounting Mod: MGS
-[INF]	Found 14 assets in 'MGS'
-[INF]	CEditorWindow::SetupUi done
+[INF]	Found 15 assets in 'MGS'
+[INF]	Created Editor Window

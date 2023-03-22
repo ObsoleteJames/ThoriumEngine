@@ -66,7 +66,7 @@ void CConsole::Exec(const FString& input)
 		{
 			if (args.Size() == 0)
 			{
-				CONSOLE_LogWarning("Insufficient arguments, expected 1 but got 0");
+				CONSOLE_LogWarning("CConsole", "Insufficient arguments, expected 1 but got 0");
 				return;
 			}
 
@@ -74,11 +74,11 @@ void CConsole::Exec(const FString& input)
 			bool bIsBool = args[0] == "true" || args[0] == "false";
 			if (!bValidArg && !bIsBool)
 			{
-				CONSOLE_LogWarning(FString("Invalid input value '") + args[0] + "'");
+				CONSOLE_LogWarning("CConsole", FString("Invalid input value '") + args[0] + "'");
 				return;
 			}
 
-			_log({ target + " = " + args[0], {0, "", ""}, CONSOLE_PLAIN, nullptr });
+			_log({ target + " = " + args[0], {0, "", ""}, CONSOLE_PLAIN, FString(), nullptr});
 
 			float f = 0.f;
 			if (!bIsBool)
@@ -91,7 +91,7 @@ void CConsole::Exec(const FString& input)
 		}
 	}
 
-	CONSOLE_LogInfo(FString("Unknown command '") + target + "'");
+	CONSOLE_LogWarning("CConsole", FString("Unknown command '") + target + "'");
 }
 
 #if CONSOLE_USE_ARRAY

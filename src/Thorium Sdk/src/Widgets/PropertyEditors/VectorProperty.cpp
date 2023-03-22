@@ -21,6 +21,7 @@ CVectorProperty::CVectorProperty(FVector* v, const FString& name, QWidget* paren
 		editors[i] = new QDoubleSpinBox(this);
 		editors[i]->setMinimum(-99999999);
 		editors[i]->setMaximum(FLT_MAX);
+		editors[i]->setSingleStep(0.1);
 
 		editors[i]->setMinimumWidth(60);
 

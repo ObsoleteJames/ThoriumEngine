@@ -329,7 +329,7 @@ void CModelCreator::Compile()
 	for (FImportedMesh& mesh : data.importedMeshes)
 	{
 		Assimp::Importer importer;
-		const aiScene* scene = importer.ReadFile(ToFString(mesh.file).c_str(), aiProcess_Triangulate | aiProcess_MakeLeftHanded | aiProcess_CalcTangentSpace | aiProcess_OptimizeMeshes | aiProcess_FlipUVs | aiProcess_PopulateArmatureData);
+		const aiScene* scene = importer.ReadFile(ToFString(mesh.file).c_str(), aiProcess_Triangulate | aiProcess_MakeLeftHanded | aiProcess_CalcTangentSpace | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph | aiProcess_FlipUVs | aiProcess_PopulateArmatureData);
 		if (!scene)
 			continue;
 

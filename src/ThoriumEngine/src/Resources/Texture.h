@@ -40,6 +40,8 @@ class ENGINE_API CTexture : public CAsset
 {
 	GENERATED_BODY()
 
+	friend class CTextureStreamingProxy;
+
 public:
 	CTexture() = default;
 	//CTexture(void* data, int width, int height, ETextureFormat format = THTX_FORMAT_RGBA8_UINT);

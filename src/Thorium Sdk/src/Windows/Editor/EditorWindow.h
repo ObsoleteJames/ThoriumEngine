@@ -66,5 +66,4 @@ private:
 	QMenu* menuDebug;
 
 	double fpsAvarage;
-
 };

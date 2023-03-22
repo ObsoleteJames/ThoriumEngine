@@ -53,7 +53,12 @@ IBasePropertyEditor* CPropertyEditorWidget::CreatePropertyEditor(void* ptr, cons
 	switch (p->type)
 	{
 	case EVT_STRUCT:
+	{
+		if (p->typeName == "FVector")
+			return new CVectorProperty((FVector*)ptr, p->name, parent);
+
 		return new CStructProperty(ptr, p, parent);
+	}
 	case EVT_CLASS:
 		break;
 	case EVT_STRING:

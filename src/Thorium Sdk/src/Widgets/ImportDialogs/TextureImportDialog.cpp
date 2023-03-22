@@ -44,9 +44,9 @@ public:
 
 		QLabel* mimmapLabl = new QLabel("MipMaps: ", frame);
 		QSpinBox* mimmapEdit = new QSpinBox(this);
-		mimmapEdit->setMinimum(0);
-		mimmapEdit->setMaximum(5);
-		mimmapEdit->setValue(5);
+		mimmapEdit->setMinimum(1);
+		mimmapEdit->setMaximum(10);
+		mimmapEdit->setValue(6);
 
 		l2->addWidget(mimmapLabl);
 		l2->addWidget(mimmapEdit);

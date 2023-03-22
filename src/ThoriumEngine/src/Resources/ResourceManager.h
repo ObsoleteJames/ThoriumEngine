@@ -22,6 +22,8 @@ struct FResourceData
 class IResourceStreamingProxy
 {
 public:
+	virtual ~IResourceStreamingProxy() = default;
+
 	virtual void Load() = 0;
 	virtual void PushData() = 0;
 

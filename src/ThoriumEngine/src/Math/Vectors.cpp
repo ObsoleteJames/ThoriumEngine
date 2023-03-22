@@ -87,6 +87,17 @@ FQuaternion FQuaternion::EulerAngles(const FVector& in)
 	return (FQuaternion)(qY * qX * qZ);
 }
 
+FQuaternion FQuaternion::Normalized() const
+{
+	FQuaternion r(*this);
+	float mag = r.Magnitude();
+	r.x /= mag;
+	r.y /= mag;
+	r.z /= mag;
+	r.w /= mag;
+	return r;
+}
+
 FVector FQuaternion::Rotate(const FVector& r) const
 {
 	FVector quatVec(x, y, z);
@@ -106,7 +117,7 @@ FQuaternion& FQuaternion::operator+=(const FQuaternion& right)
 	return *this;
 }
 
-FQuaternion& FQuaternion::operator*=(const FQuaternion& r)
+FQuaternion& FQuaternion::operator*=(const FQuaternion& b)
 {
 	//glm::quat q = (glm::quat)*this *= (glm::quat)r;
 	//x = q.x;
@@ -115,10 +126,11 @@ FQuaternion& FQuaternion::operator*=(const FQuaternion& r)
 	//w = q.w;
 	//return *this;
 
-	this->w = w * r.w - x * r.x - y * r.y - z * r.z;
-	this->x = w * r.x + x * r.w + y * r.z - z * r.y;
-	this->y = w * r.y + y * r.w + z * r.x - x * r.z;
-	this->z = w * r.z + z * r.w + x * r.y - y * r.x;
+	FQuaternion a = *this;
+	x = a.x * b.w + a.y * b.z - a.z * b.y + a.w * b.x;
+	y = -a.x * b.z + a.y * b.w + a.z * b.x + a.w * b.y;
+	z = a.x * b.y - a.y * b.x + a.z * b.w + a.w * b.z;
+	w = -a.x * b.x - a.y * b.y - a.z * b.z + a.w * b.w;
 	return *this;
 }
 
@@ -170,4 +182,14 @@ FMatrix& FMatrix::operator*=(const FQuaternion& quat)
 {
 	(*(glm::mat4*)this) *= glm::toMat4((glm::quat)quat);
 	return *this;
+}
+
+FQuaternion operator*(const FQuaternion& a, const FQuaternion& b)
+{
+	FQuaternion r;
+	r.x = a.x * b.w + a.y * b.z - a.z * b.y + a.w * b.x;
+	r.y = -a.x * b.z + a.y * b.w + a.z * b.x + a.w * b.y;
+	r.z = a.x * b.y - a.y * b.x + a.z * b.w + a.w * b.z;
+	r.w = -a.x * b.x - a.y * b.y - a.z * b.z + a.w * b.w;
+	return r;
 }

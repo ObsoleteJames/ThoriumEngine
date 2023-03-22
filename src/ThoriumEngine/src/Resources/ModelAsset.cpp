@@ -21,7 +21,7 @@ void CModelAsset::Init()
 	TUniquePtr<IBaseFStream> stream = file->GetStream("rb");
 	if (!stream || !stream->IsOpen())
 	{
-		CONSOLE_LogError(FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CModelAsset", FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
 		return;
 	}
 
@@ -30,7 +30,7 @@ void CModelAsset::Init()
 
 	if (memcmp(thmdlMagicStr, magicStr, THMDL_MAGIC_SIZE) != 0)
 	{
-		CONSOLE_LogError(FString("Invalid Model file '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CModelAsset", FString("Invalid Model file '") + ToFString(file->Path()) + "'");
 		return;
 	}
 
@@ -39,7 +39,7 @@ void CModelAsset::Init()
 
 	if (version != THMDL_VERSION)
 	{
-		CONSOLE_LogError(FString("Invalid Model file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THMDL_VERSION) + "'");
+		CONSOLE_LogError("CModelAsset", FString("Invalid Model file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THMDL_VERSION) + "'");
 		return;
 	}
 
@@ -137,13 +137,13 @@ void CModelAsset::Save()
 	{
 		if (!mesh.indexData || !mesh.vertexData)
 		{
-			CONSOLE_LogError("Attempted to save ModelAsset but no mesh data was provided.");
+			CONSOLE_LogError("CModelAsset", "Attempted to save ModelAsset but no mesh data was provided.");
 			return;
 		}
 
 		if (mesh.numIndexData % 3 != 0)
 		{
-			CONSOLE_LogError("Attempted to save ModelAsset with an invalid number of indices.");
+			CONSOLE_LogError("CModelAsset", "Attempted to save ModelAsset with an invalid number of indices.");
 			return;
 		}
 	}
@@ -151,7 +151,7 @@ void CModelAsset::Save()
 	TUniquePtr<IBaseFStream> stream = file->GetStream("wb");
 	if (!stream || !stream->IsOpen())
 	{
-		CONSOLE_LogError(FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CModelAsset", FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
 		return;
 	}
 
@@ -257,7 +257,7 @@ void CModelAsset::Load(uint8 lodLevel)
 	TUniquePtr<IBaseFStream> stream = file->GetStream("rb");
 	if (!stream || !stream->IsOpen())
 	{
-		CONSOLE_LogError(FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CModelAsset", FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
 		return;
 	}
 

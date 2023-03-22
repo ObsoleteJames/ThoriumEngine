@@ -11,7 +11,8 @@ void CTransformGizmoEntity::SetTargetObject(CSceneComponent* obj)
 	targetObject = obj;
 	bIsVisible = targetObject;
 
-	SetWorldPosition(targetObject->GetWorldPosition());
+	if (targetObject)
+		SetWorldPosition(targetObject->GetWorldPosition());
 }
 
 void CTransformGizmoEntity::SetGizmoType(EGizmoType t)

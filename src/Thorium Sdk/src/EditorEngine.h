@@ -64,7 +64,7 @@ public:
 	const TArray<TObjectPtr<CObject>>& GetSelectedObjects() const { return selectedObjects; }
 	void SetSelectedObjects(const TArray<TObjectPtr<CObject>>& objs) { selectedObjects = objs; OnObjectSelected.Fire(selectedObjects); }
 
-	void SetSelectedObject(CObject* obj) { selectedObjects.Clear(); selectedObjects.Add(obj); OnObjectSelected.Fire(selectedObjects); }
+	void SetSelectedObject(CObject* obj);
 	void AddSelectedObject(CObject* obj) { selectedObjects.Add(obj); OnObjectSelected.Fire(selectedObjects); }
 
 	void SetEditorMode(const FString& modeName);

@@ -9,6 +9,7 @@
 #include <QTreeWidget>
 #include <QBoxLayout>
 #include <QDropEvent>
+#include <QMenu>
 
 class COutlinerTreeWidget : public QTreeWidget
 {
@@ -73,6 +74,7 @@ COutlinerWidget::COutlinerWidget(QWidget* parent /*= nullptr*/) : QDockWidget(pa
 	outlinerTree->setSelectionBehavior(QAbstractItemView::SelectRows);
 	outlinerTree->setDragDropMode(QAbstractItemView::InternalMove);
 	outlinerTree->setDragEnabled(true);
+	outlinerTree->setContextMenuPolicy(Qt::CustomContextMenu);
 	//outlinerTree->setAcceptDrops(true);
 
 	outlinerTree->setColumnCount(2);
@@ -89,6 +91,19 @@ COutlinerWidget::COutlinerWidget(QWidget* parent /*= nullptr*/) : QDockWidget(pa
 		}
 		else
 			selectedEnt = nullptr;
+	});
+	connect(outlinerTree, &QTreeWidget::customContextMenuRequested, this, [=](const QPoint& point) {
+		TTreeDataItem<CEntity*>* item = (TTreeDataItem<CEntity*>*)outlinerTree->itemAt(point);
+		if (item)
+		{
+			CEntity* ent = item->GetData();
+
+			QMenu menu(this);
+
+			menu.addAction("Delete", this, [=]() { ent->Delete(); emit(entitySelected(nullptr)); });
+
+			menu.exec(outlinerTree->mapToGlobal(point));
+		}
 	});
 }
 

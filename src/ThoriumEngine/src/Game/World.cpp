@@ -81,7 +81,7 @@ void CWorld::LoadScene(CScene* ptr)
 	TUniquePtr<IBaseFStream> stream = scene->File()->GetStream("rb");
 	if (!stream || !stream->IsOpen())
 	{
-		CONSOLE_LogError(FString("Failed to create file stream for '") + ToFString(scene->File()->Path()) + "'");
+		CONSOLE_LogError("CWorld", FString("Failed to create file stream for '") + ToFString(scene->File()->Path()) + "'");
 		return;
 	}
 
@@ -92,7 +92,7 @@ void CWorld::LoadScene(CScene* ptr)
 
 	if (sig != CSCENE_SIGNITURE || version != CSCENE_VERSION)
 	{
-		CONSOLE_LogError("Invalid scene file '" + ToFString(scene->File()->Path()) + "'");
+		CONSOLE_LogError("CWorld", "Invalid scene file '" + ToFString(scene->File()->Path()) + "'");
 		return;
 	}
 
@@ -120,7 +120,7 @@ void CWorld::LoadScene(CScene* ptr)
 
 		if (!ent)
 		{
-			CONSOLE_LogError("Serialized entity with invalid type '" + typeName + "'");
+			CONSOLE_LogError("CWorld", "Serialized entity with invalid type '" + typeName + "'");
 			stream->Seek(dataSize, SEEK_CUR);
 			continue;
 		}
@@ -173,7 +173,7 @@ void CWorld::SetGameMode(const TObjectPtr<CGameMode>& gm)
 {
 	if (bActive)
 	{
-		CONSOLE_LogWarning("Cannot set gamemode while world is active!");
+		CONSOLE_LogWarning("CWorld", "Cannot set gamemode while world is active!");
 		return;
 	}
 
@@ -277,12 +277,13 @@ void CWorld::Render()
 	renderScene->SetTime((float)CurTime());
 
 	for (auto* p : primitives)
-	{
 		p->FetchData();
-	}
 
 	for (auto* l : lights)
 		l->FetchData();
+
+	for (auto* c : cameras)
+		c->FetchData();
 
 	renderScene->SetPrimitives(primitives);
 	renderScene->SetLights(lights);

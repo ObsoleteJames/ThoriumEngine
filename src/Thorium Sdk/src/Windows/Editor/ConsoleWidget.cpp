@@ -95,19 +95,21 @@ CConsoleWidget::~CConsoleWidget()
 
 void CConsoleWidget::OnLog(const FConsoleMsg& msg)
 {
-	consoleLog->setTextColor(QColor(111, 179, 75));
+	consoleLog->setTextColor(QColor(111, 179, 255));
 	consoleLog->setTextBackgroundColor(QColor(111, 179, 75, 20));
-	consoleLog->insertPlainText(logTypeText[msg.type]);
-	
-	consoleLog->setTextBackgroundColor(QColor(0, 0, 0, 0));
-	consoleLog->setTextColor(QColor(200, 200, 200));
 
+	if (msg.type != CONSOLE_PLAIN)
+		consoleLog->insertPlainText(("[" + msg.module + "]").c_str());
+
+	consoleLog->setTextColor(QColor(200, 200, 200));
+	consoleLog->setTextBackgroundColor(QColor(0, 0, 0, 0));
 	consoleLog->insertPlainText(" ");
 
-	if (msg.type == CONSOLE_WARNING)
+	if (msg.type == CONSOLE_PLAIN)
+		consoleLog->setTextColor(QColor(150, 150, 150));
+	else if (msg.type == CONSOLE_WARNING)
 		consoleLog->setTextColor(QColor(230, 197, 67));
-
-	if (msg.type == CONSOLE_ERROR)
+	else if (msg.type == CONSOLE_ERROR)
 		consoleLog->setTextBackgroundColor(QColor(207, 32, 23, 100));
 
 	consoleLog->insertPlainText((msg.msg + "\n").c_str());

@@ -3,6 +3,8 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/Texture.h"
 #include "Console.h"
+#include <mutex>
+#include <chrono>
 
 #include "ThirdParty/stb_image.h"
 #include "ThirdParty/stb_image_resize.h"
@@ -19,6 +21,76 @@ static const char* thtexMagicStr = "\0\0ThoriumEngine Texture File\0";
 //	tex = gRenderer->CreateTexture2D(data, width, height, format);
 //	bInitialized = true;
 //}
+
+class CTextureStreamingProxy : public IResourceStreamingProxy
+{
+public:
+	CTextureStreamingProxy(CTexture* t, uint8 mipMap)
+	{
+		tex = t;
+		targetTex = tex->tex;
+		targetMipMap = mipMap;
+		currentMipMap = t->numMipmaps;
+		stream = t->File()->GetStream("rb");
+	}
+
+	void Load() override
+	{
+		bLoading = true;
+
+		constexpr SizeType offset = THTEX_MAGIC_SIZE + sizeof(uint16) + sizeof(ETextureFormat) + 4 + 4 + 1;
+		stream->Seek(offset, SEEK_SET);
+
+		using namespace std::chrono_literals;
+		if (bDirty)
+		{
+			bLoading = false;
+			return;
+		}
+
+		SizeType dataSize = 0;
+		for (int i = 0; i < currentMipMap; i++)
+		{
+			*stream >> &dataSize;
+			stream->Seek(dataSize, SEEK_CUR);
+		}
+		*stream >> &dataSize;
+
+		if (data)
+			free(data);
+		
+		data = (uint8*)malloc(dataSize);
+		stream->Read(data, dataSize);
+		bDirty = true;
+		bLoading = false;
+
+		if (currentMipMap == targetMipMap)
+			bFinished = true;
+	}
+
+	void PushData() override
+	{
+		targetTex->UpdateData(data, currentMipMap);
+		//CONSOLE_LogInfo("Updated Texture with MipMap: " + FString::ToString(currentMipMap));
+		
+		free(data);
+		data = nullptr;
+
+		currentMipMap--;
+		bDirty = false;
+	}
+
+public:
+	TUniquePtr<IBaseFStream> stream;
+	TObjectPtr<CTexture> tex;
+	ITexture2D* targetTex;
+	uint8 targetMipMap;
+	
+	std::atomic<uint8> currentMipMap;
+
+	uint8* data;
+
+};
 
 static void ConvertImageType(int width, int height, uint8* in, uint8* out, uint inChannels, uint outChannels)
 {
@@ -49,7 +121,7 @@ void CTexture::Init()
 	TUniquePtr<IBaseFStream> stream = file->GetStream("rb");
 	if (!stream || !stream->IsOpen())
 	{
-		CONSOLE_LogError("Failed to create file stream for '" + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CTexture", "Failed to create file stream for '" + ToFString(file->Path()) + "'");
 		return;
 	}
 
@@ -58,7 +130,7 @@ void CTexture::Init()
 
 	if (memcmp(thtexMagicStr, magicStr, THTEX_MAGIC_SIZE) != 0)
 	{
-		CONSOLE_LogError(FString("Invalid Texture file '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CTexture", FString("Invalid Texture file '") + ToFString(file->Path()) + "'");
 		return;
 	}
 
@@ -67,13 +139,13 @@ void CTexture::Init()
 
 	if (version != THTEX_VERSION)
 	{
-		CONSOLE_LogError(FString("Invalid Texture file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THTEX_VERSION) + "'");
+		CONSOLE_LogError("CTexture", FString("Invalid Texture file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THTEX_VERSION) + "'");
 		return;
 	}
 
 	*stream >> &format >> &width >> &height;
-	*stream >> &dataSize;
 	*stream >> &numMipmaps;
+	*stream >> &dataSize;
 
 	bInitialized = true;
 }
@@ -95,13 +167,43 @@ void CTexture::Load(uint8 lodLevel)
 	TUniquePtr<IBaseFStream> stream = file->GetStream("rb");
 	if (!stream || !stream->IsOpen())
 	{
-		CONSOLE_LogError("Failed to create file stream for '" + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CTexture", "Failed to create file stream for '" + ToFString(file->Path()) + "'");
 		return;
 	}
-	constexpr SizeType offset = THTEX_MAGIC_SIZE + sizeof(uint16) + sizeof(format) + 4 + 4 + 8 + 1;
+	constexpr SizeType offset = THTEX_MAGIC_SIZE + sizeof(uint16) + sizeof(format) + 4 + 4 + 1;
 
 	stream->Seek(offset, SEEK_SET);
 
+	if (numMipmaps > 1)
+	{
+		SetLodLevel(lodLevel, true);
+
+		if (tex)
+			delete tex;
+
+		//SizeType dataSize = 0;
+		//for (int i = 0; i < lodLevel; i++)
+		//{
+		//	*stream >> &dataSize;
+		//	stream->Seek(dataSize, SEEK_CUR);
+		//}
+
+		//uint8* lowData = (uint8*)malloc(dataSize);
+		//stream->Read(lowData, dataSize);
+
+		//TArray<void*> d(numMipmaps);
+		//d[numMipmaps - 1] = lowData;
+
+		tex = gRenderer->CreateTexture2D(nullptr, numMipmaps, width, height, format, filteringType);
+		//free(lowData);
+		if (!tex)
+			return;
+
+		CResourceManager::StreamResource(new CTextureStreamingProxy(this, lodLevel));
+		return;
+	}
+
+	stream->Seek(8, SEEK_CUR);
 	uint8* data = (uint8*)malloc(dataSize);
 	stream->Read(data, dataSize);
 
@@ -146,7 +248,7 @@ bool CTexture::Import(const WString& file, const FTextureImportSettings& setting
 
 	if (!data)
 	{
-		CONSOLE_LogError("Failed to import texture.");
+		CONSOLE_LogError("CTexture", "Failed to import texture.");
 		return false;
 	}
 
@@ -172,7 +274,7 @@ bool CTexture::Import(const WString& file, const FTextureImportSettings& setting
 		uint8* newData = (uint8*)malloc(w * h * numChannels[format]);
 		if (!stbir_resize_uint8(data, width, height, 0, newData, w, h, 0, numChannels[format]))
 		{
-			CONSOLE_LogError("Failed to import texture. Compressed textures need width/height to be power of 8.");
+			CONSOLE_LogError("CTexture", "Failed to import texture. Compressed textures need width/height to be power of 8.");
 			free(data);
 			free(newData);
 			return false;
@@ -184,43 +286,75 @@ bool CTexture::Import(const WString& file, const FTextureImportSettings& setting
 		data = newData;
 	}
 
-	//if (comp != numChannels[format])
-	//{
-	//	uint8* newData = (uint8*)malloc(width * height * numChannels[format]);
-	//	ConvertImageType(width, height, data, newData, comp, numChannels[format]);
-	//	free(data);
-	//	data = newData;
-
-	//	/*CONSOLE_LogError("Failed to import texture. expected '" + FString::ToString(numChannels[format]) + "' channels got '" + FString::ToString(comp) + "'");
-	//	free(data);
-	//	return false;*/
-	//}
+	// { Data, Size } - Highest to lowest
+	TArray<TPair<uint8*, SizeType>> mipMaps;
 
 	dataSize = width * height * numChannels[format];
+	numMipmaps = settings.numMipMaps;
 
-	if (format > THTX_FORMAT_RGBA32_FLOAT)
+	for (uint8 i = 0; i < numMipmaps; i++)
 	{
-		if (format == THTX_FORMAT_DXT1)
-			dataSize /= 8;
-		else
-			dataSize /= 4;
+		SizeType mipPow = std::pow(2, i);
+		SizeType mipSize = i > 0 ? dataSize / mipPow : dataSize;
+		uint8* mipData = data;
 
-		uint8* compressedTex = (uint8*)malloc(dataSize);
+		if (width / mipPow <= 16)
+		{
+			numMipmaps = i + 1;
+			break;
+		}
 
-		rygCompress(compressedTex, data, width, height, format == THTX_FORMAT_DXT5);
-		free(data);
-		data = compressedTex;
+		if (mipSize != dataSize)
+		{
+			SizeType newWidth = width / mipPow;
+			SizeType newHeight = height / mipPow;
+			mipData = (uint8*)malloc(mipSize);
+			stbir_resize_uint8(data, width, height, 0, mipData, newWidth, newHeight, 0, numChannels[format]);
+		}
+
+		if (format > THTX_FORMAT_RGBA32_FLOAT)
+		{
+			if (format == THTX_FORMAT_DXT1)
+				mipSize /= 8;
+			else
+				mipSize /= 4;
+
+			SizeType newWidth = width / mipPow;
+			SizeType newHeight = height / mipPow;
+
+			uint8* compressedMip = (uint8*)malloc(mipSize);
+			rygCompress(compressedMip, mipData, newWidth, newHeight, format == THTX_FORMAT_DXT5);
+			if (mipData != data)
+				free(mipData);
+			mipData = compressedMip;
+		}
+
+		mipMaps.Add({ mipData, mipSize });
 	}
 
-	numMipmaps = settings.numMipMaps;
+	//if (format > THTX_FORMAT_RGBA32_FLOAT)
+	//{
+	//	if (format == THTX_FORMAT_DXT1)
+	//		dataSize /= 8;
+	//	else
+	//		dataSize /= 4;
+
+	//	uint8* compressedTex = (uint8*)malloc(dataSize);
+
+	//	rygCompress(compressedTex, data, width, height, format == THTX_FORMAT_DXT5);
+	//	free(data);
+	//	data = compressedTex;
+	//}
 
 	FFile* texFile = this->file;
 	TUniquePtr<IBaseFStream> stream = texFile->GetStream("wb");
 
 	if (!stream || !stream->IsOpen())
 	{
-		CONSOLE_LogError("Failed to create file stream for texture.");
-		free(data);
+		CONSOLE_LogError("CTexture", "Failed to create file stream for texture.");
+		for (auto& mp : mipMaps)
+			free(mp.Key);
+
 		return false;
 	}
 
@@ -231,12 +365,17 @@ bool CTexture::Import(const WString& file, const FTextureImportSettings& setting
 
 	*stream << &format;
 	*stream << &width << &height;
-	*stream << &dataSize;
+	//*stream << &dataSize;
 	*stream << &numMipmaps;
 
-	// TODO: MimMaps
-	stream->Write(data, dataSize);
-
-	free(data);
+	for (auto& mp : mipMaps)
+	{
+		*stream << &mp.Value;
+		stream->Write(mp.Key, mp.Value);
+	}
+	
+	for (auto& mp : mipMaps)
+		free(mp.Key);
+	
 	return true;
 }

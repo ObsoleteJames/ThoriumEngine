@@ -12,6 +12,8 @@
 #include <atomic>
 #include <chrono>
 
+#define RESOURCE_THREAD_COUNT 2
+
 TUnorderedMap<WString, CAsset*> CResourceManager::allocatedResources;
 TUnorderedMap<WString, FResourceData> CResourceManager::availableResources;
 TArray<IResourceStreamingProxy*> CResourceManager::streamingResources;
@@ -19,6 +21,8 @@ TArray<IResourceStreamingProxy*> CResourceManager::streamingResources;
 static std::mutex resourceMutex;
 static std::thread resourceThread;
 static std::atomic<bool> bResourceRunning;
+
+static TArray<std::thread> resourceThreads;
 
 FAssetClass* GetClassFromExt(const FString& ext)
 {
@@ -77,13 +81,23 @@ void CResourceManager::OnResourceFileDeleted(FFile* file)
 void CResourceManager::Init()
 {
 	bResourceRunning = true;
-	resourceThread = std::thread(&CResourceManager::StreamResources);
+	//resourceThread = std::thread(&CResourceManager::StreamResources);
+	resourceThreads.Resize(RESOURCE_THREAD_COUNT);
+	for (int i = 0; i < RESOURCE_THREAD_COUNT; i++)
+		resourceThreads[i] = std::thread(&CResourceManager::StreamResources);
+
+	CONSOLE_LogInfo("CResourceManager", "Created resource threads (" + FString::ToString(RESOURCE_THREAD_COUNT) + ")");
+	CONSOLE_LogInfo("CResourceManager", "Initialized");
 }
 
 void CResourceManager::Shutdown()
 {
 	bResourceRunning = false;
-	resourceThread.join();
+	CONSOLE_LogInfo("CResourceManager", "Shutting down resource threads...");
+	for (int i = 0; i < RESOURCE_THREAD_COUNT; i++)
+		resourceThreads[i].join();
+
+	resourceThreads.Clear();
 }
 
 void CResourceManager::Update()
@@ -95,15 +109,28 @@ void CResourceManager::Update()
 		return;
 	}
 
-	IResourceStreamingProxy* obj = streamingResources.first();
-	if (obj->bDirty)
-		obj->PushData();
-
-	if (obj->bFinished)
+	for (int i = 0; i < streamingResources.Size(); i++)
 	{
-		streamingResources.Erase(streamingResources.first());
-		delete obj;
+		IResourceStreamingProxy* obj = streamingResources[i];
+		if (obj->bDirty)
+			obj->PushData();
+
+		if (obj->bFinished)
+		{
+			streamingResources.Erase(streamingResources.begin() + i);
+			delete obj;
+		}
 	}
+
+	//IResourceStreamingProxy* obj = streamingResources.first();
+	//if (obj->bDirty)
+	//	obj->PushData();
+
+	//if (obj->bFinished)
+	//{
+	//	streamingResources.Erase(streamingResources.first());
+	//	delete obj;
+	//}
 
 	resourceMutex.unlock();
 }
@@ -111,6 +138,7 @@ void CResourceManager::Update()
 void CResourceManager::StreamResources()
 {
 	using namespace std::chrono_literals;
+	int index = 0;
 	while (bResourceRunning)
 	{
 		resourceMutex.lock();
@@ -121,7 +149,9 @@ void CResourceManager::StreamResources()
 			continue;
 		}
 
-		IResourceStreamingProxy* obj = streamingResources.first();
+		IResourceStreamingProxy* obj = streamingResources[index];
+		index++;
+		index %= streamingResources.Size();
 		resourceMutex.unlock();
 
 		if (obj->bFinished)
@@ -130,7 +160,7 @@ void CResourceManager::StreamResources()
 			continue;
 		}
 
-		while (!obj->bFinished)
+		if (!obj->bFinished && !obj->bLoading)
 			obj->Load();
 	}
 }
@@ -139,7 +169,7 @@ void CResourceManager::ScanMod(FMod* mod)
 {
 	int numFiles = ScanDir(&mod->root);
 
-	CONSOLE_LogInfo(FString("Found ") + std::to_string(numFiles) + " assets in '" + ToFString(mod->Name()) + "'");
+	CONSOLE_LogInfo("CResourceManager", FString("Found ") + std::to_string(numFiles) + " assets in '" + ToFString(mod->Name()) + "'");
 
 	for (auto& it : availableResources)
 	{

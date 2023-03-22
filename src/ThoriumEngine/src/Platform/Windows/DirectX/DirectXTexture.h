@@ -20,6 +20,10 @@ public:
 	ID3D11ShaderResourceView* view;
 	ID3D11SamplerState* sampler;
 	ETextureFormat format;
+	
+	SizeType width;
+	SizeType height;
+
 	int mipMapCount;
 	int suppliedMipMapData = 0;
 };

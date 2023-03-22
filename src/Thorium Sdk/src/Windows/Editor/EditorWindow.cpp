@@ -398,8 +398,17 @@ void CEditorWindow::SetupUi()
 	RegisterAssetMenus();
 
 	Events::PostLevelChange.Bind(this, &CEditorWindow::OnLevelChange);
+	
+	worldViewport->GetWindow()->OnKeyEvent.Bind(this, [=](EKeyCode key, EInputAction action, EInputMod mod) {
+		switch (key)
+		{
+		case EKeyCode::ESCAPE:
+			gEditorEngine()->SetSelectedObject(nullptr);
+			break;
+		}
+	});
 
-	CONSOLE_LogInfo("CEditorWindow::SetupUi done");
+	CONSOLE_LogInfo("CEditorEngine", "Created Editor Window");
 }
 
 void CEditorWindow::SetupMenuBar()
@@ -697,6 +706,6 @@ void CEditorWindow::OnObjectSelected(const TArray<TObjectPtr<CObject>>& objs)
 {
 	if (objs.Size() == 0)
 		propertiesWidget->SetObject(nullptr);
-
-	propertiesWidget->SetObject(objs[0]);
+	else
+		propertiesWidget->SetObject(objs[0]);
 }

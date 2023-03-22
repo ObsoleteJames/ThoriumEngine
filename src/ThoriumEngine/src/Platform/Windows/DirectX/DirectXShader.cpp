@@ -14,7 +14,7 @@ DirectXShader::DirectXShader(CShaderSource* in, int type)
 	CFStream stream(ToFString(shaderPath), "rb");
 	if (!stream.IsOpen())
 	{
-		CONSOLE_LogError(FString("Failed to create shader for '") + in->shaderName + "'!");
+		CONSOLE_LogError("IShader", FString("Failed to create shader for '") + in->shaderName + "'!");
 		return;
 	}
 
@@ -85,12 +85,12 @@ DirectXVertexShader::DirectXVertexShader(CShaderSource* in)
 
 	HRESULT hr = GetDirectXRenderer()->device->CreateInputLayout(vertexLayout, vertexLayoutSize, buff->GetBufferPointer(), buff->GetBufferSize(), &inputLayout);
 	if (FAILED(hr))
-		CONSOLE_LogError("Failed to create input layout for vertex shader!");
+		CONSOLE_LogError("IShader", "Failed to create input layout for vertex shader!");
 
 	hr = GetDirectXRenderer()->device->CreateVertexShader(buff->GetBufferPointer(), buff->GetBufferSize(), nullptr, &shader);
 	if (FAILED(hr))
 	{
-		CONSOLE_LogError("Failed to create vertex shader!");
+		CONSOLE_LogError("IShader", "Failed to create vertex shader!");
 		free(buff);
 		return;
 	}

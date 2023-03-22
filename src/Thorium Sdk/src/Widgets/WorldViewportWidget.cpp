@@ -31,6 +31,8 @@ CWorldViewportWidget::CWorldViewportWidget(QWidget* parent) : CRenderWidget(pare
 	moveBack = 0;
 	moveLeft = 0;
 	moveRight = 0;
+	moveUp = 0;
+	moveDown = 0;
 }
 
 CWorldViewportWidget::~CWorldViewportWidget()

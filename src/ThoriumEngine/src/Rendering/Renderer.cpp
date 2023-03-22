@@ -80,6 +80,9 @@ void CreateForwardLightBuffer(const FVector& objPos, const TArray<CLightProxy*>&
 
 	for (auto* l : lights)
 	{
+		if (!l->Enabled())
+			continue;
+
 		if (l->type == CLightProxy::DIRECTIONAL_LIGHT)
 		{
 			if (out.numDirLights > 1)

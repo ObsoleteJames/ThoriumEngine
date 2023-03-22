@@ -141,7 +141,7 @@ void CEntity::Load(FMemStream& in)
 		FClass* compClass = CModuleManager::FindClass(classTypename);
 		if (!compClass)
 		{
-			CONSOLE_LogWarning("Serialized component has unkown class '" + classTypename + "', loading for entity " + Name() + ".");
+			CONSOLE_LogWarning("CEntity", "Serialized component has unkown class '" + classTypename + "', loading for entity " + Name() + ".");
 			in.Seek(compDataSize, SEEK_CUR);
 			continue;
 		}

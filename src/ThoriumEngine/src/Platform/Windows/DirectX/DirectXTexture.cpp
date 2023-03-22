@@ -22,7 +22,7 @@ static constexpr int formatSizes[] = {
 	4
 };
 
-DirectXTexture2D::DirectXTexture2D(void* data, int width, int height, ETextureFormat f, ETextureFilter filter) : format(f)
+DirectXTexture2D::DirectXTexture2D(void* data, int w, int h, ETextureFormat f, ETextureFilter filter) : format(f), width(w), height(h)
 {
 	D3D11_TEXTURE2D_DESC texd{};
 	texd.Width = width;
@@ -32,9 +32,9 @@ DirectXTexture2D::DirectXTexture2D(void* data, int width, int height, ETextureFo
 	texd.Format = formats[format];
 	texd.SampleDesc.Count = 1;
 	texd.SampleDesc.Quality = 0;
-	texd.Usage = D3D11_USAGE_IMMUTABLE;
+	texd.Usage = D3D11_USAGE_DYNAMIC;
 	texd.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	texd.CPUAccessFlags = 0;
+	texd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	//texd.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
 	int pitch = width * formatSizes[format];
@@ -46,7 +46,7 @@ DirectXTexture2D::DirectXTexture2D(void* data, int width, int height, ETextureFo
 	HRESULT hr = GetDirectXRenderer()->device->CreateTexture2D(&texd, &imgData, &tex);
 	if (FAILED(hr))
 	{
-		CONSOLE_LogError("Failed to create DirectX Texture2D");
+		CONSOLE_LogError("ITexture", "Failed to create DirectX Texture2D");
 		return;
 	}
 
@@ -60,7 +60,7 @@ DirectXTexture2D::DirectXTexture2D(void* data, int width, int height, ETextureFo
 	hr = GetDirectXRenderer()->device->CreateShaderResourceView(tex, &srvDesc, &view);
 	if (FAILED(hr))
 	{
-		CONSOLE_LogError("Failed to create DirectX SRV");
+		CONSOLE_LogError("ITexture", "Failed to create DirectX SRV");
 		return;
 	}
 
@@ -77,14 +77,14 @@ DirectXTexture2D::DirectXTexture2D(void* data, int width, int height, ETextureFo
 	hr = GetDirectXRenderer()->device->CreateSamplerState(&samplerDesc, &sampler);
 	if (FAILED(hr))
 	{
-		CONSOLE_LogError("Failed to create DirectX SamplerState");
+		CONSOLE_LogError("ITexture", "Failed to create DirectX SamplerState");
 		return;
 	}
 
 	mipMapCount = 1;
 }
 
-DirectXTexture2D::DirectXTexture2D(void** data, int numMimMaps, int width, int height, ETextureFormat f, ETextureFilter filter) : format(f)
+DirectXTexture2D::DirectXTexture2D(void** data, int numMimMaps, int w, int h, ETextureFormat f, ETextureFilter filter) : format(f), width(w), height(h)
 {
 	D3D11_TEXTURE2D_DESC texd{};
 	texd.Width = width;
@@ -94,47 +94,60 @@ DirectXTexture2D::DirectXTexture2D(void** data, int numMimMaps, int width, int h
 	texd.Format = formats[format];
 	texd.SampleDesc.Count = 1;
 	texd.SampleDesc.Quality = 0;
-	texd.Usage = D3D11_USAGE_DYNAMIC;
+	texd.Usage = D3D11_USAGE_DEFAULT;
 	texd.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	texd.CPUAccessFlags = 0;
-	//texd.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-	//int pitch = width * formatSizes[format];
-
-	//D3D11_SUBRESOURCE_DATA imgData{};
-	//imgData.pSysMem = data;
-	//imgData.SysMemPitch = pitch;
-
-	D3D11_SUBRESOURCE_DATA* imgData = nullptr;
+	D3D11_SUBRESOURCE_DATA* imgData = new D3D11_SUBRESOURCE_DATA[numMimMaps];;
 	if (data)
 	{
-		imgData = new D3D11_SUBRESOURCE_DATA[numMimMaps];
 		for (int i = 0; i < numMimMaps; i++)
 		{
 			imgData[i].pSysMem = data[i];
-			imgData[i].SysMemPitch = (width / std::pow(2, i + 1)) * formatSizes[format];
+			imgData[i].SysMemPitch = (width / std::pow(2, i)) * formatSizes[format];
 		}
 		suppliedMipMapData = numMimMaps;
+	}
+	else
+	{
+		for (int i = 0; i < numMimMaps; i++)
+		{
+			SizeType size = (width * height) / std::pow(2, i) * formatSizes[format];
+			imgData[i].pSysMem = malloc(size);
+			if (i == numMimMaps - 1)
+				memset((void*)imgData[i].pSysMem, 0, size);
+
+			imgData[i].SysMemPitch = (width / std::pow(2, i)) * formatSizes[format];
+		}
 	}
 
 	HRESULT hr = GetDirectXRenderer()->device->CreateTexture2D(&texd, imgData, &tex);
 	if (FAILED(hr))
 	{
-		CONSOLE_LogError("Failed to create DirectX Texture2D");
+		CONSOLE_LogError("ITexture", "Failed to create DirectX Texture2D");
 		return;
 	}
+
+	if (!data)
+	{
+		for (int i = 0; i < numMimMaps; i++)
+		{
+			free((void*)imgData[i].pSysMem);
+		}
+	}
+
+	delete[] imgData;
 
 	//GetDirectXRenderer()->deviceContext->UpdateSubresource(tex, 0, nullptr, data, pitch, 0);
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = texd.Format;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MostDetailedMip = numMimMaps - 1;
 	srvDesc.Texture2D.MipLevels = -1;
 	hr = GetDirectXRenderer()->device->CreateShaderResourceView(tex, &srvDesc, &view);
 	if (FAILED(hr))
 	{
-		CONSOLE_LogError("Failed to create DirectX SRV");
+		CONSOLE_LogError("ITexture", "Failed to create DirectX SRV");
 		return;
 	}
 
@@ -151,7 +164,7 @@ DirectXTexture2D::DirectXTexture2D(void** data, int numMimMaps, int width, int h
 	hr = GetDirectXRenderer()->device->CreateSamplerState(&samplerDesc, &sampler);
 	if (FAILED(hr))
 	{
-		CONSOLE_LogError("Failed to create DirectX SamplerState");
+		CONSOLE_LogError("ITexture", "Failed to create DirectX SamplerState");
 		return;
 	}
 
@@ -173,12 +186,14 @@ void DirectXTexture2D::UpdateData(void* p, int mipmapLevel)
 	if (mipmapLevel >= mipMapCount)
 		return;
 
-	D3D11_MAPPED_SUBRESOURCE data;
-	HRESULT hr = GetDirectXRenderer()->deviceContext->Map(tex, mipmapLevel, D3D11_MAP_WRITE_DISCARD, 0, &data);
-	if (FAILED(hr))
-		return;
-	memcpy(data.pData, p, data.DepthPitch * data.RowPitch);
-	GetDirectXRenderer()->deviceContext->Unmap(tex, mipmapLevel);
+	GetDirectXRenderer()->deviceContext->UpdateSubresource(tex, mipmapLevel, nullptr, p, (width / std::pow(2, mipmapLevel)) * formatSizes[format], (height / std::pow(2, mipmapLevel)) * formatSizes[format]);
+
+	//D3D11_MAPPED_SUBRESOURCE data;
+	//HRESULT hr = GetDirectXRenderer()->deviceContext->Map(tex, mipmapLevel, D3D11_MAP_WRITE_DISCARD, 0, &data);
+	//if (FAILED(hr))
+	//	return;
+	//memcpy(data.pData, p, (width * height) / std::pow(2, mipmapLevel));
+	//GetDirectXRenderer()->deviceContext->Unmap(tex, mipmapLevel);
 
 	if (suppliedMipMapData < mipMapCount - mipmapLevel)
 		suppliedMipMapData = mipMapCount - mipmapLevel;
@@ -199,7 +214,7 @@ void DirectXTexture2D::UpdateView()
 	HRESULT hr = GetDirectXRenderer()->device->CreateShaderResourceView(tex, &srvDesc, &view);
 	if (FAILED(hr))
 	{
-		CONSOLE_LogError("Failed to create DirectX SRV");
+		CONSOLE_LogError("ITexture", "Failed to create DirectX SRV");
 		return;
 	}
 }

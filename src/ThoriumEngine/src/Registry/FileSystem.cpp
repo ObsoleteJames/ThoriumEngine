@@ -255,7 +255,7 @@ FFile* FMod::CreateFile(const WString& path)
 	FString _p = ToFString(this->path + L"\\" + file->Path());
 	CFStream stream(_p, "wb");
 	if (!stream.IsOpen())
-		CONSOLE_LogWarning(FString("Failed to create OS file '") + _p + "'");
+		CONSOLE_LogWarning("CFileSystem", FString("Failed to create OS file '") + _p + "'");
 
 	stream.Close();
 	return file;
@@ -336,7 +336,7 @@ FMod* CFileSystem::MountMod(const WString& modPath, const WString& mn, const WSt
 	if (!FFileHelper::DirectoryExists(modPath))
 		return nullptr;
 
-	CONSOLE_LogInfo(FString("Mounting Mod: ") + ToFString(modPath));
+	CONSOLE_LogInfo("CFileSystem", FString("Mounting Mod: ") + ToFString(modPath));
 
 	WString modName;
 	if (mn.IsEmpty())

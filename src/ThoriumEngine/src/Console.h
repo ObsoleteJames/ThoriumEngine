@@ -25,6 +25,7 @@ struct FConsoleMsg
 	FString msg;
 	FConsoleMsgInfo info;
 	EConsoleMsgType type;
+	FString module;
 
 	FConsoleMsg* next = nullptr;
 };
@@ -77,9 +78,9 @@ public:
 	static void Shutdown();
 
 public:
-	static void LogInfo(const FString& msg, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_INFO, nullptr }); }
-	static void LogWarning(const FString& msg, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_WARNING, nullptr}); }
-	static void LogError(const FString& msg, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_ERROR, nullptr}); }
+	static void LogInfo(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_INFO, module, nullptr }); }
+	static void LogWarning(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_WARNING, module, nullptr}); }
+	static void LogError(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_ERROR, module, nullptr}); }
 
 	static void Exec(const FString& input);
 
@@ -104,6 +105,6 @@ private:
 
 };
 
-#define CONSOLE_LogInfo(msg) CConsole::LogInfo(msg, { __LINE__, __FILE__, __FUNCTION__ })
-#define CONSOLE_LogWarning(msg) CConsole::LogWarning(msg, { __LINE__, __FILE__, __FUNCTION__ })
-#define CONSOLE_LogError(msg) CConsole::LogError(msg, { __LINE__, __FILE__, __FUNCTION__ })
+#define CONSOLE_LogInfo(module, msg) CConsole::LogInfo(msg, module, { __LINE__, __FILE__, __FUNCTION__ })
+#define CONSOLE_LogWarning(module, msg) CConsole::LogWarning(msg, module, { __LINE__, __FILE__, __FUNCTION__ })
+#define CONSOLE_LogError(module, msg) CConsole::LogError(msg, module, { __LINE__, __FILE__, __FUNCTION__ })

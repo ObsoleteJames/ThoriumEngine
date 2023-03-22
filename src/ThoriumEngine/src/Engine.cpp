@@ -41,7 +41,7 @@ void CEngine::InitMinimal()
 {
 	THORIUM_ASSERT(gEngine, "");
 	CConsole::Init();
-	CONSOLE_LogInfo("CEngine Initializing...");
+	CONSOLE_LogInfo("CEngine", "Initializing...");
 	
 	CResourceManager::Init();
 	CModuleManager::RegisterModule(&GetModule_Engine());
@@ -109,9 +109,9 @@ void CEngine::LoadGame(const FString& game, bool bFirst)
 #endif
 	int r = CModuleManager::LoadModule(libPath);
 	if (r == 1)
-		CONSOLE_LogWarning(FString("Failed to locate module for mod '") + game + "'");
+		CONSOLE_LogWarning("CEngine", FString("Failed to locate module for mod '") + game + "'");
 	else if (r > 1)
-		CONSOLE_LogError(FString("Failed to initialize module '") + game + "'");
+		CONSOLE_LogError("CEngine", FString("Failed to initialize module '") + game + "'");
 
 	FMod* fMod = CFileSystem::MountMod(ToWString(game));
 	WString sdkPath = L".project\\" + wGame + L"\\sdk_content";
@@ -212,7 +212,7 @@ bool CEngine::LoadProject(const WString& path /*= "."*/)
 
 	if (!activeGame.gameInstanceClass.Get())
 	{
-		CONSOLE_LogError("No GameInstance class was specified, reverting to default.");
+		CONSOLE_LogError("CEngine", "No GameInstance class was specified, reverting to default.");
 		SetGameInstance<CGameInstance>();
 	}
 	else
@@ -261,7 +261,7 @@ void CEngine::DoLoadWorld()
 		pScene = CResourceManager::GetResource<CScene>(nextSceneName);
 
 		if (!pScene)
-			CONSOLE_LogError(FString("Failed to find scene file '") + ToFString(nextSceneName) + "'");
+			CONSOLE_LogError("CEngine", FString("Failed to find scene file '") + ToFString(nextSceneName) + "'");
 		else
 			gWorld->LoadScene(pScene);
 	}

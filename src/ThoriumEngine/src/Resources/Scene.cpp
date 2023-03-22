@@ -9,7 +9,7 @@ void CScene::Save(CWorld* world)
 	TUniquePtr<IBaseFStream> stream = file->GetStream("wb");
 	if (!stream || !stream->IsOpen())
 	{
-		CONSOLE_LogError(FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CWorld", FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
 		return;
 	}
 

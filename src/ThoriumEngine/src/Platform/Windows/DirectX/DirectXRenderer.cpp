@@ -34,7 +34,7 @@ void DirectXRenderer::Init()
 		NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
-#if 0
+#if 1
 		D3D11_CREATE_DEVICE_DEBUG,
 #else
 		0,
@@ -203,11 +203,11 @@ void DirectXRenderer::CompileShader(const FString& source, IShader::EType shader
 
 		if (bHasErros)
 		{
-			CONSOLE_LogError(msg);
+			CONSOLE_LogError("CRenderer", msg);
 			errors->Release();
 			return;
 		}
-		CONSOLE_LogWarning(msg);
+		CONSOLE_LogWarning("CRenderer", msg);
 		errors->Release();
 	}
 

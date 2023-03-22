@@ -280,6 +280,15 @@ QIcon CEditorEngine::GetResourceIcon(const WString& extension)
 	return icon;
 }
 
+void CEditorEngine::SetSelectedObject(CObject* obj)
+{
+	selectedObjects.Clear(); 
+	if (obj) 
+		selectedObjects.Add(obj); 
+	
+	OnObjectSelected.Fire(selectedObjects);
+}
+
 void CEditorEngine::SetEditorMode(const FString& modeName)
 {
 	auto it = CEditorModeRegistry::Get().Find([modeName](CEditorMode* const& mode) { return mode->Name() == modeName; }, 0);
@@ -308,13 +317,16 @@ void CEditorEngine::RegisterProject(const FProject& proj)
 void CEditorEngine::__OnObjectSelected(const TArray<TObjectPtr<CObject>>& obj)
 {
 	if (selectedObjects.Size() == 0)
+	{
 		transformGizmo->SetTargetObject(nullptr);
+		return;
+	}
 
-	TObjectPtr<CEntity> ent = Cast<CEntity>(selectedObjects[0]);
+	TObjectPtr<CEntity> ent = CastChecked<CEntity>(selectedObjects[0]);
 	CSceneComponent* comp;
 	if (!ent)
 	{
-		comp = Cast<CSceneComponent>(selectedObjects[0]);
+		comp = CastChecked<CSceneComponent>(selectedObjects[0]);
 	}
 	else
 		comp = ent->RootComponent();
