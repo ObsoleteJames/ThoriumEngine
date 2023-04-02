@@ -2,16 +2,9 @@
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(499,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
   Path: F:\MyProjects\VS_Projects\ThoriumEngine\projects\MgsDemo\.project\MGS\intermediate\..\..\MetalGearSolid.thproj
   Running HeaderTool for project: MGS
+  MgsPawn.cpp
   MGS.init.cpp
-  TestEntity.generated.cpp
   Generating Code...
-MGS.init.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/OPT:ICF' specification
-     Creating library build\MGS.lib and object build\MGS.exp
-  Generating code
-  0 of 6 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
-    0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
-  Finished generating code
   MgsDemo.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\projects\MgsDemo\.project\MGS\intermediate\build\MGS.dll
   F:\MyProjects\VS_Projects\ThoriumEngine\projects\MgsDemo\.project\MGS\intermediate\build\MGS.dll
   1 File(s) copied

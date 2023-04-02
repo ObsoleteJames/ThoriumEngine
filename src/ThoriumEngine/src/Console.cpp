@@ -53,10 +53,10 @@ void CConsole::Exec(const FString& input)
 		{
 			cmd->Exec(args);
 
-			FConsoleMsg msg;
-			msg.type = CONSOLE_PLAIN;
-			msg.msg = target;
-			_log(msg);
+			//FConsoleMsg msg;
+			//msg.type = CONSOLE_PLAIN;
+			//msg.msg = target;
+			//_log(msg);
 			return;
 		}
 	}
@@ -64,7 +64,7 @@ void CConsole::Exec(const FString& input)
 	{
 		if (cmd->Name() == target)
 		{
-			if (args.Size() == 0)
+			if (args.Size() == 0 || args[0].IsEmpty())
 			{
 				CONSOLE_LogWarning("CConsole", "Insufficient arguments, expected 1 but got 0");
 				return;
@@ -134,13 +134,25 @@ void CConsole::_log(const FConsoleMsg& msg)
 	consoleMutex.unlock();
 }
 
-CConCmd::CConCmd(const FString& n, CmdFuncPtr f) : func(f), name(n)
+CConCmd::CConCmd(const FString& n, CmdFuncPtr f) : name(n)
 {
 	for (auto* cmd : CConsole::consoleCmds)
 		THORIUM_ASSERT(cmd->Name() != name, FString("Failed to register ConCmd '") + name + "', command with the same name already exists!");
 	for (auto* var : CConsole::consoleVars)
 		THORIUM_ASSERT(var->Name() != name, FString("Failed to register ConCmd '") + name + "', ConVar with the same name arleady exists!");
 
+	func = f;
+	CConsole::consoleCmds.Add(this);
+}
+
+CConCmd::CConCmd(const FString& n, CmdFuncPtrNoArgs f) : name(n)
+{
+	for (auto* cmd : CConsole::consoleCmds)
+		THORIUM_ASSERT(cmd->Name() != name, FString("Failed to register ConCmd '") + name + "', command with the same name already exists!");
+	for (auto* var : CConsole::consoleVars)
+		THORIUM_ASSERT(var->Name() != name, FString("Failed to register ConCmd '") + name + "', ConVar with the same name arleady exists!");
+
+	func = [=](const TArray<FString>&) { f(); };
 	CConsole::consoleCmds.Add(this);
 }
 
@@ -153,7 +165,7 @@ CConCmd::~CConCmd()
 
 void CConCmd::Exec(const TArray<FString>& args)
 {
-	func();
+	func(args);
 }
 
 CConVar::CConVar(const FString& n, float v) : value(v), name(n)

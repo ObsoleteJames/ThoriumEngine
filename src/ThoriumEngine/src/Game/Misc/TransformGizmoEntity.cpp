@@ -43,37 +43,35 @@ void CTransformGizmoEntity::Init()
 {
 	BaseClass::Init();
 
-	translateGizmo = AddComponent<CModelComponent>("Translate Gizmo");
+	translateGizmo = AddComponent<CSceneComponent>("Translate Gizmo");
 	rotateGizmo = AddComponent<CModelComponent>("Rotate Gizmo");
 	scaleGizmo = AddComponent<CModelComponent>("Scale Gizmo");
+
+	translateArrowX = AddComponent<CModelComponent>("Translate Arrow X");
+	translateArrowY = AddComponent<CModelComponent>("Translate Arrow Y");
+	translateArrowZ = AddComponent<CModelComponent>("Translate Arrow Z");
 
 	translateGizmo->AttachTo(rootComponent);
 	rotateGizmo->AttachTo(rootComponent);
 	scaleGizmo->AttachTo(rootComponent);
 
-	//TArray<FMesh> translateMeshes;
-	//translateMeshes.Resize(3);
+	translateArrowX->AttachTo(translateGizmo);
+	translateArrowY->AttachTo(translateGizmo);
+	translateArrowZ->AttachTo(translateGizmo);
 
-	//translateMeshes[0].materialIndex = 0;
-	//translateMeshes[0].numVertices = 2;
-	//translateMeshes[0].topologyType = FMesh::TOPOLOGY_LINES;
-	//translateMeshes[0].vertexBuffer = gRenderer->CreateVertexBuffer({ { FVector(0, 0, 0) }, { FVector(1, 0, 0) } });
+	translateArrowX->SetModel(L"editor\\models\\arrow.thmdl");
+	translateArrowX->SetPosition(FVector(0.5f, 0, 0));
+	translateArrowX->SetRotation(FQuaternion::EulerAngles(FVector(0, -90.f, 0).Radians()));
 
-	//translateMeshes[1].materialIndex = 1;
-	//translateMeshes[1].numVertices = 2;
-	//translateMeshes[1].topologyType = FMesh::TOPOLOGY_LINES;
-	//translateMeshes[1].vertexBuffer = gRenderer->CreateVertexBuffer({ { FVector(0, 0, 0) }, { FVector(0, 1, 0) } });
+	translateArrowY->SetModel(L"editor\\models\\arrow.thmdl");
+	translateArrowY->SetPosition(FVector(0, 0.5f, 0));
+	translateArrowY->SetRotation(FQuaternion::EulerAngles(FVector(90.f, 0, 0).Radians()));
 
-	//translateMeshes[2].materialIndex = 2;
-	//translateMeshes[2].numVertices = 2;
-	//translateMeshes[2].topologyType = FMesh::TOPOLOGY_LINES;
-	//translateMeshes[2].vertexBuffer = gRenderer->CreateVertexBuffer({ { FVector(0, 0, 0) }, { FVector(0, 0, 1) } });
+	translateArrowZ->SetModel(L"editor\\models\\arrow.thmdl");
+	translateArrowZ->SetPosition(FVector(0, 0, 0.5f));
+	translateArrowZ->SetRotation(FQuaternion::EulerAngles(FVector(-180.f, 0, 0).Radians()));
 
-	//TObjectPtr<CModelAsset> translateModel = CreateObject<CModelAsset>();
-	//translateModel->Init(translateMeshes);
-	//translateGizmo->SetModel(translateModel);
-
-	translateGizmo->SetModel(L"editor\\models\\TransformGizmo.thmdl");
+	//translateGizmo->SetModel(L"editor\\models\\TransformGizmo.thmdl");
 
 	gizmoMatX = CreateObject<CMaterial>();
 	gizmoMatX->SetShader("Tools");
@@ -93,9 +91,9 @@ void CTransformGizmoEntity::Init()
 	gizmoMatZ->SetInt("vInt1", 2);
 	gizmoMatZ->EnableDepthTest(false);
 
-	translateGizmo->SetMaterial(gizmoMatX, 1);
-	translateGizmo->SetMaterial(gizmoMatY, 0);
-	translateGizmo->SetMaterial(gizmoMatZ, 3);
+	translateArrowX->SetMaterial(gizmoMatX, 0);
+	translateArrowY->SetMaterial(gizmoMatY, 0);
+	translateArrowZ->SetMaterial(gizmoMatZ, 0);
 
 	bIsVisible = false;
 
@@ -106,13 +104,15 @@ void CTransformGizmoEntity::Update(double dt)
 {
 	BaseClass::Update(dt);
 
-	if (mouseBtnBind == -1)
+	if (!bHasBoundEvents)
+	{
 		if (auto* wnd = GetWorld()->GetRenderWindow(); wnd)
-			mouseBtnBind = wnd->OnMouseButton.Bind(this, &CTransformGizmoEntity::OnMouseButton);
-
-	if (keyEventBind == -1)
-		if (auto* wnd = GetWorld()->GetRenderWindow(); wnd)
-			keyEventBind = wnd->OnKeyEvent.Bind(this, &CTransformGizmoEntity::OnKeyEvent);
+		{
+			wnd->OnMouseButton.Bind(this, &CTransformGizmoEntity::OnMouseButton);
+			wnd->OnKeyEvent.Bind(this, &CTransformGizmoEntity::OnKeyEvent);
+			bHasBoundEvents = true;
+		}
+	}
 
 	if (!targetObject || !camera || !GetWorld()->GetRenderWindow())
 		return;
@@ -123,10 +123,10 @@ void CTransformGizmoEntity::Update(double dt)
 	SetWorldPosition(targetObject->GetWorldPosition());
 
 	GetWorld()->GetRenderWindow()->GetMousePos(state.mouseX, state.mouseY);
-	state.mouseRay = camera->MouseToRay(state.mouseX, state.mouseY, GetWorld()->GetRenderWindow());
+	state.mouseRay = FRay::MouseToRay(camera, state.mouseX, state.mouseY, GetWorld()->GetRenderWindow());
 
-	float dist = FVector::Distance(rootComponent->GetWorldPosition(), camera->GetWorldPosition());
-	drawScale = FMath::Max(FMath::Tan(camera->FOV()) * dist * 0.15f, 0.5f);
+	float dist = FVector::Distance(rootComponent->GetWorldPosition(), camera->position);
+	drawScale = FMath::Max(FMath::Tan(camera->fov) * dist * 0.15f, 0.5f);
 	SetScale(FVector(drawScale));
 
 	switch (type)
@@ -147,10 +147,51 @@ void CTransformGizmoEntity::Update(double dt)
 
 void CTransformGizmoEntity::OnDelete()
 {
-	if (mouseBtnBind != -1)
-		GetWorld()->GetRenderWindow()->OnMouseButton.Remove(mouseBtnBind);
+	GetWorld()->GetRenderWindow()->OnMouseButton.RemoveAll(this);
+	GetWorld()->GetRenderWindow()->OnKeyEvent.RemoveAll(this);
 
 	BaseClass::OnDelete();
+}
+
+void CTransformGizmoEntity::UpdateGizmoPositions()
+{
+	FVector dirToCam = (GetWorldPosition() - camera->position).Normalize();
+	
+	float dot = FVector::Dot(rootComponent->GetRightVector(), dirToCam);
+	if (dot < 0.f)
+	{
+		translateArrowX->SetPosition(FVector(0.5f, 0, 0));
+		translateArrowX->SetRotation(FQuaternion::EulerAngles(FVector(0, -90.f, 0).Radians()));
+	}
+	else
+	{
+		translateArrowX->SetPosition(FVector(-0.5f, 0, 0));
+		translateArrowX->SetRotation(FQuaternion::EulerAngles(FVector(0, 90.f, 0).Radians()));
+	}
+
+	dot = FVector::Dot(rootComponent->GetUpVector(), dirToCam);
+	if (dot < 0.f)
+	{
+		translateArrowY->SetPosition(FVector(0, 0.5f, 0));
+		translateArrowY->SetRotation(FQuaternion::EulerAngles(FVector(90.f, 0, 0).Radians()));
+	}
+	else
+	{
+		translateArrowY->SetPosition(FVector(0, -0.5f, 0));
+		translateArrowY->SetRotation(FQuaternion::EulerAngles(FVector(-90.f, 0, 0).Radians()));
+	}
+
+	dot = FVector::Dot(rootComponent->GetForwardVector(), dirToCam);
+	if (dot < 0.f)
+	{
+		translateArrowZ->SetPosition(FVector(0, 0, 0.5f));
+		translateArrowZ->SetRotation(FQuaternion::EulerAngles(FVector(-180.f, 0, 0).Radians()));
+	}
+	else
+	{
+		translateArrowZ->SetPosition(FVector(0, 0, -0.5f));
+		//translateArrowZ->SetRotation(FQuaternion::EulerAngles(FVector(0, 0, 0).Radians()));
+	}
 }
 
 void CTransformGizmoEntity::UpdateTranslate()
@@ -191,30 +232,34 @@ void CTransformGizmoEntity::UpdateTranslate()
 
 	int8 selectedAxis = -1;
 
-	FVector dir = rootComponent->GetRightVector();
-	FVector center = rootComponent->GetWorldPosition() + ((dir * 0.5f) * drawScale);
+	UpdateGizmoPositions();
 
-	FMath::RayCylinderIntersection(center, dir, 0.035 * drawScale, 1.0 * drawScale, state.mouseRay.origin, state.mouseRay.direction, bHit, hitDist);
+	FVector dir = translateArrowX->GetForwardVector();
+	FVector center = translateArrowX->GetWorldPosition();
+
+	//center = translateArrowX->GetWorldPosition();
+
+	FMath::RayCylinderIntersection(center, dir, 0.05f * drawScale, 0.7f * drawScale, state.mouseRay.origin, state.mouseRay.direction, bHit, hitDist);
 	if (bHit && bestHit < hitDist)
 	{
 		bestHit = hitDist;
 		selectedAxis = 0;
 	}
 
-	dir = rootComponent->GetUpVector();
-	center = rootComponent->GetWorldPosition() + ((dir * 0.5f) * drawScale);
+	dir = translateArrowY->GetForwardVector();
+	center = translateArrowY->GetWorldPosition();
 
-	FMath::RayCylinderIntersection(center, dir, 0.035 * drawScale, 1.0 * drawScale, state.mouseRay.origin, state.mouseRay.direction, bHit, hitDist);
+	FMath::RayCylinderIntersection(center, dir, 0.035 * drawScale, 0.7f * drawScale, state.mouseRay.origin, state.mouseRay.direction, bHit, hitDist);
 	if (bHit && bestHit < hitDist)
 	{
 		bestHit = hitDist;
 		selectedAxis = 1;
 	}
 
-	dir = rootComponent->GetForwardVector();
-	center = rootComponent->GetWorldPosition() + ((dir * 0.5f) * drawScale);
+	dir = translateArrowZ->GetForwardVector();
+	center = translateArrowZ->GetWorldPosition();
 
-	FMath::RayCylinderIntersection(center, dir, 0.035 * drawScale, 1.0 * drawScale, state.mouseRay.origin, state.mouseRay.direction, bHit, hitDist);
+	FMath::RayCylinderIntersection(center, dir, 0.035 * drawScale, 0.7f * drawScale, state.mouseRay.origin, state.mouseRay.direction, bHit, hitDist);
 	if (bHit && bestHit < hitDist)
 	{
 		bestHit = hitDist;
@@ -261,7 +306,7 @@ FVector CTransformGizmoEntity::CalculateDragPosition()
 {
 	const FVector axis[3] = { targetObject->GetRightVector(), targetObject->GetUpVector(), targetObject->GetForwardVector() };
 
-	FVector planeTangent = FVector::Cross(axis[dragGizmo], targetObject->GetWorldPosition() - camera->GetWorldPosition());
+	FVector planeTangent = FVector::Cross(axis[dragGizmo], targetObject->GetWorldPosition() - camera->position);
 	FVector planeNormal = FVector::Cross(axis[dragGizmo], planeTangent);
 
 	FVector& rayDir = state.mouseRay.direction;

@@ -1,5 +1,7 @@
 
 #include "Vectors.h"
+#include "Rendering/RenderProxies.h"
+#include "Window.h"
 #include <DirectXMath.h>
 
 FVector FVector::Orthogonal() const
@@ -127,10 +129,10 @@ FQuaternion& FQuaternion::operator*=(const FQuaternion& b)
 	//return *this;
 
 	FQuaternion a = *this;
-	x = a.x * b.w + a.y * b.z - a.z * b.y + a.w * b.x;
-	y = -a.x * b.z + a.y * b.w + a.z * b.x + a.w * b.y;
-	z = a.x * b.y - a.y * b.x + a.z * b.w + a.w * b.z;
-	w = -a.x * b.x - a.y * b.y - a.z * b.z + a.w * b.w;
+	w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
+	x = a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y;
+	y = a.w * b.y + a.y * b.w + a.z * b.x - a.x * b.z;
+	z = a.w * b.z + a.z * b.w + a.x * b.y - a.y * b.x;
 	return *this;
 }
 
@@ -187,9 +189,28 @@ FMatrix& FMatrix::operator*=(const FQuaternion& quat)
 FQuaternion operator*(const FQuaternion& a, const FQuaternion& b)
 {
 	FQuaternion r;
-	r.x = a.x * b.w + a.y * b.z - a.z * b.y + a.w * b.x;
-	r.y = -a.x * b.z + a.y * b.w + a.z * b.x + a.w * b.y;
-	r.z = a.x * b.y - a.y * b.x + a.z * b.w + a.w * b.z;
-	r.w = -a.x * b.x - a.y * b.y - a.z * b.z + a.w * b.w;
+	r.w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
+	r.x = a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y;
+	r.y = a.w * b.y + a.y * b.w + a.z * b.x - a.x * b.z;
+	r.z = a.w * b.z + a.z * b.w + a.x * b.y - a.y * b.x;
 	return r;
+}
+
+FRay FRay::MouseToRay(CCameraProxy* cam, float x, float y, IBaseWindow* window)
+{
+	int w, h;
+	window->GetSize(w, h);
+
+	y = h - y;
+
+	float mouseX = x / ((float)w * 0.5f) - 1.f;
+	float mouseY = y / ((float)h * 0.5f) - 1.f;
+
+	FMatrix invVP = (cam->projection * cam->view).Inverse();
+	glm::vec4 screenPos = glm::vec4(mouseX, mouseY, 1.f, 1.f);
+	glm::vec4 worldPos = (glm::mat4)invVP * screenPos;
+
+	FVector dir = glm::normalize(glm::vec3(worldPos));
+
+	return { cam->position, dir };
 }

@@ -15,6 +15,7 @@
 #include "Game/Components/CameraComponent.h"
 #include "Resources/Material.h"
 #include "Resources/Scene.h"
+#include "Misc/Timer.h"
 
 #include <GLFW/glfw3.h>
 #include <Util/Assert.h>
@@ -40,6 +41,8 @@ bool gIsMainGaurded = 0;
 void CEngine::InitMinimal()
 {
 	THORIUM_ASSERT(gEngine, "");
+
+	MakeIndestructible();
 	CConsole::Init();
 	CONSOLE_LogInfo("CEngine", "Initializing...");
 	
@@ -122,6 +125,7 @@ void CEngine::LoadGame(const FString& game, bool bFirst)
 		return;
 	
 	activeGame.name = game;
+	activeGame.mod = fMod;
 	activeGame.title = *gameinfo.GetValue("title");
 	activeGame.version = *gameinfo.GetValue("version");
 	activeGame.startupScene = *gameinfo.GetValue("scene");
@@ -146,8 +150,11 @@ int CEngine::Run()
 {
 	gIsRunning = true;
 
+	deltaTime = 0.02;
 	while (gIsRunning)
 	{
+		FTimer dtTimer;
+
 		CWindow::PollEvents();
 
 		CResourceManager::Update();
@@ -159,24 +166,29 @@ int CEngine::Run()
 			gWorld->Start();
 		}
 
-		_time = glfwGetTime();
+		/*_time = glfwGetTime();
 		deltaTime = _time - _prevTime;
-		_prevTime = _time;
+		_prevTime = _time;*/
 
-		Events::OnUpdate.Fire();
+		FTimer updateTimer;
+
+		Events::OnUpdate.Invoke();
 		gWorld->Update(deltaTime);
 
-		Events::PostUpdate.Fire();
+		Events::PostUpdate.Invoke();
+
+		updateTimer.Stop();
+		updateTime = updateTimer.GetMiliseconds();
+
+		updateTimer.Begin();
 
 #if RENDER_MULTITHREADED
 		gRenderer->JoinRenderThread();
 #endif
 		gRenderer->BeginRender();
 
-		Events::OnRender.Fire();
+		Events::OnRender.Invoke();
 
-		//worldRenderScene->SetFrameBuffer(gameWindow->swapChain->GetFrameBuffer());
-		//worldRenderScene->SetDepthBuffer(gameWindow->swapChain->GetDepthBuffer());
 		gWorld->renderScene->SetFrameBuffer(gameWindow->swapChain->GetFrameBuffer());
 		gWorld->renderScene->SetDepthBuffer(gameWindow->swapChain->GetDepthBuffer());
 
@@ -188,7 +200,13 @@ int CEngine::Run()
 #else
 		gRenderer->Render();
 #endif
+		updateTimer.Stop();
+		renderTime = updateTimer.GetMiliseconds();
+
 		gameWindow->Present(1, 0);
+
+		dtTimer.Stop();
+		deltaTime = dtTimer.GetSeconds();
 
 		if (gameWindow->WantsToClose() || bWantsToExit)
 			gIsRunning = false;
@@ -253,7 +271,7 @@ void CEngine::DoLoadWorld()
 	gWorld = CreateObject<CWorld>();
 	gWorld->MakeIndestructible();
 
-	Events::LevelChange.Fire();
+	Events::LevelChange.Invoke();
 
 	if (nextSceneName != L"empty")
 	{
@@ -271,7 +289,7 @@ void CEngine::DoLoadWorld()
 	gWorld->InitWorld(CWorld::InitializeInfo().RegisterForRendering(false));
 	//gWorld->SetRenderScene(worldRenderScene);
 
-	Events::PostLevelChange.Fire();
+	Events::PostLevelChange.Invoke();
 
 	nextSceneName = L"";
 }
@@ -353,7 +371,7 @@ void CEngine::SaveUserConfig()
 		kv.GetValue("window.y")->Set(FString::ToString(gameWindow->WindowedRect.y));
 		kv.GetValue("window.w")->Set(FString::ToString(gameWindow->WindowedRect.w));
 		kv.GetValue("window.h")->Set(FString::ToString(gameWindow->WindowedRect.h));
-		kv.GetValue("window.mode")->Set(FString::ToString(gameWindow->GetWindowMode()));
+		kv.GetValue("window.mode")->Set(FString::ToString((int)gameWindow->GetWindowMode()));
 	}
 
 	kv.Save();

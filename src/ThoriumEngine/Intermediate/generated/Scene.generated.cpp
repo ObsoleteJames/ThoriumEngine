@@ -9,9 +9,29 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
-DECLARE_PROPERTY(CScene, "Gamemode Class", gamemodeClass, "", "CGameMode", EVT_CLASS_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , CScene::__private_gamemodeClass_offset(), sizeof(TClassPtr<CGameMode>), nullptr, nullptr)
+static FPropertyMeta _CScene_gamemodeClass_Meta {
+	"",
+	"",
+	"Gamemode",
+	"",
+	nullptr
+};
+
+DECLARE_PROPERTY(CScene, "Gamemode Class", gamemodeClass, "", "CGameMode", EVT_CLASS_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CScene, gamemodeClass), sizeof(TClassPtr<CGameMode>), &_CScene_gamemodeClass_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CScene, gamemodeClass)
+
+static FPropertyMeta _CScene_gravity_Meta {
+	"",
+	"",
+	"Physics",
+	"",
+	nullptr
+};
+
+DECLARE_PROPERTY(CScene, "Gravity", gravity, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CScene, gravity), sizeof(float), &_CScene_gravity_Meta, nullptr)
+#undef CLASS_NEXT_PROPERTY
+#define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CScene, gravity)
 
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
@@ -24,7 +44,7 @@ public:
 		name = "Scene";
 		cppName = "CScene";
 		size = sizeof(CScene);
-		numProperties = 1;
+		numProperties = 2;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
 		extension = ".thscene";

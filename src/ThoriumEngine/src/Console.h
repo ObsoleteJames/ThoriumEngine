@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EngineCore.h"
+#include <functional>
 #include <Util/Event.h>
 
 #define CONSOLE_USE_ARRAY 1
@@ -32,10 +33,12 @@ struct FConsoleMsg
 
 class ENGINE_API CConCmd
 {
-	typedef void(*CmdFuncPtr)();
+	typedef void(*CmdFuncPtr)(const TArray<FString>& args);
+	typedef void(*CmdFuncPtrNoArgs)();
 
 public:
 	CConCmd(const FString& name, CmdFuncPtr func);
+	CConCmd(const FString& name, CmdFuncPtrNoArgs func);
 	~CConCmd();
 
 	virtual void Exec(const TArray<FString>& args);
@@ -44,7 +47,7 @@ public:
 
 private:
 	FString name;
-	CmdFuncPtr func;
+	std::function<void(const TArray<FString>&)> func;
 };
 
 class ENGINE_API CConVar
@@ -78,9 +81,10 @@ public:
 	static void Shutdown();
 
 public:
-	static void LogInfo(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_INFO, module, nullptr }); }
-	static void LogWarning(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_WARNING, module, nullptr}); }
-	static void LogError(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_ERROR, module, nullptr}); }
+	static inline void LogPlain(const FString& msg, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_PLAIN, FString(), nullptr }); }
+	static inline void LogInfo(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_INFO, module, nullptr }); }
+	static inline void LogWarning(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_WARNING, module, nullptr }); }
+	static inline void LogError(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_ERROR, module, nullptr }); }
 
 	static void Exec(const FString& input);
 

@@ -9,6 +9,7 @@
 #include "Game/GameInstance.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/RenderScene.h"
+#include "Misc/Timer.h"
 #include "Platform/Windows/DirectX/DirectXRenderer.h"
 
 #include "Resources/Material.h"
@@ -20,7 +21,8 @@
 void CEditorEngine::Init()
 {
 	InitMinimal();
-	gIsEditor = 1;
+	gIsEditor = true;
+	gIsClient = true;
 
 	LoadEditorConfig();
 
@@ -62,7 +64,7 @@ int CEditorEngine::Run()
 {
 	CResourceManager::Update();
 	CObjectManager::Update();
-	Events::OnUpdate.Fire();
+	Events::OnUpdate.Invoke();
 
 	if (!nextSceneName.IsEmpty())
 	{
@@ -70,6 +72,8 @@ int CEditorEngine::Run()
 		if (bIsPlaying)
 			gWorld->Start();
 	}
+
+	FTimer updateTimer;
 
 	gWorld->Update(deltaTime);
 
@@ -81,8 +85,9 @@ int CEditorEngine::Run()
 			editorMode->EditorUpdate(deltaTime);
 	}
 
-	Events::PostUpdate.Fire();
+	Events::PostUpdate.Invoke();
 
+	if (!bIsPlaying)
 	{
 		FDrawMeshCmd cmd;
 		cmd.material = gridMat;
@@ -99,6 +104,9 @@ int CEditorEngine::Run()
 
 	if (editorMode)
 		editorMode->Render();
+
+	updateTimer.Stop();
+	updateTime = updateTimer.GetMiliseconds();
 
 	return 0;
 }
@@ -150,13 +158,13 @@ void CEditorEngine::SaveEditorConfig()
 
 void CEditorEngine::OnLevelChange()
 {
-	editorCamera = new CCameraComponent();
-	editorCamera->SetWorldPosition({ 0.f, 1.f, -5.f });
+	editorCamera = new CCameraProxy();
+	editorCamera->position = { 0.f, 1.f, -5.f };
 
 	//arrowModel = CreateObject<CModelAsset>();
 	//arrowModel->InitFromObj(gArrowObj);
 
-	gWorld->renderScene->SetCamera(editorCamera);
+	gWorld->SetPrimaryCamera(editorCamera);
 
 	transformGizmo = gWorld->CreateEntity<CTransformGizmoEntity>();
 	transformGizmo->bEditorEntity = true;
@@ -286,7 +294,7 @@ void CEditorEngine::SetSelectedObject(CObject* obj)
 	if (obj) 
 		selectedObjects.Add(obj); 
 	
-	OnObjectSelected.Fire(selectedObjects);
+	OnObjectSelected.Invoke(selectedObjects);
 }
 
 void CEditorEngine::SetEditorMode(const FString& modeName)

@@ -181,6 +181,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="Intermediate\generated\BillboardComponent.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Buffers.generated.cpp" />
     <ClCompile Include="Intermediate\generated\CameraComponent.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Engine.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Engine.init.cpp" />
     <ClCompile Include="Intermediate\generated\Entity.generated.cpp" />
     <ClCompile Include="Intermediate\generated\EntityComponent.generated.cpp" />
@@ -191,6 +192,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="Intermediate\generated\ModelComponent.generated.cpp" />
     <ClCompile Include="Intermediate\generated\ModelEntity.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Object.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\ObjectHandle.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Pawn.generated.cpp" />
     <ClCompile Include="Intermediate\generated\PawnController.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Player.generated.cpp" />
@@ -234,6 +236,8 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="src\Game\World.cpp" />
     <ClCompile Include="src\Math\Math.cpp" />
     <ClCompile Include="src\Math\Vectors.cpp" />
+    <ClCompile Include="src\Misc\Timer.cpp" />
+    <ClCompile Include="src\Object\ObjectHandle.cpp" />
     <ClCompile Include="src\Platform\Windows\DirectX\DirectXBuffers.cpp" />
     <ClCompile Include="src\Platform\Windows\DirectX\DirectXFrameBuffer.cpp" />
     <ClCompile Include="src\Platform\Windows\DirectX\DirectXRenderer.cpp" />
@@ -281,6 +285,8 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClInclude Include="src\Game\PawnController.h" />
     <ClInclude Include="src\Game\PlayerController.h" />
     <ClInclude Include="src\Game\Player.h" />
+    <ClInclude Include="src\Misc\Timer.h" />
+    <ClInclude Include="src\Object\ObjectHandle.h" />
     <ClInclude Include="src\Object\ObjectSelector.h" />
     <ClInclude Include="src\Profiler\Profiler.h" />
     <ClInclude Include="src\Rendering\RenderProxies.h" />
@@ -329,6 +335,9 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClInclude Include="src\ThirdParty\stb_image_resize.h" />
     <ClInclude Include="src\Window.h" />
     <ClInclude Include="src\Game\World.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Object\Delegate.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

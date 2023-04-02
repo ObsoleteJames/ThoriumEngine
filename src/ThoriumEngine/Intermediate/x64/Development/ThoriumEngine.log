@@ -1,7 +1,10 @@
 ﻿  Path: F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\
   Running HeaderTool for project: Engine
   Engine.init.cpp
-  Console.cpp
+  Texture.cpp
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Resources\Texture.cpp(310,19): warning C4244: 'initializing': conversion from 'double' to 'SizeType', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Resources\Texture.cpp(325,99): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Resources\Texture.cpp(339,87): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
   Generating Code...
   Util.lib(String.obj) : MSIL .netmodule or module compiled with /GL found; restarting link with /LTCG; add /LTCG to the link command line to improve linker performance
 LINK : warning LNK4075: ignoring '/INCREMENTAL' due to '/LTCG' specification
@@ -17,7 +20,7 @@ glfw3x64.lib(vulkan.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'g
 glfw3x64.lib(window.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(window.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
 glfw3x64.lib(win32_init.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_init.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
 glfw3x64.lib(win32_joystick.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_joystick.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(win32_monitor.obj) : warning LNK4099: PDB '' was not found with 'glfw3x64.lib(win32_monitor.obj)' or at ''; linking object as if no debug info
+glfw3x64.lib(win32_monitor.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_monitor.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
 glfw3x64.lib(win32_time.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_time.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
 glfw3x64.lib(win32_thread.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_thread.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info
 glfw3x64.lib(win32_window.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_window.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\glfw.pdb'; linking object as if no debug info

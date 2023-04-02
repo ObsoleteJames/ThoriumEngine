@@ -2,6 +2,7 @@
 
 #include "Windows/ToolsWindow.h"
 #include "Object/Object.h"
+#include "Window.h"
 
 class QMenu;
 class QLabel;
@@ -10,14 +11,18 @@ class QComboBox;
 class CConsoleWidget;
 class COutlinerWidget;
 class CPropertiesWidget;
+class CSceneSettingsWidget;
 class CAssetBrowserDW;
 class CWorldViewportWidget;
 class CCameraComponent;
+class P_CEditorWindow;
 
 class SDK_API CEditorWindow : public CToolsWindow
 {
 	Q_OBJECT
 	ToolsWindowBody(CEditorWindow, "Editor Window", false)
+
+	friend class P_CEditorWindow;
 
 public:
 	CEditorWindow();
@@ -44,13 +49,17 @@ protected:
 	void UpdateTitle();
 
 	void OnLevelChange();
-
 	void OnObjectSelected(const TArray<TObjectPtr<CObject>>& objs);
 
+	void OnKeyEvent(EKeyCode key, EInputAction action, EInputMod mod);
+
 private:
+	P_CEditorWindow* p_obj;
+
 	CConsoleWidget* consoleWidget;
 	COutlinerWidget* outlinerWidget;
 	CPropertiesWidget* propertiesWidget;
+	CSceneSettingsWidget* sceneSettings;
 	CAssetBrowserDW* assetBrowser;
 	CWorldViewportWidget* worldViewport;
 	QLabel* projectLabel;

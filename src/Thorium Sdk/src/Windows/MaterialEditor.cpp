@@ -120,7 +120,7 @@ public:
 		});
 
 		connect(btnSwitch, &QPushButton::clicked, this, [=]() {
-			if (!t->bIsCustom && t->tex)
+			if (!t->bIsCustom && t->tex && t->tex->File())
 			{
 				texPath = t->tex->File()->Path();
 			}
@@ -273,10 +273,13 @@ void CMaterialEditor::Init()
 	modelComp = modelEnt->AddComponent<CModelComponent>("Model");
 	modelComp->SetModel(L"models\\Sphere.thmdl");
 
-	camera = CreateObject<CCameraComponent>();
+	//camera = CreateObject<CCameraComponent>();
+	cam = new CCameraProxy();
 	viewport->SetControlMode(ECameraControlMode::Orbit);
-	viewport->camera = camera;
-	world->GetRenderScene()->SetCamera(camera);
+	viewport->SetCamera(cam);
+	
+	world->RegisterCamera(cam);
+	world->SetPrimaryCamera(cam);
 }
 
 void CMaterialEditor::paintEvent(QPaintEvent* event)
@@ -301,9 +304,9 @@ void CMaterialEditor::closeEvent(QCloseEvent* event)
 	}
 
 	material = nullptr;
-	camera->Delete();
 	world->Delete();
 	world = nullptr;
+	delete cam;
 
 	event->accept();
 }

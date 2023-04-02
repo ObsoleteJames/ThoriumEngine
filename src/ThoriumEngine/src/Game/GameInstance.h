@@ -24,7 +24,7 @@ public:
 	inline const TArray<TObjectPtr<CPlayer>>& GetPlayers() const { return players; }
 	inline const TArray<FLocalPlayer>& GetLocalPlayers() const { return localPlayers; }
 
-	inline FLocalPlayer& GetLocalPlayer(int index = 0) { return localPlayers[index]; }
+	FLocalPlayer* GetLocalPlayer(int index = 0);
 
 	bool AddLocalPlayer(uint controllerId = -1);
 

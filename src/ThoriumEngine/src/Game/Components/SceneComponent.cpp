@@ -4,7 +4,7 @@
 FVector CSceneComponent::GetWorldPosition() const
 {
 	if (parent)
-		return parent->GetRotation().Rotate(position) + parent->GetWorldPosition();
+		return (parent->GetWorldRotation().Rotate(position) * parent->GetWorldScale()) + parent->GetWorldPosition();
 	return position;
 }
 
@@ -18,14 +18,14 @@ FVector CSceneComponent::GetWorldScale() const
 FQuaternion CSceneComponent::GetWorldRotation() const
 {
 	if (parent)
-		return rotation * parent->GetWorldRotation();
+		return parent->GetWorldRotation() * rotation;
 	return rotation;
 }
 
 void CSceneComponent::SetWorldPosition(const FVector& pos)
 {
 	if (parent)
-		position = pos - parent->GetRotation().Rotate(parent->GetWorldPosition()); // TODO: use rotational position
+		position = pos - parent->GetWorldRotation().Rotate(parent->GetWorldPosition()); // TODO: use rotational position
 	else
 		position = pos;
 }
@@ -45,7 +45,7 @@ void CSceneComponent::SetWorldRotation(const FQuaternion& rot)
 
 void CSceneComponent::AttachTo(CSceneComponent* newParent, const FTransformSpace& space /*= FTransformSpace::KEEP_WORLD_TRANSFORM*/)
 {
-	if (parent == newParent)
+	if (parent == newParent || newParent == this)
 		return;
 
 	if (parent)

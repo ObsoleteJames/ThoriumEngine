@@ -56,6 +56,7 @@ public:
 	static void GetAssetTypes(TArray<FAssetClass*>& out);
 
 	static void FindChildClasses(FClass* target, TArray<FClass*>& out);
+	static void GetClassesOfType(FClass* type, TArray<FClass*>& out);
 
 	static int LoadModule(const WString& path);
 	static inline bool IsModuleLoaded(const FString& name) { return FindModule(name) != nullptr; }

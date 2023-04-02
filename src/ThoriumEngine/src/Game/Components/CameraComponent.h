@@ -1,9 +1,11 @@
 #pragma once
 
 #include "SceneComponent.h"
+#include "Game/World.h"
 #include "CameraComponent.generated.h"
 
 class IBaseWindow;
+class CCameraProxy;
 
 ENUM()
 enum EProjectionType
@@ -17,8 +19,13 @@ class ENGINE_API CCameraComponent : public CSceneComponent
 {
 	GENERATED_BODY()
 
+	friend class CCameraCompProxy;
+
 public:
 	CCameraComponent() = default;
+
+	void Init();
+	void OnDelete();
 
 	inline const FMatrix& GetViewMatrix() const { return viewMat; }
 	inline const FMatrix& GetProjectionMatrix() const { return projectionMat; }
@@ -28,6 +35,8 @@ public:
 	FRay MouseToRay(float mousex, float mousey, IBaseWindow* window);
 
 	inline float FOV() const { return fov; }
+
+	inline void MakePrimary() const { GetWorld()->SetPrimaryCamera(camProxy); }
 
 private:
 	PROPERTY(Editable)
@@ -44,4 +53,6 @@ private:
 
 	FMatrix viewMat;
 	FMatrix projectionMat;
+
+	CCameraProxy* camProxy;
 };

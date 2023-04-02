@@ -5,12 +5,12 @@
 #include "Rendering/RenderCommands.h"
 #include "Registry/RegistryBase.h"
 #include "HistoryBuffer.h"
-#include <Util/Event.h>
+#include "Object/Delegate.h"
 
 #include <QIcon>
 
 class CMaterial;
-class CCameraComponent;
+class CCameraProxy;
 class CEditorEngine;
 class CModelAsset;
 class CEditorMode;
@@ -46,6 +46,7 @@ public:
 public:
 	//inline void SetRenderScene(CRenderScene* scene) { worldRenderScene = scene; }
 	inline void SetDeltaTime(double dt) { deltaTime = dt; }
+	inline void UpdateRenderTime(double t) { renderTime = t; }
 
 	void LoadEditorConfig();
 	void SaveEditorConfig();
@@ -62,10 +63,10 @@ public:
 	QIcon GetResourceIcon(const WString& extension);
 
 	const TArray<TObjectPtr<CObject>>& GetSelectedObjects() const { return selectedObjects; }
-	void SetSelectedObjects(const TArray<TObjectPtr<CObject>>& objs) { selectedObjects = objs; OnObjectSelected.Fire(selectedObjects); }
+	void SetSelectedObjects(const TArray<TObjectPtr<CObject>>& objs) { selectedObjects = objs; OnObjectSelected.Invoke(selectedObjects); }
 
 	void SetSelectedObject(CObject* obj);
-	void AddSelectedObject(CObject* obj) { selectedObjects.Add(obj); OnObjectSelected.Fire(selectedObjects); }
+	void AddSelectedObject(CObject* obj) { selectedObjects.Add(obj); OnObjectSelected.Invoke(selectedObjects); }
 
 	void SetEditorMode(const FString& modeName);
 	inline CEditorMode* GetEditorMode() const { return editorMode; }
@@ -87,7 +88,7 @@ public:
 	TArray<FProject> availableProjects;
 
 	CHistoryBuffer historyBuffer;
-	TEvent<const TArray<TObjectPtr<CObject>>&> OnObjectSelected;
+	TDelegate<const TArray<TObjectPtr<CObject>>&> OnObjectSelected;
 
 	bool bIsPlaying = false;
 
@@ -102,7 +103,7 @@ public:
 	TObjectPtr<CMaterial> gridMat;
 	TObjectPtr<CTransformGizmoEntity> transformGizmo;
 
-	CCameraComponent* editorCamera;
+	CCameraProxy* editorCamera;
 	FMesh* gridMesh;
 };
 

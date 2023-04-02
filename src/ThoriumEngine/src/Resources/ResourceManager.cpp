@@ -12,7 +12,7 @@
 #include <atomic>
 #include <chrono>
 
-#define RESOURCE_THREAD_COUNT 2
+#define RESOURCE_THREAD_COUNT 1
 
 TUnorderedMap<WString, CAsset*> CResourceManager::allocatedResources;
 TUnorderedMap<WString, FResourceData> CResourceManager::availableResources;
@@ -23,6 +23,8 @@ static std::thread resourceThread;
 static std::atomic<bool> bResourceRunning;
 
 static TArray<std::thread> resourceThreads;
+
+static CConCmd cmdPrintStreamCount("resources.printinfo", []() { CONSOLE_LogInfo("CResourceManager", "Resources: " + FString::ToString(CResourceManager::ResourcesCount()) + "\nStreaming: " + FString::ToString(CResourceManager::StreamingResourcesCount())); });
 
 FAssetClass* GetClassFromExt(const FString& ext)
 {
@@ -115,7 +117,7 @@ void CResourceManager::Update()
 		if (obj->bDirty)
 			obj->PushData();
 
-		if (obj->bFinished)
+		if (obj->bFinished && !obj->bLoading)
 		{
 			streamingResources.Erase(streamingResources.begin() + i);
 			delete obj;
@@ -156,7 +158,7 @@ void CResourceManager::StreamResources()
 
 		if (obj->bFinished)
 		{
-			std::this_thread::sleep_for(1ms);
+			//std::this_thread::sleep_for(1ms);
 			continue;
 		}
 

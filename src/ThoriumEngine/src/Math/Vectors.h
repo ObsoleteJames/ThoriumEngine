@@ -10,6 +10,9 @@
 
 #include "Vectors.Generated.h"
 
+class IBaseWindow;
+class CCameraProxy;
+
 STRUCT()
 struct ENGINE_API FVector
 {
@@ -120,6 +123,9 @@ STRUCT()
 struct ENGINE_API FRay
 {
 	GENERATED_BODY()
+
+public:
+	static FRay MouseToRay(CCameraProxy* cam, float mousex, float mousey, IBaseWindow* window);
 
 public:
 	PROPERTY(Editable)

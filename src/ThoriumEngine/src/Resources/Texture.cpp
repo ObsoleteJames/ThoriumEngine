@@ -16,12 +16,6 @@
 #define THTEX_MAGIC_SIZE 29
 static const char* thtexMagicStr = "\0\0ThoriumEngine Texture File\0";
 
-//CTexture::CTexture(void* data, int width, int height, ETextureFormat f) : format(f)
-//{
-//	tex = gRenderer->CreateTexture2D(data, width, height, format);
-//	bInitialized = true;
-//}
-
 class CTextureStreamingProxy : public IResourceStreamingProxy
 {
 public:
@@ -34,6 +28,11 @@ public:
 		stream = t->File()->GetStream("rb");
 	}
 
+	virtual ~CTextureStreamingProxy()
+	{
+		tex->bLoading = false;
+	}
+
 	void Load() override
 	{
 		bLoading = true;
@@ -41,7 +40,6 @@ public:
 		constexpr SizeType offset = THTEX_MAGIC_SIZE + sizeof(uint16) + sizeof(ETextureFormat) + 4 + 4 + 1;
 		stream->Seek(offset, SEEK_SET);
 
-		using namespace std::chrono_literals;
 		if (bDirty)
 		{
 			bLoading = false;
@@ -60,6 +58,8 @@ public:
 			free(data);
 		
 		data = (uint8*)malloc(dataSize);
+		THORIUM_ASSERT(data, "Failed to allocate memory for texture (" + FString::ToString(dataSize) + " bytes)");
+
 		stream->Read(data, dataSize);
 		bDirty = true;
 		bLoading = false;
@@ -70,7 +70,9 @@ public:
 
 	void PushData() override
 	{
-		targetTex->UpdateData(data, currentMipMap);
+		tex->curMipMapLevel = currentMipMap;
+		if (data)
+			targetTex->UpdateData(data, currentMipMap);
 		//CONSOLE_LogInfo("Updated Texture with MipMap: " + FString::ToString(currentMipMap));
 		
 		free(data);
@@ -84,9 +86,9 @@ public:
 	TUniquePtr<IBaseFStream> stream;
 	TObjectPtr<CTexture> tex;
 	ITexture2D* targetTex;
-	uint8 targetMipMap;
+	int8 targetMipMap;
 	
-	std::atomic<uint8> currentMipMap;
+	std::atomic<int8> currentMipMap;
 
 	uint8* data;
 
@@ -147,6 +149,12 @@ void CTexture::Init()
 	*stream >> &numMipmaps;
 	*stream >> &dataSize;
 
+	curMipMapLevel = numMipmaps;
+
+	if (numMipmaps > 1)
+		tex = gRenderer->CreateTexture2D(nullptr, numMipmaps, width, height, format, filteringType);
+
+	bLoading = false;
 	bInitialized = true;
 }
 
@@ -161,8 +169,16 @@ void CTexture::Init(void* data, int width, int height, ETextureFormat format /*=
 
 void CTexture::Load(uint8 lodLevel)
 {
-	if (IsLodLoaded(lodLevel) || !file)
+	if (!file || curMipMapLevel <= lodLevel || bLoading)
 		return;
+
+	if (numMipmaps > 1)
+	{
+		bLoading = true;
+
+		CResourceManager::StreamResource(new CTextureStreamingProxy(this, lodLevel));
+		return;
+	}
 
 	TUniquePtr<IBaseFStream> stream = file->GetStream("rb");
 	if (!stream || !stream->IsOpen())
@@ -174,35 +190,6 @@ void CTexture::Load(uint8 lodLevel)
 
 	stream->Seek(offset, SEEK_SET);
 
-	if (numMipmaps > 1)
-	{
-		SetLodLevel(lodLevel, true);
-
-		if (tex)
-			delete tex;
-
-		//SizeType dataSize = 0;
-		//for (int i = 0; i < lodLevel; i++)
-		//{
-		//	*stream >> &dataSize;
-		//	stream->Seek(dataSize, SEEK_CUR);
-		//}
-
-		//uint8* lowData = (uint8*)malloc(dataSize);
-		//stream->Read(lowData, dataSize);
-
-		//TArray<void*> d(numMipmaps);
-		//d[numMipmaps - 1] = lowData;
-
-		tex = gRenderer->CreateTexture2D(nullptr, numMipmaps, width, height, format, filteringType);
-		//free(lowData);
-		if (!tex)
-			return;
-
-		CResourceManager::StreamResource(new CTextureStreamingProxy(this, lodLevel));
-		return;
-	}
-
 	stream->Seek(8, SEEK_CUR);
 	uint8* data = (uint8*)malloc(dataSize);
 	stream->Read(data, dataSize);
@@ -211,7 +198,7 @@ void CTexture::Load(uint8 lodLevel)
 		delete tex;
 
 	tex = gRenderer->CreateTexture2D(data, width, height, format, filteringType);
-	SetLodLevel(lodLevel, true);
+	curMipMapLevel = 0;
 }
 
 void CTexture::Unload(uint8 lodLevel)

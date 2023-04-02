@@ -51,7 +51,7 @@ void CQuatProperty::Update()
 
 	if (cache != *value)
 	{
-		FVector euler = FMath::Degrees(value->ToEuler());
+		FVector euler = value->ToEuler().Degrees();
 
 		editors[0]->setValue(euler.x);
 		editors[1]->setValue(euler.y);
@@ -68,7 +68,7 @@ void CQuatProperty::Changed()
 	euler.y = editors[1]->value();
 	euler.z = editors[2]->value();
 
-	FQuaternion q = FQuaternion::EulerAngles(FMath::Radians(euler));
+	FQuaternion q = FQuaternion::EulerAngles(euler.Radians());
 	cache = q;
 	*value = q;
 	emit(OnValueChanged());

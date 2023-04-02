@@ -2,10 +2,12 @@
 #include "GameInstance.h"
 #include "World.h"
 #include "GameMode.h"
+#include "Engine.h"
 
 void CGameInstance::Init()
 {
-	AddLocalPlayer(0);
+	if (gIsClient)
+		AddLocalPlayer(0);
 }
 
 void CGameInstance::Start()
@@ -26,6 +28,13 @@ void CGameInstance::SpawnLocalPlayers()
 	{
 		gamemode->OnPlayerJoined(lp.player);
 	}
+}
+
+FLocalPlayer* CGameInstance::GetLocalPlayer(int index /*= 0*/)
+{
+	if (index >= localPlayers.Size()) 
+		return nullptr; 
+	return &localPlayers[index];
 }
 
 bool CGameInstance::AddLocalPlayer(uint controllerId)

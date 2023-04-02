@@ -16,6 +16,9 @@ void CBillboardComponent::Init()
 		void FetchData() override
 		{
 			bVisible = comp->IsVisible();
+			if (comp->bEditorOnly && comp->GetWorld()->IsActive())
+				bVisible = false;
+
 			if (!bVisible)
 				return;
 

@@ -7,7 +7,7 @@
 class CModelComponent;
 class CSceneComponent;
 class CMaterial;
-class CCameraComponent;
+class CCameraProxy;
 
 ENUM()
 enum EGizmoType
@@ -40,7 +40,7 @@ public:
 	void SetTargetObject(CSceneComponent* obj);
 	inline CSceneComponent* GetTargetObject() const { return targetObject; }
 
-	inline void SetCamera(CCameraComponent* c) { camera = c; }
+	inline void SetCamera(CCameraProxy* c) { camera = c; }
 
 	void SetGizmoType(EGizmoType t);
 
@@ -59,6 +59,8 @@ protected:
 	void Init() override;
 	void Update(double dt) override;
 	void OnDelete() override;
+
+	void UpdateGizmoPositions();
 
 	void UpdateTranslate();
 	void UpdateRotate();
@@ -81,8 +83,7 @@ private:
 	float scaleSnap = 0.5f;
 
 	int dragGizmo = -1;
-	SizeType mouseBtnBind = -1;
-	SizeType keyEventBind = -1;
+	bool bHasBoundEvents;
 
 	FVector posOffset;
 	float drawScale = 1.0f;
@@ -90,7 +91,11 @@ private:
 	FGizmoState state;
 	FGizmoState previousState;
 
-	TObjectPtr<CModelComponent> translateGizmo;
+	CModelComponent* translateArrowX;
+	CModelComponent* translateArrowY;
+	CModelComponent* translateArrowZ;
+
+	TObjectPtr<CSceneComponent> translateGizmo;
 	TObjectPtr<CModelComponent> rotateGizmo;
 	TObjectPtr<CModelComponent> scaleGizmo;
 
@@ -99,6 +104,6 @@ private:
 	TObjectPtr<CMaterial> gizmoMatZ;
 	TObjectPtr<CMaterial> gizmoMatW;
 
-	CCameraComponent* camera;
+	CCameraProxy* camera;
 	TObjectPtr<CSceneComponent> targetObject;
 };

@@ -56,7 +56,7 @@ void CWorld::InitWorld(const InitializeInfo& initInfo)
 
 	if (initInfo.bRegisterForRendering)
 	{
-		Events::OnRender.Bind([=]() { this->Render(); gRenderer->PushScene(renderScene); });
+		Events::OnRender.Bind(this, [=]() { this->Render(); gRenderer->PushScene(renderScene); });
 	}
 
 
@@ -163,7 +163,7 @@ CEntity* CWorld::CreateEntity(FClass* classType, const FString& name)
 	if (bActive)
 		r->OnStart();
 
-	OnEntityCreated.Fire(r);
+	OnEntityCreated.Invoke(r);
 
 	entities.Add(r);
 	return r;

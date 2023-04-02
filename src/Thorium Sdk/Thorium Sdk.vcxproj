@@ -15,12 +15,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\CodeGenerator.cpp" />
     <ClCompile Include="src\EditorEngine.cpp" />
     <ClCompile Include="src\EditorMode.cpp" />
     <ClCompile Include="src\EditorSelectMode.cpp" />
     <ClCompile Include="src\HistoryBuffer.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\ToolsCore.cpp" />
+    <ClCompile Include="src\Widgets\ClassSelectorWidget.cpp" />
     <ClCompile Include="src\Widgets\FileDialogs.cpp" />
     <ClCompile Include="src\Widgets\FramelessDialog.cpp" />
     <ClCompile Include="src\Widgets\ImportDialogs\BaseImportDialog.cpp" />
@@ -29,6 +31,7 @@
     <ClCompile Include="src\Widgets\PropertyEditor.cpp" />
     <ClCompile Include="src\Widgets\PropertyEditors\ArrayProperty.cpp" />
     <ClCompile Include="src\Widgets\PropertyEditors\BoolProperty.cpp" />
+    <ClCompile Include="src\Widgets\PropertyEditors\ClassPtrProperty.cpp" />
     <ClCompile Include="src\Widgets\PropertyEditors\EnumProperty.cpp" />
     <ClCompile Include="src\Widgets\PropertyEditors\FloatProperty.cpp" />
     <ClCompile Include="src\Widgets\PropertyEditors\IntProperty.cpp" />
@@ -46,6 +49,7 @@
     <ClCompile Include="src\Windows\Editor\EditorWindow.cpp" />
     <ClCompile Include="src\Windows\Editor\OutlinerWidget.cpp" />
     <ClCompile Include="src\Windows\Editor\PropertiesWidget.cpp" />
+    <ClCompile Include="src\Windows\Editor\SceneSettingsWidget.cpp" />
     <ClCompile Include="src\Windows\MaterialEditor.cpp" />
     <ClCompile Include="src\Windows\ModelCreator\ModelCreator.cpp" />
     <ClCompile Include="src\Windows\ProjectManagerWindow.cpp" />
@@ -65,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="src\CodeGenerator.h" />
     <ClInclude Include="src\EditorEngine.h" />
     <ClInclude Include="src\EditorMode.h" />
     <QtMoc Include="src\HistoryBuffer.h" />
@@ -89,12 +94,15 @@
     <QtMoc Include="src\Widgets\ObjectSelectorWidget.h" />
     <QtMoc Include="src\Widgets\PropertyEditors\ObjectPtrProperty.h" />
     <QtMoc Include="src\Widgets\PropertyEditors\VectorProperty.h" />
+    <QtMoc Include="src\Widgets\ClassSelectorWidget.h" />
     <ClInclude Include="src\Widgets\ImportDialogs\BaseImportDialog.h" />
     <QtMoc Include="src\Widgets\PropertyEditors\ArrayProperty.h" />
     <ClInclude Include="src\Widgets\ImportDialogs\TextureImportDialog.h" />
     <QtMoc Include="src\Windows\MaterialEditor.h" />
     <QtMoc Include="src\Widgets\PropertyEditors\QuatProperty.h" />
     <QtMoc Include="src\Windows\Debug\ObjectDebugger.h" />
+    <QtMoc Include="src\Widgets\PropertyEditors\ClassPtrProperty.h" />
+    <QtMoc Include="src\Windows\Editor\SceneSettingsWidget.h" />
     <ClInclude Include="src\Windows\ModelCreator\Private\MeshWidget.h" />
     <ClInclude Include="src\Windows\ToolsClass.h" />
     <ClInclude Include="src\Widgets\TreeDataItem.h" />

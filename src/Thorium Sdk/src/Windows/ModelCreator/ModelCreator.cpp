@@ -34,7 +34,10 @@ bool CModelCreator::Shutdown()
 	if (bRequiresSave && !ShutdownSave())
 		return false;
 
-	delete gridMesh;
+	world->Delete();
+	world = nullptr;
+	delete gridMesh; 
+	delete camera;
 
 	SaveState();
 	return true;
@@ -161,10 +164,12 @@ void CModelCreator::Init()
 	//world->SetRenderScene(viewport->GetRenderScene());
 	viewport->SetOverrideScene(world->GetRenderScene());
 
-	camera = CreateObject<CCameraComponent>();
+	camera = new CCameraProxy();
 	viewport->SetControlMode(ECameraControlMode::Orbit);
-	viewport->camera = camera;
-	world->GetRenderScene()->SetCamera(camera);
+	viewport->SetCamera(camera);
+	//viewport->camera = camera;
+	//world->GetRenderScene()->SetCamera(camera);
+	world->SetPrimaryCamera(camera);
 
 	TObjectPtr<CEntity> modelEnt = world->CreateEntity<CEntity>();
 	modelComp = modelEnt->AddComponent<CModelComponent>("Model");
@@ -329,7 +334,7 @@ void CModelCreator::Compile()
 	for (FImportedMesh& mesh : data.importedMeshes)
 	{
 		Assimp::Importer importer;
-		const aiScene* scene = importer.ReadFile(ToFString(mesh.file).c_str(), aiProcess_Triangulate | aiProcess_MakeLeftHanded | aiProcess_CalcTangentSpace | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph | aiProcess_FlipUVs | aiProcess_PopulateArmatureData);
+		const aiScene* scene = importer.ReadFile(ToFString(mesh.file).c_str(), aiProcess_Triangulate | aiProcess_MakeLeftHanded | aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph | aiProcess_FlipUVs | aiProcess_PopulateArmatureData);
 		if (!scene)
 			continue;
 
@@ -432,6 +437,7 @@ void CModelCreator::CompileMesh(const aiScene* scene, const aiMesh* importMesh, 
 
 		vert.position = rotation.Rotate(vert.position * scale) + offset;
 		vert.normal = rotation.Rotate(vert.normal);
+		vert.tangent = rotation.Rotate(vert.tangent);
 
 		for (int b = 0; b < 4; b++)
 			vert.bones[b] = -1;

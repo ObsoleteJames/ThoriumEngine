@@ -5,6 +5,9 @@
 class CEntity;
 class CModelComponent;
 
+/**
+ * Multiclass Object ptr
+ */
 template<class... T>
 class TObjectSelector
 {
@@ -37,10 +40,4 @@ TObjectSelector<T...>& TObjectSelector<T...>::operator=(CObject* obj)
 		}
 	}
 	return *this;
-}
-
-void Tes()
-{
-	TObjectSelector<CEntity, CModelComponent> obj;
-
 }

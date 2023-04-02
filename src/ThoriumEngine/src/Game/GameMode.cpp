@@ -3,6 +3,9 @@
 #include "Player.h"
 #include "PlayerController.h"
 #include "Pawn.h"
+#include "Engine.h"
+#include "Game/Components/CameraComponent.h"
+#include "Game/GameInstance.h"
 #include "Game/World.h"
 
 #include "Game/Entities/PlayerStart.h"
@@ -15,6 +18,7 @@ void CGameMode::Init()
 
 void CGameMode::OnStart()
 {
+
 }
 
 void CGameMode::OnPlayerJoined(CPlayer* player)

@@ -3,6 +3,7 @@
 #include <Util/Event.h>
 #include "EngineCore.h"
 #include "Object/Object.h"
+#include "Object/Delegate.h"
 
 struct GLFWwindow;
 class ISwapChain;
@@ -182,11 +183,11 @@ public:
 	virtual void SetCursorMode(const ECursorMode& cm) {}
 
 public:
-	TEvent<EKeyCode, EInputAction, EInputMod> OnKeyEvent;
-	TEvent<uint> OnCharEvent;
+	TDelegate<EKeyCode, EInputAction, EInputMod> OnKeyEvent;
+	TDelegate<uint> OnCharEvent;
 
-	TEvent<double, double> OnCursorMove; // X, Y
-	TEvent<EMouseButton, EInputAction, EInputMod> OnMouseButton;
+	TDelegate<double, double> OnCursorMove; // X, Y
+	TDelegate<EMouseButton, EInputAction, EInputMod> OnMouseButton;
 
 protected:
 	double mouseX, mouseY;

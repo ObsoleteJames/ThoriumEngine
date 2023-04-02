@@ -295,7 +295,7 @@ void CRenderWidget::Render()
 	gRenderer->PushScene(targetScene);
 	gRenderer->Render();
 
-	swapchain->Present(1, 0);
+	swapchain->Present(0, 0);
 
 	// Update D.T.
 	{
@@ -314,14 +314,13 @@ void CRenderWidget::Render()
 
 void CRenderWidget::mousePressEvent(QMouseEvent* event)
 {
-	// TODO: fix button type.
-	_window->OnMouseButton.Fire(ConvertMouseBtn(event->button()), IE_PRESS, ConvertMod(event->modifiers()));
+	_window->OnMouseButton.Invoke(ConvertMouseBtn(event->button()), IE_PRESS, ConvertMod(event->modifiers()));
 	QFrame::mousePressEvent(event);
 }
 
 void CRenderWidget::mouseReleaseEvent(QMouseEvent* event)
 {
-	_window->OnMouseButton.Fire(ConvertMouseBtn(event->button()), IE_RELEASE, ConvertMod(event->modifiers()));
+	_window->OnMouseButton.Invoke(ConvertMouseBtn(event->button()), IE_RELEASE, ConvertMod(event->modifiers()));
 	QFrame::mouseReleaseEvent(event);
 }
 
@@ -341,12 +340,12 @@ void CRenderWidget::resizeEvent(QResizeEvent *event)
 
 void CRenderWidget::keyPressEvent(QKeyEvent* event)
 {
-	_window->OnKeyEvent.Fire(ConvertKey((Qt::Key)event->key()), IE_PRESS, ConvertMod(event->modifiers()));
+	_window->OnKeyEvent.Invoke(ConvertKey((Qt::Key)event->key()), IE_PRESS, ConvertMod(event->modifiers()));
 	QFrame::keyPressEvent(event);
 }
 
 void CRenderWidget::keyReleaseEvent(QKeyEvent* event)
 {
-	_window->OnKeyEvent.Fire(ConvertKey((Qt::Key)event->key()), IE_RELEASE, ConvertMod(event->modifiers()));
+	_window->OnKeyEvent.Invoke(ConvertKey((Qt::Key)event->key()), IE_RELEASE, ConvertMod(event->modifiers()));
 	QFrame::keyReleaseEvent(event);
 }

@@ -4,12 +4,15 @@
 #include "Object/Class.h"
 
 class CGameInstance;
+struct FMod;
 
 struct ENGINE_API FGame
 {
 	FString title;
 	FString name;
 	FString version;
+
+	FMod* mod;
 
 	FString startupScene;
 	TClassPtr<CGameInstance> gameInstanceClass;

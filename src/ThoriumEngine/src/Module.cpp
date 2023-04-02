@@ -132,6 +132,18 @@ void CModuleManager::FindChildClasses(FClass* target, TArray<FClass*>& out)
 	}
 }
 
+void CModuleManager::GetClassesOfType(FClass* type, TArray<FClass*>& out)
+{
+	for (auto* m : modules)
+	{
+		for (auto* c : m->Classes)
+		{
+			if (c->CanCast(type))
+				out.Add(c);
+		}
+	}
+}
+
 int CModuleManager::LoadModule(const WString& path)
 {
 	//FString path = name + "\\bin\\" + name + ".dll";

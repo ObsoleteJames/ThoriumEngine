@@ -14,15 +14,30 @@ public:
 	CCameraProxy() = default;
 	virtual ~CCameraProxy() = default;
 
-	virtual void FetchData() = 0;
+	/**
+	 * Fetch all required data for this camera to be used in the render thread.
+	 */
+	virtual void FetchData() {}
 
-	inline bool IsEnabled() const { return bEnabled; }
+	/**
+	 * Calulate the camera matrices.
+	 * May be called within the render thread.
+	 */
+	virtual void CalculateMatrix(float aspectRatio);
 
-protected:
+	inline FVector GetForwardVector() const { return rotation.Rotate({ 0.f, 0.f, 1.f }); }
+	inline FVector GetRightVector() const { return rotation.Rotate({ 1.f, 0.f, 0.f }); }
+	inline FVector GetUpVector() const { return rotation.Rotate({ 0.f, 1.f, 0.f }); }
+
+public:
 	FVector position;
 	FQuaternion rotation;
 	FMatrix view;
 	FMatrix projection;
+
+	float fov = 70.f;
+	float nearPlane = 0.1f;
+	float farPlane = 10000.f;
 
 	bool bEnabled;
 };

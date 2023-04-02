@@ -24,8 +24,11 @@ public:
 	void Save(CWorld* world);
 	virtual void Load(uint8) {}
 
-protected:
-	PROPERTY(Editable)
+public:
+	PROPERTY(Editable, Category = "Gamemode")
 	TClassPtr<CGameMode> gamemodeClass = CGameMode::StaticClass();
+
+	PROPERTY(Editable, Category = "Physics")
+	float gravity = 9.81f;
 
 };

@@ -45,7 +45,7 @@ void CWorldViewportWidget::Update(double dt)
 	{
 		cameraPitch = FMath::Clamp(cameraPitch + mouseDeltaY, -90.f, 90.f);
 		cameraYaw += mouseDeltaX;
-		camera->SetRotation(FQuaternion::EulerAngles(FVector(cameraPitch, cameraYaw, 0.f).Radians()));
+		camera->rotation = FQuaternion::EulerAngles(FVector(cameraPitch, cameraYaw, 0.f).Radians());
 
 		FVector move = GetMoveVector();
 		float verticalMove = moveDown + -moveUp;
@@ -57,11 +57,11 @@ void CWorldViewportWidget::Update(double dt)
 			else
 				curSpeed = GetCameraSpeed(cameraSpeed);
 
-			FVector pos = camera->GetPosition();
+			FVector pos = camera->position;
 			pos += camera->GetForwardVector() * move.y * curSpeed * dt;
 			pos += camera->GetRightVector() * move.x * curSpeed * dt;
 			pos += FVector(0, verticalMove, 0) * curSpeed * dt;
-			camera->SetPosition(pos);
+			camera->position = pos;
 		}
 		else
 			curSpeed = 0.f;
@@ -70,16 +70,16 @@ void CWorldViewportWidget::Update(double dt)
 	{
 		cameraPitch = FMath::Clamp(cameraPitch + mouseDeltaY, -90.f, 90.f);
 		cameraYaw += mouseDeltaX;
-		camera->SetRotation(FQuaternion::EulerAngles(FVector(cameraPitch, cameraYaw, 0.f).Radians()));
+		camera->rotation = FQuaternion::EulerAngles(FVector(cameraPitch, cameraYaw, 0.f).Radians());
 	}
 	if (bMouseMiddle)
 	{
 		if (mode == ECameraControlMode::FreeMode)
 		{
-			FVector pos = camera->GetPosition();
+			FVector pos = camera->position;
 			pos += camera->GetUpVector() * mouseDeltaY * dt;
 			pos += camera->GetRightVector() * -mouseDeltaX * dt;
-			camera->SetPosition(pos);
+			camera->position = pos;
 		}
 		else
 		{
@@ -89,7 +89,7 @@ void CWorldViewportWidget::Update(double dt)
 	}
 
 	if (mode == ECameraControlMode::Orbit)
-		camera->SetPosition((-camera->GetForwardVector() * (15 - cameraSpeed)) + orbitPos);
+		camera->position = (-camera->GetForwardVector() * (15 - cameraSpeed)) + orbitPos;
 
 	mouseDeltaY = 0;
 	mouseDeltaX = 0;
@@ -218,13 +218,23 @@ void CWorldViewportWidget::wheelEvent(QWheelEvent *event)
 	}
 }
 
-void CWorldViewportWidget::SetCamera(CCameraComponent* cam)
+//void CWorldViewportWidget::SetCamera(CCameraComponent* cam)
+//{
+//	camera = cam;
+//	FVector euler = camera->GetWorldRotation().ToEuler();
+//	euler = FMath::Degrees(euler);
+//	cameraPitch = euler.x;
+//	cameraYaw = euler.y;
+//
+//	scene->SetCamera(camera);
+//}
+
+void CWorldViewportWidget::SetCamera(CCameraProxy* c)
 {
-	camera = cam;
-	FVector euler = camera->GetWorldRotation().ToEuler();
-	euler = FMath::Degrees(euler);
+	camera = c;
+	FVector euler = camera->rotation.ToEuler().Degrees();
 	cameraPitch = euler.x;
 	cameraYaw = euler.y;
 
-	scene->SetCamera(camera);
+	scene->SetPrimaryCamera(camera);
 }

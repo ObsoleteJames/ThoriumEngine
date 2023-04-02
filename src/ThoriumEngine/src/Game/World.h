@@ -4,6 +4,7 @@
 #include <Util/Event.h>
 #include "Game/Entity.h"
 #include "EngineCore.h"
+#include "Object/Delegate.h"
 #include <mutex>
 
 #include "World.generated.h"
@@ -131,8 +132,8 @@ protected:
 	void OnDelete() override;
 
 public: // Events
-	TEvent<CEntity*> OnEntityCreated;
-	TEvent<CEntity*> OnEntityDeleted;
+	TDelegate<CEntity*> OnEntityCreated;
+	TDelegate<CEntity*> OnEntityDeleted;
 
 protected:
 	CWorld* parent;
@@ -182,5 +183,5 @@ TArray<TObjectPtr<T>> CWorld::FindEntitiesOfType()
 class ENGINE_API FWorldRegisterer
 {
 public:
-	static void UnregisterEntity(CWorld* world, CEntity* ent) { auto it = world->entities.Find(ent); if (it != world->entities.end()) { world->OnEntityDeleted.Fire(ent); world->entities.Erase(it); } }
+	static void UnregisterEntity(CWorld* world, CEntity* ent) { auto it = world->entities.Find(ent); if (it != world->entities.end()) { world->OnEntityDeleted.Invoke(ent); world->entities.Erase(it); } }
 };

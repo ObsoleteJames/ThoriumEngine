@@ -1,8 +1,8 @@
 [INF]	Initializing...
-[INF]	Created resource threads (2)
+[INF]	Created resource threads (1)
 [INF]	Initialized
 [INF]	Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
-[INF]	Found 26 assets in 'Engine'
+[INF]	Found 27 assets in 'Engine'
 [INF]	Mounting Mod: MGS
-[INF]	Found 15 assets in 'MGS'
+[INF]	Found 20 assets in 'MGS'
 [INF]	Created Editor Window

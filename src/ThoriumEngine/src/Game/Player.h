@@ -43,6 +43,8 @@ public:
 
 	void SetupViewport(uint8 numPlayers, bool bSplitVertical);
 
+	inline CPlayer* GetPlayer() const { return player; }
+
 private:
 	CPlayer* player;
 	uint8 playerId;

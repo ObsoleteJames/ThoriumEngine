@@ -19,8 +19,11 @@ Global
 		#include "common/pixel_input.hlsl"
 	};
 	
-	Property<float> vRoughness(Name = "Roughness", UiGroup = "Specular");
-	Property<float> vMetallic(Name = "Metallic", UiGroup = "Specular");
+	//Property<float> vRoughness(Name = "Roughness", UiGroup = "Specular");
+	//Property<float> vMetallic(Name = "Metallic", UiGroup = "Specular");
+
+	Property<Texture2D> vRoughness(Name = "Roughness", UiGroup = "Specular");
+	Property<Texture2D> vMetallic(Name = "Metallic", UiGroup = "Specular");
 
 	Property<Texture2D> vEmission(Name = "Emmision", UiGroup = "Color");
 	Property<float> vEmissionIntensity(Name = "Emmision Intensity", UiGroup = "Color");
@@ -110,18 +113,18 @@ PS
 		return F0 + mul(pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0), max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0);
 	}
 
-	float3 DirLight(float3 posWs, float3 normal, float3 diffuse, FDirectionalLight light)
+	float3 DirLight(float3 posWs, float3 normal, float roughness, float metallic, float3 diffuse, FDirectionalLight light)
 	{
 		float3 V = normalize(vCameraPos - posWs);
 		float3 H = normalize(V + light.direction);
 		float3 radiance = light.color * light.intensity;
 
 		float3 F0 = float3(0.04, 0.04, 0.04);
-		F0 = lerp(F0, diffuse, vMetallic);
+		F0 = lerp(F0, diffuse, metallic);
 		float3 F = fresnelSchlick(max(dot(H, V), 0), F0);
 
-		float NDF = DistributionGGX(normal, H, vRoughness);
-		float G = GeometrySmith(normal, V, light.direction, vRoughness);
+		float NDF = DistributionGGX(normal, H, roughness);
+		float G = GeometrySmith(normal, V, light.direction, roughness);
 
 		float3 numerator = NDF * G * F;
 		float denominator = 4.0 * max(dot(normal, V), 0.0) * max(dot(normal, light.direction), 0.0)  + 0.0001;
@@ -129,27 +132,28 @@ PS
 
 		float3 kS = F;
 		float3 kD = float3(1, 1, 1) - kS;
-		kD = kD * 1.0 - vMetallic;
+		kD = kD * (1.0 - metallic);
 		float NdotL = max(dot(normal, light.direction), 0);
 		return (kD * diffuse / PI + specular) * radiance * NdotL;
 	}
 
-	float3 PointLight(float3 posWs, float3 normal, float3 diffuse, FPointLight light)
+	float3 PointLight(float3 posWs, float3 normal, float roughness, float metallic, float3 diffuse, FPointLight light)
 	{
 		float3 V = normalize(vCameraPos - posWs);
 		float3 L = normalize(light.position - posWs);
 		float3 H = normalize(V + L);
 
 		float distance = length(light.position - posWs);
-		float attenuation = 1 / (distance * distance);
+		//float attenuation = 1 / (distance * distance);
+		float attenuation = 1 - saturate(distance / light.range);
 		float3 radiance = light.color * attenuation * light.intensity;
 
 		float3 F0 = float3(0.04, 0.04, 0.04);
-		F0 = lerp(F0, diffuse, vMetallic);
+		F0 = lerp(F0, diffuse, metallic);
 		float3 F = fresnelSchlick(max(dot(H, V), 0), F0);
 
-		float NDF = DistributionGGX(normal, H, vRoughness);
-		float G = GeometrySmith(normal, V, L, vRoughness);
+		float NDF = DistributionGGX(normal, H, roughness);
+		float G = GeometrySmith(normal, V, L, roughness);
 
 		float3 numerator = NDF * G * F;
 		float denominator = 4.0 * max(dot(normal, V), 0.0) * max(dot(normal, L), 0.0)  + 0.0001;
@@ -157,7 +161,7 @@ PS
 
 		float3 kS = F;
 		float3 kD = float3(1, 1, 1) - kS;
-		kD = kD * 1.0 - vMetallic;
+		kD = kD * 1.0 - metallic;
 
 		float NdotL = max(dot(normal, L), 0);
 
@@ -168,6 +172,9 @@ PS
     {
 		float4 diffuse = SampleTexture2D(vBaseColor, input.vTextureCoords) /*  * vColorTint */;
 		float4 emmision = SampleTexture2D(vEmission, input.vTextureCoords) * vEmissionIntensity;
+		float rough = SampleTexture2D(vRoughness, input.vTextureCoords).r;
+		float metallic = SampleTexture2D(vMetallic, input.vTextureCoords).r;
+
 		//float4 diffuse = float4(1, 1, 1, 1);
 		float3 d2 = diffuse.xyz;
 		float3 normal = CalculateNormal(input);
@@ -193,12 +200,12 @@ PS
 
 		for (int i = 0; i < numDirectionalLights; i++)
 		{
-			outColor =  outColor + DirLight(input.vPositionWs, normal, d2, directionalLights[i]);
+			outColor = outColor + DirLight(input.vPositionWs, normal, rough, metallic, d2, directionalLights[i]);
 		}
 
 		for (int i = 0; i < numPointLights; i++)
 		{
-			outColor = outColor + PointLight(input.vPositionWs, normal, d2, pointLights[i]);
+			outColor = outColor + PointLight(input.vPositionWs, normal, rough, metallic, d2, pointLights[i]);
 		}
 
 		//float3 amb = float3(0.01, 0.01, 0.01) * d2;

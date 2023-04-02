@@ -9,7 +9,7 @@ class CWorldViewportWidget;
 class CWorld;
 class CMaterial;
 class CModelComponent;
-class CCameraComponent;
+class CCameraProxy;
 class QVBoxLayout;
 
 class CMaterialEditor : public CToolsWindow
@@ -51,7 +51,7 @@ private:
 	TObjectPtr<CMaterial> material;
 	TObjectPtr<CModelComponent> modelComp;
 
-	TObjectPtr<CCameraComponent> camera;
+	CCameraProxy* cam;
 
 	TArray<CCollapsableWidget*> curWidgets;
 

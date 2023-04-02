@@ -4,6 +4,7 @@
 #include <QPoint>
 
 class CCameraComponent;
+class CCameraProxy;
 
 enum class ECameraControlMode
 {
@@ -34,12 +35,15 @@ protected:
 	inline FVector GetMoveVector() const { return FVector(moveLeft + -moveRight, -moveForward + moveBack, 0); }
 
 public:
-	void SetCamera(CCameraComponent* cam);
+	//void SetCamera(CCameraComponent* cam);
+	void SetCamera(CCameraProxy* cam);
 	inline void SetControlMode(ECameraControlMode m) { mode = m; }
 
 public:
-	CCameraComponent* camera;
+	//CCameraComponent* camera;
+	CCameraProxy* camera;
 	int cameraMode = 0;
+
 
 private:
 	ECameraControlMode mode = ECameraControlMode::FreeMode;

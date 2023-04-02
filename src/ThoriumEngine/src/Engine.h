@@ -3,6 +3,7 @@
 #include "EngineCore.h"
 #include "Misc/ProjectStructure.h"
 #include "Rendering/Renderer.h"
+#include "Engine.generated.h"
 
 class CEngine;
 class CWindow;
@@ -24,8 +25,11 @@ struct FUserConfig
 	uint8 windowMode;
 };
 
-class ENGINE_API CEngine
+CLASS(Abstract, Hidden)
+class ENGINE_API CEngine : public CObject
 {
+	GENERATED_BODY()
+	
 public:
 	CEngine() = default;
 	CEngine(const CEngine&) = delete;
@@ -93,6 +97,9 @@ public:
 	inline T* SetGameInstance() { return (T*)SetGameInstance(T::StaticClass()); }
 	CGameInstance* SetGameInstance(FClass* type);
 
+	inline double GetUpdateTime() const { return updateTime; }
+	inline double GetRenderTime() const { return renderTime; }
+
 protected:
 	virtual void OnExit();
 
@@ -117,6 +124,9 @@ protected:
 	double _prevTime;
 	double deltaTime;
 
+	double updateTime;
+	double renderTime;
+
 	TObjectPtr<CGameInstance> gameInstance;
 
 	FProject projectConfig;
@@ -125,5 +135,4 @@ protected:
 	//CRenderScene* worldRenderScene;
 
 	CWindow* gameWindow;
-
 };

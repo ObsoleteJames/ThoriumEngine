@@ -152,217 +152,239 @@ void IRenderer::renderAll()
 	// Draw each scene.
 	for (auto scene : renderQueue)
 	{
-		if (!scene->camera)
+		for (auto* cam : scene->cameras)
+			if (cam != scene->GetPrimaryCamera())
+				RenderCamera(scene, cam);
+
+		if (scene->GetPrimaryCamera())
+			RenderCamera(scene, scene->GetPrimaryCamera());
+		// else draw error msg.
+
+		scene->renderQueue.Clear();
+	}
+
+	gRenderer->renderScenes.Clear();
+}
+
+void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
+{
+	TArray<FRenderCommand> curCommands;
+	SizeType queueLastIndex = 0;
+
+	int viewWidth, viewHeight;
+	scene->frameBuffer->GetSize(viewWidth, viewHeight);
+	scene->frameBuffer->Clear();
+	if (scene->depthBuffer)
+		scene->depthBuffer->Clear();
+
+	gRenderer->SetViewport(0.f, 0.f, (float)viewWidth, (float)viewHeight);
+
+	camera->CalculateMatrix((float)viewWidth / (float)viewHeight);
+
+	FSceneInfoBuffer sceneInfo{ camera->projection * camera->view,
+		camera->view, camera->projection,
+		camera->position, 0u, camera->GetForwardVector(), 0u, scene->GetTime() };
+	gRenderer->sceneBuffer->Update(sizeof(FSceneInfoBuffer), &sceneInfo);
+
+	TArray<TPair<CPrimitiveProxy*, FMeshBuilder>> dynamicMeshes;
+
+	for (auto* primitive : scene->primitves)
+	{
+		if (!primitive->IsVisible())
 			continue;
 
-		TArray<FRenderCommand> curCommands;
-		SizeType queueLastIndex = 0;
+		dynamicMeshes.Add({ primitive, FMeshBuilder() });
+		FMeshBuilder& dynamic = dynamicMeshes.last()->Value;
 
-		int viewWidth, viewHeight;
-		scene->frameBuffer->GetSize(viewWidth, viewHeight);
-		scene->frameBuffer->Clear();
-		if (scene->depthBuffer)
-			scene->depthBuffer->Clear();
-
-		gRenderer->SetViewport(0.f, 0.f, (float)viewWidth, (float)viewHeight);
-
-		scene->camera->CalculateMatrix((float)viewWidth / (float)viewHeight);
-
-		FSceneInfoBuffer sceneInfo{ scene->camera->GetProjectionMatrix() * scene->camera->GetViewMatrix(), 
-			scene->camera->GetViewMatrix(), scene->camera->GetProjectionMatrix(),
-			scene->camera->GetWorldPosition(), 0u, scene->camera->GetForwardVector(), 0u, scene->GetTime() };
-		gRenderer->sceneBuffer->Update(sizeof(FSceneInfoBuffer), &sceneInfo);
-
-		TArray<TPair<CPrimitiveProxy*, FMeshBuilder>> dynamicMeshes;
-		
-		for (auto* primitive : scene->primitves)
-		{
-			if (!primitive->IsVisible())
-				continue;
-
-			dynamicMeshes.Add({ primitive, FMeshBuilder() });
-			FMeshBuilder& dynamic = dynamicMeshes.last()->Value;
-
-			primitive->GetDynamicMeshes(dynamic);
-		}
+		primitive->GetDynamicMeshes(dynamic);
+	}
 
 #if 0
-		// ------------- SHADOW PASS -------------
+	// ------------- SHADOW PASS -------------
+	{
 		{
-			{
-				auto end = __getRenderCommands(R_SHADOW_PASS, scene->renderQueue.At(queueLastIndex), scene->renderQueue.end(), curCommands);
-				queueLastIndex = ((SizeType)end.ptr - (SizeType)scene->renderQueue.Data()) / sizeof(FRenderCommand);
-			}
-
-			ILightComponent* sunLight;
-
-			// Calculate shadow-map priority
-			std::vector<TPair<float, ILightComponent*>> shadowLights;
-			for (auto* light : scene->lights)
-			{
-				if (!light->CastShadows())
-					continue;
-
-				if (light->IsSunlight())
-				{
-					sunLight = light;
-					continue;
-				}
-
-				float distance = FVector::Distance(scene->GetCamera()->GetWorldPosition(), light->GetWorldPosition());
-				shadowLights.push_back({ distance, light });
-			}
-
-			struct {
-				bool operator()(const TPair<float, ILightComponent*>& a, const TPair<float, ILightComponent*>& b) {
-					return a.Key < b.Key;
-				}
-			} FCustomSort;
-
-			std::sort(shadowLights.begin(), shadowLights.end(), FCustomSort);
-
-			constexpr int maxShadows = 16;
-			for (int i = 0; i < FMath::Min(16, (int)shadowLights.size()); i++)
-			{
-				// TODO: render shadows.
-			}
+			auto end = __getRenderCommands(R_SHADOW_PASS, scene->renderQueue.At(queueLastIndex), scene->renderQueue.end(), curCommands);
+			queueLastIndex = ((SizeType)end.ptr - (SizeType)scene->renderQueue.Data()) / sizeof(FRenderCommand);
 		}
 
-		// ------------- DEFERRED PASS -------------
+		ILightComponent* sunLight;
+
+		// Calculate shadow-map priority
+		std::vector<TPair<float, ILightComponent*>> shadowLights;
+		for (auto* light : scene->lights)
+		{
+			if (!light->CastShadows())
+				continue;
+
+			if (light->IsSunlight())
+			{
+				sunLight = light;
+				continue;
+			}
+
+			float distance = FVector::Distance(scene->GetCamera()->GetWorldPosition(), light->GetWorldPosition());
+			shadowLights.push_back({ distance, light });
+		}
+
+		struct {
+			bool operator()(const TPair<float, ILightComponent*>& a, const TPair<float, ILightComponent*>& b) {
+				return a.Key < b.Key;
+			}
+		} FCustomSort;
+
+		std::sort(shadowLights.begin(), shadowLights.end(), FCustomSort);
+
+		constexpr int maxShadows = 16;
+		for (int i = 0; i < FMath::Min(16, (int)shadowLights.size()); i++)
+		{
+			// TODO: render shadows.
+		}
+	}
+
+	// ------------- DEFERRED PASS -------------
+	curCommands.Clear();
+	GetRenderCommands(R_DEFERRED_PASS, scene->renderQueue, curCommands);
+
+	LockGPU();
+	gRenderer->BindGBuffer();
+
+	gRenderer->SetPsShader(gRenderer->psShaderDeferred);
+	gRenderer->BindGlobalData();
+
+	for (auto& rc : curCommands)
+	{
+		if (rc.type != FRenderCommand::DRAW_MESH)
+			continue;
+
+		gRenderer->SetVsShader(rc.drawMesh.material->GetVsShader());
+		gRenderer->DrawMesh(&rc.drawMesh);
+}
+
+	gRenderer->SetFrameBuffer(scene->frameBuffer, nullptr);
+	gRenderer->SetPsShader(gRenderer->psShaderDeferredLighting);
+	gRenderer->SetVsShader(gRenderer->vsShaderDeferredLighting);
+
+	// TODO: Setup global buffer information.
+
+	gRenderer->DrawMesh(gRenderer->quadMesh);
+
+	gRenderer->SetVsShader(nullptr);
+#endif
+
+	// ------------- FORWARD PASS -------------
+	{
 		curCommands.Clear();
-		GetRenderCommands(R_DEFERRED_PASS, scene->renderQueue, curCommands);
+		GetRenderCommands(R_FORWARD_PASS, scene->renderQueue, curCommands);
+
+		TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh*>> forwardMeshes;
+		GetMeshesToDraw(R_FORWARD_PASS, dynamicMeshes, forwardMeshes);
 
 		LockGPU();
-		gRenderer->BindGBuffer();
+		gRenderer->SetFrameBuffer(scene->frameBuffer, scene->depthBuffer);
+		gRenderer->SetShaderBuffer(gRenderer->sceneBuffer, 1);
+		gRenderer->SetShaderBuffer(gRenderer->forwardLightsBuffer, 2);
+		gRenderer->SetShaderBuffer(gRenderer->objectBuffer, 3);
 
-		gRenderer->SetPsShader(gRenderer->psShaderDeferred);
-		gRenderer->BindGlobalData();
+		IShader* overridePsShader = nullptr;
+		if (cvRenderMaterialMode.AsInt() == 1 || scene->lights.Size() == 0)
+			overridePsShader = gRenderer->debugUnlit->psShader;
+		else if (cvRenderMaterialMode.AsInt() == 2)
+			overridePsShader = gRenderer->debugNormalForward->psShader;
+
+		if (overridePsShader)
+			gRenderer->SetPsShader(overridePsShader);
+
+		for (auto& rc : forwardMeshes)
+		{
+			//FObjectInfoBuffer objectInfo{ *rc->skeletonMatrices.Data(), rc->transform, FVector(), 0 };
+			FObjectInfoBuffer objectInfo;
+			objectInfo.transform = rc.Value->transform;
+			objectInfo.position = rc.Key->GetPosition();
+			memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min(rc.Value->skeletonMatrices.Size(), 48ull));
+			gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
+
+			FForwardLightsBuffer lights{};
+			CreateForwardLightBuffer(objectInfo.position, scene->GetLights(), lights);
+			gRenderer->forwardLightsBuffer->Update(sizeof(FForwardLightsBuffer), &lights);
+
+			gRenderer->SetVsShader(rc.Value->mat->GetVsShader());
+			if (!overridePsShader)
+				gRenderer->SetPsShader(rc.Value->mat->GetPsShader());
+
+			gRenderer->DrawMesh(rc.Value);
+		}
 
 		for (auto& rc : curCommands)
 		{
 			if (rc.type != FRenderCommand::DRAW_MESH)
 				continue;
 
+			FObjectInfoBuffer objectInfo{ { FMatrix(1.f) }, rc.drawMesh.transform, FVector(), 0 };
+			gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
+
 			gRenderer->SetVsShader(rc.drawMesh.material->GetVsShader());
+			if (!overridePsShader)
+				gRenderer->SetPsShader(rc.drawMesh.material->GetPsShader());
+
 			gRenderer->DrawMesh(&rc.drawMesh);
 		}
 
-		gRenderer->SetFrameBuffer(scene->frameBuffer, nullptr);
-		gRenderer->SetPsShader(gRenderer->psShaderDeferredLighting);
-		gRenderer->SetVsShader(gRenderer->vsShaderDeferredLighting);
-
-		// TODO: Setup global buffer information.
-
-		gRenderer->DrawMesh(gRenderer->quadMesh);
-
-		gRenderer->SetVsShader(nullptr);
-#endif
-
-		// ------------- FORWARD PASS -------------
-		{
-			curCommands.Clear();
-			GetRenderCommands(R_FORWARD_PASS, scene->renderQueue, curCommands);
-
-			TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh*>> forwardMeshes;
-			GetMeshesToDraw(R_FORWARD_PASS, dynamicMeshes, forwardMeshes);
-
-			LockGPU();
-			gRenderer->SetFrameBuffer(scene->frameBuffer, scene->depthBuffer);
-			gRenderer->SetShaderBuffer(gRenderer->sceneBuffer, 1);
-			gRenderer->SetShaderBuffer(gRenderer->forwardLightsBuffer, 2);
-			gRenderer->SetShaderBuffer(gRenderer->objectBuffer, 3);
-
-			IShader* overridePsShader = nullptr;
-			if (cvRenderMaterialMode.AsInt() == 1 || scene->lights.Size() == 0)
-				overridePsShader = gRenderer->debugUnlit->psShader;
-			else if (cvRenderMaterialMode.AsInt() == 2)
-				overridePsShader = gRenderer->debugNormalForward->psShader;
-
-			if (overridePsShader)
-				gRenderer->SetPsShader(overridePsShader);
-
-			for (auto& rc : forwardMeshes)
-			{
-				//FObjectInfoBuffer objectInfo{ *rc->skeletonMatrices.Data(), rc->transform, FVector(), 0 };
-				FObjectInfoBuffer objectInfo;
-				objectInfo.transform = rc.Value->transform;
-				objectInfo.position = rc.Key->GetPosition();
-				memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min(rc.Value->skeletonMatrices.Size(), 48ull));
-				gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
-
-				FForwardLightsBuffer lights{};
-				CreateForwardLightBuffer(objectInfo.position, scene->GetLights(), lights);
-				gRenderer->forwardLightsBuffer->Update(sizeof(FForwardLightsBuffer), &lights);
-
-				gRenderer->SetVsShader(rc.Value->mat->GetVsShader());
-				if (!overridePsShader)
-					gRenderer->SetPsShader(rc.Value->mat->GetPsShader());
-
-				gRenderer->DrawMesh(rc.Value);
-			}
-
-			for (auto& rc : curCommands)
-			{
-				if (rc.type != FRenderCommand::DRAW_MESH)
-					continue;
-
-				FObjectInfoBuffer objectInfo{ { FMatrix(1.f) }, rc.drawMesh.transform, FVector(), 0 };
-				gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
-
-				gRenderer->SetVsShader(rc.drawMesh.material->GetVsShader());
-				if (!overridePsShader)
-					gRenderer->SetPsShader(rc.drawMesh.material->GetPsShader());
-
-				gRenderer->DrawMesh(&rc.drawMesh);
-			}
-
-			UnlockGPU();
-		}
-
-		// ------------- DEBUG PASS -------------
-		{
-			curCommands.Clear();
-			GetRenderCommands(R_DEBUG_PASS, scene->renderQueue, curCommands);
-
-			TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh*>> debugMeshes;
-			GetMeshesToDraw(R_DEBUG_PASS, dynamicMeshes, debugMeshes);
-
-			LockGPU();
-			gRenderer->SetFrameBuffer(scene->frameBuffer, scene->depthBuffer);
-			gRenderer->SetShaderBuffer(gRenderer->sceneBuffer, 1);
-			gRenderer->SetShaderBuffer(gRenderer->objectBuffer, 3);
-
-			for (auto& rc : curCommands)
-			{
-				if (rc.type != FRenderCommand::DRAW_MESH)
-					continue;
-
-				FObjectInfoBuffer objectInfo{ { FMatrix(1.f) }, rc.drawMesh.transform, FVector(), 0 };
-				gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
-
-				gRenderer->SetVsShader(rc.drawMesh.material->GetVsShader());
-				gRenderer->SetPsShader(rc.drawMesh.material->GetPsShader());
-				gRenderer->DrawMesh(&rc.drawMesh);
-			}
-
-			for (auto& rc : debugMeshes)
-			{
-				FObjectInfoBuffer objectInfo;
-				objectInfo.transform = rc.Value->transform;
-				memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min(rc.Value->skeletonMatrices.Size(), 48ull));
-				gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
-
-				gRenderer->SetVsShader(rc.Value->mat->GetVsShader());
-				gRenderer->SetPsShader(rc.Value->mat->GetPsShader());
-				gRenderer->DrawMesh(rc.Value);
-			}
-
-			UnlockGPU();
-		}
-
-		dynamicMeshes.Clear();
-		scene->renderQueue.Clear();
+		UnlockGPU();
 	}
 
-	gRenderer->renderScenes.Clear();
+	// ------------- DEBUG PASS -------------
+	{
+		curCommands.Clear();
+		GetRenderCommands(R_DEBUG_PASS, scene->renderQueue, curCommands);
+
+		TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh*>> debugMeshes;
+		GetMeshesToDraw(R_DEBUG_PASS, dynamicMeshes, debugMeshes);
+
+		LockGPU();
+		gRenderer->SetFrameBuffer(scene->frameBuffer, scene->depthBuffer);
+		gRenderer->SetShaderBuffer(gRenderer->sceneBuffer, 1);
+		gRenderer->SetShaderBuffer(gRenderer->objectBuffer, 3);
+
+		for (auto& rc : curCommands)
+		{
+			if (rc.type != FRenderCommand::DRAW_MESH)
+				continue;
+
+			FObjectInfoBuffer objectInfo{ { FMatrix(1.f) }, rc.drawMesh.transform, FVector(), 0 };
+			gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
+
+			gRenderer->SetVsShader(rc.drawMesh.material->GetVsShader());
+			gRenderer->SetPsShader(rc.drawMesh.material->GetPsShader());
+			gRenderer->DrawMesh(&rc.drawMesh);
+		}
+
+		for (auto& rc : debugMeshes)
+		{
+			FObjectInfoBuffer objectInfo;
+			objectInfo.transform = rc.Value->transform;
+			memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min(rc.Value->skeletonMatrices.Size(), 48ull));
+			gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
+
+			gRenderer->SetVsShader(rc.Value->mat->GetVsShader());
+			gRenderer->SetPsShader(rc.Value->mat->GetPsShader());
+			gRenderer->DrawMesh(rc.Value);
+		}
+
+		UnlockGPU();
+	}
+}
+
+void IRenderer::RenderSpotLightShadow(CLightProxy* light, ITexture2D* out)
+{
+
+}
+
+void IRenderer::RenderSpotLightShadow(CLightProxy* light, ITextureCube* out)
+{
+
+}
+
+void IRenderer::RenderSunLightShadow(CLightProxy* light, ITexture2D* out)
+{
+
 }

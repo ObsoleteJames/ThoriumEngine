@@ -26,7 +26,9 @@
 #include "ConsoleWidget.h"
 #include "OutlinerWidget.h"
 #include "PropertiesWidget.h"
+#include "SceneSettingsWidget.h"
 #include "EditorMode.h"
+#include "Misc/Timer.h"
 #include <Util/KeyValue.h>
 
 #include <fstream>
@@ -44,6 +46,34 @@
 #include <QPushButton>
 
 SDK_REGISTER_WINDOW(CEditorWindow, "Editor Window", NULL, NULL);
+
+class P_CEditorWindow : public CObject
+{
+public:
+	P_CEditorWindow() = default;
+
+	void Init(CEditorWindow* wnd)
+	{
+		window = wnd;
+
+		MakeIndestructible();
+
+		gEditorEngine()->OnObjectSelected.Bind(this, [=](const TArray<TObjectPtr<CObject>>& objs) { window->OnObjectSelected(objs); });
+		Events::PostLevelChange.Bind(this, [=]() { window->OnLevelChange(); });
+		gWorld->GetRenderWindow()->OnKeyEvent.Bind(this, [=](EKeyCode key, EInputAction action, EInputMod mod) { window->OnKeyEvent(key, action, mod); });
+	}
+
+	void OnDelete() override
+	{
+		gEditorEngine()->OnObjectSelected.RemoveAll(this);
+		Events::PostLevelChange.RemoveAll(this);
+		gWorld->GetRenderWindow()->OnKeyEvent.RemoveAll(this);
+	}
+
+private:
+	CEditorWindow* window;
+
+};
 
 void RegisterAssetMenus()
 {
@@ -157,8 +187,8 @@ CEditorWindow::~CEditorWindow()
 
 bool CEditorWindow::Shutdown()
 {
-	gEditorEngine()->OnObjectSelected.Remove(this);
-	Events::PostLevelChange.Remove(this);
+	//gEditorEngine()->OnObjectSelected.Remove(this);
+	//Events::PostLevelChange.RemoveAll(this);
 
 	SaveState();
 	return true;
@@ -339,6 +369,7 @@ void CEditorWindow::SetupUi()
 
 			gEditorEngine()->bIsPlaying = false;
 			gWorld->Stop();
+			gWorld->SetPrimaryCamera(gEditorEngine()->editorCamera);
 		});
 
 		toolbar->addWidget(worldBtnsFrame);
@@ -369,6 +400,9 @@ void CEditorWindow::SetupUi()
 	propertiesWidget = new CPropertiesWidget(this);
 	addDockWidget(Qt::RightDockWidgetArea, propertiesWidget);
 
+	sceneSettings = new CSceneSettingsWidget(this);
+	addDockWidget(Qt::RightDockWidgetArea, sceneSettings);
+
 	menuView->addAction(consoleWidget->toggleViewAction());
 	menuView->addAction(assetBrowser->toggleViewAction());
 	menuView->addAction(outlinerWidget->toggleViewAction());
@@ -392,21 +426,11 @@ void CEditorWindow::SetupUi()
 	connect(outlinerWidget, &COutlinerWidget::entitySelected, this, [=](CEntity* ent) { gEditorEngine()->SetSelectedObject(ent); });
 	connect(propertiesWidget, &CPropertiesWidget::ComponentSelected, this, [=](TObjectPtr<CObject> obj) { gEditorEngine()->SetSelectedObject(obj); });
 
-	gEditorEngine()->OnObjectSelected.Bind(this, &CEditorWindow::OnObjectSelected);
+	p_obj = new P_CEditorWindow();
+	p_obj->Init(this);
 
 	RestoreState();
 	RegisterAssetMenus();
-
-	Events::PostLevelChange.Bind(this, &CEditorWindow::OnLevelChange);
-	
-	worldViewport->GetWindow()->OnKeyEvent.Bind(this, [=](EKeyCode key, EInputAction action, EInputMod mod) {
-		switch (key)
-		{
-		case EKeyCode::ESCAPE:
-			gEditorEngine()->SetSelectedObject(nullptr);
-			break;
-		}
-	});
 
 	CONSOLE_LogInfo("CEditorEngine", "Created Editor Window");
 }
@@ -487,7 +511,7 @@ void CEditorWindow::NewScene()
 	gEditorEngine()->bSceneDirty = true;
 	gEditorEngine()->savedAtHC = -1;
 	gEditorEngine()->historyBuffer.ClearHistory();
-	worldViewport->SetCamera(gEditorEngine()->editorCamera);
+	//worldViewport->SetCamera(gEditorEngine()->editorCamera);
 	gWorld->SetRenderWindow(worldViewport->GetWindow());
 	
 	UpdateTitle();
@@ -509,14 +533,14 @@ void CEditorWindow::LoadScene()
 	CFStream sdkStream = dialog->File()->GetSdkStream("rb");
 	if (sdkStream.IsOpen())
 	{
-		CCameraComponent* cam = gEditorEngine()->editorCamera;
+		CCameraProxy* cam = gEditorEngine()->editorCamera;
 		FVector camPos;
 		FQuaternion camRot;
 
 		sdkStream >> &camPos >> &camRot;
 
-		cam->SetWorldPosition(camPos);
-		cam->SetWorldRotation(camRot);
+		cam->position = camPos;
+		cam->rotation = camRot;
 		sdkStream.Close();
 	}
 
@@ -550,9 +574,9 @@ bool CEditorWindow::SaveScene(bool bNewPath /*= false*/)
 	CFStream sdkStream = gWorld->GetScene()->File()->GetSdkStream("wb");
 	if (sdkStream.IsOpen())
 	{
-		CCameraComponent* cam = gEditorEngine()->editorCamera;
-		FVector camPos = cam->GetWorldPosition();
-		FQuaternion camRot = cam->GetWorldRotation();
+		CCameraProxy* cam = gEditorEngine()->editorCamera;
+		FVector camPos = cam->position;
+		FQuaternion camRot = cam->rotation;
 
 		sdkStream << &camPos << &camRot;
 		sdkStream.Close();
@@ -575,6 +599,8 @@ void CEditorWindow::closeEvent(QCloseEvent *event)
 
 	if (CToolsWindow::CloseAll(this))
 	{
+		p_obj->Delete();
+
 		event->accept();
 		Shutdown();
 		QApplication::quit();
@@ -627,7 +653,11 @@ void CEditorWindow::paintEvent(QPaintEvent *event)
 	//	gEditorEngine()->gizmo2Mat->SetFloat("Variable1", (float)bHit);
 	//}
 
+	FTimer renderTimer;
+
 	worldViewport->Render();
+	renderTimer.Stop();
+	gEditorEngine()->UpdateRenderTime(renderTimer.GetMiliseconds());
 
 	static int counter = 0;
 	if (counter == 15)
@@ -700,6 +730,7 @@ void CEditorWindow::UpdateTitle()
 void CEditorWindow::OnLevelChange()
 {
 	worldViewport->SetOverrideScene(gWorld->GetRenderScene());
+	sceneSettings->LevelChanged();
 }
 
 void CEditorWindow::OnObjectSelected(const TArray<TObjectPtr<CObject>>& objs)
@@ -708,4 +739,14 @@ void CEditorWindow::OnObjectSelected(const TArray<TObjectPtr<CObject>>& objs)
 		propertiesWidget->SetObject(nullptr);
 	else
 		propertiesWidget->SetObject(objs[0]);
+}
+
+void CEditorWindow::OnKeyEvent(EKeyCode key, EInputAction action, EInputMod mod)
+{
+	switch (key)
+	{
+	case EKeyCode::ESCAPE:
+		gEditorEngine()->SetSelectedObject(nullptr);
+		break;
+	}
 }

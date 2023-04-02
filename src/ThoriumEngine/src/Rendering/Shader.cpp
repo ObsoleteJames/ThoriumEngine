@@ -12,6 +12,47 @@ static const char* thcsMagicStr = "\0\0ThoriumEngine Shader File\0";
 
 static TArray<TObjectPtr<CShaderSource>> _shaders;
 
+static CConCmd cmdDebugShader("shader.printinfo", [](const TArray<FString>& args) {
+	if (args.Size() == 0)
+		return;
+	
+	CShaderSource* shader = CShaderSource::GetShader(args[0]);
+	if (!shader)
+	{
+		CONSOLE_LogWarning("CShaderSource", "Unknown shader: " + args[0]);
+		return;
+	}
+
+	CConsole::LogPlain("Shader: " + shader->shaderName);
+	CConsole::LogPlain("BufferSize: " + FString::ToString(shader->bufferSize));
+
+	CConsole::LogPlain("properties:");
+	CConsole::LogPlain("    PropertyName  -  DisplayName  -  Type  -  DataOffset");
+	for (auto& prop : shader->properties)
+	{
+		constexpr const char* typeNames[] = {
+			"NONE",
+			"BOOL",
+			"INT",
+			"FLOAT",
+			"VEC3",
+			"VEC4",
+			"TEXTURE_2D",
+			"TEXTURE_CUBE"
+		};
+
+		FString propertyTypeName = typeNames[prop.type];
+		
+		CConsole::LogPlain("    " + prop.name + ":    " + prop.displayName + "    " + propertyTypeName + "    " + FString::ToString(prop.offset));
+	}
+	CConsole::LogPlain("textures:");
+	CConsole::LogPlain("    TextureName  -  DisplayName  -  Register");
+	for (auto& tex : shader->textures)
+	{
+		CConsole::LogPlain("    " + tex.name + ":    " + tex.displayName + "    " + FString::ToString(tex.registerId));
+	}
+});
+
 CShaderSource::~CShaderSource()
 {
 	delete vsShader;
@@ -22,12 +63,12 @@ CShaderSource::~CShaderSource()
 void CShaderSource::Init()
 {
 	// Add the static properties and textures.
-	properties.Add({ "vColorTint", "Color Tint", "", "Color", FShaderProperty::VEC4, FShaderProperty::COLOR, 0});
-	properties.Add({ "vNormalIntensity", "Normal Map Strength", "", "Normal", FShaderProperty::FLOAT, FShaderProperty::SLIDER, 16 });
-	properties.Add({ "vAlpha", "Alpha", "", "Color", FShaderProperty::FLOAT, FShaderProperty::SLIDER, 20});
+	//properties.Add({ "vColorTint", "Color Tint", "", "Color", FShaderProperty::VEC4, FShaderProperty::COLOR, 0});
+	//properties.Add({ "vNormalIntensity", "Normal Map Strength", "", "Normal", FShaderProperty::FLOAT, FShaderProperty::SLIDER, 16 });
+	//properties.Add({ "vAlpha", "Alpha", "", "Color", FShaderProperty::FLOAT, FShaderProperty::SLIDER, 20});
 
-	textures.Add({ "vBaseColor", "Base Color", 5, "Color" });
-	textures.Add({ "vNormalMap", "Normal Map", 6, "Normal" });
+	//textures.Add({ "vBaseColor", "Base Color", 5, "Color" });
+	//textures.Add({ "vNormalMap", "Normal Map", 6, "Normal" });
 
 	// Register the shader
 	_shaders.Add(this);
@@ -86,9 +127,9 @@ void CShaderSource::Init()
 		FString pName;
 		FString pDisplayName;
 		FString pDescription;
-		int pType;
+		FShaderProperty::EType pType;
 		FString pUiGroup;
-		int pUiType;
+		FShaderProperty::UiType pUiType;
 		SizeType pBufferOffset;
 
 		*stream >> pName;
@@ -152,9 +193,11 @@ void CShaderSource::Save()
 	}
 	for (auto& t : textures)
 	{
-		int pType;
+		FShaderProperty::EType pType = FShaderProperty::TEXTURE_2D;
+		FShaderProperty::UiType pUiType = FShaderProperty::BOX;
 		FString pUiGroup;
-		int pUiType;
+
+		SizeType reg = t.registerId;
 
 		*stream << t.name;
 		*stream << t.displayName;
@@ -162,7 +205,7 @@ void CShaderSource::Save()
 		*stream << &pType;
 		*stream << t.UiGroup;
 		*stream << &pUiType;
-		*stream << &t.registerId;
+		*stream << &reg;
 	}
 }
 

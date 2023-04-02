@@ -9,6 +9,7 @@
 #include "PropertyEditors/StringProperty.h"
 #include "PropertyEditors/StructProperty.h"
 #include "PropertyEditors/ObjectPtrProperty.h"
+#include "PropertyEditors/ClassPtrProperty.h"
 #include "PropertyEditors/VectorProperty.h"
 #include "PropertyEditors/QuatProperty.h"
 
@@ -70,7 +71,7 @@ IBasePropertyEditor* CPropertyEditorWidget::CreatePropertyEditor(void* ptr, cons
 	case EVT_OBJECT_PTR:
 		return new CObjectPtrProperty(ptr, p, parent);
 	case EVT_CLASS_PTR:
-		break;
+		return new CClassPtrProperty(ptr, p, parent);
 	case EVT_FLOAT:
 		return new CFloatProperty(ptr, p, parent);
 	case EVT_DOUBLE:

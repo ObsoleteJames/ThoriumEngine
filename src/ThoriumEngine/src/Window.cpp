@@ -45,19 +45,19 @@ CWindow::CWindow(int w, int h, int x, int y, const FString& title, EWindowMode m
 		CWindow* w = GetWindowFromHandle(wnd);
 		w->mouseX = x;
 		w->mouseY = y;
-		w->OnCursorMove.Fire(x, y);
+		w->OnCursorMove.Invoke(x, y);
 	});
 	glfwSetKeyCallback((GLFWwindow*)nativeHandle, [](GLFWwindow* wnd, int key, int scancode, int action, int mods) {
 		CWindow* w = GetWindowFromHandle(wnd);
-		w->OnKeyEvent.Fire((EKeyCode)key, (EInputAction)action, (EInputMod)mods);
+		w->OnKeyEvent.Invoke((EKeyCode)key, (EInputAction)action, (EInputMod)mods);
 	});
 	glfwSetCharCallback((GLFWwindow*)nativeHandle, [](GLFWwindow* wnd, uint k) {
 		CWindow* w = GetWindowFromHandle(wnd);
-		w->OnCharEvent.Fire(k);
+		w->OnCharEvent.Invoke(k);
 	});
 	glfwSetMouseButtonCallback((GLFWwindow*)nativeHandle, [](GLFWwindow* wnd, int button, int action, int mods) {
 		CWindow* w = GetWindowFromHandle(wnd);
-		w->OnMouseButton.Fire((EMouseButton)button, (EInputAction)action, (EInputMod)mods);
+		w->OnMouseButton.Invoke((EMouseButton)button, (EInputAction)action, (EInputMod)mods);
 	});
 
 	glfwSetWindowSizeCallback((GLFWwindow*)nativeHandle, [](GLFWwindow* window, int width, int height) {

@@ -150,11 +150,15 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\MgsGameMode.cpp" />
+    <ClCompile Include="..\src\MgsPawn.cpp" />
     <ClCompile Include="generated\*.cpp" />
     <ClCompile Include="..\src\TestEntity.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\MgsDemo.h" />
+    <ClInclude Include="..\src\MgsGameMode.h" />
+    <ClInclude Include="..\src\MgsPawn.h" />
     <ClInclude Include="..\src\TestEntity.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

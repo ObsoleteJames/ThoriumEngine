@@ -6,7 +6,7 @@
 class IBasePropertyEditor;
 class CWorldViewportWidget;
 class CCollapsableWidget;
-class CCameraComponent;
+class CCameraProxy;
 class CModelComponent;
 class CWorld;
 class MCSkeletonWidget;
@@ -101,7 +101,9 @@ private:
 
 	TObjectPtr<CWorld> world;
 	TObjectPtr<CModelAsset> model;
-	TObjectPtr<CCameraComponent> camera;
+	//TObjectPtr<CCameraComponent> camera;
+	CCameraProxy* camera;
+
 	FModelAssetData data;
 
 	FMesh* gridMesh;

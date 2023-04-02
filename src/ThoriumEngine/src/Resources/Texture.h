@@ -67,6 +67,9 @@ private:
 	SizeType dataSize;
 	uint8 numMipmaps;
 
+	uint8 curMipMapLevel;
+	uint8 bLoading;
+
 	int width, height;
 
 	ITexture2D* tex = nullptr;

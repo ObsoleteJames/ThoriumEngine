@@ -95,7 +95,7 @@ CConsoleWidget::~CConsoleWidget()
 
 void CConsoleWidget::OnLog(const FConsoleMsg& msg)
 {
-	consoleLog->setTextColor(QColor(111, 179, 255));
+	consoleLog->setTextColor(QColor(111, 179, 75));
 	consoleLog->setTextBackgroundColor(QColor(111, 179, 75, 20));
 
 	if (msg.type != CONSOLE_PLAIN)

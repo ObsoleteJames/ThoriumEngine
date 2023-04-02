@@ -1,16 +1,16 @@
 #pragma once
 
 #include "EngineCore.h"
-#include <Util/Event.h>
+#include "Object/Delegate.h"
 
 class ENGINE_API Events
 {
 public:
-	static TEvent<> OnUpdate;
-	static TEvent<> PostUpdate;
+	static TDelegate<> OnUpdate;
+	static TDelegate<> PostUpdate;
 
-	static TEvent<> OnRender;
+	static TDelegate<> OnRender;
 	
-	static TEvent<> LevelChange;
-	static TEvent<> PostLevelChange;
+	static TDelegate<> LevelChange;
+	static TDelegate<> PostLevelChange;
 };

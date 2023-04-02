@@ -1,5 +1,6 @@
 
-CObjectSelectorWidget
+CObjectSelectorWidget,
+CClassSelectorWidget
 {
 	color: #ccc;
 	background-color: #111;
@@ -13,12 +14,14 @@ CObjectSelectorWidget
 	text-align: left;
 }
 
-CObjectSelectorWidget:hover
+CObjectSelectorWidget:hover,
+CClassSelectorWidget:hover
 {
 	border-color: #555;
 }
 
-CObjectSelectorWidget:disabled
+CObjectSelectorWidget:disabled,
+CClassSelectorWidget:disabled
 {
 	color: #555;
 	border-color: #222;

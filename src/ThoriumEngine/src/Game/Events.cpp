@@ -1,12 +1,8 @@
 
 #include "Events.h"
 
-TEvent<> Events::OnUpdate;
-
-TEvent<> Events::PostUpdate;
-
-TEvent<> Events::OnRender;
-
-TEvent<> Events::LevelChange;
-
-TEvent<> Events::PostLevelChange;
+TDelegate<> Events::OnUpdate;
+TDelegate<> Events::PostUpdate;
+TDelegate<> Events::OnRender;
+TDelegate<> Events::LevelChange;
+TDelegate<> Events::PostLevelChange;

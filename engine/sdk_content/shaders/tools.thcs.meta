@@ -45,17 +45,17 @@ VS
 	{
 		PS_Input output = ProcessVertex(input);
 
-		if (vType == 3)
-		{
-			float4 outPos = float4(output.vPositionWs, 1.f);
-			//float distanceFromCamera = length(vCameraPos - vObjectPos);
-			//outPos = mul(distanceFromCamera, outPos);
-			outPos = mul(vObjectMatrix, outPos);
+		// if (vType == 3)
+		// {
+		// 	float4 outPos = float4(output.vPositionWs, 1.f);
+		// 	//float distanceFromCamera = length(vCameraPos - vObjectPos);
+		// 	//outPos = mul(distanceFromCamera, outPos);
+		// 	outPos = mul(vObjectMatrix, outPos);
 
-			output.vPositionWs = (float3)outPos;
-			output.vPositionPs = mul(vCameraMatrix, outPos);
-		}
-		else
+		// 	output.vPositionWs = (float3)outPos;
+		// 	output.vPositionPs = mul(vCameraMatrix, outPos);
+		// }
+		// else
 			FinalizeVertex(input, output);
 		return output;
 	}

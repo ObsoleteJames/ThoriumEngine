@@ -82,6 +82,9 @@ public:
 
 	static void StreamResource(IResourceStreamingProxy* proxy);
 
+	inline static SizeType ResourcesCount() { return allocatedResources.size(); }
+	inline static SizeType StreamingResourcesCount() { return streamingResources.Size(); }
+
 private:
 	static CAsset* AllocateResource(FAssetClass* type, const WString& path);
 	static int ScanDir(FDirectory* dir);

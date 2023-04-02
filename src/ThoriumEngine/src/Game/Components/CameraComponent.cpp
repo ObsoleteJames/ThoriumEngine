@@ -1,6 +1,51 @@
 
 #include "CameraComponent.h"
+#include "Rendering/RenderProxies.h"
+#include "Game/World.h"
 #include "Window.h"
+
+void CCameraComponent::Init()
+{
+	BaseClass::Init();
+
+	class CCameraCompProxy : public CCameraProxy
+	{
+	public:
+		CCameraCompProxy(CCameraComponent* comp) : cam(comp) {}
+
+		void FetchData() override
+		{
+			bEnabled = cam->IsVisible();
+
+			position = cam->GetWorldPosition();
+			rotation = cam->GetWorldRotation();
+
+			fov = cam->FOV();
+			farPlane = cam->farPlane;
+			nearPlane = cam->nearPlane;
+		}
+
+	public:
+		CCameraComponent* cam;
+	};
+
+	if (GetWorld())
+	{
+		camProxy = new CCameraCompProxy(this);
+		GetWorld()->RegisterCamera(camProxy);
+	}
+}
+
+void CCameraComponent::OnDelete()
+{
+	BaseClass::OnDelete();
+
+	if (camProxy)
+	{
+		GetWorld()->UnregisterCamera(camProxy);
+		delete camProxy;
+	}
+}
 
 void CCameraComponent::CalculateMatrix(float aspectRatio)
 {
