@@ -5,6 +5,7 @@
 #include "Object/Object.h"
 #include "Game/World.h"
 #include "Math/Vectors.h"
+#include "Math/Bounds.h"
 #include "Game/Components/SceneComponent.h"
 #include "Entity.generated.h"
 
@@ -98,6 +99,8 @@ public:
 	inline FVector GetWorldPosition() const { return rootComponent->GetWorldPosition(); }
 	inline FQuaternion GetWorldRotation() const { return rootComponent->GetWorldRotation(); }
 	inline FVector GetWorldScale() const { return rootComponent->GetWorldScale(); }
+
+	FBounds GetBounds();
 
 protected:
 	virtual void Init();

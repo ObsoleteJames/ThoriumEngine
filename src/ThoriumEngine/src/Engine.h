@@ -23,6 +23,7 @@ struct FUserConfig
 	int windowPosX, windowPosY;
 	int windowWidth = 1920, windowHeight = 1080;
 	uint8 windowMode;
+	bool bVSync = true;
 };
 
 CLASS(Abstract, Hidden)

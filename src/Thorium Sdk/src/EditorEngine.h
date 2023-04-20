@@ -73,6 +73,8 @@ public:
 
 	void RegisterProject(const FProject& proj);
 
+	void DrawSelectionDebug();
+
 private:
 	void __OnObjectSelected(const TArray<TObjectPtr<CObject>>& obj);
 
@@ -103,8 +105,11 @@ public:
 	TObjectPtr<CMaterial> gridMat;
 	TObjectPtr<CTransformGizmoEntity> transformGizmo;
 
+	TObjectPtr<CMaterial> outlineMat;
+
 	CCameraProxy* editorCamera;
 	FMesh* gridMesh;
+	FMesh boxOutlineMesh;
 };
 
 inline CEditorEngine* gEditorEngine() { return static_cast<CEditorEngine*>(gEngine); }

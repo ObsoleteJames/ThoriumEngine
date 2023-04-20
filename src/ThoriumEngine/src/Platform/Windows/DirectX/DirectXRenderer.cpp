@@ -377,7 +377,7 @@ void DirectXRenderer::DrawMesh(FDrawMeshCmd* info)
 	//else
 	//	deviceContext->OMSetDepthStencilState(nullptr, 0);
 
-	if (topologyType == D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST && mesh->indexBuffer)
+	if (mesh->indexBuffer)
 		deviceContext->DrawIndexed(mesh->numIndices, 0, 0);
 	else
 		deviceContext->Draw(mesh->numVertices, 0);

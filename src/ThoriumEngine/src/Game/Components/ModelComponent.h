@@ -35,6 +35,9 @@ public:
 
 	TArray<FMesh> GetVisibleMeshes(uint8 lodLevel = 0);
 
+protected:
+	virtual void Load(FMemStream& in) override;
+
 private:
 	FUNCTION()
 	void OnModelEdit();

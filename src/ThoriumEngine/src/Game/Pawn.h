@@ -4,6 +4,7 @@
 #include "Pawn.generated.h"
 
 class CPawnController;
+class CInputManager;
 
 CLASS()
 class ENGINE_API CPawn : public CEntity
@@ -16,6 +17,8 @@ public:
 
 	inline CPawnController* GetController() const { return controller; }
 	inline bool HasController() const { return controller.IsValid(); }
+
+	virtual void SetupInput(CInputManager* inputManager) {}
 
 private:
 	TObjectPtr<CPawnController> controller;

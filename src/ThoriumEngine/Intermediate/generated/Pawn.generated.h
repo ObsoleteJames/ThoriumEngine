@@ -2,7 +2,7 @@
 #include "Object/Class.h"
 #include "Object/ObjectMacros.h"
 
-#define Engine_Pawn_h_11_GeneratedBody \
+#define Engine_Pawn_h_12_GeneratedBody \
 DECLARE_CLASS(CPawn, CEntity, Engine)
 
 

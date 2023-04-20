@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ToolsCore.h"
+#include "Object/Object.h"
 #include <QIcon>
 
 class SDK_API CEditorMode

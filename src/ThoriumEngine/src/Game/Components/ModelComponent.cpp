@@ -72,13 +72,18 @@ void CModelComponent::SetModel(const WString& file)
 
 void CModelComponent::SetModel(TObjectPtr<CModelAsset> m)
 {
-	activeBodyGroups.Clear();
-	materials.Clear();
+	//activeBodyGroups.Clear();
+	//materials.Clear();
+	bounds = FBounds();
 
 	model = m;
 
 	if (!model)
+	{
+		activeBodyGroups.Clear();
+		materials.Clear();
 		return;
+	}
 
 	activeBodyGroups.Resize(model->GetBodyGroups().Size());
 	for (auto& i : activeBodyGroups)
@@ -86,6 +91,8 @@ void CModelComponent::SetModel(TObjectPtr<CModelAsset> m)
 
 	const TArray<FMaterial>& mats = model->GetMaterials();
 	materials.Resize(mats.Size());
+
+	bounds = model->CalculateBounds();
 
 	//for (auto& matPath : mats)
 	//{
@@ -205,6 +212,14 @@ TArray<FMesh> CModelComponent::GetVisibleMeshes(uint8 lodLevel /*= 0*/)
 	}
 
 	return meshes;
+}
+
+void CModelComponent::Load(FMemStream& in)
+{
+	BaseClass::Load(in);
+
+	if (model)
+		SetModel(model);
 }
 
 void CModelComponent::OnModelEdit()

@@ -2,6 +2,7 @@
 
 #include "Game/EntityComponent.h"
 #include "Math/Vectors.h"
+#include "Math/Bounds.h"
 #include "SceneComponent.generated.h"
 
 enum class FTransformSpace
@@ -51,6 +52,8 @@ public:
 
 	inline CSceneComponent* GetParent() const { return parent; }
 
+	FBounds Bounds() const;
+
 private:
 	PROPERTY()
 	TObjectPtr<CSceneComponent> parent;
@@ -66,4 +69,8 @@ private:
 
 	PROPERTY()
 	FQuaternion rotation;
+
+protected:
+	FBounds bounds;
+
 };

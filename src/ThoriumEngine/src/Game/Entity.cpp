@@ -58,6 +58,17 @@ void CEntity::RemoveComponent(CEntityComponent* comp)
 	}
 }
 
+FBounds CEntity::GetBounds()
+{
+	FBounds r;
+	for (auto comp : components)
+	{
+		if (auto scene = Cast<CSceneComponent>(comp); scene)
+			r = r.Combine(scene->Bounds());
+	}
+	return r;
+}
+
 void CEntity::Init()
 {
 	rootComponent = AddComponent<CSceneComponent>("root");

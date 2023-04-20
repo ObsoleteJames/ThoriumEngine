@@ -1,12 +1,14 @@
 
 #include <string>
+#include "Engine.h"
 #include "ModelAsset.h"
 #include "Rendering/Renderer.h"
 #include "Console.h"
 #include "Material.h"
 #include "Math/Math.h"
 
-#define THMDL_VERSION 0x0003
+#define THMDL_VERSION_3 0x0003
+#define THMDL_VERSION 0x0004
 
 #define THMDL_MAGIC_SIZE 27
 static const char* thmdlMagicStr = "\0\0ThoriumEngine Model File\0";
@@ -34,14 +36,13 @@ void CModelAsset::Init()
 		return;
 	}
 
-	uint16 version;
-	*stream >> &version;
+	*stream >> &fileVersion;
 
-	if (version != THMDL_VERSION)
-	{
-		CONSOLE_LogError("CModelAsset", FString("Invalid Model file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THMDL_VERSION) + "'");
-		return;
-	}
+	//if (version != THMDL_VERSION)
+	//{
+	//	CONSOLE_LogError("CModelAsset", FString("Invalid Model file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THMDL_VERSION) + "'");
+	//	return;
+	//}
 
 	uint numMeshes;
 	uint numMaterials;
@@ -59,6 +60,14 @@ void CModelAsset::Init()
 
 		SizeType nextMesh;
 		*stream >> &nextMesh;
+
+		SizeType numVertices;
+		SizeType numIndices;
+
+		*stream >> &numVertices >> &numIndices;
+
+		if (fileVersion > THMDL_VERSION_3)
+			*stream >> &meshes[i].bounds;
 
 		stream->Seek(nextMesh, SEEK_SET);
 	}
@@ -133,17 +142,25 @@ void CModelAsset::Init(const TArray<FMesh>& m)
 void CModelAsset::Save()
 {
 	// first check if we have any data to save.
+	bool bLoadedMeshData = false;
 	for (auto& mesh : meshes)
 	{
-		if (!mesh.indexData || !mesh.vertexData)
-		{
-			CONSOLE_LogError("CModelAsset", "Attempted to save ModelAsset but no mesh data was provided.");
-			return;
-		}
-
 		if (mesh.numIndexData % 3 != 0)
 		{
 			CONSOLE_LogError("CModelAsset", "Attempted to save ModelAsset with an invalid number of indices.");
+			return;
+		}
+
+		if (!mesh.indexData || !mesh.vertexData)
+		{
+			if (gIsEditor)
+			{
+				LoadMeshData();
+				bLoadedMeshData = true;
+				break;
+			}
+
+			CONSOLE_LogError("CModelAsset", "Attempted to save ModelAsset but no mesh data was provided.");
 			return;
 		}
 	}
@@ -157,8 +174,8 @@ void CModelAsset::Save()
 
 	stream->Write((void*)thmdlMagicStr, THMDL_MAGIC_SIZE);
 
-	uint16 version = THMDL_VERSION;
-	*stream << &version;
+	fileVersion = THMDL_VERSION;
+	*stream << &fileVersion;
 
 	uint numMeshes = (uint)meshes.Size();
 	uint numMaterials = (uint)materials.Size();
@@ -174,6 +191,7 @@ void CModelAsset::Save()
 		mesh.meshDataOffset = prevOffset;
 
 		*stream << &mesh.numVertexData << & mesh.numIndexData;
+		*stream << &mesh.bounds;
 
 		for (SizeType i = 0; i < mesh.numVertexData; i++)
 			*stream << &mesh.vertexData[i];
@@ -238,6 +256,9 @@ void CModelAsset::Save()
 		*stream << &bone.parent;
 		*stream << &bone.position << &bone.direction;
 	}
+	
+	if (bLoadedMeshData)
+		ClearMeshData();
 }
 
 void CModelAsset::Load(uint8 lodLevel)
@@ -292,6 +313,9 @@ void CModelAsset::Load(uint8 lodLevel)
 
 		*stream >> &nextOffset >> &numVertices >> &numIndices;
 
+		if (fileVersion > THMDL_VERSION_3)
+			*stream >> &meshes[it].bounds;
+
 		vertices.Resize(numVertices);
 		indices.Resize(numIndices);
 
@@ -327,6 +351,64 @@ void CModelAsset::Unload(uint8 lodLevel)
 	}
 }
 
+void CModelAsset::LoadMeshData()
+{
+	if (!bInitialized || !file)
+		return;
+
+	TUniquePtr<IBaseFStream> stream = file->GetStream("rb");
+	if (!stream || !stream->IsOpen())
+	{
+		CONSOLE_LogError("CModelAsset", FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
+		return;
+	}
+
+	for (auto& mesh : meshes)
+	{
+		stream->Seek(mesh.meshDataOffset, SEEK_SET);
+
+		SizeType nextOffset;
+
+		SizeType numVertices;
+		SizeType numIndices;
+		
+		*stream >> &nextOffset >> &numVertices >> &numIndices;
+
+		FVertex* vertices = new FVertex[numVertices];
+		uint* indices = new uint[numIndices];
+
+		for (SizeType i = 0; i < numVertices; i++)
+			*stream >> &vertices[i];
+
+		for (SizeType i = 0; i < numIndices; i++)
+			*stream >> &indices[i];
+
+		mesh.numVertexData = numVertices;
+		mesh.numIndexData = numIndices;
+		mesh.vertexData = vertices;
+		mesh.indexData = indices;
+	}
+}
+
+void CModelAsset::ClearMeshData()
+{
+	for (auto& mesh : meshes)
+	{
+		if (mesh.vertexData)
+			delete[] mesh.vertexData;
+		if (mesh.indexData)
+			delete[] mesh.indexData;
+	}
+}
+
+FBounds CModelAsset::CalculateBounds()
+{
+	bounds = FBounds();
+	for (auto& mesh : meshes)
+		bounds = bounds.Combine(mesh.bounds);
+	return bounds;
+}
+
 int CModelAsset::GetLodFromDistance(float distance)
 {
 	for (int8 i = numLODs; i > 0; i--)
@@ -355,4 +437,34 @@ void CModelAsset::ClearMeshes()
 			delete[] mesh.indexData;
 	}
 	meshes.Clear();
+}
+
+void FMesh::CalculateBounds()
+{
+	if (!vertexData)
+		return;
+
+	FVector min;
+	FVector max;
+
+	for (uint32 i = 0; i < numVertices; i++)
+	{
+		FVector& vert = vertexData[i].position;
+
+		if (vert.x < min.x)
+			min.x = vert.x;
+		if (vert.y < min.y)
+			min.y = vert.y;
+		if (vert.z < min.z)
+			min.z = vert.z;
+
+		if (vert.x > max.x)
+			max.x = vert.x;
+		if (vert.y > max.y)
+			max.y = vert.y;
+		if (vert.z > max.z)
+			max.z = vert.z;
+	}
+
+	bounds = FBounds::FromMinMax(min, max);
 }

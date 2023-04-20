@@ -2,6 +2,7 @@
 
 #include "Asset.h"
 #include "Math/Vectors.h"
+#include "Math/Bounds.h"
 #include "ModelAsset.generated.h"
 
 class IVertexBuffer;
@@ -19,12 +20,6 @@ struct FVertex
 
 	int bones[4];
 	float boneInfluence[4];
-};
-
-struct FBounds
-{
-	FVector min;
-	FVector max;
 };
 
 struct ENGINE_API FMesh
@@ -48,6 +43,9 @@ public:
 	FString meshName;
 
 	FBounds bounds;
+
+public:
+	void CalculateBounds();
 
 public:
 	// This is only used for saving new mesh data.
@@ -118,6 +116,15 @@ public:
 	void Load(uint8 lodLevel) final;
 	void Unload(uint8 lodLevel) final;
 
+	// Loads vertex data for CPU usage.
+	void LoadMeshData();
+
+	// Deletes CPU vertex data.
+	void ClearMeshData();
+
+	inline FBounds GetBounds() const { return bounds; }
+	FBounds CalculateBounds();
+
 public:
 	int GetLodFromDistance(float distance);
 
@@ -139,11 +146,14 @@ private:
 protected:
 	bool bAllowInstancing;
 
+	uint16 fileVersion;
+
 	FLODGroup LODs[6];
 	uint8 numLODs;
 
 	TArray<FBodyGroup> bodyGroups;
 
+	FBounds bounds;
 	TArray<FMesh> meshes;
 	TArray<FMaterial> materials;
 	FSkeleton skeleton;

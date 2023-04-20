@@ -4,6 +4,7 @@
 #include "PlayerController.h"
 #include "Pawn.h"
 #include "Engine.h"
+#include "Game/Input/InputManager.h"
 #include "Game/Components/CameraComponent.h"
 #include "Game/GameInstance.h"
 #include "Game/World.h"
@@ -62,8 +63,8 @@ void CGameMode::SpawnPlayer(CPlayer* player)
 	if (!pawn)
 		return;
 
-	// TODO: Find player start entities.
 	player->GetPlayerController()->Possess(pawn);
+	//gInputManager->RegisterPlayer(player);
 
 	FVector pos;
 	FQuaternion rot;

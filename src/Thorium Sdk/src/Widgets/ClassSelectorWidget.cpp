@@ -57,6 +57,9 @@ public:
 			if (!filter.isEmpty() && !cName.contains(filter))
 				continue;
 
+			if (c->HasFlag(CTAG_ABSTRACT) || c->HasFlag(CTAG_HIDDEN))
+				continue;
+
 			auto* item = new QListWidgetItem(cName, list);
 			item->setData(257, (uint64)c);
 		}

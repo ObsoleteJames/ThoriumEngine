@@ -26,7 +26,10 @@ extern "C" __declspec(dllexport) int Launch(const char* cmdLine)
 
 		}
 		else
+		{
+			gIsClient = true;
 			gEngine->Init();
+		}
 
 		//gEngine->LoadGame(loadGame);
 		return gEngine->Run();

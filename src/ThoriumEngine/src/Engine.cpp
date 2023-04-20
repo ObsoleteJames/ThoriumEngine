@@ -66,8 +66,6 @@ void CEngine::Init()
 	InitMinimal();
 	LoadProject();
 
-	gIsClient = true;
-
 	CWindow::Init();
 
 	LoadUserConfig();
@@ -203,7 +201,7 @@ int CEngine::Run()
 		updateTimer.Stop();
 		renderTime = updateTimer.GetMiliseconds();
 
-		gameWindow->Present(1, 0);
+		gameWindow->Present(userConfig.bVSync, 0);
 
 		dtTimer.Stop();
 		deltaTime = dtTimer.GetSeconds();
@@ -342,6 +340,8 @@ bool CEngine::LoadUserConfig()
 	if (auto* mode = kv.GetValue("window.mode", false); mode != nullptr)
 		userConfig.windowMode = FMath::Clamp(mode->AsInt(), 0, 3);
 
+	userConfig.bVSync = kv.GetValue("vsync")->AsBool();
+
 	if (userConfig.windowWidth == 0 || userConfig.windowHeight == 0)
 	{
 		userConfig.windowWidth = 1920;
@@ -372,6 +372,7 @@ void CEngine::SaveUserConfig()
 		kv.GetValue("window.w")->Set(FString::ToString(gameWindow->WindowedRect.w));
 		kv.GetValue("window.h")->Set(FString::ToString(gameWindow->WindowedRect.h));
 		kv.GetValue("window.mode")->Set(FString::ToString((int)gameWindow->GetWindowMode()));
+		kv.GetValue("vsync")->Set(FString::ToString((int)userConfig.bVSync));
 	}
 
 	kv.Save();
@@ -396,17 +397,23 @@ void CEngine::SaveConsoleLog()
 		switch (log->type)
 		{
 		case CONSOLE_PLAIN:
-			typeStr = "[MSG]\t";
+			typeStr = "";
 			break;
 		case CONSOLE_INFO:
-			typeStr = "[INF]\t";
+			typeStr = "[INF]";
 			break;
 		case CONSOLE_WARNING:
-			typeStr = "[WRN]\t";
+			typeStr = "[WRN]";
 			break;
 		case CONSOLE_ERROR:
-			typeStr = "[ERR]\t";
+			typeStr = "[ERR]";
 			break;
+		}
+
+		if (!log->module.IsEmpty())
+		{
+			typeStr += '[';
+			typeStr += log->module + "]\t";
 		}
 
 		stream.Write(typeStr.Data(), typeStr.Size());

@@ -56,6 +56,41 @@ void CEditorEngine::Init()
 	gridMesh = new FMesh();
 	GenerateGrid(100.0f, 1.f, gridMesh);
 
+	TArray<FVertex> boxVerts = {
+		{ { -1, 1, 1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ { 1, 1, 1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ { -1, 1, -1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ { 1, 1, -1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ {- 1, -1, 1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ { 1, -1, 1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ { -1, -1, -1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ { 1, -1, -1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+	};
+
+	TArray<uint> boxInds = {
+		0, 1,
+		0, 2,
+		2, 3,
+		1, 3,
+
+		4, 5,
+		4, 6,
+		6, 7,
+		5, 7,
+
+		0, 4,
+		1, 5,
+		2, 6,
+		3, 7
+	};
+
+	boxOutlineMesh.vertexBuffer = gRenderer->CreateVertexBuffer(boxVerts);
+	boxOutlineMesh.indexBuffer = gRenderer->CreateIndexBuffer(boxInds);
+	boxOutlineMesh.numVertices = boxVerts.Size();
+	boxOutlineMesh.numIndices = boxInds.Size();
+
+	boxOutlineMesh.topologyType = FMesh::TOPOLOGY_LINES;
+
 	Events::PostLevelChange.Bind(this, &CEditorEngine::OnLevelChange);
 	OnObjectSelected.Bind(this, &CEditorEngine::__OnObjectSelected);
 }
@@ -98,6 +133,8 @@ int CEditorEngine::Run()
 		FRenderCommand gridDraw(cmd, R_DEBUG_PASS);
 		gWorld->renderScene->PushCommand(gridDraw);
 		//worldRenderScene->PushCommand(gridDraw);
+
+		DrawSelectionDebug();
 	}
 
 	gWorld->Render();
@@ -174,9 +211,14 @@ void CEditorEngine::OnLevelChange()
 	gridMat->SetShader("Tools");
 	gridMat->SetInt("vType", 1);
 
+	outlineMat = CreateObject<CMaterial>();
+	outlineMat->SetShader("Tools");
+	outlineMat->SetInt("vType", 4);
+	float col[3] = { 1.f, 0.88f, 0.4f };
+	outlineMat->SetVec3("vColorTint", col);
+
 	if (editorMode)
 		editorMode->OnLevelChange();
-
 }
 
 void CEditorEngine::GenerateGrid(float gridSize, float quadSize, FMesh*& outMesh)
@@ -320,6 +362,34 @@ void CEditorEngine::RegisterProject(const FProject& proj)
 			return;
 
 	availableProjects.Add(proj);
+}
+
+void CEditorEngine::DrawSelectionDebug()
+{
+	if (selectedObjects.Size() == 0)
+		return;
+
+	FBounds selectionBounds;
+
+	for (auto obj : selectedObjects)
+	{
+		if (auto ent = CastChecked<CEntity>(obj); ent)
+		{
+			selectionBounds = selectionBounds.Combine(ent->GetBounds());
+		}
+	}
+
+	if (selectionBounds.Size().Magnitude() == 0.f)
+		return;
+
+	FDrawMeshCmd cmd;
+	cmd.material = outlineMat;
+	cmd.mesh = &boxOutlineMesh;
+	cmd.transform = FMatrix(1.f).Translate(selectionBounds.position).Scale(selectionBounds.extents);
+	cmd.drawType |= MESH_DRAW_PRIMITIVE_LINES;
+
+	FRenderCommand gridDraw(cmd, R_DEBUG_PASS);
+	gWorld->renderScene->PushCommand(gridDraw);
 }
 
 void CEditorEngine::__OnObjectSelected(const TArray<TObjectPtr<CObject>>& obj)

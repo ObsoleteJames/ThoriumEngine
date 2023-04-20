@@ -82,3 +82,15 @@ void CSceneComponent::Detach(const FTransformSpace& space /*= FTransformSpace::K
 	parent->children.Erase(parent->children.Find(this));
 	parent = nullptr;
 }
+
+FBounds CSceneComponent::Bounds() const
+{
+	FBounds r = bounds;
+
+	FQuaternion rot = GetWorldRotation();
+	FVector pos = GetWorldPosition();
+	FVector scale = GetWorldScale();
+	r.extents = (rot.Rotate(r.extents) * scale);
+	r.position = (rot.Rotate(r.position) * scale) + pos;
+	return r;
+}

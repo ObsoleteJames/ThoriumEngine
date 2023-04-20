@@ -179,6 +179,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
   <ItemGroup>
     <ClCompile Include="Intermediate\generated\Asset.generated.cpp" />
     <ClCompile Include="Intermediate\generated\BillboardComponent.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Bounds.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Buffers.generated.cpp" />
     <ClCompile Include="Intermediate\generated\CameraComponent.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Engine.generated.cpp" />
@@ -187,6 +188,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="Intermediate\generated\EntityComponent.generated.cpp" />
     <ClCompile Include="Intermediate\generated\GameInstance.generated.cpp" />
     <ClCompile Include="Intermediate\generated\GameMode.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\InputManager.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Material.generated.cpp" />
     <ClCompile Include="Intermediate\generated\ModelAsset.generated.cpp" />
     <ClCompile Include="Intermediate\generated\ModelComponent.generated.cpp" />
@@ -229,11 +231,13 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="src\Game\Events.cpp" />
     <ClCompile Include="src\Game\GameInstance.cpp" />
     <ClCompile Include="src\Game\GameMode.cpp" />
+    <ClCompile Include="src\Game\Input\InputManager.cpp" />
     <ClCompile Include="src\Game\Misc\TransformGizmoEntity.cpp" />
     <ClCompile Include="src\Game\Pawn.cpp" />
     <ClCompile Include="src\Game\PawnController.cpp" />
     <ClCompile Include="src\Game\Player.cpp" />
     <ClCompile Include="src\Game\World.cpp" />
+    <ClCompile Include="src\Math\Bounds.cpp" />
     <ClCompile Include="src\Math\Math.cpp" />
     <ClCompile Include="src\Math\Vectors.cpp" />
     <ClCompile Include="src\Misc\Timer.cpp" />
@@ -285,6 +289,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClInclude Include="src\Game\PawnController.h" />
     <ClInclude Include="src\Game\PlayerController.h" />
     <ClInclude Include="src\Game\Player.h" />
+    <ClInclude Include="src\Math\Bounds.h" />
     <ClInclude Include="src\Misc\Timer.h" />
     <ClInclude Include="src\Object\ObjectHandle.h" />
     <ClInclude Include="src\Object\ObjectSelector.h" />

@@ -167,7 +167,7 @@ FString& CToolsWindow::GetStyleSheet()
 		FKeyValue theme(file->FullPath());
 		THORIUM_ASSERT(theme.IsOpen(), "Failed to open theme file '" + ToFString(file->FullPath()) + "'");
 
-		for (auto& v : *theme.GetArray("include"))
+		for (auto& v : *theme.GetArray("include", true))
 		{
 			std::ifstream includeStream((enginePath + "\\" + v).c_str());
 			THORIUM_ASSERT(includeStream.is_open(), FString("Failed to open '") + v + "'");

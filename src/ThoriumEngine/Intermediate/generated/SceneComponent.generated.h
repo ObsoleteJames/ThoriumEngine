@@ -2,7 +2,7 @@
 #include "Object/Class.h"
 #include "Object/ObjectMacros.h"
 
-#define Engine_SceneComponent_h_24_GeneratedBody \
+#define Engine_SceneComponent_h_25_GeneratedBody \
 PRIVATE_MEMBER_OFFSET_ACCESSOR(CSceneComponent, parent) \
 PRIVATE_MEMBER_OFFSET_ACCESSOR(CSceneComponent, children) \
 PRIVATE_MEMBER_OFFSET_ACCESSOR(CSceneComponent, position) \

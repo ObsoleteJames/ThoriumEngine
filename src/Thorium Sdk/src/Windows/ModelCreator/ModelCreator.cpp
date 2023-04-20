@@ -287,9 +287,6 @@ void CModelCreator::closeEvent(QCloseEvent* event)
 		return;
 	}
 
-	world->Delete();
-	world = nullptr;
-
 	event->accept();
 }
 
@@ -473,6 +470,8 @@ void CModelCreator::CompileMesh(const aiScene* scene, const aiMesh* importMesh, 
 		memcpy(indexBuf.Data(), m.indexData, m.numIndices * sizeof(uint));
 		m.indexBuffer = gRenderer->CreateIndexBuffer(indexBuf);
 	}
+
+	m.CalculateBounds();
 
 	//if (boneIndices.size() > 0)
 	//{
