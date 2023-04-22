@@ -25,6 +25,7 @@ public:
 	inline const TArray<FLocalPlayer>& GetLocalPlayers() const { return localPlayers; }
 
 	FLocalPlayer* GetLocalPlayer(int index = 0);
+	FLocalPlayer* GetLocalPlayer(CPlayer* p);
 
 	bool AddLocalPlayer(uint controllerId = -1);
 

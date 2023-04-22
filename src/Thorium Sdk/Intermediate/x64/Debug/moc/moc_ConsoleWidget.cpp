@@ -64,7 +64,7 @@ void CConsoleWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _
 }
 
 QT_INIT_METAOBJECT const QMetaObject CConsoleWidget::staticMetaObject = { {
-    QMetaObject::SuperData::link<QDockWidget::staticMetaObject>(),
+    QMetaObject::SuperData::link<ads::CDockWidget::staticMetaObject>(),
     qt_meta_stringdata_CConsoleWidget.data,
     qt_meta_data_CConsoleWidget,
     qt_static_metacall,
@@ -83,12 +83,12 @@ void *CConsoleWidget::qt_metacast(const char *_clname)
     if (!_clname) return nullptr;
     if (!strcmp(_clname, qt_meta_stringdata_CConsoleWidget.stringdata0))
         return static_cast<void*>(this);
-    return QDockWidget::qt_metacast(_clname);
+    return ads::CDockWidget::qt_metacast(_clname);
 }
 
 int CConsoleWidget::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
-    _id = QDockWidget::qt_metacall(_c, _id, _a);
+    _id = ads::CDockWidget::qt_metacall(_c, _id, _a);
     return _id;
 }
 QT_WARNING_POP

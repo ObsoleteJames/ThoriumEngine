@@ -15,6 +15,9 @@
 #include <QPushButton>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QXmlStreamWriter>
+
+#include "AdvancedDockWidgets/DockManager.h"
 
 //TArray<FToolsWindowClass*> _RegisteredWindows;
 //TArray<FToolsWidgetClass*> _RegisteredWidgets;
@@ -76,6 +79,8 @@ CToolsWindow::CToolsWindow() : QMainWindow(nullptr)
 	_menuBar->setObjectName("menuBar");
 	_menuBar->setLayoutDirection(Qt::LeftToRight);
 	setMenuBar(_menuBar);
+
+	dockmanager = new ads::CDockManager(this);
 
 	//setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinimizeButtonHint);
 
@@ -243,6 +248,7 @@ bool CToolsWindow::CloseWindow()
 void CToolsWindow::SetupUi()
 {
 	setStyleSheet(GetStyleSheet().c_str());
+
 	//QHBoxLayout* horizontalLayout = new QHBoxLayout();
 	//horizontalLayout->setSpacing(0);
 	//horizontalLayout->setMargin(0);
@@ -414,6 +420,7 @@ void CToolsWindow::SaveState()
 	settings.setValue("window_geo", saveGeometry());
 
 	QList<QDockWidget*> dockWidgets = findChildren<QDockWidget*>();
+	//QList<ads::CDockWidget*> dockWidgets = findChildren<ads::CDockWidget*>();
 
 	for (auto* dock : dockWidgets)
 	{
@@ -423,6 +430,8 @@ void CToolsWindow::SaveState()
 
 		settings.endGroup();
 	}
+
+	settings.setValue("adsDocks", dockmanager->saveState());
 
 	UserSaveState(settings);
 }
@@ -445,6 +454,8 @@ void CToolsWindow::RestoreState()
 
 		settings.endGroup();
 	}
+
+	dockmanager->restoreState(settings.value("adsDocks").toByteArray());
 
 	UserRestoreState(settings);
 }

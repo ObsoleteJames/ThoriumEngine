@@ -15,14 +15,13 @@ const char* logTypeText[] = {
 	"[ERR]"
 };
 
-CConsoleWidget::CConsoleWidget(QWidget* parent /*= nullptr*/) : QDockWidget(parent)
+CConsoleWidget::CConsoleWidget(QWidget* parent /*= nullptr*/) : ads::CDockWidget("Console", parent)
 {
 	QWidget* rootWidget = new QWidget(this);
 	QVBoxLayout* layout = new QVBoxLayout();
 	rootWidget->setLayout(layout);
 
 	setObjectName("console_widget");
-	setWindowTitle("Console");
 	setWidget(rootWidget);
 
 	splitter = new QSplitter(Qt::Horizontal, this);

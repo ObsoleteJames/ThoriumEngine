@@ -16,6 +16,7 @@
 		"qheaderview.css",
 		"qlistview.css",
 		"cobjectselector.css",
-		"common.css"
+		"common.css",
+		"ads.css"
 	]
 }

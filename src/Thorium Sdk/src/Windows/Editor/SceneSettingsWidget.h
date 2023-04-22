@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QDockWidget>
+#include "AdvancedDockWidgets/DockWidget.h"
 #include "EngineCore.h"
 #include "ToolsCore.h"
 #include "Widgets/CollapsableWidget.h"
@@ -8,7 +8,7 @@
 class QVBoxLayout;
 class QScrollArea;
 
-class SDK_API CSceneSettingsWidget : public QDockWidget
+class SDK_API CSceneSettingsWidget : public ads::CDockWidget
 {
 	Q_OBJECT
 

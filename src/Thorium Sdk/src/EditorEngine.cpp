@@ -7,6 +7,7 @@
 #include "Game/Events.h"
 #include "Game/Misc/TransformGizmoEntity.h"
 #include "Game/GameInstance.h"
+#include "Game/Input/InputManager.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/RenderScene.h"
 #include "Misc/Timer.h"
@@ -97,6 +98,9 @@ void CEditorEngine::Init()
 
 int CEditorEngine::Run()
 {
+	inputManager->ClearCache();
+	inputManager->BuildInput();
+
 	CResourceManager::Update();
 	CObjectManager::Update();
 	Events::OnUpdate.Invoke();

@@ -18,7 +18,7 @@ public:
 	inline CPawnController* GetController() const { return controller; }
 	inline bool HasController() const { return controller.IsValid(); }
 
-	virtual void SetupInput(CInputManager* inputManager) {}
+	virtual void SetupInput(CInputManager* inputManager);
 
 private:
 	TObjectPtr<CPawnController> controller;

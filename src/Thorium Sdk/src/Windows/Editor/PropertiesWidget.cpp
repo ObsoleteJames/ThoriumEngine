@@ -12,10 +12,9 @@
 #include <QPushButton>
 #include <QLineEdit>
 
-CPropertiesWidget::CPropertiesWidget(QWidget* parent /*= nullptr*/)
+CPropertiesWidget::CPropertiesWidget(QWidget* parent /*= nullptr*/) : ads::CDockWidget("Properties", parent)
 {
 	setObjectName("properties_widget");
-	setWindowTitle("Properties");
 
 	QWidget* pWidget = new QWidget(this);
 	QVBoxLayout* layout = new QVBoxLayout(pWidget);

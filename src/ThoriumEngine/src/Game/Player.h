@@ -24,6 +24,8 @@ public:
 	inline CPlayerController* GetPlayerController() const { return controller; }
 	inline CPawn* GetPawn() const { return controller->GetPawn(); }
 
+	bool IsLocalPlayer();
+
 private:
 	//FUNCTION(ClientRpc) // TODO implement
 	void clPlayerControllerUpdate(CPlayerController* newController) {}

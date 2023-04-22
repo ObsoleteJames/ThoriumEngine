@@ -9,7 +9,7 @@
 #include <QScrollArea>
 #include <QBoxLayout>
 
-CSceneSettingsWidget::CSceneSettingsWidget(QWidget* parent /*= nullptr*/) : QDockWidget(parent)
+CSceneSettingsWidget::CSceneSettingsWidget(QWidget* parent /*= nullptr*/) : ads::CDockWidget("Scene Settings", parent)
 {
 	widget = new QWidget(this);
 	QVBoxLayout* layout = new QVBoxLayout(widget);
@@ -19,7 +19,6 @@ CSceneSettingsWidget::CSceneSettingsWidget(QWidget* parent /*= nullptr*/) : QDoc
 	setWidget(widget);
 
 	setObjectName("scene_settings_widget");
-	setWindowTitle("Scene Settings");
 
 	scroll = new QScrollArea(this);
 	scroll->setAlignment(Qt::AlignTop | Qt::AlignHCenter);

@@ -141,3 +141,26 @@ class FEnum_EKeyCode : public FEnum
 };
 FEnum_EKeyCode __FEnum_EKeyCode_Instance;
 
+class FEnum_EMouseButton : public FEnum
+{
+	public:
+	FEnum_EMouseButton()
+	{
+		values.Add({ "LEFT", (int64)EMouseButton::LEFT });
+		values.Add({ "RIGHT", (int64)EMouseButton::RIGHT });
+		values.Add({ "MIDDLE", (int64)EMouseButton::MIDDLE });
+		values.Add({ "MOUSE4", (int64)EMouseButton::MOUSE4 });
+		values.Add({ "MOUSE5", (int64)EMouseButton::MOUSE5 });
+		values.Add({ "MOUSE6", (int64)EMouseButton::MOUSE6 });
+		values.Add({ "MOUSE7", (int64)EMouseButton::MOUSE7 });
+		values.Add({ "MOUSE8", (int64)EMouseButton::MOUSE8 });
+		values.Add({ "NONE", (int64)EMouseButton::NONE });
+		name = "MouseButton";
+		cppName = "EMouseButton";
+		size = sizeof(EMouseButton);
+		flags = EnumFlag_NONE;
+		GetModule_Engine().RegisterFEnum(this);
+	}
+};
+FEnum_EMouseButton __FEnum_EMouseButton_Instance;
+

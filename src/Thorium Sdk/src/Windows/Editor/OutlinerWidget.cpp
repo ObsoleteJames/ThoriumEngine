@@ -54,7 +54,7 @@ void COutlinerTreeWidget::dropEvent(QDropEvent* event)
 	}
 }
 
-COutlinerWidget::COutlinerWidget(QWidget* parent /*= nullptr*/) : QDockWidget(parent)
+COutlinerWidget::COutlinerWidget(QWidget* parent /*= nullptr*/) : ads::CDockWidget("Scene Outliner", parent)
 {
 	QWidget* pWidget = new QWidget(this);
 	QVBoxLayout* layout = new QVBoxLayout(pWidget);
@@ -63,7 +63,6 @@ COutlinerWidget::COutlinerWidget(QWidget* parent /*= nullptr*/) : QDockWidget(pa
 	setWidget(pWidget);
 
 	setObjectName("outliner_widget");
-	setWindowTitle("Outliner");
 
 	filter = new QLineEdit(this);
 	filter->setPlaceholderText("Search...");

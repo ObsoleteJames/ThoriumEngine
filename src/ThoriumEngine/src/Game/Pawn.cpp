@@ -6,6 +6,7 @@
 
 void CPawn::OnPossessed(const TObjectPtr<CPawnController>& controller)
 {
+	this->controller = controller;
 	if (auto* player = gEngine->GameInstance()->GetLocalPlayer(0); player)
 	{
 		if (player->GetPlayer()->GetPlayerController() == controller)
@@ -18,6 +19,11 @@ void CPawn::OnPossessed(const TObjectPtr<CPawnController>& controller)
 }
 
 void CPawn::OnUnposses()
+{
+
+}
+
+void CPawn::SetupInput(CInputManager* inputManager)
 {
 
 }

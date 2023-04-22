@@ -37,6 +37,16 @@ FLocalPlayer* CGameInstance::GetLocalPlayer(int index /*= 0*/)
 	return &localPlayers[index];
 }
 
+FLocalPlayer* CGameInstance::GetLocalPlayer(CPlayer* p)
+{
+	for (auto& pl : localPlayers)
+	{
+		if (pl.player == p)
+			return &pl;
+	}
+	return nullptr;
+}
+
 bool CGameInstance::AddLocalPlayer(uint controllerId)
 {
 	if (localPlayers.Size() == 4)

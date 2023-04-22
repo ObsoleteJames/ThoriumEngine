@@ -7,6 +7,7 @@
 #include "Game/World.h"
 #include "Game/Components/CameraComponent.h"
 #include "Game/Misc/TransformGizmoEntity.h"
+#include "Game/Input/InputManager.h"
 #include "Rendering/RenderScene.h"
 #include "Rendering/RenderCommands.h"
 #include "Widgets/WorldViewportWidget.h"
@@ -30,6 +31,8 @@
 #include "EditorMode.h"
 #include "Misc/Timer.h"
 #include <Util/KeyValue.h>
+
+#include "AdvancedDockWidgets/DockManager.h"
 
 #include <fstream>
 #include <QCloseEvent>
@@ -295,7 +298,11 @@ void CEditorWindow::SetupUi()
 	layout->setMargin(1);
 
 	widget->setLayout(layout);
-	setCentralWidget(widget);
+	//setCentralWidget(widget);
+
+	sceneDW = new ads::CDockWidget("Scene", this);
+	sceneDW->setWidget(widget);
+	dockmanager->addDockWidget(ads::CenterDockWidgetArea, sceneDW);
 
 	QStatusBar* statusBar = new QStatusBar(this);
 	setStatusBar(statusBar);
@@ -383,13 +390,13 @@ void CEditorWindow::SetupUi()
 	worldViewport->SetCamera(gEditorEngine()->editorCamera);
 
 	consoleWidget = new CConsoleWidget(this);
-	addDockWidget(Qt::BottomDockWidgetArea, consoleWidget);
+	dockmanager->addDockWidget(ads::BottomDockWidgetArea, consoleWidget);
 
 	assetBrowser = new CAssetBrowserDW(this);
-	addDockWidget(Qt::BottomDockWidgetArea, assetBrowser);
+	dockmanager->addDockWidget(ads::BottomDockWidgetArea, assetBrowser);
 
 	outlinerWidget = new COutlinerWidget(this);
-	addDockWidget(Qt::RightDockWidgetArea, outlinerWidget);
+	dockmanager->addDockWidget(ads::RightDockWidgetArea, outlinerWidget);
 
 	/*QDockWidget* propertiesDock = new QDockWidget(this);
 	propertiesWidget = new CPropertyEditorWidget(this);
@@ -398,10 +405,10 @@ void CEditorWindow::SetupUi()
 	propertiesDock->setObjectName("properties_widget");
 	addDockWidget(Qt::RightDockWidgetArea, propertiesDock);*/
 	propertiesWidget = new CPropertiesWidget(this);
-	addDockWidget(Qt::RightDockWidgetArea, propertiesWidget);
+	dockmanager->addDockWidget(ads::RightDockWidgetArea, propertiesWidget);
 
 	sceneSettings = new CSceneSettingsWidget(this);
-	addDockWidget(Qt::RightDockWidgetArea, sceneSettings);
+	dockmanager->addDockWidget(ads::RightDockWidgetArea, sceneSettings);
 
 	menuView->addAction(consoleWidget->toggleViewAction());
 	menuView->addAction(assetBrowser->toggleViewAction());
@@ -428,6 +435,8 @@ void CEditorWindow::SetupUi()
 
 	p_obj = new P_CEditorWindow();
 	p_obj->Init(this);
+
+	gEngine->InputManager()->SetInputWindow(worldViewport->GetWindow());
 
 	RestoreState();
 	RegisterAssetMenus();

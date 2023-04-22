@@ -1,3 +1,5 @@
-[INF]	CEngine Initializing...
-[INF]	Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
-[INF]	Found 25 assets in 'Engine'
+[INF][CEngine]	Initializing...
+[INF][CResourceManager]	Created resource threads (1)
+[INF][CResourceManager]	Initialized
+[INF][CFileSystem]	Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
+[INF][CResourceManager]	Found 28 assets in 'Engine'

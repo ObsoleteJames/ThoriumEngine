@@ -2,7 +2,7 @@
 #include "Object/Class.h"
 #include "Object/ObjectMacros.h"
 
-#define Engine_Engine_h_32_GeneratedBody \
+#define Engine_Engine_h_33_GeneratedBody \
 DECLARE_CLASS(CEngine, CObject, Engine)
 
 

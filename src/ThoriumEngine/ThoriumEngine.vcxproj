@@ -241,6 +241,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="src\Math\Math.cpp" />
     <ClCompile Include="src\Math\Vectors.cpp" />
     <ClCompile Include="src\Misc\Timer.cpp" />
+    <ClCompile Include="src\Object\Class.cpp" />
     <ClCompile Include="src\Object\ObjectHandle.cpp" />
     <ClCompile Include="src\Platform\Windows\DirectX\DirectXBuffers.cpp" />
     <ClCompile Include="src\Platform\Windows\DirectX\DirectXFrameBuffer.cpp" />

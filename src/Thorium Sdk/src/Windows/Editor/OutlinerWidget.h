@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QDockWidget>
+#include "AdvancedDockWidgets/DockWidget.h"
 #include <Util/Map.h>
 #include "Object/Object.h"
 #include "Widgets/TreeDataItem.h"
@@ -10,7 +10,7 @@ class QTreeWidget;
 class CEntity;
 class CWorld;
 
-class COutlinerWidget : public QDockWidget
+class COutlinerWidget : public ads::CDockWidget
 {
 	Q_OBJECT
 

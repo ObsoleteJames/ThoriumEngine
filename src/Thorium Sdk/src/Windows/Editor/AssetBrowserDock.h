@@ -1,9 +1,9 @@
 #pragma once
 
-#include <QDockWidget>
+#include "AdvancedDockWidgets/DockWidget.h"
 #include "Widgets/AssetBrowser.h"
 
-class CAssetBrowserDW : public QDockWidget
+class CAssetBrowserDW : public ads::CDockWidget
 {
 	Q_OBJECT
 

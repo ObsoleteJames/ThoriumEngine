@@ -12,6 +12,7 @@
 #include "Game/World.h"
 #include "Game/Events.h"
 #include "Game/GameInstance.h"
+#include "Game/Input/InputManager.h"
 #include "Game/Components/CameraComponent.h"
 #include "Resources/Material.h"
 #include "Resources/Scene.h"
@@ -76,6 +77,8 @@ void CEngine::Init()
 #endif
 
 	gameWindow->swapChain = gRenderer->CreateSwapChain(gameWindow);
+
+	inputManager->SetInputWindow(gameWindow);
 
 	//worldRenderScene = new CRenderScene();
 	//worldRenderScene->SetFrameBuffer(gameWindow->swapChain->GetFrameBuffer());
@@ -153,7 +156,10 @@ int CEngine::Run()
 	{
 		FTimer dtTimer;
 
+		inputManager->ClearCache();
 		CWindow::PollEvents();
+
+		inputManager->BuildInput();
 
 		CResourceManager::Update();
 		CObjectManager::Update();
@@ -233,6 +239,10 @@ bool CEngine::LoadProject(const WString& path /*= "."*/)
 	}
 	else
 		SetGameInstance(activeGame.gameInstanceClass.Get());
+
+	// TODO: Make input manager class a config variable.
+	inputManager = CreateObject<CInputManager>();
+	inputManager->LoadConfig();
 
 	return true;
 }

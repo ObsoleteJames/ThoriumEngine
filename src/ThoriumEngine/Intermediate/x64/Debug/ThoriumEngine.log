@@ -1,8 +1,6 @@
 ﻿  Path: F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\
   Running HeaderTool for project: Engine
   Engine.init.cpp
-  Bounds.cpp
-  Generating Code...
   ThoriumEngine.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.dll
   F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.dll
   1 File(s) copied

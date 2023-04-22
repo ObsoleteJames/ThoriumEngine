@@ -47,6 +47,9 @@ void CGameMode::OnPlayerDisconnect(CPlayer* player)
 
 	playerControllers.Erase(playerControllers.Find(player->GetPlayerController()));
 
+	if (player->IsLocalPlayer())
+		gEngine->InputManager()->RemovePlayer(player->GetPlayerController());
+
 	player->GetPawn()->Delete();
 	auto oldPC = player->GetPlayerController();
 	player->SetPlayerController(nullptr);
@@ -64,7 +67,9 @@ void CGameMode::SpawnPlayer(CPlayer* player)
 		return;
 
 	player->GetPlayerController()->Possess(pawn);
-	//gInputManager->RegisterPlayer(player);
+
+	if (player->IsLocalPlayer())
+		gEngine->InputManager()->RegisterPlayer(player->GetPlayerController());
 
 	FVector pos;
 	FQuaternion rot;

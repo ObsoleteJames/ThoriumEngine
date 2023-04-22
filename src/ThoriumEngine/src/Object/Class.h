@@ -110,12 +110,19 @@ public:
 	inline const FString& GetName() const { return name; }
 	inline const FString& GetInternalName() const { return cppName; }
 	inline const FString& GetDescription() const { return description; }
+
+	// The size of the enum in bytes.
 	inline SizeType Size() const { return size; }
+	
+	// The amount of values in the enum
+	inline SizeType ValueCount() const { return values.Size(); }
+	
 	inline EEnumFlags Flags() const { return flags; }
 
 	inline const TArray<TPair<FString, int64_t>>& GetValues() const { return values; }
 	inline const FString& GetNameByIndex(SizeType index) { return values[index].Key; }
 	inline int64_t GetValueByIndex(SizeType index) { return values[index].Value; }
+	int64_t GetValueByName(const FString& name);
 	
 protected:
 	TArray<TPair<FString, int64_t>> values;

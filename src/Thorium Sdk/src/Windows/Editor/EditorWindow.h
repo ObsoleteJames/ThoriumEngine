@@ -56,6 +56,8 @@ protected:
 private:
 	P_CEditorWindow* p_obj;
 
+	ads::CDockWidget* sceneDW;
+
 	CConsoleWidget* consoleWidget;
 	COutlinerWidget* outlinerWidget;
 	CPropertiesWidget* propertiesWidget;

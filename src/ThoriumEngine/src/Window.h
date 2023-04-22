@@ -4,6 +4,7 @@
 #include "EngineCore.h"
 #include "Object/Object.h"
 #include "Object/Delegate.h"
+#include "Window.generated.h"
 
 struct GLFWwindow;
 class ISwapChain;
@@ -142,6 +143,7 @@ enum class ECursorMode
 	DISABLED,
 };
 
+ENUM()
 enum class EMouseButton
 {
 	LEFT,

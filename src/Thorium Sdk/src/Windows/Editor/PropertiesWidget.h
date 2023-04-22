@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QDockWidget>
+#include "AdvancedDockWidgets/DockWidget.h"
 #include <Util/Map.h>
 #include "Object/Object.h"
 #include "Widgets/PropertyEditor.h"
@@ -11,7 +11,7 @@ class QSplitter;
 class CSceneComponent;
 class QLineEdit;
 
-class CPropertiesWidget : public QDockWidget
+class CPropertiesWidget : public ads::CDockWidget
 {
 	Q_OBJECT
 

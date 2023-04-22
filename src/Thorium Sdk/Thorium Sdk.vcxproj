@@ -15,6 +15,28 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\AdvancedDockWidgets\ads_globals.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\AutoHideDockContainer.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\AutoHideSideBar.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\AutoHideTab.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\DockAreaTabBar.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\DockAreaTitleBar.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\DockAreaWidget.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\DockComponentsFactory.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\DockContainerWidget.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\DockFocusController.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\DockingStateReader.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\DockManager.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\DockOverlay.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\DockSplitter.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\DockWidget.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\DockWidgetTab.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\ElidingLabel.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\FloatingDockContainer.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\FloatingDragPreview.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\IconProvider.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\PushButton.cpp" />
+    <ClCompile Include="src\AdvancedDockWidgets\ResizeHandle.cpp" />
     <ClCompile Include="src\CodeGenerator.cpp" />
     <ClCompile Include="src\EditorEngine.cpp" />
     <ClCompile Include="src\EditorMode.cpp" />
@@ -69,6 +91,29 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\ads_globals.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\AutoHideDockContainer.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\AutoHideSideBar.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\AutoHideTab.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\DockAreaTabBar.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\DockAreaTitleBar.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\DockAreaTitleBar_p.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\DockAreaWidget.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\DockComponentsFactory.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\DockContainerWidget.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\DockFocusController.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\DockingStateReader.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\DockManager.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\DockOverlay.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\DockSplitter.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\DockWidget.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\DockWidgetTab.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\ElidingLabel.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\FloatingDockContainer.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\FloatingDragPreview.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\IconProvider.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\PushButton.h" />
+    <QtMoc Include="src\AdvancedDockWidgets\ResizeHandle.h" />
     <ClInclude Include="src\CodeGenerator.h" />
     <ClInclude Include="src\EditorEngine.h" />
     <ClInclude Include="src\EditorMode.h" />
@@ -199,9 +244,9 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Development|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThoriumEngine\Intermediate\generated;$(SolutionDir)dep\assimp;$(SolutionDir)ThoriumEngine\src;$(SolutionDir)dep\glm;$(SolutionDir)dep\glfw;$(ProjectDir)src;$(UTIL_INCLUDE);%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThoriumEngine\Intermediate\generated;$(SolutionDir)dep\assimp;$(SolutionDir)ThoriumEngine\src;$(SolutionDir)dep\glm;$(SolutionDir)dep\glfw;$(ProjectDir)src;$(UTIL_INCLUDE);%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_);$(ProjectDir)src\AdvancedDockWidgets</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <PreprocessorDefinitions>SDK_DLL;PLATFORM_WINDOWS;$(Qt_DEFINES_);%(PreprocessorDefinitions);IS_DEV;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ADS_SHARED_EXPORT;SDK_DLL;PLATFORM_WINDOWS;$(Qt_DEFINES_);%(PreprocessorDefinitions);IS_DEV;</PreprocessorDefinitions>
       <SupportJustMyCode>true</SupportJustMyCode>
     </ClCompile>
     <Link>
@@ -216,9 +261,9 @@ XCOPY "$(TargetDir)Thorium Sdk.pdb" $(SolutionDir)..\engine\bin\ /y</Command>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThoriumEngine\Intermediate\generated;$(SolutionDir)dep\assimp;$(SolutionDir)ThoriumEngine\src;$(SolutionDir)dep\glm;$(SolutionDir)dep\glfw;$(ProjectDir)src;$(UTIL_INCLUDE);%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThoriumEngine\Intermediate\generated;$(SolutionDir)dep\assimp;$(SolutionDir)ThoriumEngine\src;$(SolutionDir)dep\glm;$(SolutionDir)dep\glfw;$(ProjectDir)src;$(UTIL_INCLUDE);%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_);$(ProjectDir)src\AdvancedDockWidgets</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <PreprocessorDefinitions>SDK_DLL;PLATFORM_WINDOWS;$(Qt_DEFINES_);%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ADS_SHARED_EXPORT;SDK_DLL;PLATFORM_WINDOWS;$(Qt_DEFINES_);%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)dep\build\$(Platform)-$(Configuration)\;$(SolutionDir)build\$(Platform)-$(Configuration)\</AdditionalLibraryDirectories>
@@ -231,9 +276,9 @@ XCOPY $(TargetDir)Thorium Sdk.pdb $(SolutionDir)..\engine\bin\ /y</Command>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThoriumEngine\Intermediate\generated;$(SolutionDir)dep\assimp;$(SolutionDir)ThoriumEngine\src;$(SolutionDir)dep\glm;$(SolutionDir)dep\glfw;$(ProjectDir)src;$(UTIL_INCLUDE);%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThoriumEngine\Intermediate\generated;$(SolutionDir)dep\assimp;$(SolutionDir)ThoriumEngine\src;$(SolutionDir)dep\glm;$(SolutionDir)dep\glfw;$(ProjectDir)src;$(UTIL_INCLUDE);%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_);$(ProjectDir)src\AdvancedDockWidgets</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <PreprocessorDefinitions>SDK_DLL;PLATFORM_WINDOWS;$(Qt_DEFINES_);%(PreprocessorDefinitions);IS_DEV;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>ADS_SHARED_EXPORT;SDK_DLL;PLATFORM_WINDOWS;$(Qt_DEFINES_);%(PreprocessorDefinitions);IS_DEV;</PreprocessorDefinitions>
       <SupportJustMyCode>true</SupportJustMyCode>
     </ClCompile>
     <Link>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QDockWidget>
+#include "AdvancedDockWidgets/DockWidget.h"
 #include "Console.h"
 
 class QLineEdit;
@@ -8,7 +8,7 @@ class QTextEdit;
 class QSplitter;
 class QPushButton;
 
-class CConsoleWidget : public QDockWidget
+class CConsoleWidget : public ads::CDockWidget
 {
 	Q_OBJECT
 

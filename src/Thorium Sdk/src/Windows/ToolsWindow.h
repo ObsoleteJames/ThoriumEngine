@@ -11,6 +11,12 @@
 #include <Util/Map.h>
 #include <Registry/RegistryBase.h>
 
+namespace ads
+{
+	class CDockManager;
+	class CDockWidget;
+}
+
 CREATE_OBJECT_REGISTRY_DLL(ToolsRegisteredWindows, FToolsWindowClass*, SDK_API);
 //CREATE_OBJECT_REGISTRY(FToolsWidgetClass*, ToolsRegisteredWidgets);
 
@@ -124,6 +130,7 @@ private:
 
 protected:
 	QMenuBar* _menuBar;
+	ads::CDockManager* dockmanager;
 
 private:
 	FGuid ID;

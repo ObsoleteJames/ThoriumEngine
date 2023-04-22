@@ -3,9 +3,8 @@
 
 #include "Widgets/AssetBrowser.h"
 
-CAssetBrowserDW::CAssetBrowserDW(QWidget* parent) : QDockWidget(parent)
+CAssetBrowserDW::CAssetBrowserDW(QWidget* parent) : ads::CDockWidget("Asset Browser", parent)
 {
-	setWindowTitle("Asset Browser");
 	setObjectName("assetbrowser_dockwidget");
 
 	assetBrowser = new CAssetBrowserWidget(this);

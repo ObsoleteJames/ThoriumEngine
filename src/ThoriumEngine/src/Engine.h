@@ -9,6 +9,7 @@ class CEngine;
 class CWindow;
 class CRenderScene;
 class CGameInstance;
+class CInputManager;
 
 extern ENGINE_API CEngine* gEngine;
 
@@ -92,7 +93,9 @@ public:
 	inline const FProject& GetProjectConfig() const { return projectConfig; }
 	inline const FGame& ActiveGame() const { return activeGame; }
 
-	inline CGameInstance* GameInstance() { return gameInstance; }
+	inline CGameInstance* GameInstance() const { return gameInstance; }
+
+	inline CInputManager* InputManager() const { return inputManager; }
 
 	template<class T>
 	inline T* SetGameInstance() { return (T*)SetGameInstance(T::StaticClass()); }
@@ -100,6 +103,8 @@ public:
 
 	inline double GetUpdateTime() const { return updateTime; }
 	inline double GetRenderTime() const { return renderTime; }
+
+	inline WString GetGameConfigPath() const { return ToWString(activeGame.name) + L"\\config"; }
 
 protected:
 	virtual void OnExit();
@@ -129,6 +134,7 @@ protected:
 	double renderTime;
 
 	TObjectPtr<CGameInstance> gameInstance;
+	TObjectPtr<CInputManager> inputManager;
 
 	FProject projectConfig;
 	FGame activeGame;

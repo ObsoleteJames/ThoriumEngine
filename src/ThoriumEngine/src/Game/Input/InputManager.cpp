@@ -1,8 +1,11 @@
 
 #include "InputManager.h"
+#include "Engine.h"
 
 #include "Game/PlayerController.h"
 #include "Game/Pawn.h"
+
+#include <Util/KeyValue.h>
 
 void CInputManager::SetInputWindow(IBaseWindow* window)
 {
@@ -16,16 +19,101 @@ void CInputManager::SetInputWindow(IBaseWindow* window)
 
 	inputWindow = window;
 
-	window->OnKeyEvent.Bind(this, &CInputManager::OnKeyEvent);
+	//window->OnKeyEvent.Bind(this, &CInputManager::KeyEvent);
 	window->OnCharEvent.Bind(this, &CInputManager::OnCharEvent);
 	window->OnCursorMove.Bind(this, &CInputManager::OnCursorMove);
 	window->OnMouseButton.Bind(this, &CInputManager::OnMouseButton);
+}
+
+void CInputManager::LoadConfig()
+{
+	WString cfgPath = gEngine->GetGameConfigPath() + L"\\input.cfg";
+	FKeyValue kv(cfgPath);
+	if (!kv.IsOpen())
+		return;
+
+	if (KVCategory* cActions = kv.GetCategory("Actions"); cActions)
+	{
+		for (auto* inputs : cActions->GetCategories())
+		{
+			FInputAction input;
+			input.name = inputs->GetName();
+			
+			for (auto* keys : inputs->GetCategories())
+			{
+				FInputActionKey key;
+				key.type = keys->GetValue("Type")->AsInt();
+				key.mods = (EInputMod)keys->GetValue("Mods")->AsInt();
+
+				switch (key.type)
+				{
+				case 0:
+				{
+					FEnum* keyEnum = CModuleManager::FindEnum("EKeyCode");
+					if (!keyEnum)
+						break;
+
+					key.key = keyEnum->GetValueByName(*keys->GetValue("Key"));
+				}
+					break;
+				case 1:
+				{
+					FEnum* mouseEnum = CModuleManager::FindEnum("EMouseButton");
+					if (!mouseEnum)
+						break;
+
+					key.key = mouseEnum->GetValueByName(*keys->GetValue("Key"));
+				}
+					break;
+				}
+
+				input.keys.Add(key);
+			}
+
+			actions.Add(input);
+		}
+	}
+}
+
+void CInputManager::SaveConfig()
+{
+
+}
+
+void CInputManager::BuildInput()
+{
+
+}
+
+void CInputManager::ClearCache()
+{
+
 }
 
 void CInputManager::RegisterPlayer(CPlayerController* player)
 {
 	auto* pawn = player->GetPawn();
 	pawn->SetupInput(this);
+}
+
+void CInputManager::RemovePlayer(CPlayerController* player)
+{
+	for (auto& action : actions)
+	{
+		for (auto it = action.bindings.rbegin(); it != action.bindings.rend(); it++)
+		{
+			if (it->player == player)
+				action.bindings.Erase(it);
+		}
+	}
+	for (auto& a : axis)
+	{
+		for (auto it = a.bindings.rbegin(); it != a.bindings.rend(); it++)
+		{
+			if (it->player == player)
+				a.bindings.Erase(it);
+		}
+	}
 }
 
 void CInputManager::SetInputMode(EInputMode mode)
@@ -40,9 +128,48 @@ void CInputManager::SetShowCursor(bool b)
 		inputWindow->SetCursorMode(bShowCursor ? ECursorMode::NORMAL : ECursorMode::DISABLED);
 }
 
-void CInputManager::OnKeyEvent(EKeyCode key, EInputAction action, EInputMod mod)
+FInputAction* CInputManager::GetAction(const FString& name)
 {
+	for (auto& a : actions)
+		if (a.name == name)
+			return &a;
 
+	return nullptr;
+}
+
+FInputAxis* CInputManager::GetAxis(const FString& name)
+{
+	for (auto& a : axis)
+		if (a.name == name)
+			return &a;
+
+	return nullptr;
+}
+
+void CInputManager::KeyEvent(EKeyCode key, EInputAction action, EInputMod mod)
+{
+	for (auto& a : actions)
+	{
+		for (auto& k : a.keys)
+		{
+			if (k.type == 0 && k.key == (uint16)key && k.mods == mod)
+			{
+				a.FireBindings(action);
+			}
+		}
+	}
+
+	// This won't work
+	//for (auto& a : axis)
+	//{
+	//	for (auto& k : a.keys)
+	//	{
+	//		if (k.type == 0 && k.key == (uint16)key && action == IE_PRESS)
+	//		{
+	//			a.cache += k.bNegate ? -1.f : 1.f;
+	//		}
+	//	}
+	//}
 }
 
 void CInputManager::OnCharEvent(uint key)
@@ -57,5 +184,31 @@ void CInputManager::OnCursorMove(double x, double y)
 
 void CInputManager::OnMouseButton(EMouseButton btn, EInputAction action, EInputMod mod)
 {
+	for (auto& a : actions)
+	{
+		for (auto& k : a.keys)
+		{
+			if (k.type == 1 && k.key == (uint16)btn && k.mods == mod)
+			{
+				a.FireBindings(action);
+			}
+		}
+	}
+}
 
+void FInputAction::FireBindings(EInputAction action)
+{
+	for (auto& b : bindings)
+	{
+		if (b.activactionAction == action)
+			b.binding.Invoke();
+	}
+}
+
+void FInputAxis::FireBindings()
+{
+	for (auto& b : bindings)
+	{
+		b.binding.Invoke(cache);
+	}
 }
