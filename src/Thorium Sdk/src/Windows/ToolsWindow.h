@@ -130,7 +130,7 @@ private:
 
 protected:
 	QMenuBar* _menuBar;
-	ads::CDockManager* dockmanager;
+	ads::CDockManager* dockmanager = nullptr;
 
 private:
 	FGuid ID;

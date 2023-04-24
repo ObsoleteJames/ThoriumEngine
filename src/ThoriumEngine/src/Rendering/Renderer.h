@@ -30,18 +30,19 @@ enum class ERendererApi
 	VULKAN
 };
 
-struct FGraphicsSettings
-{
-	uint8 lightingQuality : 2;
-	uint8 textureQuality : 2;
-	uint8 shadowQuality : 2;
-	uint8 effectsQuality : 2;
-	uint8 renderScale = 100;
-
-	bool bVsync : 1;
-	bool bUseBloom : 1;
-	bool bMotionBlur : 1;
-};
+// DEPRECATED - Moved to using ConVars
+//struct FGraphicsSettings
+//{
+//	uint8 lightingQuality : 2; // Low - Medium - High - Ultra
+//	uint8 textureQuality : 2; // Low - Medium - High - Ultra
+//	uint8 shadowQuality : 2; // 256x - 512x - 1024x - 2048x
+//	uint8 effectsQuality : 2;
+//	uint8 renderScale = 100;
+//
+//	bool bVsync : 1;
+//	bool bUseBloom : 1;
+//	bool bMotionBlur : 1;
+//};
 
 struct FSceneInfoBuffer
 {
@@ -186,6 +187,7 @@ private:
 	static void RenderSpotLightShadow(CLightProxy* light, ITextureCube* out);
 
 	static void RenderCamera(CRenderScene* scene, CCameraProxy* camera);
+	static void RenderShadowMaps(CRenderScene* scene);
 
 	static TIterator<FRenderCommand> __getRenderCommands(ERenderPass currentPass,
 		TIterator<FRenderCommand> begin, TIterator<FRenderCommand> end, TArray<FRenderCommand>& out);

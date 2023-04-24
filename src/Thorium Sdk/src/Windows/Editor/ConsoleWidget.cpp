@@ -17,7 +17,7 @@ const char* logTypeText[] = {
 
 CConsoleWidget::CConsoleWidget(QWidget* parent /*= nullptr*/) : ads::CDockWidget("Console", parent)
 {
-	QWidget* rootWidget = new QWidget(this);
+	QWidget* rootWidget = new QFrame(this);
 	QVBoxLayout* layout = new QVBoxLayout();
 	rootWidget->setLayout(layout);
 

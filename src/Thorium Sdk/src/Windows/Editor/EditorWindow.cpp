@@ -201,6 +201,8 @@ void CEditorWindow::SetupUi()
 {
 	CToolsWindow::SetupUi();
 
+	dockmanager = new ads::CDockManager(this);
+
 	// Setup Menubar
 	{
 		menuFile = new QMenu("File", _menuBar);
@@ -295,7 +297,7 @@ void CEditorWindow::SetupUi()
 
 	QVBoxLayout* layout = new QVBoxLayout(this);
 	layout->setSpacing(0);
-	layout->setMargin(1);
+	layout->setMargin(0);
 
 	widget->setLayout(layout);
 	//setCentralWidget(widget);
@@ -621,7 +623,7 @@ void CEditorWindow::closeEvent(QCloseEvent *event)
 void CEditorWindow::paintEvent(QPaintEvent *event)
 {
 	static int inactiveCounter = 0;
-	if (!isActiveWindow())
+	if (QApplication::activeWindow() == nullptr)
 	{
 		inactiveCounter++;
 
@@ -672,7 +674,7 @@ void CEditorWindow::paintEvent(QPaintEvent *event)
 	if (counter == 15)
 	{
 		fpsAvarage /= 15.0;
-		fpsLabel->setText(QString("FPS: ") + QString::number(1.0 / fpsAvarage));
+		fpsLabel->setText(QString("FPS: ") + QString::number(int(1.0 / fpsAvarage)));
 		fpsAvarage = 0;
 		counter = 0;
 	}

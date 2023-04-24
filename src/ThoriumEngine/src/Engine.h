@@ -116,8 +116,7 @@ protected:
 
 public:
 	FUserConfig userConfig;
-	FGraphicsSettings graphicsSettings;
-
+	
 protected:
 	TEvent<> eventOnHotReload;
 

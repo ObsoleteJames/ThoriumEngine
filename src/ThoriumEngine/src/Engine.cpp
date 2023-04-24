@@ -227,6 +227,8 @@ bool CEngine::LoadProject(const WString& path /*= "."*/)
 
 	CFileSystem::SetCurrentPath(path);
 
+	CConsole::LoadConfig();
+
 	if (projectConfig.games.Find(projectConfig.defaultGame) != projectConfig.games.end())
 		LoadGame(projectConfig.defaultGame);
 	else

@@ -1,4 +1,23 @@
-﻿  Thorium Sdk.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Thorium Sdk.exe
+﻿  moc src\Windows\ToolsWindow.h
+  Main.cpp
+  ModuleDebugger.cpp
+  ObjectDebugger.cpp
+  WidgetDemo.cpp
+  EditorWindow.cpp
+  MaterialEditor.cpp
+  ModelCreator.cpp
+  ProjectManagerWindow.cpp
+  ToolsWindow.cpp
+  moc_EditorPreferences.cpp
+  moc_EditorWindow.cpp
+  moc_MaterialEditor.cpp
+  moc_ModelCreator.cpp
+  moc_ModuleDebugger.cpp
+  moc_ObjectDebugger.cpp
+  moc_ProjectManagerWindow.cpp
+  moc_ToolsWindow.cpp
+  moc_WidgetDemo.cpp
+  Thorium Sdk.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Thorium Sdk.exe
   F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Thorium Sdk.exe
   1 File(s) copied
   F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Thorium Sdk.pdb

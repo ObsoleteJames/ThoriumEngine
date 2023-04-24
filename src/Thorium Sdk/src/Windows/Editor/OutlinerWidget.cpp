@@ -56,9 +56,9 @@ void COutlinerTreeWidget::dropEvent(QDropEvent* event)
 
 COutlinerWidget::COutlinerWidget(QWidget* parent /*= nullptr*/) : ads::CDockWidget("Scene Outliner", parent)
 {
-	QWidget* pWidget = new QWidget(this);
+	QWidget* pWidget = new QFrame(this);
 	QVBoxLayout* layout = new QVBoxLayout(pWidget);
-	layout->setContentsMargins(4, 4, 4, 4);
+	layout->setMargin(6);
 
 	setWidget(pWidget);
 

@@ -80,8 +80,6 @@ CToolsWindow::CToolsWindow() : QMainWindow(nullptr)
 	_menuBar->setLayoutDirection(Qt::LeftToRight);
 	setMenuBar(_menuBar);
 
-	dockmanager = new ads::CDockManager(this);
-
 	//setWindowFlags(Qt::FramelessWindowHint | Qt::WindowSystemMenuHint | Qt::WindowMinimizeButtonHint);
 
 }
@@ -431,7 +429,8 @@ void CToolsWindow::SaveState()
 		settings.endGroup();
 	}
 
-	settings.setValue("adsDocks", dockmanager->saveState());
+	if (dockmanager)
+		settings.setValue("adsDocks", dockmanager->saveState());
 
 	UserSaveState(settings);
 }
@@ -455,7 +454,8 @@ void CToolsWindow::RestoreState()
 		settings.endGroup();
 	}
 
-	dockmanager->restoreState(settings.value("adsDocks").toByteArray());
+	if (dockmanager)
+		dockmanager->restoreState(settings.value("adsDocks").toByteArray());
 
 	UserRestoreState(settings);
 }

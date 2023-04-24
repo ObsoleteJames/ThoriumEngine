@@ -54,6 +54,7 @@ class ENGINE_API CConVar
 {
 public:
 	CConVar(const FString& name, float value = 0.f);
+	explicit CConVar(const FString& name, const WString& configPath, float value = 0.f);
 	~CConVar();
 
 	float AsFloat() const { return value; }
@@ -66,7 +67,14 @@ public:
 
 	inline const FString& Name() const { return name; }
 
+	// Returns the config path. 
+	// If set, during project initialization this variable will be loaded from the specified file.
+	inline const WString& ConfigPath() const { return configPath; }
+
 private:
+	// Config path relative to project dir.
+	WString configPath;
+
 	FString name;
 	float value;
 };
@@ -79,6 +87,8 @@ class ENGINE_API CConsole
 public:
 	static void Init();
 	static void Shutdown();
+
+	static void LoadConfig();
 
 public:
 	static inline void LogPlain(const FString& msg, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_PLAIN, FString(), nullptr }); }
@@ -96,8 +106,10 @@ public:
 
 	static inline TEvent<const FConsoleMsg&>& GetLogEvent() { return onMsgLogged; }
 
-	inline const TArray<CConVar*>& GetConVars() const { return consoleVars; }
-	inline const TArray<CConCmd*>& GetConCmds() const { return consoleCmds; }
+	inline static const TArray<CConVar*>& GetConVars() { return consoleVars; }
+	inline static const TArray<CConCmd*>& GetConCmds() { return consoleCmds; }
+
+	static CConVar* GetConVar(const FString& name);
 
 private:
 	static void _log(const FConsoleMsg& msg);

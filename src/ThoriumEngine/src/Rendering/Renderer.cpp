@@ -16,6 +16,9 @@ std::thread renderThread;
 // 0 = None, 1 = Unlit, 2 = Normal, 3 = Material
 static CConVar cvRenderMaterialMode("r.materialmode");
 
+static CConVar cvRenderShadowQuality("r.shadow.quality", L"config\\graphics.cfg", 2.f);
+static CConVar cvRenderTextureQuality("r.texture.quality", L"config\\graphics.cfg", 3.f);
+
 IRenderer::IRenderer()
 {
 	gRenderer = this;
@@ -152,8 +155,10 @@ void IRenderer::renderAll()
 	// Draw each scene.
 	for (auto scene : renderQueue)
 	{
+		//RenderShadowMaps(scene);
+
 		for (auto* cam : scene->cameras)
-			if (cam != scene->GetPrimaryCamera())
+			if (cam != scene->GetPrimaryCamera() && cam->bEnabled)
 				RenderCamera(scene, cam);
 
 		if (scene->GetPrimaryCamera())

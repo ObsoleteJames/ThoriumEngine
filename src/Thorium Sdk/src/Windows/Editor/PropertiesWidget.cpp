@@ -18,7 +18,7 @@ CPropertiesWidget::CPropertiesWidget(QWidget* parent /*= nullptr*/) : ads::CDock
 
 	QWidget* pWidget = new QWidget(this);
 	QVBoxLayout* layout = new QVBoxLayout(pWidget);
-	layout->setContentsMargins(4, 4, 4, 4);
+	layout->setMargin(0);
 
 	setWidget(pWidget);
 

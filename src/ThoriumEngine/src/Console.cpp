@@ -1,6 +1,7 @@
 
 #include "Console.h"
 #include <Util/Assert.h>
+#include <Util/KeyValue.h>
 #include <mutex>
 #include <string>
 
@@ -39,6 +40,33 @@ void CConsole::Shutdown()
 #if !CONSOLE_USE_ARRAY
 	delete[] logArray;
 #endif
+
+	// Save Config.
+	for (auto& var : consoleVars)
+	{
+		if (var->ConfigPath().IsEmpty())
+			continue;
+
+		FKeyValue kv(var->ConfigPath());
+		kv.GetValue(var->Name())->Value = std::to_string(var->AsFloat()).c_str();
+
+		kv.Save();
+	}
+}
+
+void CConsole::LoadConfig()
+{
+	for (auto& var : consoleVars)
+	{
+		if (var->ConfigPath().IsEmpty())
+			continue;
+
+		FKeyValue kv(var->ConfigPath());
+		if (!kv.IsOpen())
+			continue;
+
+		var->SetValue(std::stof(kv.GetValue(var->Name())->Value.c_str()));
+	}
 }
 
 void CConsole::Exec(const FString& input)
@@ -106,6 +134,15 @@ FConsoleMsg* CConsole::GetLinkedList()
 }
 #endif
 
+CConVar* CConsole::GetConVar(const FString& name)
+{
+	for (auto* var : consoleVars)
+		if (var->Name() == name)
+			return var;
+
+	return nullptr;
+}
+
 void CConsole::_log(const FConsoleMsg& msg)
 {
 	consoleMutex.lock();
@@ -169,6 +206,16 @@ void CConCmd::Exec(const TArray<FString>& args)
 }
 
 CConVar::CConVar(const FString& n, float v) : value(v), name(n)
+{
+	for (auto* cmd : CConsole::consoleCmds)
+		THORIUM_ASSERT(cmd->Name() != name, FString("Failed to register ConVar '") + name + "', ConCmd with the same name already exists!");
+	for (auto* var : CConsole::consoleVars)
+		THORIUM_ASSERT(var->Name() != name, FString("Failed to register ConVar '") + name + "', ConVar with the same name arleady exists!");
+
+	CConsole::consoleVars.Add(this);
+}
+
+CConVar::CConVar(const FString& n, const WString& c /*= FString()*/, float v /*= 0.f*/) : value(v), name(n), configPath(c)
 {
 	for (auto* cmd : CConsole::consoleCmds)
 		THORIUM_ASSERT(cmd->Name() != name, FString("Failed to register ConVar '") + name + "', ConCmd with the same name already exists!");
