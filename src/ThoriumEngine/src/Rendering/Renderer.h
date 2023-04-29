@@ -109,6 +109,20 @@ struct FForwardLightsBuffer
 	int numSpotLights;
 };
 
+struct FTextSDFBuffer
+{
+	FVector color;
+	float _padding;
+	FVector outlineColor;
+	float _padding2;
+
+	float thickness;
+	float outline;
+
+	uint uvStride;
+	uint uvIndex;
+};
+
 class ENGINE_API IRenderer
 {
 	friend class IShader;

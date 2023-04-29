@@ -4,6 +4,70 @@
 #include "Window.h"
 #include <DirectXMath.h>
 
+float FVector2::Distance(const FVector2& a, const FVector2& b)
+{
+	return FMath::Sqrt(FMath::Squared(b.x - a.x) + FMath::Squared(b.y - a.y));
+}
+
+float FVector2::Dot(const FVector2& a, const FVector2& b)
+{
+	return a.x * b.x + a.y * b.y;
+}
+
+FVector2 FVector2::Rotate(float degrees) const
+{
+	FVector2 r;
+	float theta = FMath::Radians(degrees);
+	float cs = FMath::Cos(theta);
+	float sn = FMath::Sin(theta);
+
+	r.x = x * cs - y * sn;
+	r.y = x * sn + y * cs;
+	return r;
+}
+
+FVector2& FVector2::operator-=(const FVector2& right)
+{
+	x -= right.x;
+	y -= right.y;
+	return *this;
+}
+
+FVector2& FVector2::operator*=(const FVector2& right)
+{
+	x *= right.x;
+	y *= right.y;
+	return *this;
+}
+
+FVector2& FVector2::operator/=(const FVector2& right)
+{
+	x /= right.x;
+	y /= right.y;
+	return *this;
+}
+
+FVector2& FVector2::operator+=(const FVector2& right)
+{
+	x += right.x;
+	y += right.y;
+	return *this;
+}
+
+FVector2& FVector2::operator*=(float f)
+{
+	x *= f;
+	y *= f;
+	return *this;
+}
+
+FVector2& FVector2::operator/=(float f)
+{
+	x /= f;
+	y /= f;
+	return *this;
+}
+
 FVector FVector::Orthogonal() const
 {
 	FVector absVec(FMath::Abs(x), FMath::Abs(y), FMath::Abs(z));

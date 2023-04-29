@@ -4,6 +4,8 @@
 #include "PlayerController.generated.h"
 
 class CPlayer;
+class CCanvas;
+class CRenderScene;
 
 CLASS(Hidden)
 class ENGINE_API CPlayerController : public CPawnController 
@@ -15,8 +17,12 @@ class ENGINE_API CPlayerController : public CPawnController
 
 public:
 	inline CPlayer* GetPlayer() const { return player; }
+	inline const TArray<TObjectPtr<CCanvas>>& GetCanvass() const { return canvass; }
+
+	void AddCanvas(CCanvas* canvas);
+	void RemoveCanvas(CCanvas* canvas);
 
 protected:
 	TObjectPtr<CPlayer> player;
-
+	TArray<TObjectPtr<CCanvas>> canvass;
 };

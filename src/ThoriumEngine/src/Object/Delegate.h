@@ -28,12 +28,18 @@ public:
 		FDelegateBinding<TArgs...>& binding = *bindings.last();
 		binding.receiver = obj;
 		binding.funcPtr = funcPtr;
-		binding.func = [=](TArgs... args) {
-			if constexpr (std::is_member_function_pointer<TFunc>::value)
+		if constexpr (std::is_member_function_pointer<TFunc>::value)
+		{
+			binding.func = [obj, func](TArgs... args) {
 				(obj->*func)(args...);
-			else
+			};
+		}
+		else
+		{
+			binding.func = [obj, func](TArgs... args) {
 				func(args...);
-		};
+			};
+		}
 	}
 
 	void Invoke(TArgs... args)

@@ -175,7 +175,9 @@ void CEditorEngine::LoadEditorConfig()
 		FProject proj;
 		proj.name = v.Key;
 		proj.dir = ToWString(v.Value.Value);
-		availableProjects.Add(proj);
+
+		RegisterProject(proj);
+		//availableProjects.Add(proj);
 	}
 
 	if (config.theme.IsEmpty())

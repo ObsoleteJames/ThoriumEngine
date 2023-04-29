@@ -14,6 +14,63 @@ class IBaseWindow;
 class CCameraProxy;
 
 STRUCT()
+struct ENGINE_API FVector2
+{
+	GENERATED_BODY()
+
+public:
+	FVector2() = default;
+	FVector2(float scalar) : x(scalar), y(scalar) {}
+	FVector2(const FVector2& other) : x(other.x), y(other.y) {}
+	FVector2(const glm::vec2& other) : x(other.x), y(other.y) {}
+	FVector2(float _x, float _y) : x(_x), y(_y) {}
+
+	inline operator glm::vec2() const { return glm::vec2(x, y); }
+
+	inline float Magnitude() const { return FMath::Sqrt(x * x + y * y); }
+	inline FVector2 Normalize() const { return FVector2(*this) /= Magnitude(); }
+
+	static float Distance(const FVector2& a, const FVector2& b);
+	static float Dot(const FVector2& a, const FVector2& b);
+
+	FVector2 Radians() const { return FVector2(FMath::Radians(x), FMath::Radians(y)); }
+	FVector2 Degrees() const { return FVector2(FMath::Degrees(x), FMath::Degrees(y)); }
+
+	FVector2 Cos() const { return FVector2(FMath::Cos(x), FMath::Cos(y)); }
+	FVector2 Sin() const { return FVector2(FMath::Sin(x), FMath::Sin(y)); }
+	FVector2 Tan() const { return FVector2(); }
+
+	FVector2 Rotate(float degrees) const;
+
+	inline FVector2 operator-() { return FVector2(-x, -y); }
+
+	FVector2& operator+=(const FVector2& right);
+	FVector2& operator-=(const FVector2& right);
+	FVector2& operator*=(const FVector2& right);
+	FVector2& operator/=(const FVector2& right);
+
+	FVector2& operator*=(float f);
+	FVector2& operator/=(float f);
+
+	bool operator==(const FVector2& right) { return x == right.x && y == right.y; }
+	bool operator!=(const FVector2& right) { return x != right.x && y != right.y; }
+
+public:
+	PROPERTY()
+		float x = 0.0f;
+	PROPERTY()
+		float y = 0.0f;
+};
+
+inline FVector2 operator+(const FVector2& a, const FVector2& b) { return FVector2(a) += b; }
+inline FVector2 operator-(const FVector2& a, const FVector2& b) { return FVector2(a) -= b; }
+inline FVector2 operator*(const FVector2& a, const FVector2& b) { return FVector2(a) *= b; }
+inline FVector2 operator/(const FVector2& a, const FVector2& b) { return FVector2(a) /= b; }
+
+inline FVector2 operator*(const FVector2& a, float f) { return FVector2(a) *= f; }
+inline FVector2 operator/(const FVector2& a, float f) { return FVector2(a) /= f; }
+
+STRUCT()
 struct ENGINE_API FVector
 {
 	GENERATED_BODY()
@@ -21,6 +78,7 @@ struct ENGINE_API FVector
 public:
 	FVector() = default;
 	FVector(float scalar) : x(scalar), y(scalar), z(scalar) {}
+	FVector(const FVector2& a, float _z = 0.0f) : x(a.x), y(a.y), z(_z) {}
 	FVector(const FVector& other) : x(other.x), y(other.y), z(other.z) {}
 	FVector(const glm::vec3& other) : x(other.x), y(other.y), z(other.z) {}
 	FVector(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}

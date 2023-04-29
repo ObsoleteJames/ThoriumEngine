@@ -182,6 +182,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="Intermediate\generated\Bounds.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Buffers.generated.cpp" />
     <ClCompile Include="Intermediate\generated\CameraComponent.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Canvas.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Engine.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Engine.init.cpp" />
     <ClCompile Include="Intermediate\generated\Entity.generated.cpp" />
@@ -211,6 +212,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="Intermediate\generated\Texture.generated.cpp" />
     <ClCompile Include="Intermediate\generated\TransformGizmoEntity.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Vectors.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Widget.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Window.generated.cpp" />
     <ClCompile Include="Intermediate\generated\World.generated.cpp" />
     <ClCompile Include="src\Console.cpp" />
@@ -236,6 +238,9 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="src\Game\Pawn.cpp" />
     <ClCompile Include="src\Game\PawnController.cpp" />
     <ClCompile Include="src\Game\Player.cpp" />
+    <ClCompile Include="src\Game\PlayerController.cpp" />
+    <ClCompile Include="src\Game\UserInterface\Canvas.cpp" />
+    <ClCompile Include="src\Game\UserInterface\Widget.cpp" />
     <ClCompile Include="src\Game\World.cpp" />
     <ClCompile Include="src\Math\Bounds.cpp" />
     <ClCompile Include="src\Math\Math.cpp" />
@@ -284,12 +289,15 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClInclude Include="src\Game\Events.h" />
     <ClInclude Include="src\Game\GameInstance.h" />
     <ClInclude Include="src\Game\GameMode.h" />
+    <ClInclude Include="src\Game\Input\InputEvents.h" />
     <ClInclude Include="src\Game\Input\InputManager.h" />
     <ClInclude Include="src\Game\Misc\TransformGizmoEntity.h" />
     <ClInclude Include="src\Game\Pawn.h" />
     <ClInclude Include="src\Game\PawnController.h" />
     <ClInclude Include="src\Game\PlayerController.h" />
     <ClInclude Include="src\Game\Player.h" />
+    <ClInclude Include="src\Game\UserInterface\Canvas.h" />
+    <ClInclude Include="src\Game\UserInterface\Widget.h" />
     <ClInclude Include="src\Math\Bounds.h" />
     <ClInclude Include="src\Misc\Timer.h" />
     <ClInclude Include="src\Object\ObjectHandle.h" />

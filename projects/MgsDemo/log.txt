@@ -2,7 +2,6 @@
 [INF][CResourceManager]	Created resource threads (1)
 [INF][CResourceManager]	Initialized
 [INF][CFileSystem]	Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
-[INF][CResourceManager]	Found 28 assets in 'Engine'
+[INF][CResourceManager]	Found 29 assets in 'Engine'
 [INF][CFileSystem]	Mounting Mod: MGS
 [INF][CResourceManager]	Found 20 assets in 'MGS'
-[INF][CEditorEngine]	Created Editor Window

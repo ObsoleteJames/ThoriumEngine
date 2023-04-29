@@ -1,6 +1,10 @@
 ﻿  Path: F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\
   Running HeaderTool for project: Engine
   Engine.init.cpp
+  InputManager.cpp
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\Input\InputManager.cpp(63,39): warning C4244: '=': conversion from 'int64_t' to 'uint16', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\Input\InputManager.cpp(72,41): warning C4244: '=': conversion from 'int64_t' to 'uint16', possible loss of data
+  Generating Code...
   ThoriumEngine.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.dll
   F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.dll
   1 File(s) copied

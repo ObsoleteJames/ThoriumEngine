@@ -66,3 +66,14 @@ bool CGameInstance::AddLocalPlayer(uint controllerId)
 	newPlayer.SetupViewport(localPlayers.Size(), false);
 	return true;
 }
+
+void CGameInstance::AddGlobalCanvas(CCanvas* canvas)
+{
+	globalCanvass.Add(canvas);
+}
+
+void CGameInstance::RemoveGlobalCanvas(CCanvas* canvas)
+{
+	if (auto it = globalCanvass.Find(canvas); it != globalCanvass.end())
+		globalCanvass.Erase(it);
+}

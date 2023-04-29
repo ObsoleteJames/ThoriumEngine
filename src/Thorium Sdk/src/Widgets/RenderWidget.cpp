@@ -17,7 +17,7 @@ public:
 
 	virtual void* GetNativeHandle() { return wndHandle; }
 
-	void SetSize(int w, int h) { width = w; height = h; }
+	void SetSize(int w, int h) { width = w; height = h; OnWindowResize.Invoke(w, h); }
 	void SetMousePos(double x, double y) { mouseX = x; mouseY = y; }
 
 protected:
@@ -328,6 +328,7 @@ void CRenderWidget::mouseMoveEvent(QMouseEvent* event)
 {
 	auto p = event->localPos();
 	_window->SetMousePos(p.x(), p.y());
+	_window->OnCursorMove.Invoke(p.x(), p.y());
 	QFrame::mouseMoveEvent(event);
 }
 

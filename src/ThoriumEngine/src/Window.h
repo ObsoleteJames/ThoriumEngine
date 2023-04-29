@@ -191,6 +191,8 @@ public:
 	TDelegate<double, double> OnCursorMove; // X, Y
 	TDelegate<EMouseButton, EInputAction, EInputMod> OnMouseButton;
 
+	TDelegate<int, int> OnWindowResize;
+
 protected:
 	double mouseX, mouseY;
 	int width, height;

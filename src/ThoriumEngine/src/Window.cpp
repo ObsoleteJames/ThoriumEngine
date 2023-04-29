@@ -66,7 +66,9 @@ CWindow::CWindow(int w, int h, int x, int y, const FString& title, EWindowMode m
 		w->height = height;
 		if (w->swapChain && width != 0 && height != 0)
 			w->swapChain->Resize(width, height);
-		});
+
+		w->OnWindowResize.Invoke(width, height);
+	});
 	glfwSetWindowFocusCallback((GLFWwindow*)nativeHandle, [](GLFWwindow* window, int focus) { GetWindowFromHandle(window)->bFocused = focus; });
 	glfwSetWindowMaximizeCallback((GLFWwindow*)nativeHandle, [](GLFWwindow* window, int b) { GetWindowFromHandle(window)->bIsMaximized = b; });
 }

@@ -1,10 +1,14 @@
 
 #include "InputManager.h"
 #include "Engine.h"
+#include "InputEvents.h"
 
+#include "Game/GameInstance.h"
 #include "Game/PlayerController.h"
 #include "Game/Pawn.h"
+#include "Game/UserInterface/Canvas.h"
 
+#include <set>
 #include <Util/KeyValue.h>
 
 void CInputManager::SetInputWindow(IBaseWindow* window)
@@ -19,7 +23,10 @@ void CInputManager::SetInputWindow(IBaseWindow* window)
 
 	inputWindow = window;
 
-	//window->OnKeyEvent.Bind(this, &CInputManager::KeyEvent);
+	// TODO: Fix crashing when in editor.
+	if (!gIsEditor)
+		window->OnKeyEvent.Bind(this, &CInputManager::KeyEvent);
+
 	window->OnCharEvent.Bind(this, &CInputManager::OnCharEvent);
 	window->OnCursorMove.Bind(this, &CInputManager::OnCursorMove);
 	window->OnMouseButton.Bind(this, &CInputManager::OnMouseButton);
@@ -148,13 +155,41 @@ FInputAxis* CInputManager::GetAxis(const FString& name)
 
 void CInputManager::KeyEvent(EKeyCode key, EInputAction action, EInputMod mod)
 {
-	for (auto& a : actions)
+	CKeyEvent event(key, action, mod);
+
+	if (inputMode != EInputMode::GAME_ONLY)
 	{
-		for (auto& k : a.keys)
+		//std::set<int, CCanvas*> canvass;
+		//for (auto c : gEngine->GameInstance()->GetGlobalCanvass())
+		//	canvass.emplace(c->ZOrder(), c);
+
+		//for (auto p : gEngine->GameInstance()->GetPlayers())
+		//{
+		//	for (auto c : p->GetPlayerController()->GetCanvass())
+		//		canvass.emplace(-c->ZOrder(), c);
+		//}
+
+		//std::sort(canvass.begin(), canvass.end());
+
+		/*for (auto it = canvass.begin(); it != canvass.end(); it++)
 		{
-			if (k.type == 0 && k.key == (uint16)key && k.mods == mod)
+
+
+			if (event.Accepted())
+				break;
+		}*/
+	}
+	
+	if (inputMode != EInputMode::UI_ONLY)
+	{
+		for (auto& a : actions)
+		{
+			for (auto& k : a.keys)
 			{
-				a.FireBindings(action);
+				if (k.type == 0 && k.key == (uint16)key && k.mods == mod)
+				{
+					a.FireBindings(action);
+				}
 			}
 		}
 	}

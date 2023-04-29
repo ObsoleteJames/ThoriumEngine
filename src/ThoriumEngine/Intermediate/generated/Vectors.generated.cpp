@@ -9,6 +9,37 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
+DECLARE_PROPERTY(FVector2, "x", x, "", "float", EVT_FLOAT, VTAG_SERIALIZABLE , offsetof(FVector2, x), sizeof(float), nullptr, nullptr)
+#undef CLASS_NEXT_PROPERTY
+#define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FVector2, x)
+
+DECLARE_PROPERTY(FVector2, "y", y, "", "float", EVT_FLOAT, VTAG_SERIALIZABLE , offsetof(FVector2, y), sizeof(float), nullptr, nullptr)
+#undef CLASS_NEXT_PROPERTY
+#define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FVector2, y)
+
+class FStruct_FVector2 : public FStruct
+{
+public:
+	FStruct_FVector2()
+	{
+		name = "Vector 2";
+		cppName = "FVector2";
+		size = sizeof(FVector2);
+		numProperties = 2;
+		PropertyList = CLASS_NEXT_PROPERTY;
+		bIsClass = false;
+		GetModule_Engine().RegisterFStruct(this);
+	}
+};
+FStruct_FVector2 __FStruct_FVector2_Instance;
+
+FStruct* FVector2::StaticStruct() { return &__FStruct_FVector2_Instance; }
+
+#undef CLASS_NEXT_PROPERTY
+#undef CLASS_NEXT_FUNCTION
+#undef CLASS_NEXT_PROPERTY
+#define CLASS_NEXT_PROPERTY nullptr
+
 DECLARE_PROPERTY(FVector, "x", x, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FVector, x), sizeof(float), nullptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FVector, x)
