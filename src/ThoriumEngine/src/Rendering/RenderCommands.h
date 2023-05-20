@@ -7,7 +7,7 @@ struct FFont;
 class CMaterial;
 class IShader;
 
-enum ERenderPass : uint8
+enum ERenderPass : uint16
 {
 	RENDER_PASS_NONE = 0,
 	R_SHADOW_PASS = 1,
@@ -16,7 +16,8 @@ enum ERenderPass : uint8
 	R_TRANSPARENT_PASS = 1 << 3,
 	R_POSTPROCESS_PASS = 1 << 4,
 	R_DEBUG_PASS = 1 << 5,
-	R_UI_PASS = 1 << 6
+	R_DEBUG_OVERLAY_PASS = 1 << 7,
+	R_UI_PASS = 1 << 6,
 };
 
 enum EMeshDrawType : uint8

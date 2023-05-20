@@ -322,18 +322,28 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 				auto uiMinI = p.macro.ArgIndex("UIMin");
 				auto uiMaxI = p.macro.ArgIndex("UIMax");
 				auto catI = p.macro.ArgIndex("Category");
-				auto onEditI = p.macro.ArgIndex("OnEditFunc");
 
-				bHasMeta = uiMinI != -1 || uiMaxI != -1 || catI != -1 || onEditI != -1;
+				bHasMeta = uiMinI != -1 || uiMaxI != -1 || catI != -1 || p.macro.Arguments.Size() != 0;
 				if (bHasMeta)
 				{
+					stream << "#if IS_DEV\n";
+
+					stream << "static TPair<FString, FString> " << metaName.c_str() << "_Tags[]" << "{\n";
+					for (auto& arg : p.macro.Arguments)
+						stream << "\t{ \"" << arg.Key.c_str() << "\", \"" << arg.Value.c_str() << "\" },\n";
+
+					stream << "};\n\n";
+
 					stream << "static FPropertyMeta " << metaName.c_str() << " {\n";
 					stream << "\t\"" << (uiMinI != -1 ? p.macro.Arguments[uiMinI].Value.c_str() : "") << "\",\n";
 					stream << "\t\"" << (uiMaxI != -1 ? p.macro.Arguments[uiMaxI].Value.c_str() : "") << "\",\n";
 					stream << "\t\"" << (catI != -1 ? p.macro.Arguments[catI].Value.c_str() : "") << "\",\n";
 					stream << "\t\"\",\n";
+
+					stream << "\t" << std::to_string(p.macro.Arguments.Size()) << ",\n";
+					stream << "\t" << metaName.c_str() << "_Tags\n";
 					
-					if (onEditI != -1)
+					/*if (onEditI != -1)
 					{
 						FString func = p.macro.Arguments[onEditI].Value;
 						CppFunction* f = Class.GetFunction(func);
@@ -353,9 +363,14 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 						}
 					}
 					else
-						stream << "\tnullptr\n";
+						stream << "\tnullptr\n";*/
 
 					stream << "};\n\n";
+
+					stream << "#define " << metaName.c_str() << "_Ptr &" << metaName.c_str() << "\n";
+					stream << "#else\n";
+					stream << "#define " << metaName.c_str() << "_Ptr nullptr\n";
+					stream << "#endif\n";
 				}
 			}
 
@@ -399,7 +414,7 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			stream << "sizeof(" << p.fullTypename.c_str();
 			stream << "), ";
 
-			stream << (bHasMeta ? ("&" + metaName + ", ").c_str() : "nullptr, ");
+			stream << (bHasMeta ? (metaName + "_Ptr, ").c_str() : "nullptr, ");
 
 			if (varTypeId == "EVT_ARRAY")
 				stream << "&_arrayHelper_" << p.name.c_str();
@@ -476,6 +491,17 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 		else
 			objectTypeName = FString("FAssetClass_") + Class.name;
 
+		bool bHasTags = Class.classMacro.Arguments.Size() > 0;
+		if (bHasTags)
+		{
+			stream << "#ifdef IS_DEV\n";
+			stream << "static TPair<FString, FString> _" << objectTypeName.c_str() << "_Tags[] {\n";
+			for (auto& arg : Class.classMacro.Arguments)
+				stream << "\t{ \"" << arg.Key.c_str() << "\", \"" << arg.Value.c_str() << "\" },\n";
+			stream << "};\n";
+			stream << "#endif\n\n";
+		}
+
 		if (Class.classMacro.type == FMacro::CLASS)
 			stream << "class " << objectTypeName.c_str() << " : public FClass\n{\n";
 		else if (Class.classMacro.type == FMacro::STRUCT)
@@ -498,6 +524,14 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			<< "\t\tPropertyList = CLASS_NEXT_PROPERTY;\n"
 			<< "\t\tbIsClass = " << (Class.classMacro.type != FMacro::STRUCT ? "true" : "false") << ";\n";
 
+		if (bHasTags)
+		{
+			stream << "#ifdef IS_DEV\n";
+			stream << "\t\tnumTags = " << std::to_string(Class.classMacro.Arguments.Size()) << ";\n";
+			stream << "\t\ttags = _" << objectTypeName.c_str() << "_Tags;\n";
+			stream << "#endif\n";
+		}
+
 		if (auto i = Class.classMacro.ArgIndex("Extension"); Class.classMacro.type == FMacro::ASSET && Class.classMacro.ArgIndex("Abstract") == -1)
 		{
 			if (i == -1)
@@ -512,7 +546,8 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 
 		if (Class.classMacro.type != FMacro::STRUCT)
 		{
-			bool bBaseClass = ClassExists(Class.baseName);
+			//bool bBaseClass = ClassExists(Class.baseName);
+			bool bBaseClass = true;
 			stream << "\t\tBaseClass = " << (bBaseClass ? (Class.baseName + "::StaticClass()").c_str() : "nullptr") << ";\n"
 				<< "\t\tnumFunctions = " << std::to_string(Class.Functions.Size()) << ";\n"
 				<< "\t\tFunctionList = CLASS_NEXT_FUNCTION;\n"

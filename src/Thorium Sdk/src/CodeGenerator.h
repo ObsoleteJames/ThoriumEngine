@@ -7,6 +7,10 @@ class CCodeGenerator
 {
 public:
 	static void GenerateCppFile(const FString& filePath, const FString& baseClass, const WString& mod = WString());
+	static void GenerateProjectHeader(const FString& projName, const WString& outPath);
+
+	// Generate CMakeLists.txt for the current game.
+	static void GenerateCMakeLists();
 
 	static FString GetIncludePath(const FString& className);
 

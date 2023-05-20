@@ -9,19 +9,71 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
-DECLARE_PROPERTY(CPointLightComponent, "Intensity", intensity, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CPointLightComponent, intensity), sizeof(float), nullptr, nullptr)
+static TPair<FString, FString> _CPointLightComponent_intensity_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CPointLightComponent_intensity_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CPointLightComponent_intensity_Meta_Tags
+};
+
+DECLARE_PROPERTY(CPointLightComponent, "Intensity", intensity, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CPointLightComponent, intensity), sizeof(float), &_CPointLightComponent_intensity_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CPointLightComponent, intensity)
 
-DECLARE_PROPERTY(CPointLightComponent, "Range", range, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CPointLightComponent, range), sizeof(float), nullptr, nullptr)
+static TPair<FString, FString> _CPointLightComponent_range_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CPointLightComponent_range_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CPointLightComponent_range_Meta_Tags
+};
+
+DECLARE_PROPERTY(CPointLightComponent, "Range", range, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CPointLightComponent, range), sizeof(float), &_CPointLightComponent_range_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CPointLightComponent, range)
 
-DECLARE_PROPERTY(CPointLightComponent, "Color", color, "", "FVector", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CPointLightComponent, color), sizeof(FVector), nullptr, nullptr)
+static TPair<FString, FString> _CPointLightComponent_color_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CPointLightComponent_color_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CPointLightComponent_color_Meta_Tags
+};
+
+DECLARE_PROPERTY(CPointLightComponent, "Color", color, "", "FVector", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CPointLightComponent, color), sizeof(FVector), &_CPointLightComponent_color_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CPointLightComponent, color)
 
-DECLARE_PROPERTY(CPointLightComponent, "Cast Shadows", bCastShadows, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CPointLightComponent, bCastShadows), sizeof(bool), nullptr, nullptr)
+static TPair<FString, FString> _CPointLightComponent_bCastShadows_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CPointLightComponent_bCastShadows_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CPointLightComponent_bCastShadows_Meta_Tags
+};
+
+DECLARE_PROPERTY(CPointLightComponent, "Cast Shadows", bCastShadows, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CPointLightComponent, bCastShadows), sizeof(bool), &_CPointLightComponent_bCastShadows_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CPointLightComponent, bCastShadows)
 

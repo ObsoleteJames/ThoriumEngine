@@ -51,7 +51,7 @@ public:
 	 *
 	 * @param bFirst - used to tell if this is the first call during recursion. must always be true when called manually.
 	 */
-	void LoadGame(const FString& game, bool bFirst = true);
+	void LoadGame();
 
 	/**
 	* Create world from the specified scene.
@@ -73,6 +73,8 @@ public:
 	virtual int Run();
 
 	virtual bool LoadProject(const WString& path = L".");
+
+	void LoadAddon(const FAddon& addon);
 
 	void Exit();
 
@@ -104,7 +106,10 @@ public:
 	inline double GetUpdateTime() const { return updateTime; }
 	inline double GetRenderTime() const { return renderTime; }
 
+	inline double DeltaTime() const { return deltaTime; }
+
 	inline WString GetGameConfigPath() const { return ToWString(activeGame.name) + L"\\config"; }
+	inline WString EngineContentPath() const { return engineMod->Path(); }
 
 protected:
 	virtual void OnExit();
@@ -113,6 +118,11 @@ protected:
 
 	bool LoadProjectConfig(const WString& path);
 	bool LoadUserConfig();
+
+	// Finds and loads core addons.
+	void LoadCoreAddons();
+
+	void RegisterAddon(const WString& path);
 
 public:
 	FUserConfig userConfig;
@@ -124,6 +134,8 @@ protected:
 
 	bool bWantsToExit = false;
 	bool bInitialized = false;
+
+	FMod* engineMod = nullptr;
 
 	double _time;
 	double _prevTime;
@@ -137,6 +149,8 @@ protected:
 
 	FProject projectConfig;
 	FGame activeGame;
+
+	TArray<FAddon> coreAddons;
 
 	//CRenderScene* worldRenderScene;
 

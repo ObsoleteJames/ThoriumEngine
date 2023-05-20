@@ -27,6 +27,7 @@ struct FConsoleMsg
 	FConsoleMsgInfo info;
 	EConsoleMsgType type;
 	FString module;
+	SizeType time;
 
 	FConsoleMsg* next = nullptr;
 };
@@ -91,10 +92,10 @@ public:
 	static void LoadConfig();
 
 public:
-	static inline void LogPlain(const FString& msg, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_PLAIN, FString(), nullptr }); }
-	static inline void LogInfo(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_INFO, module, nullptr }); }
-	static inline void LogWarning(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_WARNING, module, nullptr }); }
-	static inline void LogError(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_ERROR, module, nullptr }); }
+	static inline void LogPlain(const FString& msg, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_PLAIN, FString(), 0, nullptr }); }
+	static inline void LogInfo(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_INFO, module, 0, nullptr }); }
+	static inline void LogWarning(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_WARNING, module, 0, nullptr }); }
+	static inline void LogError(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_ERROR, module, 0, nullptr }); }
 
 	static void Exec(const FString& input);
 

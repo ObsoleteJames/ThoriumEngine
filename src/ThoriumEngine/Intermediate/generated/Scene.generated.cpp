@@ -9,24 +9,36 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
+static TPair<FString, FString> _CScene_gamemodeClass_Meta_Tags[]{
+	{ "Editable", "" },
+	{ "Category", "Gamemode" },
+};
+
 static FPropertyMeta _CScene_gamemodeClass_Meta {
 	"",
 	"",
 	"Gamemode",
 	"",
-	nullptr
+	2,
+	_CScene_gamemodeClass_Meta_Tags
 };
 
 DECLARE_PROPERTY(CScene, "Gamemode Class", gamemodeClass, "", "CGameMode", EVT_CLASS_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CScene, gamemodeClass), sizeof(TClassPtr<CGameMode>), &_CScene_gamemodeClass_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CScene, gamemodeClass)
 
+static TPair<FString, FString> _CScene_gravity_Meta_Tags[]{
+	{ "Editable", "" },
+	{ "Category", "Physics" },
+};
+
 static FPropertyMeta _CScene_gravity_Meta {
 	"",
 	"",
 	"Physics",
 	"",
-	nullptr
+	2,
+	_CScene_gravity_Meta_Tags
 };
 
 DECLARE_PROPERTY(CScene, "Gravity", gravity, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CScene, gravity), sizeof(float), &_CScene_gravity_Meta, nullptr)

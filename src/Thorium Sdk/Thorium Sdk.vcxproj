@@ -45,6 +45,7 @@
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\ToolsCore.cpp" />
     <ClCompile Include="src\Widgets\ClassSelectorWidget.cpp" />
+    <ClCompile Include="src\Widgets\CreateCppClassDialog.cpp" />
     <ClCompile Include="src\Widgets\FileDialogs.cpp" />
     <ClCompile Include="src\Widgets\FramelessDialog.cpp" />
     <ClCompile Include="src\Widgets\ImportDialogs\BaseImportDialog.cpp" />
@@ -64,6 +65,7 @@
     <ClCompile Include="src\Widgets\PropertyEditors\VectorProperty.cpp" />
     <ClCompile Include="src\Widgets\SaveDialog.cpp" />
     <ClCompile Include="src\Widgets\SplitterLink.cpp" />
+    <ClCompile Include="src\Windows\DataAssetEditor.cpp" />
     <ClCompile Include="src\Windows\Debug\ModuleDebugger.cpp" />
     <ClCompile Include="src\Windows\Debug\ObjectDebugger.cpp" />
     <ClCompile Include="src\Windows\Debug\WidgetDemo.cpp" />
@@ -140,6 +142,7 @@
     <QtMoc Include="src\Widgets\PropertyEditors\ObjectPtrProperty.h" />
     <QtMoc Include="src\Widgets\PropertyEditors\VectorProperty.h" />
     <QtMoc Include="src\Widgets\ClassSelectorWidget.h" />
+    <QtMoc Include="src\Widgets\CreateCppClassDialog.h" />
     <ClInclude Include="src\Widgets\ImportDialogs\BaseImportDialog.h" />
     <QtMoc Include="src\Widgets\PropertyEditors\ArrayProperty.h" />
     <ClInclude Include="src\Widgets\ImportDialogs\TextureImportDialog.h" />
@@ -148,6 +151,7 @@
     <QtMoc Include="src\Windows\Debug\ObjectDebugger.h" />
     <QtMoc Include="src\Widgets\PropertyEditors\ClassPtrProperty.h" />
     <QtMoc Include="src\Windows\Editor\SceneSettingsWidget.h" />
+    <QtMoc Include="src\Windows\DataAssetEditor.h" />
     <ClInclude Include="src\Windows\ModelCreator\Private\MeshWidget.h" />
     <ClInclude Include="src\Windows\ToolsClass.h" />
     <ClInclude Include="src\Widgets\TreeDataItem.h" />

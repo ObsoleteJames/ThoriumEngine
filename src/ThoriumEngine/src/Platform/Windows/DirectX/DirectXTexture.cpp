@@ -154,12 +154,14 @@ DirectXTexture2D::DirectXTexture2D(void** data, int numMimMaps, int w, int h, ET
 	//GetDirectXRenderer()->deviceContext->GenerateMips(view);
 
 	D3D11_SAMPLER_DESC samplerDesc{};
-	samplerDesc.Filter = filter == THTX_FILTER_LINEAR ? D3D11_FILTER_MIN_MAG_MIP_LINEAR : D3D11_FILTER_MIN_MAG_MIP_POINT;
+	samplerDesc.Filter = filter == THTX_FILTER_LINEAR ? D3D11_FILTER_MIN_MAG_MIP_LINEAR : (filter == THTX_FILTER_POINT ? D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR : D3D11_FILTER_ANISOTROPIC);
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.MaxAnisotropy = 8;
 	samplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = numMimMaps;
 
 	hr = GetDirectXRenderer()->device->CreateSamplerState(&samplerDesc, &sampler);
 	if (FAILED(hr))

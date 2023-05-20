@@ -53,5 +53,5 @@ enum EAssetFlags
 	ASSET_NONE = 0,
 
 	ASSET_AUTO_LOAD = 1,
-	ASSET_COMPILABLE = 1 << 1
+	ASSET_COMPILABLE = 1 << 1,
 };

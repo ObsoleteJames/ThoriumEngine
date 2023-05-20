@@ -106,7 +106,7 @@ void CConsole::Exec(const FString& input)
 				return;
 			}
 
-			_log({ target + " = " + args[0], {0, "", ""}, CONSOLE_PLAIN, FString(), nullptr});
+			_log({ target + " = " + args[0], {0, "", ""}, CONSOLE_PLAIN, FString(), 0, nullptr});
 
 			float f = 0.f;
 			if (!bIsBool)
@@ -143,8 +143,11 @@ CConVar* CConsole::GetConVar(const FString& name)
 	return nullptr;
 }
 
-void CConsole::_log(const FConsoleMsg& msg)
+void CConsole::_log(const FConsoleMsg& _msg)
 {
+	FConsoleMsg msg = _msg;
+	msg.time = (SizeType)time(nullptr);
+
 	consoleMutex.lock();
 #if !CONSOLE_USE_ARRAY
 	if (endIndex == beginIndex && numLogs > 0)

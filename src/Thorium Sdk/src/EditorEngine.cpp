@@ -11,6 +11,7 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/RenderScene.h"
 #include "Misc/Timer.h"
+#include "CodeGenerator.h"
 #include "Platform/Windows/DirectX/DirectXRenderer.h"
 
 #include "Resources/Material.h"
@@ -18,6 +19,7 @@
 #include "Resources/Scene.h"
 
 #include <QStandardPaths>
+#include <QDir>
 
 void CEditorEngine::Init()
 {
@@ -368,6 +370,58 @@ void CEditorEngine::RegisterProject(const FProject& proj)
 			return;
 
 	availableProjects.Add(proj);
+}
+
+void CEditorEngine::CreateProject(const WString& name, const WString& path)
+{
+	QString qPath = QString((const QChar*)path.c_str());
+	QString qName = QString((const QChar*)name.c_str());
+	QString projectPath = qPath + "\\" + qName;
+	QDir().mkpath(projectPath);
+	QDir().mkpath(projectPath + "\\config");
+	QDir().mkpath(projectPath + "\\" + qName + "\\config");
+	QDir().mkpath(projectPath + "\\" + qName + "\\bin");
+	QDir().mkpath(projectPath + "\\.project\\" + qName + "\\sdk_content");
+	QDir().mkpath(projectPath + "\\.project\\" + qName + "\\src");
+
+	{
+		FKeyValue projectCfg(path + L"\\" + name + L"\\config\\project.cfg");
+
+		projectCfg.SetValue("name", ToFString(name));
+		projectCfg.SetValue("displayName", ToFString(name));
+		projectCfg.SetValue("engine_version", ENGINE_VERSION);
+		projectCfg.SetValue("author", "Unkown");
+		projectCfg.SetValue("game", ToFString(name));
+
+		projectCfg.SetValue("hasSdk", "0");
+		projectCfg.SetValue("hasEngineContent", "0");
+
+		projectCfg.Save();
+	}
+
+	{
+		FKeyValue gameInfo(path + L"\\" + name + L"\\" + name + L"\\config\\gameinfo.cfg");
+		
+		gameInfo.SetValue("title", ToFString(name));
+		gameInfo.SetValue("version", "1.0.0");
+		gameInfo.SetValue("scene", "empty");
+
+		gameInfo.SetValue("gameinstance", "CGameInstance");
+
+		gameInfo.Save();
+	}
+
+	{
+		FKeyValue editorProj(path + L"\\" + name + L"\\.project\\" + name + L".thproj");
+
+		editorProj.SetValue("engine_version", ENGINE_VERSION);
+		editorProj.Save();
+	}
+
+	CCodeGenerator::GenerateProjectHeader(ToFString(name), path + L"\\" + name + L"\\.project\\" + name + L"\\src");
+
+	WString launchExePath = gEngine->EngineContentPath() + L"\\..\\bin\\Launch.exe";
+	QFile::copy(QString((const QChar*)launchExePath.c_str()), projectPath + "\\" + qName + ".exe");
 }
 
 void CEditorEngine::DrawSelectionDebug()

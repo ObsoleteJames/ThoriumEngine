@@ -25,19 +25,71 @@ FEnum_EProjectionType __FEnum_EProjectionType_Instance;
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
-DECLARE_PROPERTY(CCameraComponent, "Fov", fov, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , CCameraComponent::__private_fov_offset(), sizeof(float), nullptr, nullptr)
+static TPair<FString, FString> _CCameraComponent_fov_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CCameraComponent_fov_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CCameraComponent_fov_Meta_Tags
+};
+
+DECLARE_PROPERTY(CCameraComponent, "Fov", fov, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CCameraComponent, fov), sizeof(float), &_CCameraComponent_fov_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CCameraComponent, fov)
 
-DECLARE_PROPERTY(CCameraComponent, "Near Plane", nearPlane, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , CCameraComponent::__private_nearPlane_offset(), sizeof(float), nullptr, nullptr)
+static TPair<FString, FString> _CCameraComponent_nearPlane_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CCameraComponent_nearPlane_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CCameraComponent_nearPlane_Meta_Tags
+};
+
+DECLARE_PROPERTY(CCameraComponent, "Near Plane", nearPlane, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CCameraComponent, nearPlane), sizeof(float), &_CCameraComponent_nearPlane_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CCameraComponent, nearPlane)
 
-DECLARE_PROPERTY(CCameraComponent, "Far Plane", farPlane, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , CCameraComponent::__private_farPlane_offset(), sizeof(float), nullptr, nullptr)
+static TPair<FString, FString> _CCameraComponent_farPlane_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CCameraComponent_farPlane_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CCameraComponent_farPlane_Meta_Tags
+};
+
+DECLARE_PROPERTY(CCameraComponent, "Far Plane", farPlane, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CCameraComponent, farPlane), sizeof(float), &_CCameraComponent_farPlane_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CCameraComponent, farPlane)
 
-DECLARE_PROPERTY(CCameraComponent, "Projection", projection, "", "EProjectionType", EVT_ENUM, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , CCameraComponent::__private_projection_offset(), sizeof(EProjectionType), nullptr, nullptr)
+static TPair<FString, FString> _CCameraComponent_projection_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CCameraComponent_projection_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CCameraComponent_projection_Meta_Tags
+};
+
+DECLARE_PROPERTY(CCameraComponent, "Projection", projection, "", "EProjectionType", EVT_ENUM, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CCameraComponent, projection), sizeof(EProjectionType), &_CCameraComponent_projection_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CCameraComponent, projection)
 

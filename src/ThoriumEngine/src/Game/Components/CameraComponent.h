@@ -38,7 +38,7 @@ public:
 
 	inline void MakePrimary() const { GetWorld()->SetPrimaryCamera(camProxy); }
 
-private:
+public:
 	PROPERTY(Editable)
 	float fov = 70.f;
 
@@ -51,6 +51,7 @@ private:
 	PROPERTY(Editable)
 	EProjectionType projection;
 
+private:
 	FMatrix viewMat;
 	FMatrix projectionMat;
 

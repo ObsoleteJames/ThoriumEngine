@@ -138,7 +138,7 @@ public:
 	bool bEditorEntity;
 #endif
 
-	PROPERTY()
+	PROPERTY(Editable)
 	EEntityType type = ENTITY_DYNAMIC;
 
 	PROPERTY(Editable , Category = Health)

@@ -114,7 +114,7 @@ public:
 
 public:
 	inline void RegisterPrimitive(CPrimitiveProxy* proxy) { primitives.Add(proxy); }
-	inline void UnregisterPrimitve(CPrimitiveProxy* proxy) { if (auto it = primitives.Find(proxy); it != primitives.end()) primitives.Erase(it); }
+	inline void UnregisterPrimitive(CPrimitiveProxy* proxy) { if (auto it = primitives.Find(proxy); it != primitives.end()) primitives.Erase(it); }
 	inline const TArray<CPrimitiveProxy*>& GetPrimitives() const { return primitives; }
 
 	inline void RegisterLight(CLightProxy* proxy) { lights.Add(proxy); }

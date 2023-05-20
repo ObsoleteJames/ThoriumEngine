@@ -1,10 +1,128 @@
 ﻿  Path: F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\
   Running HeaderTool for project: Engine
+  Writing Generated Header 'F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\Intermediate\generated\Vectors.generated.h'
+  BillboardComponent.generated.cpp
+  Bounds.generated.cpp
+  CameraComponent.generated.cpp
+  Canvas.generated.cpp
+  Engine.generated.cpp
   Engine.init.cpp
-  InputManager.cpp
-F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\Input\InputManager.cpp(63,39): warning C4244: '=': conversion from 'int64_t' to 'uint16', possible loss of data
-F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\Input\InputManager.cpp(72,41): warning C4244: '=': conversion from 'int64_t' to 'uint16', possible loss of data
+  Entity.generated.cpp
+  GameInstance.generated.cpp
+  GameMode.generated.cpp
+  InputManager.generated.cpp
+  Material.generated.cpp
+  ModelAsset.generated.cpp
+  ModelComponent.generated.cpp
+  ModelEntity.generated.cpp
+  Pawn.generated.cpp
+  PawnController.generated.cpp
+  Player.generated.cpp
+  PlayerController.generated.cpp
+  PlayerStart.generated.cpp
+  PointLightComponent.generated.cpp
   Generating Code...
+  Compiling...
+  PointLightEntity.generated.cpp
+  Scene.generated.cpp
+  SceneComponent.generated.cpp
+  Shader.generated.cpp
+  SkyboxComponent.generated.cpp
+  SunLightComponent.generated.cpp
+  SunLightEntity.generated.cpp
+  TransformGizmoEntity.generated.cpp
+  Vectors.generated.cpp
+  Widget.generated.cpp
+  World.generated.cpp
+  Engine.cpp
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\shared\minwindef.h(130,1): warning C4005: 'APIENTRY': macro redefinition
+F:\MyProjects\VS_Projects\ThoriumEngine\src\dep\glfw\GLFW\glfw3.h(123): message : see previous definition of 'APIENTRY'
+  BillboardComponent.cpp
+  CameraComponent.cpp
+  ModelComponent.cpp
+  PointLightComponent.cpp
+  SceneComponent.cpp
+  SkyboxComponent.cpp
+  SunLightComponent.cpp
+  ModelEntity.cpp
+  Generating Code...
+  Compiling...
+  PlayerStart.cpp
+  PointLightEntity.cpp
+  SunLightEntity.cpp
+  Entity.cpp
+  EntityComponent.cpp
+  GameInstance.cpp
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\GameInstance.cpp(58,86): warning C4267: '=': conversion from 'size_t' to 'uint8', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\GameInstance.cpp(59,46): warning C4267: '=': conversion from 'size_t' to 'uint8', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\GameInstance.cpp(66,52): warning C4267: 'argument': conversion from 'size_t' to 'uint8', possible loss of data
+  GameMode.cpp
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\GameMode.cpp(91,44): warning C4267: 'argument': conversion from 'size_t' to 'uint', possible loss of data
+  InputManager.cpp
+  TransformGizmoEntity.cpp
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\Misc\TransformGizmoEntity.cpp(126,63): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Game\Misc\TransformGizmoEntity.cpp(126,49): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+  Pawn.cpp
+  PawnController.cpp
+  Player.cpp
+  PlayerController.cpp
+  Canvas.cpp
+  Widget.cpp
+  World.cpp
+  Bounds.cpp
+  Math.cpp
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Math\Math.cpp(71,77): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+  Vectors.cpp
+  DirectXBuffers.cpp
+  Generating Code...
+  Compiling...
+  DirectXFrameBuffer.cpp
+  DirectXRenderer.cpp
+  DirectXShader.cpp
+  DirectXTexture.cpp
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Platform\Windows\DirectX\DirectXTexture.cpp(28,20): warning C4267: '=': conversion from 'size_t' to 'UINT', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Platform\Windows\DirectX\DirectXTexture.cpp(29,22): warning C4267: '=': conversion from 'size_t' to 'UINT', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Platform\Windows\DirectX\DirectXTexture.cpp(40,41): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Platform\Windows\DirectX\DirectXTexture.cpp(90,20): warning C4267: '=': conversion from 'size_t' to 'UINT', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Platform\Windows\DirectX\DirectXTexture.cpp(91,22): warning C4267: '=': conversion from 'size_t' to 'UINT', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Platform\Windows\DirectX\DirectXTexture.cpp(106,54): warning C4244: '=': conversion from 'double' to 'UINT', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Platform\Windows\DirectX\DirectXTexture.cpp(114,18): warning C4244: 'initializing': conversion from 'double' to 'SizeType', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Platform\Windows\DirectX\DirectXTexture.cpp(119,54): warning C4244: '=': conversion from 'double' to 'UINT', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Platform\Windows\DirectX\DirectXTexture.cpp(189,181): warning C4244: 'argument': conversion from 'double' to 'UINT', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Platform\Windows\DirectX\DirectXTexture.cpp(189,122): warning C4244: 'argument': conversion from 'double' to 'UINT', possible loss of data
+  FileSystem.cpp
+  RenderCommands.cpp
+  RenderProxies.cpp
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Rendering\RenderProxies.cpp(76,33): warning C4267: '=': conversion from 'size_t' to 'uint32', possible loss of data
+  Renderer.cpp
+  Shader.cpp
+  ShaderParser.cpp
+  Material.cpp
+  ModelAsset.cpp
+  ResourceManager.cpp
+  Scene.cpp
+  Texture.cpp
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Resources\Texture.cpp(284,19): warning C4244: 'initializing': conversion from 'double' to 'SizeType', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Resources\Texture.cpp(299,99): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Resources\Texture.cpp(313,87): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+  Window.cpp
+  Generating Code...
+     Creating library F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.lib and object F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.exp
+glfw3x64.lib(context.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(context.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(init.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(init.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(input.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(input.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(monitor.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(monitor.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(vulkan.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(vulkan.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(window.obj) : warning LNK4099: PDB '' was not found with 'glfw3x64.lib(window.obj)' or at ''; linking object as if no debug info
+glfw3x64.lib(win32_init.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_init.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(win32_joystick.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_joystick.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(win32_monitor.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_monitor.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(win32_time.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_time.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(win32_thread.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_thread.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(win32_window.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_window.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(wgl_context.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(wgl_context.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(egl_context.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(egl_context.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
+glfw3x64.lib(osmesa_context.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(osmesa_context.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
   ThoriumEngine.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.dll
   F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.dll
   1 File(s) copied

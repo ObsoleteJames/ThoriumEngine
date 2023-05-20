@@ -61,6 +61,31 @@ void CCodeGenerator::GenerateCppFile(const FString& filePath, const FString& bas
 	}
 }
 
+void CCodeGenerator::GenerateProjectHeader(const FString& projName, const WString& path)
+{
+	FString projNameMacro = projName;
+	projNameMacro.ReplaceAll(' ', '_');
+	for (char& c : projNameMacro)
+		if (c >= 'a' && c <= 'z')
+			c = c - 32;
+
+	FString headerName = projName;
+	headerName.EraseAll(' ');
+
+	TMap<std::string, FString> variables;
+	variables["PROJECT_NAME"] = projNameMacro;
+
+	FString headerFile = ParseBaseFile(L"editor\\CppBaseFiles\\ProjectHeader.h", variables);
+
+	CFStream stream(path + L"\\" + ToWString(headerName) + L".h", L"wb");
+	if (stream.IsOpen())
+		stream.Write(headerFile.Data(), headerFile.Size());
+}
+
+void CCodeGenerator::GenerateCMakeLists()
+{
+}
+
 FString CCodeGenerator::GetIncludePath(const FString& className)
 {
 	auto it = classIncludes.find(className.c_str());

@@ -206,10 +206,10 @@ TObjectPtr<CAsset> CResourceManager::GetResource(FAssetClass* type, const WStrin
 		if (file == availableResources.end())
 			return nullptr;
 
-		if (file->second.type != type)
+		if (type && file->second.type != type)
 			return nullptr;
 
-		asset = AllocateResource(type, path);
+		asset = AllocateResource(file->second.type, path);
 		asset->file = file->second.file;
 		asset->SetName(ToFString(asset->file->Name() + asset->file->Extension()));
 		asset->Init();

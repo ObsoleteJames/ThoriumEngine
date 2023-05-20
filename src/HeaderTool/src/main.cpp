@@ -95,7 +95,7 @@ int main()
 
 		if (!projects)
 		{
-			std::cerr << "error: main.cpp-100";
+			std::cerr << "error: thproj file invalid";
 			return 1;
 		}
 

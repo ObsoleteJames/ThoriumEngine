@@ -52,14 +52,17 @@ public:
 	FVector2& operator*=(float f);
 	FVector2& operator/=(float f);
 
-	bool operator==(const FVector2& right) { return x == right.x && y == right.y; }
-	bool operator!=(const FVector2& right) { return x != right.x && y != right.y; }
+	bool operator==(const FVector2& right) const { return x == right.x && y == right.y; }
+	bool operator!=(const FVector2& right) const { return x != right.x && y != right.y; }
+
+	bool operator<(const FVector2& right) const { return x < right.x && y < right.y; }
+	bool operator>(const FVector2& right) const { return x > right. x&& y > right.y; }
 
 public:
 	PROPERTY()
-		float x = 0.0f;
+	float x = 0.0f;
 	PROPERTY()
-		float y = 0.0f;
+	float y = 0.0f;
 };
 
 inline FVector2 operator+(const FVector2& a, const FVector2& b) { return FVector2(a) += b; }
@@ -101,6 +104,14 @@ public:
 	FVector Tan() const { return FVector(); }
 
 	inline FVector operator-() { return FVector(-x, -y, -z); }
+
+	inline FVector WithX(float v) const { return FVector(v, y, z); }
+	inline FVector WithY(float v) const { return FVector(x, v, z); }
+	inline FVector WithZ(float v) const { return FVector(x, y, v); }
+
+	inline FVector2 XY() const { return FVector2(x, y); }
+	inline FVector2 YZ() const { return FVector2(y, z); }
+	inline FVector2 XZ() const { return FVector2(x, z); }
 
 	FVector& operator+=(const FVector& right);
 	FVector& operator-=(const FVector& right);
@@ -145,6 +156,7 @@ public:
 
 	inline float Magnitude() const { return FMath::Sqrt(x * x + y * y + z * z + w * w); }
 
+	// Converts euler angles (in radians) to a quaternion.
 	static FQuaternion EulerAngles(const FVector& angle);
 	inline FVector ToEuler() const { return (FVector)glm::eulerAngles((glm::quat)*this); }
 

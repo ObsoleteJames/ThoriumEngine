@@ -1,4 +1,6 @@
-﻿  RenderWidget.cpp
+﻿  EditorEngine.cpp
+  EditorWindow.cpp
+     Creating library F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Thorium Sdk.lib and object F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Thorium Sdk.exp
   Thorium Sdk.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Thorium Sdk.exe
   F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Thorium Sdk.exe
   1 File(s) copied

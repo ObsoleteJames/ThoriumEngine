@@ -12,6 +12,13 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
+#ifdef IS_DEV
+static TPair<FString, FString> _FClass_CEngine_Tags[] {
+	{ "Abstract", "" },
+	{ "Hidden", "" },
+};
+#endif
+
 class FClass_CEngine : public FClass
 {
 public:
@@ -23,6 +30,10 @@ public:
 		numProperties = 0;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
+#ifdef IS_DEV
+		numTags = 2;
+		tags = _FClass_CEngine_Tags;
+#endif
 		BaseClass = CObject::StaticClass();
 		numFunctions = 0;
 		FunctionList = CLASS_NEXT_FUNCTION;

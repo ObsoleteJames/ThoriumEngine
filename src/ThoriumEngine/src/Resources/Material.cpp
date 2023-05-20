@@ -306,9 +306,37 @@ void CMaterial::SetTexture(const FString& name, CTexture* tex)
 			break;
 		}
 	}
-	if (!property || property->bIsCustom)
+	if (!property)
 		return;
 
+	property->bIsCustom = false;
+	property->tex = tex;
+}
+
+void CMaterial::SetTexture(const FString& name, FVector color)
+{
+	MatTexture* property = nullptr;
+	for (MatTexture& p : textures)
+	{
+		if (p.name == name)
+		{
+			property = &p;
+			break;
+		}
+	}
+	if (!property)
+		return;
+
+	uint8 data[] = {
+		uint8(color.x * 255), uint8(color.y * 255), uint8(color.z * 255), 255,
+		uint8(color.x * 255), uint8(color.y * 255), uint8(color.z * 255), 255,
+		uint8(color.x * 255), uint8(color.y * 255), uint8(color.z * 255), 255,
+		uint8(color.x * 255), uint8(color.y * 255), uint8(color.z * 255), 255,
+	};
+	auto tex = CreateObject<CTexture>();
+	tex->Init(data, 2, 2);
+
+	property->bIsCustom = true;
 	property->tex = tex;
 }
 
@@ -470,7 +498,7 @@ void CMaterial::Validate()
 		}
 	}
 
-	SetFloat("Alpha", 1.f);
+	SetFloat("vAlpha", 1.f);
 }
 
 FShaderProperty* CMaterial::GetShaderProperty(MatProperty& prop)

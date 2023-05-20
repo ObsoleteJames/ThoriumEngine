@@ -40,15 +40,69 @@ FStruct* FVector2::StaticStruct() { return &__FStruct_FVector2_Instance; }
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
-DECLARE_PROPERTY(FVector, "x", x, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FVector, x), sizeof(float), nullptr, nullptr)
+#if IS_DEV
+static TPair<FString, FString> _FVector_x_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _FVector_x_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_FVector_x_Meta_Tags
+};
+
+#define _FVector_x_Meta_Ptr &_FVector_x_Meta
+#else
+#define _FVector_x_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(FVector, "x", x, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FVector, x), sizeof(float), _FVector_x_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FVector, x)
 
-DECLARE_PROPERTY(FVector, "y", y, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FVector, y), sizeof(float), nullptr, nullptr)
+#if IS_DEV
+static TPair<FString, FString> _FVector_y_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _FVector_y_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_FVector_y_Meta_Tags
+};
+
+#define _FVector_y_Meta_Ptr &_FVector_y_Meta
+#else
+#define _FVector_y_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(FVector, "y", y, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FVector, y), sizeof(float), _FVector_y_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FVector, y)
 
-DECLARE_PROPERTY(FVector, "z", z, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FVector, z), sizeof(float), nullptr, nullptr)
+#if IS_DEV
+static TPair<FString, FString> _FVector_z_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _FVector_z_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_FVector_z_Meta_Tags
+};
+
+#define _FVector_z_Meta_Ptr &_FVector_z_Meta
+#else
+#define _FVector_z_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(FVector, "z", z, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FVector, z), sizeof(float), _FVector_z_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FVector, z)
 
@@ -114,11 +168,47 @@ FStruct* FQuaternion::StaticStruct() { return &__FStruct_FQuaternion_Instance; }
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
-DECLARE_PROPERTY(FRay, "Origin", origin, "", "FVector", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FRay, origin), sizeof(FVector), nullptr, nullptr)
+#if IS_DEV
+static TPair<FString, FString> _FRay_origin_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _FRay_origin_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_FRay_origin_Meta_Tags
+};
+
+#define _FRay_origin_Meta_Ptr &_FRay_origin_Meta
+#else
+#define _FRay_origin_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(FRay, "Origin", origin, "", "FVector", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FRay, origin), sizeof(FVector), _FRay_origin_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FRay, origin)
 
-DECLARE_PROPERTY(FRay, "Direction", direction, "", "FVector", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FRay, direction), sizeof(FVector), nullptr, nullptr)
+#if IS_DEV
+static TPair<FString, FString> _FRay_direction_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _FRay_direction_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_FRay_direction_Meta_Tags
+};
+
+#define _FRay_direction_Meta_Ptr &_FRay_direction_Meta
+#else
+#define _FRay_direction_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(FRay, "Direction", direction, "", "FVector", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FRay, direction), sizeof(FVector), _FRay_direction_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FRay, direction)
 

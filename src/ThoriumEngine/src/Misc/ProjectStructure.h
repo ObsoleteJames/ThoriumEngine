@@ -6,6 +6,45 @@
 class CGameInstance;
 struct FMod;
 
+struct ENGINE_API FDependency
+{
+	enum EType
+	{
+		INVALID,
+		LIBRARY,
+		ADDON,
+		GAME_ADDON,
+	};
+
+	EType type;
+	FString name;
+};
+
+struct ENGINE_API FAddon
+{
+	enum EType
+	{
+		CORE_ADDON,
+		GAME_ADDON
+	};
+
+	FString identity;
+	FString name;
+	WString path;
+
+	FString description;
+	FString category;
+	FString author;
+
+	EType type;
+
+	bool bHasContent;
+	bool bShipSource;
+	bool bInProjectFolder;
+
+	TArray<FDependency> dependencies;
+};
+
 struct ENGINE_API FGame
 {
 	FString title;
@@ -17,8 +56,7 @@ struct ENGINE_API FGame
 	FString startupScene;
 	TClassPtr<CGameInstance> gameInstanceClass;
 
-	TArray<FString> dependencies;
-	TArray<FString> addons;
+	TArray<FAddon> addons;
 };
 
 struct ENGINE_API FProject
@@ -28,10 +66,9 @@ public:
 	FString dispalyName;
 	WString dir;
 	FString author;
-	FString defaultGame;
+	FString game;
 
-	TArray<FString> games;	/* The Games available in this project. */
-	//TArray<FString> addons;	/* A list of all Addons available in this project. */
+	TArray<FString> addons;	/* A list of Addons used in this project. */
 
 public:
 	bool bIncludesSdk;		// does this project include an sdk.

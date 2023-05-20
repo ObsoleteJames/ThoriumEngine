@@ -183,6 +183,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="Intermediate\generated\Buffers.generated.cpp" />
     <ClCompile Include="Intermediate\generated\CameraComponent.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Canvas.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\DataAsset.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Engine.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Engine.init.cpp" />
     <ClCompile Include="Intermediate\generated\Entity.generated.cpp" />
@@ -190,6 +191,8 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="Intermediate\generated\GameInstance.generated.cpp" />
     <ClCompile Include="Intermediate\generated\GameMode.generated.cpp" />
     <ClCompile Include="Intermediate\generated\InputManager.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\JoltPhysApi.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\JoltPhysWorld.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Material.generated.cpp" />
     <ClCompile Include="Intermediate\generated\ModelAsset.generated.cpp" />
     <ClCompile Include="Intermediate\generated\ModelComponent.generated.cpp" />
@@ -198,6 +201,8 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="Intermediate\generated\ObjectHandle.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Pawn.generated.cpp" />
     <ClCompile Include="Intermediate\generated\PawnController.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\PhysicsApi.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\PhysicsWorld.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Player.generated.cpp" />
     <ClCompile Include="Intermediate\generated\PlayerController.generated.cpp" />
     <ClCompile Include="Intermediate\generated\PlayerStart.generated.cpp" />
@@ -248,6 +253,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="src\Misc\Timer.cpp" />
     <ClCompile Include="src\Object\Class.cpp" />
     <ClCompile Include="src\Object\ObjectHandle.cpp" />
+    <ClCompile Include="src\Physics\Jolt\JoltPhysApi.cpp" />
     <ClCompile Include="src\Platform\Windows\DirectX\DirectXBuffers.cpp" />
     <ClCompile Include="src\Platform\Windows\DirectX\DirectXFrameBuffer.cpp" />
     <ClCompile Include="src\Platform\Windows\DirectX\DirectXRenderer.cpp" />
@@ -266,6 +272,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="src\Rendering\Shader.cpp" />
     <ClCompile Include="src\Rendering\ShaderParser.cpp" />
     <ClCompile Include="src\Resources\Asset.cpp" />
+    <ClCompile Include="src\Resources\DataAsset.cpp" />
     <ClCompile Include="src\Resources\Material.cpp" />
     <ClCompile Include="src\Resources\ModelAsset.cpp" />
     <ClCompile Include="src\Resources\ResourceManager.cpp" />
@@ -302,8 +309,13 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClInclude Include="src\Misc\Timer.h" />
     <ClInclude Include="src\Object\ObjectHandle.h" />
     <ClInclude Include="src\Object\ObjectSelector.h" />
+    <ClInclude Include="src\Physics\Jolt\JoltPhysApi.h" />
+    <ClInclude Include="src\Physics\Jolt\JoltPhysWorld.h" />
+    <ClInclude Include="src\Physics\PhysicsApi.h" />
+    <ClInclude Include="src\Physics\PhysicsWorld.h" />
     <ClInclude Include="src\Profiler\Profiler.h" />
     <ClInclude Include="src\Rendering\RenderProxies.h" />
+    <ClInclude Include="src\Resources\DataAsset.h" />
     <ClInclude Include="src\Resources\Scene.h" />
     <ClInclude Include="src\Math\Math.h" />
     <ClInclude Include="src\Math\Vectors.h" />

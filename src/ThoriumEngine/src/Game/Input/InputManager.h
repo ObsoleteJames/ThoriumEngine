@@ -119,10 +119,17 @@ protected:
 
 	TArray<FInputAction> actions;
 	TArray<FInputAxis> axis;
+
+	FVector2 mouseDelta;
+	FVector2 mousePos;
+	FVector2 prevMousePos;
+
+	int8 keyStates[(SizeType)EKeyCode::KEYS_COUNT];
+	int8 mouseStates[(SizeType)EMouseButton::NONE + 1];
 };
 
 template<typename T>
-void CInputManager::BindAction(FString name, EInputAction action, T* target, void(T::* func)())
+void CInputManager::BindAction(FString name, EInputAction aAction, T* target, void(T::* func)())
 {
 	FInputAction* action = GetAction(name);
 	if (!action)
@@ -131,7 +138,7 @@ void CInputManager::BindAction(FString name, EInputAction action, T* target, voi
 	action->bindings.Add();
 	FInputActionBinding& ab = *action->bindings.last();
 	ab.actionName = name;
-	ab.activactionAction = action;
+	ab.activactionAction = aAction;
 	ab.player = Cast<CPlayerController>(target->GetController());
 	ab.binding.Bind(target, func);
 }

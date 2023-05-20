@@ -9,19 +9,38 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
+static TPair<FString, FString> _CEntityComponent_bIsVisible_Meta_Tags[]{
+	{ "Editable", "" },
+	{ "Category", "Rendering" },
+};
+
 static FPropertyMeta _CEntityComponent_bIsVisible_Meta {
 	"",
 	"",
 	"Rendering",
 	"",
-	nullptr
+	2,
+	_CEntityComponent_bIsVisible_Meta_Tags
 };
 
 DECLARE_PROPERTY(CEntityComponent, "Is Visible", bIsVisible, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntityComponent, bIsVisible), sizeof(bool), &_CEntityComponent_bIsVisible_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CEntityComponent, bIsVisible)
 
-DECLARE_PROPERTY(CEntityComponent, "Editor Only", bEditorOnly, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntityComponent, bEditorOnly), sizeof(bool), nullptr, nullptr)
+static TPair<FString, FString> _CEntityComponent_bEditorOnly_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CEntityComponent_bEditorOnly_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CEntityComponent_bEditorOnly_Meta_Tags
+};
+
+DECLARE_PROPERTY(CEntityComponent, "Editor Only", bEditorOnly, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntityComponent, bEditorOnly), sizeof(bool), &_CEntityComponent_bEditorOnly_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CEntityComponent, bEditorOnly)
 

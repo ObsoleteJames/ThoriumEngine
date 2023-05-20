@@ -53,6 +53,8 @@ protected:
 
 	void OnKeyEvent(EKeyCode key, EInputAction action, EInputMod mod);
 
+	void GenerateCppClass();
+
 private:
 	P_CEditorWindow* p_obj;
 

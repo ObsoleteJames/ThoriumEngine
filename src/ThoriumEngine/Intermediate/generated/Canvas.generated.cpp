@@ -25,11 +25,37 @@ FEnum_ECanvasScaleMode __FEnum_ECanvasScaleMode_Instance;
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
-DECLARE_PROPERTY(CCanvas, "Enabled", bEnabled, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CCanvas, bEnabled), sizeof(bool), nullptr, nullptr)
+static TPair<FString, FString> _CCanvas_bEnabled_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CCanvas_bEnabled_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CCanvas_bEnabled_Meta_Tags
+};
+
+DECLARE_PROPERTY(CCanvas, "Enabled", bEnabled, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CCanvas, bEnabled), sizeof(bool), &_CCanvas_bEnabled_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CCanvas, bEnabled)
 
-DECLARE_PROPERTY(CCanvas, "Scale Mode", scaleMode, "", "ECanvasScaleMode", EVT_ENUM, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CCanvas, scaleMode), sizeof(ECanvasScaleMode), nullptr, nullptr)
+static TPair<FString, FString> _CCanvas_scaleMode_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CCanvas_scaleMode_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CCanvas_scaleMode_Meta_Tags
+};
+
+DECLARE_PROPERTY(CCanvas, "Scale Mode", scaleMode, "", "ECanvasScaleMode", EVT_ENUM, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CCanvas, scaleMode), sizeof(ECanvasScaleMode), &_CCanvas_scaleMode_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CCanvas, scaleMode)
 

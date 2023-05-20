@@ -1,12 +1,6 @@
-﻿  Assert.cpp
-  FStream.cpp
-F:\MyProjects\VS_Projects\Util\src\FStream.cpp(52,20): warning C4267: 'argument': conversion from 'size_t' to 'long', possible loss of data
-  Guid.cpp
-  KeyValue.cpp
+﻿  KeyValue.cpp
 F:\MyProjects\VS_Projects\Util\include\Util\String.h(418,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
 F:\MyProjects\VS_Projects\Util\include\Util\String.h(404): message : while compiling class template member function 'int TBaseString<char>::ToInt(void)'
 F:\MyProjects\VS_Projects\Util\src\KeyValue.cpp(241): message : see reference to function template instantiation 'int TBaseString<char>::ToInt(void)' being compiled
 F:\MyProjects\VS_Projects\Util\include\Util\String.h(604): message : see reference to class template instantiation 'TBaseString<char>' being compiled
-  MemStream.cpp
-  String.cpp
   Util.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\dep\build\x64-Development\Util.lib

@@ -9,6 +9,7 @@
 #include <QTreeWidget>
 #include <QBoxLayout>
 #include <QDropEvent>
+#include <QPushButton>
 #include <QMenu>
 
 class COutlinerTreeWidget : public QTreeWidget

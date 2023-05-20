@@ -34,7 +34,7 @@ void DirectXRenderer::Init()
 		NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
-#if 1
+#if 0
 		D3D11_CREATE_DEVICE_DEBUG,
 #else
 		0,

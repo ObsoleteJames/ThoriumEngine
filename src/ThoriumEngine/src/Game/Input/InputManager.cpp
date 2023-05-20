@@ -7,6 +7,7 @@
 #include "Game/PlayerController.h"
 #include "Game/Pawn.h"
 #include "Game/UserInterface/Canvas.h"
+#include "Console.h"
 
 #include <set>
 #include <Util/KeyValue.h>
@@ -30,6 +31,8 @@ void CInputManager::SetInputWindow(IBaseWindow* window)
 	window->OnCharEvent.Bind(this, &CInputManager::OnCharEvent);
 	window->OnCursorMove.Bind(this, &CInputManager::OnCursorMove);
 	window->OnMouseButton.Bind(this, &CInputManager::OnMouseButton);
+
+	SetInputMode(inputMode);
 }
 
 void CInputManager::LoadConfig()
@@ -38,7 +41,7 @@ void CInputManager::LoadConfig()
 	FKeyValue kv(cfgPath);
 	if (!kv.IsOpen())
 		return;
-
+	
 	if (KVCategory* cActions = kv.GetCategory("Actions"); cActions)
 	{
 		for (auto* inputs : cActions->GetCategories())
@@ -48,7 +51,7 @@ void CInputManager::LoadConfig()
 			
 			for (auto* keys : inputs->GetCategories())
 			{
-				FInputActionKey key;
+				FInputActionKey key{};
 				key.type = keys->GetValue("Type")->AsInt();
 				key.mods = (EInputMod)keys->GetValue("Mods")->AsInt();
 
@@ -60,7 +63,8 @@ void CInputManager::LoadConfig()
 					if (!keyEnum)
 						break;
 
-					key.key = keyEnum->GetValueByName(*keys->GetValue("Key"));
+					FString keyValue = *keys->GetValue("Key");
+					key.key = (uint16)keyEnum->GetValueByName(keyValue);
 				}
 					break;
 				case 1:
@@ -69,7 +73,7 @@ void CInputManager::LoadConfig()
 					if (!mouseEnum)
 						break;
 
-					key.key = mouseEnum->GetValueByName(*keys->GetValue("Key"));
+					key.key = (uint16)mouseEnum->GetValueByName(*keys->GetValue("Key"));
 				}
 					break;
 				}
@@ -78,6 +82,55 @@ void CInputManager::LoadConfig()
 			}
 
 			actions.Add(input);
+		}
+	}
+
+	if (KVCategory* cAxis = kv.GetCategory("Axis"); cAxis)
+	{
+		for (auto* inputs : cAxis->GetCategories())
+		{
+			FInputAxis input;
+			input.name = inputs->GetName();
+
+			for (auto* keys : inputs->GetCategories())
+			{
+				FInputAxisKey key{};
+				key.type = keys->GetValue("Type")->AsInt();
+				key.bNegate = keys->GetValue("Negate")->AsBool();
+
+				switch (key.type)
+				{
+				case 0:
+				{
+					FEnum* keyEnum = CModuleManager::FindEnum("EKeyCode");
+					if (!keyEnum)
+						break;
+
+					FString keyValue = *keys->GetValue("Key");
+					key.key = (uint16)keyEnum->GetValueByName(keyValue);
+				}
+					break;
+				case 1:
+				{
+					FEnum* mouseEnum = CModuleManager::FindEnum("EMouseButton");
+					if (!mouseEnum)
+						break;
+
+					key.key = (uint16)mouseEnum->GetValueByName(*keys->GetValue("Key"));
+				}
+					break;
+				case 2:
+				{
+					FString v = *keys->GetValue("Key");
+					key.key = v == "MOUSE_X" ? 1 : v == "MOUSE_Y" ? 2 : 0;
+				}
+					break;
+				}
+
+				input.keys.Add(key);
+			}
+
+			axis.Add(input);
 		}
 	}
 }
@@ -89,12 +142,45 @@ void CInputManager::SaveConfig()
 
 void CInputManager::BuildInput()
 {
+	mouseDelta = mousePos - prevMousePos;
+	prevMousePos = mousePos;
 
+	for (auto& a : axis)
+	{
+		for (auto& k : a.keys)
+		{
+			if (k.type == 0)
+			{
+				if (k.bNegate)
+					a.cache += -(float)keyStates[k.key];
+				else
+					a.cache += keyStates[k.key];
+			}
+			else if (k.type == 1)
+			{
+				if (k.bNegate)
+					a.cache += -(float)mouseStates[k.key];
+				else
+					a.cache += mouseStates[k.key];
+			}
+			else if (k.type == 2)
+				a.cache += k.key == 1 ? mouseDelta.x : k.key == 2 ? mouseDelta.y : 0.f;
+		}
+	}
+
+	if (inputMode != EInputMode::UI_ONLY)
+	{
+		for (auto& a : axis)
+		{
+			a.FireBindings();
+		}
+	}
 }
 
 void CInputManager::ClearCache()
 {
-
+	for (auto& a : axis)
+		a.cache = 0.f;
 }
 
 void CInputManager::RegisterPlayer(CPlayerController* player)
@@ -126,6 +212,11 @@ void CInputManager::RemovePlayer(CPlayerController* player)
 void CInputManager::SetInputMode(EInputMode mode)
 {
 	inputMode = mode;
+
+	if (inputMode == EInputMode::GAME_ONLY)
+		SetShowCursor(false);
+	else
+		SetShowCursor(true);
 }
 
 void CInputManager::SetShowCursor(bool b)
@@ -156,6 +247,8 @@ FInputAxis* CInputManager::GetAxis(const FString& name)
 void CInputManager::KeyEvent(EKeyCode key, EInputAction action, EInputMod mod)
 {
 	CKeyEvent event(key, action, mod);
+
+	keyStates[(SizeType)key] = action != IE_RELEASE;
 
 	if (inputMode != EInputMode::GAME_ONLY)
 	{
@@ -193,18 +286,6 @@ void CInputManager::KeyEvent(EKeyCode key, EInputAction action, EInputMod mod)
 			}
 		}
 	}
-
-	// This won't work
-	//for (auto& a : axis)
-	//{
-	//	for (auto& k : a.keys)
-	//	{
-	//		if (k.type == 0 && k.key == (uint16)key && action == IE_PRESS)
-	//		{
-	//			a.cache += k.bNegate ? -1.f : 1.f;
-	//		}
-	//	}
-	//}
 }
 
 void CInputManager::OnCharEvent(uint key)
@@ -214,11 +295,13 @@ void CInputManager::OnCharEvent(uint key)
 
 void CInputManager::OnCursorMove(double x, double y)
 {
-
+	mousePos = FVector2((float)x, (float)y);
 }
 
 void CInputManager::OnMouseButton(EMouseButton btn, EInputAction action, EInputMod mod)
 {
+	mouseStates[(SizeType)btn] = action != IE_RELEASE;
+
 	for (auto& a : actions)
 	{
 		for (auto& k : a.keys)

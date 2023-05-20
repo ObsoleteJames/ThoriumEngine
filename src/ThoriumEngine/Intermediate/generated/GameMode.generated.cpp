@@ -9,11 +9,47 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
-DECLARE_PROPERTY(CGameMode, "Player Controller Class", playerControllerClass, "", "CPlayerController", EVT_CLASS_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , CGameMode::__private_playerControllerClass_offset(), sizeof(TClassPtr<CPlayerController>), nullptr, nullptr)
+#if IS_DEV
+static TPair<FString, FString> _CGameMode_playerControllerClass_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CGameMode_playerControllerClass_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CGameMode_playerControllerClass_Meta_Tags
+};
+
+#define _CGameMode_playerControllerClass_Meta_Ptr &_CGameMode_playerControllerClass_Meta
+#else
+#define _CGameMode_playerControllerClass_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CGameMode, "Player Controller Class", playerControllerClass, "", "CPlayerController", EVT_CLASS_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , CGameMode::__private_playerControllerClass_offset(), sizeof(TClassPtr<CPlayerController>), _CGameMode_playerControllerClass_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CGameMode, playerControllerClass)
 
-DECLARE_PROPERTY(CGameMode, "Default Pawn Class", defaultPawnClass, "", "CPawn", EVT_CLASS_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , CGameMode::__private_defaultPawnClass_offset(), sizeof(TClassPtr<CPawn>), nullptr, nullptr)
+#if IS_DEV
+static TPair<FString, FString> _CGameMode_defaultPawnClass_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CGameMode_defaultPawnClass_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CGameMode_defaultPawnClass_Meta_Tags
+};
+
+#define _CGameMode_defaultPawnClass_Meta_Ptr &_CGameMode_defaultPawnClass_Meta
+#else
+#define _CGameMode_defaultPawnClass_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CGameMode, "Default Pawn Class", defaultPawnClass, "", "CPawn", EVT_CLASS_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , CGameMode::__private_defaultPawnClass_offset(), sizeof(TClassPtr<CPawn>), _CGameMode_defaultPawnClass_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CGameMode, defaultPawnClass)
 

@@ -9,7 +9,20 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
-DECLARE_PROPERTY(CBillboardComponent, "Sprite", sprite, "", "CTexture", EVT_OBJECT_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CBillboardComponent, sprite), sizeof(TObjectPtr<CTexture>), nullptr, nullptr)
+static TPair<FString, FString> _CBillboardComponent_sprite_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CBillboardComponent_sprite_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CBillboardComponent_sprite_Meta_Tags
+};
+
+DECLARE_PROPERTY(CBillboardComponent, "Sprite", sprite, "", "CTexture", EVT_OBJECT_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CBillboardComponent, sprite), sizeof(TObjectPtr<CTexture>), &_CBillboardComponent_sprite_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CBillboardComponent, sprite)
 

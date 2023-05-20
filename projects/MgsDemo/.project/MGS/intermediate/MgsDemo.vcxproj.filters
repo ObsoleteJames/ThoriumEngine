@@ -52,15 +52,6 @@
     <ClCompile Include="generated\TestEntity.generated.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="generated\MgsGameMode.generated.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="generated\MgsPawn.generated.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="generated\TestEntity.generated.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="generated\*.cpp">
       <Filter>generated</Filter>
     </ClCompile>
@@ -69,6 +60,15 @@
     </ClCompile>
     <ClCompile Include="generated\*.cpp">
       <Filter>generated</Filter>
+    </ClCompile>
+    <ClCompile Include="generated\*.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="generated\*.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="generated\*.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

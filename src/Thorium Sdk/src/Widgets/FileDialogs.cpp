@@ -127,7 +127,15 @@ COpenFileDialog::COpenFileDialog(FAssetClass* filterType, QWidget* parent /*= nu
 	assetBrowser = new CAssetBrowserWidget(this);
 	assetBrowser->DisableFileCreation();
 	if (filterType)
+	{
 		assetBrowser->AddAssetFilter(ToWString(filterType->GetExtension()));
+
+		TArray<FClass*> children;
+		CModuleManager::FindChildClasses(filterType, children);
+		
+		for (auto* c : children)
+			assetBrowser->AddAssetFilter(ToWString(((FAssetClass*)c)->GetExtension()));
+	}
 	assetBrowser->LockAssetFilter();
 
 	QHBoxLayout* l2 = new QHBoxLayout();

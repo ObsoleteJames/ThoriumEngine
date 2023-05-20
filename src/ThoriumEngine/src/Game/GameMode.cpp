@@ -19,7 +19,10 @@ void CGameMode::Init()
 
 void CGameMode::OnStart()
 {
+}
 
+void CGameMode::Update(double dt)
+{
 }
 
 void CGameMode::OnPlayerJoined(CPlayer* player)
@@ -28,7 +31,7 @@ void CGameMode::OnPlayerJoined(CPlayer* player)
 	if (player->GetPlayerController())
 		player->SetPlayerController(nullptr);
 
-	TObjectPtr<CPlayerController> controller = (CPlayerController*)GetWorld()->CreateEntity(playerControllerClass.Get(), FString());
+	TObjectPtr<CPlayerController> controller = (CPlayerController*)World()->CreateEntity(playerControllerClass.Get(), FString());
 	if (!controller)
 		return;
 
@@ -62,7 +65,7 @@ void CGameMode::SpawnPlayer(CPlayer* player)
 		return;
 
 	// Spawn a pawn for the player.
-	TObjectPtr<CPawn> pawn = (CPawn*)GetWorld()->CreateEntity(defaultPawnClass.Get(), FString());
+	TObjectPtr<CPawn> pawn = (CPawn*)World()->CreateEntity(defaultPawnClass.Get(), FString());
 	if (!pawn)
 		return;
 
@@ -81,7 +84,7 @@ void CGameMode::SpawnPlayer(CPlayer* player)
 
 void CGameMode::FindPlayerSpawnPoint(CPlayer* player, CPawn* pawn, FVector& outPosition, FQuaternion& outRotation)
 {
-	auto spawnPoints = GetWorld()->FindEntitiesOfType<CPlayerStart>();
+	auto spawnPoints = World()->FindEntitiesOfType<CPlayerStart>();
 	if (spawnPoints.Size() == 0)
 		return;
 

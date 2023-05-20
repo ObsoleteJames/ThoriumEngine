@@ -64,7 +64,7 @@ void CAssetBrowserDW::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int 
 }
 
 QT_INIT_METAOBJECT const QMetaObject CAssetBrowserDW::staticMetaObject = { {
-    QMetaObject::SuperData::link<QDockWidget::staticMetaObject>(),
+    QMetaObject::SuperData::link<ads::CDockWidget::staticMetaObject>(),
     qt_meta_stringdata_CAssetBrowserDW.data,
     qt_meta_data_CAssetBrowserDW,
     qt_static_metacall,
@@ -83,12 +83,12 @@ void *CAssetBrowserDW::qt_metacast(const char *_clname)
     if (!_clname) return nullptr;
     if (!strcmp(_clname, qt_meta_stringdata_CAssetBrowserDW.stringdata0))
         return static_cast<void*>(this);
-    return QDockWidget::qt_metacast(_clname);
+    return ads::CDockWidget::qt_metacast(_clname);
 }
 
 int CAssetBrowserDW::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
-    _id = QDockWidget::qt_metacall(_c, _id, _a);
+    _id = ads::CDockWidget::qt_metacall(_c, _id, _a);
     return _id;
 }
 QT_WARNING_POP

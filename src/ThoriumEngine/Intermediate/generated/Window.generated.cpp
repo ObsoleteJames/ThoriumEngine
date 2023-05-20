@@ -132,6 +132,7 @@ class FEnum_EKeyCode : public FEnum
 		values.Add({ "RIGHT_ALT", (int64)EKeyCode::RIGHT_ALT });
 		values.Add({ "RIGHT_SUPER", (int64)EKeyCode::RIGHT_SUPER });
 		values.Add({ "MENU", (int64)EKeyCode::MENU });
+		values.Add({ "KEYS_COUNT", (int64)EKeyCode::KEYS_COUNT });
 		name = "KeyCode";
 		cppName = "EKeyCode";
 		size = sizeof(EKeyCode);

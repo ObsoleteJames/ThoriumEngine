@@ -75,6 +75,8 @@ public:
 
 	void DrawSelectionDebug();
 
+	static void CreateProject(const WString& name, const WString& path);
+
 private:
 	void __OnObjectSelected(const TArray<TObjectPtr<CObject>>& obj);
 

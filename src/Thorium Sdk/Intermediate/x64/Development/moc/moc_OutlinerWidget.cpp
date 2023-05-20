@@ -87,7 +87,7 @@ void COutlinerWidget::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int 
 }
 
 QT_INIT_METAOBJECT const QMetaObject COutlinerWidget::staticMetaObject = { {
-    QMetaObject::SuperData::link<QDockWidget::staticMetaObject>(),
+    QMetaObject::SuperData::link<ads::CDockWidget::staticMetaObject>(),
     qt_meta_stringdata_COutlinerWidget.data,
     qt_meta_data_COutlinerWidget,
     qt_static_metacall,
@@ -106,12 +106,12 @@ void *COutlinerWidget::qt_metacast(const char *_clname)
     if (!_clname) return nullptr;
     if (!strcmp(_clname, qt_meta_stringdata_COutlinerWidget.stringdata0))
         return static_cast<void*>(this);
-    return QDockWidget::qt_metacast(_clname);
+    return ads::CDockWidget::qt_metacast(_clname);
 }
 
 int COutlinerWidget::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
-    _id = QDockWidget::qt_metacall(_c, _id, _a);
+    _id = ads::CDockWidget::qt_metacall(_c, _id, _a);
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {

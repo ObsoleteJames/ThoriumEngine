@@ -9,7 +9,20 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
-DECLARE_PROPERTY(CPlayerStart, "Tag", tag, "", "FString", EVT_STRING, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CPlayerStart, tag), sizeof(FString), nullptr, nullptr)
+static TPair<FString, FString> _CPlayerStart_tag_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CPlayerStart_tag_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CPlayerStart_tag_Meta_Tags
+};
+
+DECLARE_PROPERTY(CPlayerStart, "Tag", tag, "", "FString", EVT_STRING, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CPlayerStart, tag), sizeof(FString), &_CPlayerStart_tag_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CPlayerStart, tag)
 

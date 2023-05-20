@@ -2,7 +2,7 @@
 #include "Object/Class.h"
 #include "Object/ObjectMacros.h"
 
-#define MGS_MgsPawn_h_10_GeneratedBody \
+#define MGS_MgsPawn_h_12_GeneratedBody \
 DECLARE_CLASS(CMgsPawn, CPawn, MGS)
 
 

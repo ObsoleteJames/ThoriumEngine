@@ -157,4 +157,7 @@ protected:
 	TArray<FMesh> meshes;
 	TArray<FMaterial> materials;
 	FSkeleton skeleton;
+
+	TArray<FMesh> collisionMeshes;
+	TArray<FMesh> complexCollisionMeshes;
 };

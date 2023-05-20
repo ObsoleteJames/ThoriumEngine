@@ -67,6 +67,7 @@ public:
 
 	void SetShaderValue(const FString& property, FShaderProperty::EType type, void* data);
 	void SetTexture(const FString& name, CTexture* tex);
+	void SetTexture(const FString& name, FVector color);
 
 	inline void SetInt(const FString& property, const int& value) { SetShaderValue(property, FShaderProperty::INT, (void*)&value); }
 	inline void SetFloat(const FString& property, const float& value) { SetShaderValue(property, FShaderProperty::FLOAT, (void*)&value); }

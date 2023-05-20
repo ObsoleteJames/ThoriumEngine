@@ -195,10 +195,15 @@ void CPropertyEditorWidget::AddProperties(FClass* type, CObject* obj, const FStr
 			cat->Widget()->layout()->addWidget(editor);
 
 			connect(editor, &IBasePropertyEditor::OnValueChanged, this, [=]() {
-				if (p->meta && p->meta->onEditFunc)
+				if (p->meta)
 				{
-					FStack s(0);
-					p->meta->onEditFunc(obj, s);
+					const FFunction* f = type->GetFunction(p->meta->FlagValue("OnEditFunc"));
+					if (f)
+					{
+						FStack s(0);
+						f->execFunc(obj, s);
+						//p->meta->onEditFunc(obj, s);
+					}
 				}
 			});
 		}

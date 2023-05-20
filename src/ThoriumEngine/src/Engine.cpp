@@ -50,15 +50,19 @@ void CEngine::InitMinimal()
 	CResourceManager::Init();
 	CModuleManager::RegisterModule(&GetModule_Engine());
 
-	if (!FFileHelper::DirectoryExists(L".\\core"))
+	if (gIsEditor || !FFileHelper::DirectoryExists(L".\\core"))
 	{
 		WString enginePath = OSGetEnginePath(ENGINE_VERSION);
-		THORIUM_ASSERT(!enginePath.IsEmpty(), "Failed to find engine content");
-		CFileSystem::MountMod(enginePath + L"\\content", L"Engine", enginePath + L"\\sdk_content");
+		
+		if (!enginePath.IsEmpty())
+			engineMod = CFileSystem::MountMod(enginePath + L"\\content", L"Engine", enginePath + L"\\sdk_content");
 	}
-	else
-		CFileSystem::MountMod(L".\\core", L"Engine");
+	
+	if (!engineMod && FFileHelper::DirectoryExists(L".\\core"))
+		engineMod = CFileSystem::MountMod(L".\\core", L"Engine");
 
+	THORIUM_ASSERT(engineMod != nullptr, "Failed to find Engine content!");
+	
 	bInitialized = true;
 }
 
@@ -88,20 +92,13 @@ void CEngine::Init()
 	LoadWorld(ToWString(activeGame.startupScene));
 }
 
-void CEngine::LoadGame(const FString& game, bool bFirst)
+void CEngine::LoadGame()
 {
-	WString kvPath = ToWString(game) + L"\\config\\gameinfo.cfg";
+	WString wGame = ToWString(projectConfig.game);
+	WString kvPath = wGame + L"\\config\\gameinfo.cfg";
 	FKeyValue gameinfo(kvPath);
 	THORIUM_ASSERT(gameinfo.IsOpen(), FString("Failed to open '") + ToFString(kvPath) + "'");
 
-	auto* depends = gameinfo.GetArray("dependencies", false);
-	if (depends)
-	{
-		for (const auto& d : *depends)
-			LoadGame(d, false);
-	}
-
-	WString wGame = ToWString(game);
 #if CONFIG_Debug
 	WString libPath = wGame + L"\\bin\\Debug\\" + wGame + L".dll";
 #endif
@@ -113,19 +110,16 @@ void CEngine::LoadGame(const FString& game, bool bFirst)
 #endif
 	int r = CModuleManager::LoadModule(libPath);
 	if (r == 1)
-		CONSOLE_LogWarning("CEngine", FString("Failed to locate module for mod '") + game + "'");
+		CONSOLE_LogWarning("CEngine", FString("Failed to locate module for mod '") + projectConfig.game + "'");
 	else if (r > 1)
-		CONSOLE_LogError("CEngine", FString("Failed to initialize module '") + game + "'");
+		CONSOLE_LogError("CEngine", FString("Failed to initialize module '") + projectConfig.game + "'");
 
-	FMod* fMod = CFileSystem::MountMod(ToWString(game));
+	FMod* fMod = CFileSystem::MountMod(wGame);
 	WString sdkPath = L".project\\" + wGame + L"\\sdk_content";
 	if (FFileHelper::DirectoryExists(sdkPath))
 		fMod->SetSdkPath(sdkPath);
 
-	if (!bFirst)
-		return;
-	
-	activeGame.name = game;
+	activeGame.name = projectConfig.game;
 	activeGame.mod = fMod;
 	activeGame.title = *gameinfo.GetValue("title");
 	activeGame.version = *gameinfo.GetValue("version");
@@ -226,13 +220,10 @@ bool CEngine::LoadProject(const WString& path /*= "."*/)
 		return false;
 
 	CFileSystem::SetCurrentPath(path);
-
 	CConsole::LoadConfig();
 
-	if (projectConfig.games.Find(projectConfig.defaultGame) != projectConfig.games.end())
-		LoadGame(projectConfig.defaultGame);
-	else
-		THORIUM_ASSERT(0, "Failed to Load game");
+	LoadGame();
+	LoadCoreAddons();
 
 	if (!activeGame.gameInstanceClass.Get())
 	{
@@ -247,6 +238,11 @@ bool CEngine::LoadProject(const WString& path /*= "."*/)
 	inputManager->LoadConfig();
 
 	return true;
+}
+
+void CEngine::LoadAddon(const FAddon& addon)
+{
+
 }
 
 void CEngine::Exit()
@@ -281,6 +277,8 @@ void CEngine::DoLoadWorld()
 	gWorld = CreateObject<CWorld>();
 	gWorld->MakeIndestructible();
 
+	CONSOLE_LogInfo("CEngine", "Loading scene '" + ToFString(nextSceneName) + "'");
+
 	Events::LevelChange.Invoke();
 
 	if (nextSceneName != L"empty")
@@ -312,29 +310,15 @@ bool CEngine::LoadProjectConfig(const WString& path)
 
 	projectConfig.dir = path;
 	projectConfig.name = *kv.GetValue("name");
+	projectConfig.dispalyName = *kv.GetValue("displayName");
 	projectConfig.author = *kv.GetValue("author");
-	projectConfig.defaultGame = *kv.GetValue("default_game");
+	projectConfig.game = *kv.GetValue("game");
 	
 	projectConfig.bIncludesSdk = kv.GetValue("hasSdk")->AsBool();
 	projectConfig.bHasEngineContent = kv.GetValue("hasEngineContent")->AsBool();
 
-	auto* gamesList = kv.GetArray("games", true);
-	for (auto& g : *gamesList)
-		projectConfig.games.Add(g);
-
-	//auto* addonsList = kv.GetCategory("addons", true);
-	//for (auto& a : addonsList->GetValues())
-	//	projectConfig.addons.Add(a.Key);
-
-	FString targetGame = projectConfig.defaultGame;
-	if (FString k = FCommandLine::ParamValue("-game"); !k.IsEmpty())
-		targetGame = k;
-
-	// Load the game if it exists
-	//if (projectConfig.games.Find(targetGame) != projectConfig.games.end())
-	//	LoadGame(targetGame);
-	//else
-	//	return false;
+	if (auto* arr = kv.GetArray("addons"); arr)
+		projectConfig.addons = *arr;
 
 	return true;
 }
@@ -368,6 +352,66 @@ bool CEngine::LoadUserConfig()
 	}
 
 	return true;
+}
+
+void CEngine::LoadCoreAddons()
+{
+	FDirectory* cAddonsDir = engineMod->FindDirectory(L"addons");
+	if (!cAddonsDir)
+		return;
+
+	for (auto* dir : cAddonsDir->GetSubDirectories())
+		RegisterAddon(engineMod->Path() + L"\\" + dir->GetPath());
+}
+
+void CEngine::RegisterAddon(const WString& path)
+{
+	FKeyValue cfg(path + L"\\addon.cfg");
+	if (!cfg.IsOpen())
+		return;
+
+	FAddon addon{};
+	addon.identity = *cfg.GetValue("identity");
+	addon.name = *cfg.GetValue("name");
+	//addon.type = *cfg.GetValue("type");
+	
+	addon.bHasContent = cfg.GetValue("hasContent")->AsBool();
+	addon.bShipSource = cfg.GetValue("shipSource")->AsBool();
+
+	addon.description = *cfg.GetValue("description");
+	addon.category = *cfg.GetValue("category");
+	addon.author = *cfg.GetValue("author");
+
+	if (auto* arr = cfg.GetArray("dependencies"); arr)
+	{
+		for (auto& value : *arr)
+		{
+			FString type;
+			FString name;
+
+			SizeType sep = value.FindFirstOf(':');
+			if (sep == -1)
+				continue;
+
+			type = value;
+			type.Erase(type.begin() + sep, type.end());
+			name = value;
+			name.Erase(type.begin(), type.begin() + sep + 1);
+
+			FDependency::EType eType = FDependency::INVALID;
+
+			if (type == "library")
+				eType = FDependency::LIBRARY;
+			else if (type == "addon")
+				eType = FDependency::ADDON;
+			else if (type == "game_addon")
+				eType = FDependency::GAME_ADDON;
+			else
+				continue;
+
+			addon.dependencies.Add({ eType, name });
+		}
+	}
 }
 
 void CEngine::SaveUserConfig()
@@ -406,26 +450,29 @@ void CEngine::SaveConsoleLog()
 	{
 #endif
 		FString typeStr;
-		switch (log->type)
-		{
-		case CONSOLE_PLAIN:
-			typeStr = "";
-			break;
-		case CONSOLE_INFO:
-			typeStr = "[INF]";
-			break;
-		case CONSOLE_WARNING:
-			typeStr = "[WRN]";
-			break;
-		case CONSOLE_ERROR:
-			typeStr = "[ERR]";
-			break;
-		}
 
-		if (!log->module.IsEmpty())
+		char timeBuff[48];
+
+		ctime_s(timeBuff, sizeof(timeBuff), (time_t*)&log->time);
+		FString timeStr = timeBuff;
+		timeStr.Erase(timeStr.last());
+
+		typeStr = "[" + timeStr + "]";
+
+		if (!log->module.IsEmpty() && log->type != CONSOLE_PLAIN)
 		{
 			typeStr += '[';
-			typeStr += log->module + "]\t";
+			typeStr += log->module + "] ";
+		}
+
+		switch (log->type)
+		{
+		case CONSOLE_WARNING:
+			typeStr += "WARNING: ";
+			break;
+		case CONSOLE_ERROR:
+			typeStr += "ERROR: ";
+			break;
 		}
 
 		stream.Write(typeStr.Data(), typeStr.Size());

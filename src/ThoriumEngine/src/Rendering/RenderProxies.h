@@ -52,6 +52,10 @@ public:
 		FMatrix transform;
 		TArray<FMatrix> skeletonMatrices;
 		ERenderPass rp;
+
+		int lightmapId;
+		FVector2 lightmapPos;
+		FVector2 lightmapScale;
 	};
 
 public:
@@ -69,6 +73,13 @@ protected:
 class ENGINE_API CPrimitiveProxy
 {
 public:
+	enum EMoveType
+	{
+		STATIC = 1,
+		DYNAMIC = 1 << 1,
+	};
+
+public:
 	CPrimitiveProxy() = default;
 	virtual ~CPrimitiveProxy() = default;
 
@@ -81,6 +92,9 @@ public:
 	virtual bool DoFrustumCull(CCameraProxy* cam);
 
 	virtual void UpdateLOD(CCameraProxy* cam) {}
+
+	inline bool IsStatic() const { return moveType & EMoveType::STATIC; }
+	inline bool IsDynamic() const { return moveType & EMoveType::DYNAMIC; }
 
 	inline bool UsesLODs() const { return bHasLod; }
 	inline bool IsVisible() const { return bVisible; }
@@ -104,6 +118,8 @@ protected:
 	bool bVisible;
 	bool bCastShadows;
 	bool bReceiveShadows;
+
+	EMoveType moveType;
 };
 
 class ENGINE_API CLightProxy
@@ -118,6 +134,14 @@ public:
 		DIRECTIONAL_LIGHT
 	};
 
+	enum EBakeMode
+	{
+		BAKE_NONE,
+		BAKE_INDIRECT,
+		BAKE_DIRECT,
+		BAKE_ALL
+	};
+
 public:
 	CLightProxy() = default;
 	virtual ~CLightProxy() = default;
@@ -129,6 +153,7 @@ public:
 
 public:
 	EType type;
+	EBakeMode bakingMode;
 
 	FVector position;
 	FVector direction;

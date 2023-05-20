@@ -15,6 +15,18 @@ const char* logTypeText[] = {
 	"[ERR]"
 };
 
+FString TimeToHmsString(time_t* time)
+{
+	struct tm* time_info;
+	char timeString[9];  // space for "HH:MM:SS\0"
+
+	time_info = localtime(time);
+
+	strftime(timeString, sizeof(timeString), "%H:%M:%S", time_info);
+	timeString[8] = '\0';
+	return FString(timeString);
+}
+
 CConsoleWidget::CConsoleWidget(QWidget* parent /*= nullptr*/) : ads::CDockWidget("Console", parent)
 {
 	QWidget* rootWidget = new QFrame(this);
@@ -94,11 +106,13 @@ CConsoleWidget::~CConsoleWidget()
 
 void CConsoleWidget::OnLog(const FConsoleMsg& msg)
 {
+	FString msgTime = TimeToHmsString((time_t*)&msg.time);
+
 	consoleLog->setTextColor(QColor(111, 179, 75));
 	consoleLog->setTextBackgroundColor(QColor(111, 179, 75, 20));
 
 	if (msg.type != CONSOLE_PLAIN)
-		consoleLog->insertPlainText(("[" + msg.module + "]").c_str());
+		consoleLog->insertPlainText(("[" + msgTime + "][" + msg.module + "]").c_str());
 
 	consoleLog->setTextColor(QColor(200, 200, 200));
 	consoleLog->setTextBackgroundColor(QColor(0, 0, 0, 0));

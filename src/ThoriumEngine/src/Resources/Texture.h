@@ -25,7 +25,8 @@ ENUM()
 enum ETextureFilter
 {
 	THTX_FILTER_LINEAR,
-	THTX_FILTER_POINT
+	THTX_FILTER_POINT,
+	THTX_FILTER_ANISOTROPIC
 };
 
 struct FTextureImportSettings
@@ -62,8 +63,10 @@ public:
 	inline ITexture2D* GetTextureObject() const { return tex; }
 
 private:
+	uint16 version;
+
 	ETextureFormat format;
-	ETextureFilter filteringType;
+	ETextureFilter filteringType = THTX_FILTER_ANISOTROPIC;
 	SizeType dataSize;
 	uint8 numMipmaps;
 

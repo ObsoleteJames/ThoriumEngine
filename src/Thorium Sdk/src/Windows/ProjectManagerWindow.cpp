@@ -199,12 +199,12 @@ void CProjectManagerWnd::CreateNewProject()
 	if (!r)
 		return;
 
-	FString projName = editName->text().toStdString();
+	WString projName = editName->text().toStdWString();
 	WString projDir = editDir->text().toStdWString();
 
-	//CEditorEngine::CreateProject(projName, projDir);
+	CEditorEngine::CreateProject(projName, projDir);
 
-	if (!gEngine->LoadProject(projDir + L"/" + ToWString(projName)))
+	if (!gEngine->LoadProject(projDir + L"/" + projName))
 		return;
 
 	CToolsWindow::Create<CEditorWindow>();

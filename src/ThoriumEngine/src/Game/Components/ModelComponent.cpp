@@ -151,7 +151,7 @@ void CModelComponent::OnDelete()
 	//FWorldRegisterer::UnregisterModelComponent(GetWorld(), this);
 	if (renderProxy)
 	{
-		GetWorld()->UnregisterPrimitve(renderProxy);
+		GetWorld()->UnregisterPrimitive(renderProxy);
 		delete renderProxy;
 	}
 

@@ -132,7 +132,9 @@ enum class EKeyCode
 	RIGHT_CONTROL = 345,
 	RIGHT_ALT = 346,
 	RIGHT_SUPER = 347,
-	MENU = 348
+	MENU = 348,
+
+	KEYS_COUNT
 };
 
 enum class ECursorMode

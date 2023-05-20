@@ -11,7 +11,8 @@
 #include "ThirdParty/stb_dxt.h"
 #include "ThirdParty/stb_image_resize.h"
 
-#define THTEX_VERSION 0x0001
+#define THTEX_VERSION 0x0002
+#define THTEX_VERSION_01 0x0001
 
 #define THTEX_MAGIC_SIZE 29
 static const char* thtexMagicStr = "\0\0ThoriumEngine Texture File\0";
@@ -37,7 +38,10 @@ public:
 	{
 		bLoading = true;
 
-		constexpr SizeType offset = THTEX_MAGIC_SIZE + sizeof(uint16) + sizeof(ETextureFormat) + 4 + 4 + 1;
+		SizeType offset = THTEX_MAGIC_SIZE + sizeof(uint16) + sizeof(ETextureFormat) + 4 + 4 + 1;
+		if (tex->version != THTEX_VERSION_01)
+			offset += sizeof(ETextureFilter);
+
 		stream->Seek(offset, SEEK_SET);
 
 		if (bDirty)
@@ -136,10 +140,10 @@ void CTexture::Init()
 		return;
 	}
 
-	uint16 version;
+	version;
 	*stream >> &version;
 
-	if (version != THTEX_VERSION)
+	if (version != THTEX_VERSION && version != THTEX_VERSION_01)
 	{
 		CONSOLE_LogError("CTexture", FString("Invalid Texture file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THTEX_VERSION) + "'");
 		return;
@@ -147,6 +151,9 @@ void CTexture::Init()
 
 	*stream >> &format >> &width >> &height;
 	*stream >> &numMipmaps;
+	if (version != THTEX_VERSION_01)
+		*stream >> &filteringType;
+
 	*stream >> &dataSize;
 
 	curMipMapLevel = numMipmaps;
@@ -186,7 +193,10 @@ void CTexture::Load(uint8 lodLevel)
 		CONSOLE_LogError("CTexture", "Failed to create file stream for '" + ToFString(file->Path()) + "'");
 		return;
 	}
-	constexpr SizeType offset = THTEX_MAGIC_SIZE + sizeof(uint16) + sizeof(format) + 4 + 4 + 1;
+
+	SizeType offset = THTEX_MAGIC_SIZE + sizeof(uint16) + sizeof(format) + 4 + 4 + 1;
+	if (version != THTEX_VERSION_01)
+		offset += sizeof(filteringType);
 
 	stream->Seek(offset, SEEK_SET);
 
@@ -354,6 +364,7 @@ bool CTexture::Import(const WString& file, const FTextureImportSettings& setting
 	*stream << &width << &height;
 	//*stream << &dataSize;
 	*stream << &numMipmaps;
+	*stream << &filteringType;
 
 	for (auto& mp : mipMaps)
 	{

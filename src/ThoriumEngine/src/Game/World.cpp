@@ -239,8 +239,12 @@ void CWorld::Update(double dt)
 	time += dt;
 
 	if (bActive)
+	{
+		gamemode->Update(dt);
+
 		for (auto* world : subWorlds)
 			world->Update(dt);
+	}
 
 	if (gIsEditor)
 	{

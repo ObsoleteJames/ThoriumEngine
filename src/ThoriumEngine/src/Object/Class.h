@@ -23,14 +23,22 @@ struct FBaseField
 #endif
 };
 
-struct FPropertyMeta
+struct ENGINE_API FPropertyMeta
 {
+public:
+	bool HasFlag(const FString& flag);
+	FString FlagValue(const FString& key);
+
+public:
 	FString uiMin;
 	FString uiMax;
 	FString category;
 	FString defaultValue;
 
-	FFunctionExecPtr onEditFunc;
+	//FFunctionExecPtr onEditFunc;
+
+	SizeType numGenericFlags;
+	TPair<FString, FString>* genericFlags;
 };
 
 struct FProperty : public FBaseField
@@ -165,10 +173,15 @@ public:
 	inline uint32 NumFunctions() const { return numFunctions; }
 	inline const FFunction* GetFunctionList() const { return FunctionList; }
 
+	const FFunction* GetFunction(const FString& name);
+
 	inline uint Flags() const { return flags; }
 	inline bool HasFlag(uint f) const { return (flags & f); }
 
 	inline FClass* GetBaseClass() const { return BaseClass; }
+
+	bool HasTag(const FString& tag);
+	FString TagValue(const FString& key);
 
 	bool CanCast(FClass* castTo)
 	{
@@ -189,6 +202,8 @@ protected:
 
 	uint flags;
 
+	uint32 numTags;
+	TPair<FString, FString>* tags;
 };
 
 class ENGINE_API FAssetClass : public FClass

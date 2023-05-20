@@ -165,6 +165,8 @@ void IRenderer::renderAll()
 			RenderCamera(scene, scene->GetPrimaryCamera());
 		// else draw error msg.
 
+		RenderUserInterface(scene);
+
 		scene->renderQueue.Clear();
 	}
 
@@ -173,7 +175,7 @@ void IRenderer::renderAll()
 
 void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 {
-	TArray<FRenderCommand> curCommands;
+	static TArray<FRenderCommand> curCommands;
 	SizeType queueLastIndex = 0;
 
 	int viewWidth, viewHeight;
@@ -191,7 +193,8 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		camera->position, 0u, camera->GetForwardVector(), 0u, scene->GetTime() };
 	gRenderer->sceneBuffer->Update(sizeof(FSceneInfoBuffer), &sceneInfo);
 
-	TArray<TPair<CPrimitiveProxy*, FMeshBuilder>> dynamicMeshes;
+	static TArray<TPair<CPrimitiveProxy*, FMeshBuilder>> dynamicMeshes;
+	dynamicMeshes.Clear();
 
 	for (auto* primitive : scene->primitves)
 	{
@@ -379,17 +382,12 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 	}
 }
 
-void IRenderer::RenderSpotLightShadow(CLightProxy* light, ITexture2D* out)
+void IRenderer::RenderShadowMaps(CRenderScene* scene)
 {
 
 }
 
-void IRenderer::RenderSpotLightShadow(CLightProxy* light, ITextureCube* out)
-{
-
-}
-
-void IRenderer::RenderSunLightShadow(CLightProxy* light, ITexture2D* out)
+void IRenderer::RenderUserInterface(CRenderScene* scene)
 {
 
 }

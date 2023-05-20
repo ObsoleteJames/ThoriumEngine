@@ -9,24 +9,36 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
+static TPair<FString, FString> _CObject_bReplicated_Meta_Tags[]{
+	{ "Editable", "" },
+	{ "Category", "Networking" },
+};
+
 static FPropertyMeta _CObject_bReplicated_Meta {
 	"",
 	"",
 	"Networking",
 	"",
-	nullptr
+	2,
+	_CObject_bReplicated_Meta_Tags
 };
 
 DECLARE_PROPERTY(CObject, "Replicated", bReplicated, "\n   Should this object be recplicated to other clients\n  ", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CObject, bReplicated), sizeof(bool), &_CObject_bReplicated_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CObject, bReplicated)
 
+static TPair<FString, FString> _CObject_NetPriority_Meta_Tags[]{
+	{ "Editable", "" },
+	{ "Category", "Networking" },
+};
+
 static FPropertyMeta _CObject_NetPriority_Meta {
 	"",
 	"",
 	"Networking",
 	"",
-	nullptr
+	2,
+	_CObject_NetPriority_Meta_Tags
 };
 
 DECLARE_PROPERTY(CObject, "Net Priority", NetPriority, "\n   Determines whether this object has net priority over others.\n  ", "uint8", EVT_INT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CObject, NetPriority), sizeof(uint8), &_CObject_NetPriority_Meta, nullptr)

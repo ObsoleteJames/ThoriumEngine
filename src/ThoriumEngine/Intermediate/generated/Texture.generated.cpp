@@ -36,6 +36,7 @@ class FEnum_ETextureFilter : public FEnum
 	{
 		values.Add({ "THTX_FILTER_LINEAR", (int64)ETextureFilter::THTX_FILTER_LINEAR });
 		values.Add({ "THTX_FILTER_POINT", (int64)ETextureFilter::THTX_FILTER_POINT });
+		values.Add({ "THTX_FILTER_ANISOTROPIC", (int64)ETextureFilter::THTX_FILTER_ANISOTROPIC });
 		name = "TextureFilter";
 		cppName = "ETextureFilter";
 		size = sizeof(ETextureFilter);
@@ -51,6 +52,13 @@ FEnum_ETextureFilter __FEnum_ETextureFilter_Instance;
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
+#ifdef IS_DEV
+static TPair<FString, FString> _FAssetClass_CTexture_Tags[] {
+	{ "Extension", ".thtex" },
+	{ "ImportableAs", ".png;.jpg;.tga" },
+};
+#endif
+
 class FAssetClass_CTexture : public FAssetClass
 {
 public:
@@ -62,6 +70,10 @@ public:
 		numProperties = 0;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
+#ifdef IS_DEV
+		numTags = 2;
+		tags = _FAssetClass_CTexture_Tags;
+#endif
 		extension = ".thtex";
 		importableAs = ".png;.jpg;.tga";
 		BaseClass = CAsset::StaticClass();

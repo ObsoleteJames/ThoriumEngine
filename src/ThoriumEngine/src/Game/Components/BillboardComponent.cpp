@@ -62,7 +62,7 @@ void CBillboardComponent::OnDelete()
 {
 	if (renderProxy)
 	{
-		GetWorld()->UnregisterPrimitve(renderProxy);
+		GetWorld()->UnregisterPrimitive(renderProxy);
 		delete renderProxy;
 	}
 }

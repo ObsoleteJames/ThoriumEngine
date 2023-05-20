@@ -53,6 +53,8 @@ private:
 	TArray<CCameraProxy*> cameras;
 	TArray<CLightProxy*> lights;
 
+	//TArray<CTexture*> lightmaps;
+
 	CCameraProxy* primaryCamera;
 
 	float time;

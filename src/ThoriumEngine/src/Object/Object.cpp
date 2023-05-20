@@ -56,14 +56,24 @@ void CObject::Serialize(FMemStream& out)
 	//out << classObj->GetInternalName();
 	out << &id;
 
-	SerializeProperties(out, classObj, this);
+	FClass* t = classObj;
+	while (t != nullptr)
+	{
+		SerializeProperties(out, t, this);
+		t = t->GetBaseClass();
+	}
 }
 
 void CObject::Load(FMemStream& in)
 {
 	in >> &id;
-
-	LoadProperties(in, GetClass(), this);
+	
+	FClass* t = GetClass();
+	while (t != nullptr)
+	{
+		LoadProperties(in, t, this);
+		t = t->GetBaseClass();
+	}
 }
 
 void CObject::SerializeProperties(FMemStream& out, FStruct* structType, void* object)
@@ -92,8 +102,8 @@ void CObject::SerializeProperties(FMemStream& out, FStruct* structType, void* ob
 		p = p->next;
 	}
 
-	if (structType->IsClass() && ((FClass*)structType)->GetBaseClass())
-		SerializeProperties(out, ((FClass*)structType)->GetBaseClass(), object);
+	//if (structType->IsClass() && ((FClass*)structType)->GetBaseClass())
+	//	SerializeProperties(out, ((FClass*)structType)->GetBaseClass(), object);
 }
 
 void CObject::LoadProperties(FMemStream& in, FStruct* structType, void* object)
@@ -139,8 +149,8 @@ void CObject::LoadProperties(FMemStream& in, FStruct* structType, void* object)
 			in.Seek(nextOffset, SEEK_SET);
 	}
 
-	if (structType->IsClass() && ((FClass*)structType)->GetBaseClass())
-		LoadProperties(in, ((FClass*)structType)->GetBaseClass(), object);
+	//if (structType->IsClass() && ((FClass*)structType)->GetBaseClass())
+	//	LoadProperties(in, ((FClass*)structType)->GetBaseClass(), object);
 }
 
 void CObject::OnNetDelete_Implementation()

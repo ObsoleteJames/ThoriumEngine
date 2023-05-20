@@ -155,6 +155,7 @@ private:
 	void SerializeProperty(FMemStream& out, uint type, const FProperty* p, SizeType offset, void* object);
 	bool LoadProperty(FMemStream& in, uint type, const FProperty* p, SizeType offset, void* object);
 
+protected:
 	void SerializeProperties(FMemStream& out, FStruct* structType, void* object);
 	void LoadProperties(FMemStream& in, FStruct* structType, void* object);
 
@@ -184,7 +185,9 @@ protected:
 	PROPERTY()
 	FString name;
 
-	// Prevents this object from being garbage collected. can still be deleted with Delete().
+	/**
+	 * Prevents this object from being garbage collected. can still be deleted with Delete().
+	 */
 	bool bIndestructible = false;
 
 	PROPERTY()

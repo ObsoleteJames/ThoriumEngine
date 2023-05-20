@@ -10,6 +10,7 @@ class QTreeWidgetItem;
 class QSplitter;
 class CSceneComponent;
 class QLineEdit;
+class QFrame;
 
 class CPropertiesWidget : public ads::CDockWidget
 {

@@ -24,6 +24,7 @@ public:
 	virtual void Init();
 
 	virtual void OnStart();
+	virtual void Update(double dt);
 
 public:
 	virtual void OnPlayerJoined(CPlayer* player);
@@ -33,9 +34,10 @@ public:
 	virtual void FindPlayerSpawnPoint(CPlayer* player, CPawn* pawn, FVector& outPosition, FQuaternion& outRotation);
 
 public:
+	inline const TArray<TObjectPtr<CPlayerController>>& GetPlayerControllers() const { return playerControllers; }
 	TObjectPtr<CPlayerController> GetPlayerController(SizeType index);
 
-	inline CWorld* GetWorld() const { return world; }
+	inline CWorld* World() const { return world; }
 
 protected:
 	virtual void OnDelete();

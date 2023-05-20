@@ -16,11 +16,13 @@
 #include "Widgets/PropertyEditor.h"
 #include "Widgets/FileDialogs.h"
 #include "Widgets/SaveDialog.h"
+#include "Widgets/CreateCppClassDialog.h"
 #include "Windows/Debug/ModuleDebugger.h"
 #include "Windows/Debug/WidgetDemo.h"
 #include "Windows/Debug/ObjectDebugger.h"
 #include "Windows/ModelCreator/ModelCreator.h"
 #include "Windows/MaterialEditor.h"
+#include "Windows/DataAssetEditor.h"
 #include "Resources/Scene.h"
 #include "Resources/Material.h"
 #include "AssetBrowserDock.h"
@@ -229,6 +231,14 @@ void CEditorWindow::SetupUi()
 		menuFile->addAction("Save As", this, [=]() { SaveScene(true); }, QKeySequence(QKeySequence::SaveAs));
 
 		menuFile->addSeparator();
+
+		menuFile->addAction("Build All", this, []() {});
+		menuFile->addAction("Build Lighting", this, []() {});
+		menuFile->addAction("Build Cubemaps", this, []() {});
+
+		menuFile->addAction("Package Engine Conent", this, []() {});
+
+		menuFile->addSeparator();
 		menuFile->addAction("Quit", this, []() { QApplication::quit(); });
 
 		menuEdit->addAction("Undo", this, [=]() { gEditorEngine()->historyBuffer.Undo(); }, QKeySequence(QKeySequence::Undo));
@@ -236,6 +246,11 @@ void CEditorWindow::SetupUi()
 
 		menuEdit->addSeparator();
 
+		menuEdit->addAction("Project Settings");
+		menuEdit->addAction("Editor Settings");
+		menuEdit->addAction("Addons");
+
+		menuEdit->addSeparator();
 		menuEdit->addAction("Create Entity", this, [=]() {
 			CClassSelectorDialog* dialog = new CClassSelectorDialog(this);
 			connect(dialog, &QDialog::finished, this, [=](int result) { 
@@ -252,6 +267,7 @@ void CEditorWindow::SetupUi()
 						world = ent->GetWorld();
 						type = ent->GetClass();
 						name = "Created Entity: " + _ent->Name();
+						entId = ent->Id();
 					}
 
 					void Undo()
@@ -263,11 +279,13 @@ void CEditorWindow::SetupUi()
 					void Redo()
 					{
 						ent = world->CreateEntity(type, FString());
+						ent->SetId(entId);
 					}
 
 					CWorld* world;
 					FClass* type;
 					TObjectPtr<CEntity> ent;
+					SizeType entId;
 				};
 
 				gEditorEngine()->historyBuffer.AddEvent(new FEntCreateEvent(ent));
@@ -283,12 +301,15 @@ void CEditorWindow::SetupUi()
 		
 		//menuTools->addAction("Model Creator", this, []() { CModelCreator::Class()->Create(); });
 		//menuTools->addAction("Material Editor", this, []() { CMaterialEditor::Class()->Create(); });
-		menuDebug->addAction("Reload StyleSheet", this, []() { CToolsWindow::ReloadStyle(); });
+		menuDebug->addAction("Reload StyleSheet", this, []() { CToolsWindow::ReloadStyle(); }, QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_T));
 		menuDebug->addSeparator();
 	}
 
 	SetupMenuBar();
 	UpdateTitle();
+
+	menuTools->addSeparator();
+	menuTools->addAction("Create C++ Class", this, &CEditorWindow::GenerateCppClass);
 
 	setWindowIcon(QIcon(":/icons/thorium engine icon.svg"));
 
@@ -309,7 +330,7 @@ void CEditorWindow::SetupUi()
 	QStatusBar* statusBar = new QStatusBar(this);
 	setStatusBar(statusBar);
 
-	FString projectName = FString("Project: ") + gEngine->GetProjectConfig().name;
+	FString projectName = FString("Project: ") + gEngine->GetProjectConfig().dispalyName;
 
 	projectLabel = new QLabel(this);
 	projectLabel->setText(projectName.c_str());
@@ -321,7 +342,7 @@ void CEditorWindow::SetupUi()
 
 	// Toolbar
 	{
-		toolbar = new QToolBar(this);
+		toolbar = new QToolBar("Toolbar", this);
 		toolbar->setObjectName("mainToolBar");
 		toolbar->setMinimumHeight(42);
 
@@ -383,6 +404,7 @@ void CEditorWindow::SetupUi()
 
 		toolbar->addWidget(worldBtnsFrame);
 
+		menuView->addAction(toolbar->toggleViewAction());
 		addToolBar(Qt::TopToolBarArea, toolbar);
 	}
 
@@ -393,12 +415,15 @@ void CEditorWindow::SetupUi()
 
 	consoleWidget = new CConsoleWidget(this);
 	dockmanager->addDockWidget(ads::BottomDockWidgetArea, consoleWidget);
+	menuView->addAction(consoleWidget->toggleViewAction());
 
 	assetBrowser = new CAssetBrowserDW(this);
 	dockmanager->addDockWidget(ads::BottomDockWidgetArea, assetBrowser);
+	menuView->addAction(assetBrowser->toggleViewAction());
 
 	outlinerWidget = new COutlinerWidget(this);
 	dockmanager->addDockWidget(ads::RightDockWidgetArea, outlinerWidget);
+	menuView->addAction(outlinerWidget->toggleViewAction());
 
 	/*QDockWidget* propertiesDock = new QDockWidget(this);
 	propertiesWidget = new CPropertyEditorWidget(this);
@@ -408,21 +433,18 @@ void CEditorWindow::SetupUi()
 	addDockWidget(Qt::RightDockWidgetArea, propertiesDock);*/
 	propertiesWidget = new CPropertiesWidget(this);
 	dockmanager->addDockWidget(ads::RightDockWidgetArea, propertiesWidget);
+	menuView->addAction(propertiesWidget->toggleViewAction());
 
 	sceneSettings = new CSceneSettingsWidget(this);
 	dockmanager->addDockWidget(ads::RightDockWidgetArea, sceneSettings);
-
-	menuView->addAction(consoleWidget->toggleViewAction());
-	menuView->addAction(assetBrowser->toggleViewAction());
-	menuView->addAction(outlinerWidget->toggleViewAction());
-	menuView->addAction(propertiesWidget->toggleViewAction());
+	menuView->addAction(sceneSettings->toggleViewAction());
 
 	QMenu* themesMenu = new QMenu("Themes", this);
 	menuView->addSeparator();
 	menuView->addMenu(themesMenu);
 
 	for (auto& th : gEditorEngine()->GetThemes())
-		themesMenu->addAction(th.displayName.c_str(), this, [=]() { gEditorEngine()->SetTheme(th.name); CToolsWindow::ReloadStyle(); }, QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_T));
+		themesMenu->addAction(th.displayName.c_str(), this, [=]() { gEditorEngine()->SetTheme(th.name); CToolsWindow::ReloadStyle(); });
 
 	//gEditorEngine()->SetRenderScene(worldViewport->GetRenderScene());
 	//gWorld->SetRenderScene(worldViewport->GetRenderScene());
@@ -760,4 +782,10 @@ void CEditorWindow::OnKeyEvent(EKeyCode key, EInputAction action, EInputMod mod)
 		gEditorEngine()->SetSelectedObject(nullptr);
 		break;
 	}
+}
+
+void CEditorWindow::GenerateCppClass()
+{
+	CCreateCppClassDialog dialog(this);
+	dialog.exec();
 }

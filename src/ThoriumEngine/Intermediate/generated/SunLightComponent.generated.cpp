@@ -9,15 +9,54 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
-DECLARE_PROPERTY(CSunLightComponent, "Intensity", intensity, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CSunLightComponent, intensity), sizeof(float), nullptr, nullptr)
+static TPair<FString, FString> _CSunLightComponent_intensity_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CSunLightComponent_intensity_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CSunLightComponent_intensity_Meta_Tags
+};
+
+DECLARE_PROPERTY(CSunLightComponent, "Intensity", intensity, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CSunLightComponent, intensity), sizeof(float), &_CSunLightComponent_intensity_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CSunLightComponent, intensity)
 
-DECLARE_PROPERTY(CSunLightComponent, "Color", color, "", "FVector", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CSunLightComponent, color), sizeof(FVector), nullptr, nullptr)
+static TPair<FString, FString> _CSunLightComponent_color_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CSunLightComponent_color_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CSunLightComponent_color_Meta_Tags
+};
+
+DECLARE_PROPERTY(CSunLightComponent, "Color", color, "", "FVector", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CSunLightComponent, color), sizeof(FVector), &_CSunLightComponent_color_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CSunLightComponent, color)
 
-DECLARE_PROPERTY(CSunLightComponent, "Cast Shadows", bCastShadows, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CSunLightComponent, bCastShadows), sizeof(bool), nullptr, nullptr)
+static TPair<FString, FString> _CSunLightComponent_bCastShadows_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CSunLightComponent_bCastShadows_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CSunLightComponent_bCastShadows_Meta_Tags
+};
+
+DECLARE_PROPERTY(CSunLightComponent, "Cast Shadows", bCastShadows, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CSunLightComponent, bCastShadows), sizeof(bool), &_CSunLightComponent_bCastShadows_Meta, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CSunLightComponent, bCastShadows)
 

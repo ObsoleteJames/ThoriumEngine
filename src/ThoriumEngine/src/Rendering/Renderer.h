@@ -196,12 +196,13 @@ protected:
 private:
 	static void renderAll();
 
-	static void RenderSpotLightShadow(CLightProxy* light, ITexture2D* out);
-	static void RenderSunLightShadow(CLightProxy* light, ITexture2D* out);
-	static void RenderSpotLightShadow(CLightProxy* light, ITextureCube* out);
+	//static void RenderSpotLightShadow(CLightProxy* light, ITexture2D* out);
+	//static void RenderSunLightShadow(CLightProxy* light, ITexture2D* out);
+	//static void RenderSpotLightShadow(CLightProxy* light, ITextureCube* out);
 
 	static void RenderCamera(CRenderScene* scene, CCameraProxy* camera);
 	static void RenderShadowMaps(CRenderScene* scene);
+	static void RenderUserInterface(CRenderScene* scene);
 
 	static TIterator<FRenderCommand> __getRenderCommands(ERenderPass currentPass,
 		TIterator<FRenderCommand> begin, TIterator<FRenderCommand> end, TArray<FRenderCommand>& out);

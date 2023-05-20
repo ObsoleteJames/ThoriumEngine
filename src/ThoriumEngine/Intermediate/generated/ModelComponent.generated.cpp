@@ -9,12 +9,19 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
+static TPair<FString, FString> _CModelComponent_model_Meta_Tags[]{
+	{ "Editable", "" },
+	{ "Category", "Rendering" },
+	{ "OnEditFunc", "OnModelEdit" },
+};
+
 static FPropertyMeta _CModelComponent_model_Meta {
 	"",
 	"",
 	"Rendering",
 	"",
-	&CModelComponent::execOnModelEdit
+	3,
+	_CModelComponent_model_Meta_Tags
 };
 
 DECLARE_PROPERTY(CModelComponent, "Model", model, "", "CModelAsset", EVT_OBJECT_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , CModelComponent::__private_model_offset(), sizeof(TObjectPtr<CModelAsset>), &_CModelComponent_model_Meta, nullptr)
@@ -31,12 +38,18 @@ static FArrayHelper _arrayHelper_materials{
 	sizeof(TObjectPtr<CMaterial>)
 };
 
+static TPair<FString, FString> _CModelComponent_materials_Meta_Tags[]{
+	{ "Editable", "" },
+	{ "Category", "Rendering" },
+};
+
 static FPropertyMeta _CModelComponent_materials_Meta {
 	"",
 	"",
 	"Rendering",
 	"",
-	nullptr
+	2,
+	_CModelComponent_materials_Meta_Tags
 };
 
 DECLARE_PROPERTY(CModelComponent, "Materials", materials, "", "CMaterial", EVT_ARRAY, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , CModelComponent::__private_materials_offset(), sizeof(TArray<TObjectPtr<CMaterial>>), &_CModelComponent_materials_Meta, &_arrayHelper_materials)
