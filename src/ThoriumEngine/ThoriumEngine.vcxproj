@@ -248,7 +248,9 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="src\Game\UserInterface\Widget.cpp" />
     <ClCompile Include="src\Game\World.cpp" />
     <ClCompile Include="src\Math\Bounds.cpp" />
+    <ClCompile Include="src\Math\Color.cpp" />
     <ClCompile Include="src\Math\Math.cpp" />
+    <ClCompile Include="src\Math\Transform.cpp" />
     <ClCompile Include="src\Math\Vectors.cpp" />
     <ClCompile Include="src\Misc\Timer.cpp" />
     <ClCompile Include="src\Object\Class.cpp" />
@@ -306,6 +308,8 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClInclude Include="src\Game\UserInterface\Canvas.h" />
     <ClInclude Include="src\Game\UserInterface\Widget.h" />
     <ClInclude Include="src\Math\Bounds.h" />
+    <ClInclude Include="src\Math\Color.h" />
+    <ClInclude Include="src\Math\Transform.h" />
     <ClInclude Include="src\Misc\Timer.h" />
     <ClInclude Include="src\Object\ObjectHandle.h" />
     <ClInclude Include="src\Object\ObjectSelector.h" />
@@ -314,6 +318,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClInclude Include="src\Physics\PhysicsApi.h" />
     <ClInclude Include="src\Physics\PhysicsWorld.h" />
     <ClInclude Include="src\Profiler\Profiler.h" />
+    <ClInclude Include="src\Rendering\DebugRenderer.h" />
     <ClInclude Include="src\Rendering\RenderProxies.h" />
     <ClInclude Include="src\Resources\DataAsset.h" />
     <ClInclude Include="src\Resources\Scene.h" />

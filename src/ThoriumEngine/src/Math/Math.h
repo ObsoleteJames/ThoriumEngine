@@ -47,6 +47,10 @@ public:
 	template<typename T>
 	static FString ToString(T number, uint8_t base = 10);
 
+	// Clamp between 0 and 1
+	template<typename T>
+	static inline T Saturate(T value) { return Clamp(value, T(0), T(1)); }
+
 	template<typename T>
 	static inline T Clamp(T value, T min, T max);
 	template<typename T>

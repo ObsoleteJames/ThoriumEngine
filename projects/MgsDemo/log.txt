@@ -1,10 +1,8 @@
-[Sat May 20 17:19:00 2023][CEngine] Initializing...
-[Sat May 20 17:19:00 2023][CResourceManager] Created resource threads (1)
-[Sat May 20 17:19:00 2023][CResourceManager] Initialized
-[Sat May 20 17:19:00 2023][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
-[Sat May 20 17:19:00 2023][CResourceManager] Found 29 assets in 'Engine'
-[Sat May 20 17:19:02 2023][CFileSystem] Mounting Mod: MGS
-[Sat May 20 17:19:02 2023][CResourceManager] Found 20 assets in 'MGS'
-[Sat May 20 17:19:02 2023][CEngine] Loading scene 'empty'
-[Sat May 20 17:19:03 2023][CEditorEngine] Created Editor Window
-[Sat May 20 17:19:07 2023][CEngine] Loading scene 'ImHalfMeFoxy.thscene'
+[Sat May 20 19:50:10 2023][CEngine] Initializing...
+[Sat May 20 19:50:10 2023][CResourceManager] Created resource threads (1)
+[Sat May 20 19:50:10 2023][CResourceManager] Initialized
+[Sat May 20 19:50:10 2023][CFileSystem] Mounting Mod: C:\Users\theon\Documents\VS_Projects\ThoriumEngine\engine\content
+[Sat May 20 19:50:10 2023][CResourceManager] Found 29 assets in 'Engine'
+[Sat May 20 19:50:10 2023][CFileSystem] Mounting Mod: MGS
+[Sat May 20 19:50:10 2023][CResourceManager] Found 20 assets in 'MGS'
+[Sat May 20 19:50:11 2023][CEngine] Loading scene 'ImHalfMeFoxy.thscene'
