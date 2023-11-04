@@ -12,7 +12,7 @@
 #include <atomic>
 #include <chrono>
 
-#define RESOURCE_THREAD_COUNT 1
+#define RESOURCE_THREAD_COUNT 2
 
 TUnorderedMap<WString, CAsset*> CResourceManager::allocatedResources;
 TUnorderedMap<WString, FResourceData> CResourceManager::availableResources;
@@ -163,7 +163,13 @@ void CResourceManager::StreamResources()
 		}
 
 		if (!obj->bFinished && !obj->bLoading)
-			obj->Load();
+		{
+			if (obj->loadLock.try_lock())
+			{
+				obj->Load();
+				obj->loadLock.unlock();
+			}
+		}
 	}
 }
 
@@ -178,10 +184,15 @@ void CResourceManager::ScanMod(FMod* mod)
 		FAssetClass* Class = it.second.type;
 		if (Class->AssetFlags() & ASSET_AUTO_LOAD)
 		{
-			CAsset* asset = AllocateResource(Class, it.first);
-			asset->file = it.second.file;
-			asset->SetName(ToFString(asset->file->Name() + asset->file->Extension()));
-			asset->Init();
+			// Check if this resource is not already loaded
+			auto r = allocatedResources.find(it.first);
+			if (r == allocatedResources.end())
+			{
+				CAsset* asset = AllocateResource(Class, it.first);
+				asset->file = it.second.file;
+				asset->SetName(ToFString(asset->file->Name() + asset->file->Extension()));
+				asset->Init();
+			}
 		}
 	}
 }

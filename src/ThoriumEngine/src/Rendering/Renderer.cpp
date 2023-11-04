@@ -14,10 +14,21 @@ std::mutex IRenderer::gpuMutex;
 std::thread renderThread;
 
 // 0 = None, 1 = Unlit, 2 = Normal, 3 = Material
-static CConVar cvRenderMaterialMode("r.materialmode");
+static CConVar cvRenderMaterialMode("r.materialmode", 0, CConVar::SERVER_CHEAT);
 
-static CConVar cvRenderShadowQuality("r.shadow.quality", L"config\\graphics.cfg", 2.f);
-static CConVar cvRenderTextureQuality("r.texture.quality", L"config\\graphics.cfg", 3.f);
+static CConVar cvRenderShadowEnabled("r.shadow.enabled", L"config\\graphics.cfg", 1, 0, 1);
+static CConVar cvRenderShadowQuality("r.shadow.quality", L"config\\graphics.cfg", 4, 0, 4);
+static CConVar cvRenderTextureQuality("r.texture.quality", L"config\\graphics.cfg", 4, 0, 4);
+
+static CConVar cvRenderScreenPercentage("r.screen_percentage", L"config\\graphics.cfg", 100.f, 50.f, 200.f);
+
+// Screen space Ambient Occlusion.
+static CConVar cvRenderSsaoEnabled("r.ssao.enabled", L"config\\graphics.cfg", 1);
+static CConVar cvRenderSsaoQuality("r.ssao.quality", L"config\\graphics.cfg", 4, 0, 4);
+
+// Screen space shadows.
+static CConVar cvRenderSsShadows("r.ssshadows.enabled", L"config\\graphics.cfg", 1);
+static CConVar cvRenderSsShadowsQuality("r.ssshadows.quality", L"config\\graphics.cfg", 4, 0, 4);
 
 IRenderer::IRenderer()
 {
@@ -94,6 +105,7 @@ void CreateForwardLightBuffer(const FVector& objPos, const TArray<CLightProxy*>&
 			out.dirLights[out.numDirLights].direction = l->direction;
 			out.dirLights[out.numDirLights].color = l->color;
 			out.dirLights[out.numDirLights].intensity = l->intensity;
+			out.dirLights[out.numDirLights].shadowIndex = l->shadowIndex;
 			out.numDirLights++;
 			continue;
 		}
@@ -114,6 +126,7 @@ void CreateForwardLightBuffer(const FVector& objPos, const TArray<CLightProxy*>&
 			out.pointLights[out.numPointLights].color = light->color;
 			out.pointLights[out.numPointLights].intensity = light->intensity;
 			out.pointLights[out.numPointLights].range = light->range;
+			out.pointLights[out.numPointLights].shadowIndex = light->shadowIndex;
 			out.numPointLights++;
 		}
 		else
@@ -128,6 +141,7 @@ void CreateForwardLightBuffer(const FVector& objPos, const TArray<CLightProxy*>&
 			out.spotLights[out.numSpotLights].innerConeAngle = light->innerConeAngle;
 			out.spotLights[out.numSpotLights].outerConeAngle = light->outerConeAngle;
 			out.spotLights[out.numSpotLights].range = light->range;
+			out.spotLights[out.numSpotLights].shadowIndex = light->shadowIndex;
 			out.numSpotLights++;
 		}
 	}
@@ -135,7 +149,7 @@ void CreateForwardLightBuffer(const FVector& objPos, const TArray<CLightProxy*>&
 
 void IRenderer::Init()
 {
-	CResourceManager::LoadResources<CShaderSource>();
+	//CResourceManager::LoadResources<CShaderSource>();
 
 	debugUnlit = CShaderSource::GetShader("Unlit");
 	debugNormalForward = CShaderSource::GetShader("DebugNormalForward");
@@ -146,6 +160,34 @@ void IRenderer::Init()
 	sceneBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FSceneInfoBuffer));
 	objectBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FObjectInfoBuffer));
 	forwardLightsBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FForwardLightsBuffer));
+	forwardShadowDataBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FShadowDataBuffer));
+
+	int shadowQuality = cvRenderShadowQuality.AsInt() + 1;
+	shadowTexSize = 512 * (shadowQuality < 5 ? shadowQuality : 8);
+
+	cvRenderShadowQuality.onValueChanged.Bind([=](float v) {
+		int shadowQuality = int(v) + 1;
+		shadowTexSize = 512 * (shadowQuality < 5 ? shadowQuality : 8);
+
+		FDepthBufferInfo sunDepth{};
+		sunDepth.width = shadowTexSize * 4;
+		sunDepth.height = shadowTexSize;
+		sunDepth.bShaderResource = true;
+		sunDepth.format = TH_DBF_R16;
+		sunDepth.arraySize = 1;
+
+		delete sunLightShadows;
+		sunLightShadows = gRenderer->CreateDepthBuffer(sunDepth);
+	});
+
+	FDepthBufferInfo sunDepth{};
+	sunDepth.width = shadowTexSize * 4;
+	sunDepth.height = shadowTexSize;
+	sunDepth.bShaderResource = true;
+	sunDepth.format = TH_DBF_R16;
+	sunDepth.arraySize = 1;
+
+	sunLightShadows = gRenderer->CreateDepthBuffer(sunDepth);
 }
 
 void IRenderer::renderAll()
@@ -155,7 +197,7 @@ void IRenderer::renderAll()
 	// Draw each scene.
 	for (auto scene : renderQueue)
 	{
-		//RenderShadowMaps(scene);
+		RenderShadowMaps(scene);
 
 		for (auto* cam : scene->cameras)
 			if (cam != scene->GetPrimaryCamera() && cam->bEnabled)
@@ -207,48 +249,48 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		primitive->GetDynamicMeshes(dynamic);
 	}
 
-#if 0
 	// ------------- SHADOW PASS -------------
-	{
-		{
-			auto end = __getRenderCommands(R_SHADOW_PASS, scene->renderQueue.At(queueLastIndex), scene->renderQueue.end(), curCommands);
-			queueLastIndex = ((SizeType)end.ptr - (SizeType)scene->renderQueue.Data()) / sizeof(FRenderCommand);
-		}
+	//{
+	//	{
+	//		auto end = __getRenderCommands(R_SHADOW_PASS, scene->renderQueue.At(queueLastIndex), scene->renderQueue.end(), curCommands);
+	//		queueLastIndex = ((SizeType)end.ptr - (SizeType)scene->renderQueue.Data()) / sizeof(FRenderCommand);
+	//	}
+	//
+	//	ILightComponent* sunLight;
+	//
+	//	// Calculate shadow-map priority
+	//	std::vector<TPair<float, ILightComponent*>> shadowLights;
+	//	for (auto* light : scene->lights)
+	//	{
+	//		if (!light->CastShadows())
+	//			continue;
+	//
+	//		if (light->IsSunlight())
+	//		{
+	//			sunLight = light;
+	//			continue;
+	//		}
+	//
+	//		float distance = FVector::Distance(scene->GetCamera()->GetWorldPosition(), light->GetWorldPosition());
+	//		shadowLights.push_back({ distance, light });
+	//	}
+	//
+	//	struct {
+	//		bool operator()(const TPair<float, ILightComponent*>& a, const TPair<float, ILightComponent*>& b) {
+	//			return a.Key < b.Key;
+	//		}
+	//	} FCustomSort;
+	//
+	//	std::sort(shadowLights.begin(), shadowLights.end(), FCustomSort);
+	//
+	//	constexpr int maxShadows = 16;
+	//	for (int i = 0; i < FMath::Min(16, (int)shadowLights.size()); i++)
+	//	{
+	//		// TODO: render shadows.
+	//	}
+	//}
 
-		ILightComponent* sunLight;
-
-		// Calculate shadow-map priority
-		std::vector<TPair<float, ILightComponent*>> shadowLights;
-		for (auto* light : scene->lights)
-		{
-			if (!light->CastShadows())
-				continue;
-
-			if (light->IsSunlight())
-			{
-				sunLight = light;
-				continue;
-			}
-
-			float distance = FVector::Distance(scene->GetCamera()->GetWorldPosition(), light->GetWorldPosition());
-			shadowLights.push_back({ distance, light });
-		}
-
-		struct {
-			bool operator()(const TPair<float, ILightComponent*>& a, const TPair<float, ILightComponent*>& b) {
-				return a.Key < b.Key;
-			}
-		} FCustomSort;
-
-		std::sort(shadowLights.begin(), shadowLights.end(), FCustomSort);
-
-		constexpr int maxShadows = 16;
-		for (int i = 0; i < FMath::Min(16, (int)shadowLights.size()); i++)
-		{
-			// TODO: render shadows.
-		}
-	}
-
+#if 0
 	// ------------- DEFERRED PASS -------------
 	curCommands.Clear();
 	GetRenderCommands(R_DEFERRED_PASS, scene->renderQueue, curCommands);
@@ -284,14 +326,20 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		curCommands.Clear();
 		GetRenderCommands(R_FORWARD_PASS, scene->renderQueue, curCommands);
 
-		TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh*>> forwardMeshes;
+		static TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh*>> forwardMeshes;
+		forwardMeshes.Clear();
 		GetMeshesToDraw(R_FORWARD_PASS, dynamicMeshes, forwardMeshes);
 
 		LockGPU();
+		gRenderer->SetBlendMode(EBlendMode::BLEND_DISABLED);
+
 		gRenderer->SetFrameBuffer(scene->frameBuffer, scene->depthBuffer);
 		gRenderer->SetShaderBuffer(gRenderer->sceneBuffer, 1);
 		gRenderer->SetShaderBuffer(gRenderer->forwardLightsBuffer, 2);
 		gRenderer->SetShaderBuffer(gRenderer->objectBuffer, 3);
+		gRenderer->SetShaderBuffer(gRenderer->forwardShadowDataBuffer, 4);
+		
+		gRenderer->SetShaderResource(gRenderer->sunLightShadows, 2);
 
 		IShader* overridePsShader = nullptr;
 		if (cvRenderMaterialMode.AsInt() == 1 || scene->lights.Size() == 0)
@@ -308,7 +356,7 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 			FObjectInfoBuffer objectInfo;
 			objectInfo.transform = rc.Value->transform;
 			objectInfo.position = rc.Key->GetPosition();
-			memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min(rc.Value->skeletonMatrices.Size(), 48ull));
+			memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min(rc.Value->skeletonMatrices.Size(), 48ull) * sizeof(FMatrix));
 			gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
 
 			FForwardLightsBuffer lights{};
@@ -340,42 +388,196 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		UnlockGPU();
 	}
 
-	// ------------- DEBUG PASS -------------
+	// ------------- FORWARD TRANSPARENT PASS -------------
 	{
 		curCommands.Clear();
-		GetRenderCommands(R_DEBUG_PASS, scene->renderQueue, curCommands);
+		GetRenderCommands(R_TRANSPARENT_PASS, scene->renderQueue, curCommands);
 
-		TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh*>> debugMeshes;
-		GetMeshesToDraw(R_DEBUG_PASS, dynamicMeshes, debugMeshes);
+		static TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh*>> forwardMeshes;
+		forwardMeshes.Clear();
+		GetMeshesToDraw(R_TRANSPARENT_PASS, dynamicMeshes, forwardMeshes);
 
 		LockGPU();
+		gRenderer->SetBlendMode(EBlendMode::BLEND_ADDITIVE);
+
+		gRenderer->SetFrameBuffer(scene->frameBuffer, scene->depthBuffer);
+		gRenderer->SetShaderBuffer(gRenderer->sceneBuffer, 1);
+		gRenderer->SetShaderBuffer(gRenderer->forwardLightsBuffer, 2);
+		gRenderer->SetShaderBuffer(gRenderer->objectBuffer, 3);
+
+		IShader* overridePsShader = nullptr;
+		if (cvRenderMaterialMode.AsInt() == 1 || scene->lights.Size() == 0)
+			overridePsShader = gRenderer->debugUnlit->psShader;
+		else if (cvRenderMaterialMode.AsInt() == 2)
+			overridePsShader = gRenderer->debugNormalForward->psShader;
+
+		if (overridePsShader)
+			gRenderer->SetPsShader(overridePsShader);
+
+		static std::vector<std::pair<float, uint64>> sortedDraws;
+		sortedDraws.clear();
+
+		for (int i = 0; i < curCommands.Size(); i++)
+		{
+			if (curCommands[i].type != FRenderCommand::DRAW_MESH)
+				continue;
+
+			//uint64 bType = 0;
+			FVector pos = curCommands[i].drawMesh.transform.GetPosition();
+			float distance = FVector::Distance(pos, camera->position);
+
+			uint64 index{};
+			((uint32*)(&index))[0] = i;
+			((uint32*)(&index))[1] = 0;
+
+			sortedDraws.push_back({ distance, index });
+		}
+		for (int i = 0; i < forwardMeshes.Size(); i++)
+		{
+			FVector pos = forwardMeshes[i].Key->GetPosition();
+			float distance = FVector::Distance(pos, camera->position);
+
+			uint64 bType = 1;
+			uint64 index{};
+			((uint32*)(&index))[0] = i;
+			((uint32*)(&index))[1] = bType;
+
+			sortedDraws.push_back({ distance, index });
+		}
+		// Sort draw calls.
+		std::sort(sortedDraws.begin(), sortedDraws.end(), [](std::pair<float, uint64> a, std::pair<float, uint64> b) { return a.first > b.first; });
+
+		for (auto& draw : sortedDraws)
+		{
+			int i = ((uint32*)(&draw.second))[0];
+			int type = ((uint32*)(&draw.second))[1];
+
+			if (type == 1)
+			{
+				TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh*>& rc = forwardMeshes[i];
+
+				//FObjectInfoBuffer objectInfo{ *rc->skeletonMatrices.Data(), rc->transform, FVector(), 0 };
+				FObjectInfoBuffer objectInfo;
+				objectInfo.transform = rc.Value->transform;
+				objectInfo.position = rc.Key->GetPosition();
+				memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min(rc.Value->skeletonMatrices.Size(), 48ull) * sizeof(FMatrix));
+				gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
+
+				FForwardLightsBuffer lights{};
+				CreateForwardLightBuffer(objectInfo.position, scene->GetLights(), lights);
+				gRenderer->forwardLightsBuffer->Update(sizeof(FForwardLightsBuffer), &lights);
+
+				gRenderer->SetVsShader(rc.Value->mat->GetVsShader());
+				if (!overridePsShader)
+					gRenderer->SetPsShader(rc.Value->mat->GetPsShader());
+
+				gRenderer->DrawMesh(rc.Value);
+			}
+			else
+			{
+				FRenderCommand& rc = curCommands[i];
+				if (rc.type != FRenderCommand::DRAW_MESH)
+					continue;
+
+				FObjectInfoBuffer objectInfo{ { FMatrix(1.f) }, rc.drawMesh.transform, FVector(), 0 };
+				gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
+
+				gRenderer->SetVsShader(rc.drawMesh.material->GetVsShader());
+				if (!overridePsShader)
+					gRenderer->SetPsShader(rc.drawMesh.material->GetPsShader());
+
+				gRenderer->DrawMesh(&rc.drawMesh);
+			}
+		}
+
+		UnlockGPU();
+	}
+
+	// ------------- DEBUG PASS -------------
+	for (int pass = 0; pass < 2; pass++)
+	{
+		curCommands.Clear();
+		GetRenderCommands(pass == 0 ? R_DEBUG_PASS : R_DEBUG_OVERLAY_PASS, scene->renderQueue, curCommands);
+
+		static TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh*>> debugMeshes;
+		debugMeshes.Clear();
+		GetMeshesToDraw(pass == 0 ? R_DEBUG_PASS : R_DEBUG_OVERLAY_PASS, dynamicMeshes, debugMeshes);
+
+		LockGPU();
+		gRenderer->SetBlendMode(EBlendMode::BLEND_ADDITIVE);
+
+		if (pass == 1 && scene->depthBuffer)
+			scene->depthBuffer->Clear();
+
 		gRenderer->SetFrameBuffer(scene->frameBuffer, scene->depthBuffer);
 		gRenderer->SetShaderBuffer(gRenderer->sceneBuffer, 1);
 		gRenderer->SetShaderBuffer(gRenderer->objectBuffer, 3);
 
-		for (auto& rc : curCommands)
+		static std::vector<std::pair<float, uint64>> sortedDraws;
+		sortedDraws.clear();
+
+		for (int i = 0; i < curCommands.Size(); i++)
 		{
-			if (rc.type != FRenderCommand::DRAW_MESH)
+			if (curCommands[i].type != FRenderCommand::DRAW_MESH)
 				continue;
 
-			FObjectInfoBuffer objectInfo{ { FMatrix(1.f) }, rc.drawMesh.transform, FVector(), 0 };
-			gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
+			//uint64 bType = 0;
+			FVector pos = curCommands[i].drawMesh.transform.GetPosition();
+			float distance = FVector::Distance(pos, camera->position);
+			
+			uint64 index{};
+			((uint32*)(&index))[0] = i;
+			((uint32*)(&index))[1] = 0;
 
-			gRenderer->SetVsShader(rc.drawMesh.material->GetVsShader());
-			gRenderer->SetPsShader(rc.drawMesh.material->GetPsShader());
-			gRenderer->DrawMesh(&rc.drawMesh);
+			sortedDraws.push_back({ distance, index });
 		}
-
-		for (auto& rc : debugMeshes)
+		for (int i = 0; i < debugMeshes.Size(); i++)
 		{
-			FObjectInfoBuffer objectInfo;
-			objectInfo.transform = rc.Value->transform;
-			memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min(rc.Value->skeletonMatrices.Size(), 48ull));
-			gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
+			FVector pos = debugMeshes[i].Key->GetPosition();
+			float distance = FVector::Distance(pos, camera->position);
 
-			gRenderer->SetVsShader(rc.Value->mat->GetVsShader());
-			gRenderer->SetPsShader(rc.Value->mat->GetPsShader());
-			gRenderer->DrawMesh(rc.Value);
+			uint64 bType = 1;
+			uint64 index{};
+			((uint32*)(&index))[0] = i;
+			((uint32*)(&index))[1] = bType;
+
+			sortedDraws.push_back({ distance, index });
+		}
+		// Sort draw calls.
+		std::sort(sortedDraws.begin(), sortedDraws.end(), [](std::pair<float, uint64> a, std::pair<float, uint64> b) { return a.first > b.first; });
+
+		for (auto& draw : sortedDraws)
+		{
+			int i = ((uint32*)(&draw.second))[0];
+			int type = ((uint32*)(&draw.second))[1];
+
+			if (type == 0)
+			{
+				FRenderCommand& rc = curCommands[i];
+				if (rc.type != FRenderCommand::DRAW_MESH)
+					continue;
+
+				FObjectInfoBuffer objectInfo{ { FMatrix(1.f) }, rc.drawMesh.transform, FVector(), 0 };
+				gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
+
+				gRenderer->SetVsShader(rc.drawMesh.material->GetVsShader());
+				gRenderer->SetPsShader(rc.drawMesh.material->GetPsShader());
+				gRenderer->DrawMesh(&rc.drawMesh);
+			}
+
+			if (type == 1)
+			{
+				TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh*>& rc = debugMeshes[i];
+
+				FObjectInfoBuffer objectInfo;
+				objectInfo.transform = rc.Value->transform;
+				memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min(rc.Value->skeletonMatrices.Size(), 48ull));
+				gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
+
+				gRenderer->SetVsShader(rc.Value->mat->GetVsShader());
+				gRenderer->SetPsShader(rc.Value->mat->GetPsShader());
+				gRenderer->DrawMesh(rc.Value);
+			}
 		}
 
 		UnlockGPU();
@@ -384,7 +586,142 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 void IRenderer::RenderShadowMaps(CRenderScene* scene)
 {
+	auto& lights = scene->GetLights();
+	if (lights.Size() == 0 || !cvRenderShadowEnabled.AsBool())
+		return;
+	
+	CLightProxy* sunLight = nullptr;
+	static TArray<CLightProxy*> spotLights;
+	static TArray<CLightProxy*> pointLights;
+	spotLights.Clear();
+	pointLights.Clear();
 
+	static TArray<FRenderCommand> curCommands;
+	static TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh>> drawMeshes;
+	drawMeshes.Clear();
+	curCommands.Clear();
+
+	GetRenderCommands(R_DEFERRED_PASS, scene->renderQueue, curCommands);
+	GetRenderCommands(R_FORWARD_PASS, scene->renderQueue, curCommands);
+
+	for (CLightProxy* light : lights)
+	{
+		light->shadowIndex = -1;
+		if (!light->CastShadows())
+			continue;
+
+		if (light->bakingMode > CLightProxy::BAKE_INDIRECT)
+			continue;
+
+		if (light->type == CLightProxy::DIRECTIONAL_LIGHT && !sunLight)
+		{
+			sunLight = light;
+		}
+		else if (light->type == CLightProxy::SPOT_LIGHT)
+		{
+			spotLights.Add(light);
+		}
+		else if (light->type == CLightProxy::POINT_LIGHT)
+		{
+			pointLights.Add(light);
+		}
+	}
+
+	FShadowDataBuffer shadowData{};
+
+	for (auto* primitive : scene->primitves)
+	{
+		if (!primitive->IsVisible() || !primitive->CastShadows())
+			continue;
+
+		//dynamicMeshes.Add({ primitive, FMeshBuilder() });
+		//FMeshBuilder& dynamic = dynamicMeshes.last()->Value;
+		FMeshBuilder dynamic;
+		primitive->GetDynamicMeshes(dynamic);
+
+		for (int i = 0; i < dynamic.GetMeshes().Size(); i++)
+		{
+			const FMeshBuilder::FRenderMesh& mesh = dynamic.GetMeshes()[i];
+			if (mesh.rp != R_FORWARD_PASS && mesh.rp != R_DEFERRED_PASS)
+				continue;
+
+			drawMeshes.Add({ primitive, mesh });
+		}
+	}
+
+	if (scene->primaryCamera && sunLight)
+	{
+		sunLight->shadowIndex = 0;
+
+		// Update sun light camera position
+		FVector camPos = scene->primaryCamera->position;
+		camPos += scene->primaryCamera->GetForwardVector() * 2;
+
+		if (FVector::Distance(camPos, scene->sunLightCamPos) > 0.15f)
+		{
+			scene->sunLightCamPos = camPos;
+			scene->sunLightCamDir = scene->primaryCamera->GetForwardVector();
+		}
+
+		gRenderer->sunLightShadows->Clear();
+
+		// Render directional light shadows
+		gRenderer->SetFrameBuffer(nullptr, gRenderer->sunLightShadows);
+
+		for (int j = 0; j < 4; j++)
+		{
+			gRenderer->SetViewport(gRenderer->shadowTexSize * j, 0, gRenderer->shadowTexSize, gRenderer->shadowTexSize);
+
+			float fDistance = 3 * ((j + 1) * (j + 1));
+			FVector camTarget = scene->sunLightCamPos + (scene->sunLightCamDir * (fDistance / 2));
+			//FVector shadowCamPos = camTarget + (sunLight->direction * (150 + fDistance));
+			FVector shadowCamPos = camTarget + (sunLight->direction * 350);
+
+			FMatrix shadowProjection = FMatrix::Orthographic(-fDistance, fDistance, -fDistance, fDistance, 1.f, 500.f);
+			//FMatrix shadowView = FMatrix::LookAt(shadowCamPos, camTarget, FVector(0, 1, 0));
+			FMatrix shadowView = FMatrix(1.f).Translate(shadowCamPos) * sunLight->rotation;
+			shadowView = shadowView.Inverse();
+			FMatrix shadowMatrix = shadowProjection * shadowView;
+
+			shadowData.vSunShadowMatrix[j] = shadowMatrix;
+			shadowData.vSunShadowBias = sunLight->shadowBias;
+
+			FSceneInfoBuffer sceneInfo{ shadowMatrix,
+				shadowView, shadowProjection,
+				shadowCamPos, 0u, sunLight->direction, 0u, scene->GetTime() };
+			gRenderer->sceneBuffer->Update(sizeof(FSceneInfoBuffer), &sceneInfo);
+
+			for (auto& rc : drawMeshes)
+			{
+				FObjectInfoBuffer objectInfo;
+				objectInfo.transform = rc.Value.transform;
+				objectInfo.position = rc.Key->GetPosition();
+				memcpy(objectInfo.skeletonMatrices, rc.Value.skeletonMatrices.Data(), FMath::Min(rc.Value.skeletonMatrices.Size(), 48ull) * sizeof(FMatrix));
+				gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
+
+				gRenderer->SetVsShader(rc.Value.mat->GetVsShader());
+				gRenderer->SetPsShader(nullptr);
+
+				gRenderer->DrawMesh(&rc.Value);
+			}
+
+			for (auto& rc : curCommands)
+			{
+				if (rc.type != FRenderCommand::DRAW_MESH)
+					continue;
+
+				FObjectInfoBuffer objectInfo{ { FMatrix(1.f) }, rc.drawMesh.transform, FVector(), 0 };
+				gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
+
+				gRenderer->SetVsShader(rc.drawMesh.material->GetVsShader());
+				gRenderer->SetPsShader(nullptr);
+
+				gRenderer->DrawMesh(&rc.drawMesh);
+			}
+		}
+	}
+
+	gRenderer->forwardShadowDataBuffer->Update(sizeof(FShadowDataBuffer), &shadowData);
 }
 
 void IRenderer::RenderUserInterface(CRenderScene* scene)

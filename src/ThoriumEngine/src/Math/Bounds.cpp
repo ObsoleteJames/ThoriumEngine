@@ -36,3 +36,20 @@ FBounds FBounds::Combine(const FBounds& b) const
 	rMax.z = aMax.z > bMax.z ? aMax.z : bMax.z;
 	return FromMinMax(rMin, rMax);
 }
+
+FBounds FBounds::Rotate(const FQuaternion& r, const FVector& pivot) const
+{
+	FVector maxX = FVector(extents.x * 2, extents.y, 0) + pivot;
+	FVector maxY = FVector(0, extents.y * 2, 0) + pivot;
+	FVector maxZ = FVector(0, extents.y, extents.z * 2) + pivot;
+
+	maxX = r.Rotate(maxX) - pivot;
+	maxY = r.Rotate(maxY) - pivot;
+	maxZ = r.Rotate(maxZ) - pivot;
+
+	FBounds b;
+	b.extents = { maxX.x / 2, maxY.y / 2, maxZ.z / 2 };
+	b.position = position;
+
+	return b;
+}

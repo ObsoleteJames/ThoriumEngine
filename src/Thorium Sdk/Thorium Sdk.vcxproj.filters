@@ -82,7 +82,6 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\EditorMode.h" />
     <ClInclude Include="src\CodeGenerator.h" />
-    <ClInclude Include="src\Windows\DataAssetEditor.h" />
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="src\Windows\Debug\ModuleDebugger.h" />
@@ -147,6 +146,7 @@
     <QtMoc Include="src\AdvancedDockWidgets\PushButton.h" />
     <QtMoc Include="src\AdvancedDockWidgets\ResizeHandle.h" />
     <QtMoc Include="src\Widgets\CreateCppClassDialog.h" />
+    <QtMoc Include="src\Windows\DataAssetEditor.h" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="icons.qrc" />

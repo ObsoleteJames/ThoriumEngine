@@ -547,7 +547,7 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 		if (Class.classMacro.type != FMacro::STRUCT)
 		{
 			//bool bBaseClass = ClassExists(Class.baseName);
-			bool bBaseClass = true;
+			bool bBaseClass = Class.name != "CObject";
 			stream << "\t\tBaseClass = " << (bBaseClass ? (Class.baseName + "::StaticClass()").c_str() : "nullptr") << ";\n"
 				<< "\t\tnumFunctions = " << std::to_string(Class.Functions.Size()) << ";\n"
 				<< "\t\tFunctionList = CLASS_NEXT_FUNCTION;\n"

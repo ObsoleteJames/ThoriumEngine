@@ -4,7 +4,7 @@
 #include "SkyboxComponent.generated.h"
 
 CLASS()
-class CSkyboxComponent : public CModelComponent
+class ENGINE_API CSkyboxComponent : public CModelComponent
 {
 	GENERATED_BODY()
 

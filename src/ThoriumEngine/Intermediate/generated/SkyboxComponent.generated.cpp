@@ -9,6 +9,7 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
+#if IS_DEV
 static TPair<FString, FString> _CSkyboxComponent_mat_Meta_Tags[]{
 	{ "Editable", "" },
 	{ "OnEditFunc", "OnMaterialChanged" },
@@ -23,7 +24,11 @@ static FPropertyMeta _CSkyboxComponent_mat_Meta {
 	_CSkyboxComponent_mat_Meta_Tags
 };
 
-DECLARE_PROPERTY(CSkyboxComponent, "Mat", mat, "", "CMaterial", EVT_OBJECT_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CSkyboxComponent, mat), sizeof(TObjectPtr<CMaterial>), &_CSkyboxComponent_mat_Meta, nullptr)
+#define _CSkyboxComponent_mat_Meta_Ptr &_CSkyboxComponent_mat_Meta
+#else
+#define _CSkyboxComponent_mat_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CSkyboxComponent, "Mat", mat, "", "CMaterial", EVT_OBJECT_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CSkyboxComponent, mat), sizeof(TObjectPtr<CMaterial>), _CSkyboxComponent_mat_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CSkyboxComponent, mat)
 

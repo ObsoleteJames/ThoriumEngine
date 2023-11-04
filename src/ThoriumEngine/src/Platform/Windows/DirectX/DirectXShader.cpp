@@ -91,7 +91,7 @@ DirectXVertexShader::DirectXVertexShader(CShaderSource* in)
 	if (FAILED(hr))
 	{
 		CONSOLE_LogError("IShader", "Failed to create vertex shader!");
-		free(buff);
+		buff->Release();
 		return;
 	}
 

@@ -19,12 +19,15 @@
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 
+#include "ImGui/imgui.h"
+#include "ImGui/imgui_impl_win32.h"
+#include "ImGui/imgui_impl_glfw.h"
+#include "ImGui/imgui_impl_dx11.h"
+
 DirectXRenderer* GetDirectXRenderer()
 {
 	return (DirectXRenderer*)gRenderer;
 }
-
-// TODO: Separate the Swap chain from the renderer and make them per window.
 
 void DirectXRenderer::Init()
 {
@@ -34,7 +37,7 @@ void DirectXRenderer::Init()
 		NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
-#if 0
+#if 1
 		D3D11_CREATE_DEVICE_DEBUG,
 #else
 		0,
@@ -123,7 +126,48 @@ void DirectXRenderer::Init()
 
 		device->CreateDepthStencilState(&depthOffDesc, &depthStateReadOnly);
 	}
+
+	// Blend State Additive
+	{
+		D3D11_BLEND_DESC blendDesc{};
+
+		D3D11_RENDER_TARGET_BLEND_DESC rtbd{};
+
+		rtbd.BlendEnable = true;
+		rtbd.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+		rtbd.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+		rtbd.BlendOp = D3D11_BLEND_OP_ADD;
+		rtbd.SrcBlendAlpha = D3D11_BLEND_ONE;
+		rtbd.DestBlendAlpha = D3D11_BLEND_ZERO;
+		rtbd.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+		rtbd.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+		blendDesc.RenderTarget[0] = rtbd;
+
+		device->CreateBlendState(&blendDesc, &blendAdditive);
+	}
+
 	IRenderer::Init();
+}
+
+void DirectXRenderer::InitImGui(IBaseWindow* wnd)
+{
+	bImGuiGlfw = wnd->IsGlfwWindow();
+	if (!wnd->IsGlfwWindow())
+		ImGui_ImplWin32_Init(wnd->GetNativeHandle());
+	else
+		ImGui_ImplGlfw_InitForOther(((CWindow*)wnd)->GlfwWindow(), true);
+	ImGui_ImplDX11_Init(device, deviceContext);
+}
+
+void DirectXRenderer::ImGuiShutdown()
+{
+	ImGui_ImplDX11_Shutdown();
+	if (!bImGuiGlfw)
+		ImGui_ImplWin32_Shutdown();
+	else
+		ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 }
 
 DirectXRenderer::~DirectXRenderer()
@@ -273,9 +317,14 @@ ISwapChain* DirectXRenderer::CreateSwapChain(IBaseWindow* window)
 	return new DirectXSwapChain(window);
 }
 
-IDepthBuffer* DirectXRenderer::CreateDepthBuffer(int width, int height)
+IDepthBuffer* DirectXRenderer::CreateDepthBuffer(FDepthBufferInfo depthInfo)
 {
-	return new DirectXDepthBuffer(width, height);
+	return new DirectXDepthBuffer(depthInfo);
+}
+
+IFrameBuffer* DirectXRenderer::CreateFrameBuffer(int width, int height, ETextureFormat format)
+{
+	return new DirectXFrameBuffer(width, height, format);
 }
 
 ITexture2D* DirectXRenderer::CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter)
@@ -362,10 +411,10 @@ void DirectXRenderer::DrawMesh(FDrawMeshCmd* info)
 		}
 	}
 
-	if (!info->material->DoDepthTest())
-		deviceContext->OMSetDepthStencilState(depthStateOff, 0);
-	else
-		deviceContext->OMSetDepthStencilState(nullptr, 0);
+	//if (!info->material->DoDepthTest())
+	//	deviceContext->OMSetDepthStencilState(depthStateOff, 0);
+	//else
+	//	deviceContext->OMSetDepthStencilState(nullptr, 0);
 
 	//if (info->drawType & MESH_DRAW_DEPTH_WRITE != 0)
 	//{
@@ -421,10 +470,10 @@ void DirectXRenderer::DrawMesh(FMeshBuilder::FRenderMesh* data)
 			deviceContext->PSSetSamplers(t.registerId, 1, &tex->sampler);
 		}
 	}
-	if (!data->mat->DoDepthTest())
-		deviceContext->OMSetDepthStencilState(depthStateOff, 0);
-	else
-		deviceContext->OMSetDepthStencilState(nullptr, 0);
+	//if (!data->mat->DoDepthTest())
+	//	deviceContext->OMSetDepthStencilState(depthStateOff, 0);
+	//else
+	//	deviceContext->OMSetDepthStencilState(nullptr, 0);
 
 	if (topologyType == D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST && mesh->indexBuffer)
 		deviceContext->DrawIndexed(mesh->numIndices, 0, 0);
@@ -434,12 +483,12 @@ void DirectXRenderer::DrawMesh(FMeshBuilder::FRenderMesh* data)
 
 void DirectXRenderer::SetVsShader(IShader* shader)
 {
-	deviceContext->VSSetShader((ID3D11VertexShader*)((DirectXShader*)shader)->shader, nullptr, 0);
+	deviceContext->VSSetShader(shader != nullptr ? (ID3D11VertexShader*)((DirectXShader*)shader)->shader : nullptr, nullptr, 0);
 }
 
 void DirectXRenderer::SetPsShader(IShader* shader)
 {
-	deviceContext->PSSetShader((ID3D11PixelShader*)((DirectXShader*)shader)->shader, nullptr, 0);
+	deviceContext->PSSetShader(shader != nullptr ? (ID3D11PixelShader*)((DirectXShader*)shader)->shader : nullptr, nullptr, 0);
 }
 
 void DirectXRenderer::SetShaderBuffer(IShaderBuffer* buffer, int _register)
@@ -449,9 +498,23 @@ void DirectXRenderer::SetShaderBuffer(IShaderBuffer* buffer, int _register)
 	deviceContext->GSSetConstantBuffers(_register, 1, &((DirectXShaderBuffer*)&*buffer)->buffer);
 }
 
+void DirectXRenderer::SetShaderResource(ITexture2D* texture, int _register)
+{
+	DirectXTexture2D* tex = (DirectXTexture2D*)texture;
+	deviceContext->PSSetShaderResources(_register, 1, &tex->view);
+	deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
+}
+
+void DirectXRenderer::SetShaderResource(IDepthBuffer* depthTex, int _register)
+{
+	DirectXDepthBuffer* tex = (DirectXDepthBuffer*)depthTex;
+	deviceContext->PSSetShaderResources(_register, 1, &tex->view);
+	deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
+}
+
 void DirectXRenderer::SetFrameBuffer(IFrameBuffer* framebuffer, IDepthBuffer* depth)
 {
-	deviceContext->OMSetRenderTargets(1, &((DirectXFrameBuffer*)framebuffer)->Get(), depth != nullptr ? ((DirectXDepthBuffer*)depth)->depthView : 0);
+	deviceContext->OMSetRenderTargets(framebuffer != nullptr, framebuffer != nullptr ? &((DirectXFrameBuffer*)framebuffer)->Get() : 0, depth != nullptr ? ((DirectXDepthBuffer*)depth)->depthView : 0);
 }
 
 void DirectXRenderer::SetFrameBuffers(IFrameBuffer** framebuffers, SizeType count, IDepthBuffer* depth)
@@ -476,6 +539,14 @@ void DirectXRenderer::SetViewport(float x, float y, float width, float height)
 	deviceContext->RSSetViewports(1, &viewport);
 }
 
+void DirectXRenderer::SetBlendMode(EBlendMode mode)
+{
+	if (mode == EBlendMode::BLEND_DISABLED)
+		deviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+	else if (mode == EBlendMode::BLEND_ADDITIVE)
+		deviceContext->OMSetBlendState(blendAdditive, nullptr, 0xFFFFFFFF);
+}
+
 void DirectXRenderer::BindGBuffer()
 {
 
@@ -484,6 +555,55 @@ void DirectXRenderer::BindGBuffer()
 void DirectXRenderer::Present()
 {
 	//swapchain->Present(1, 0);
+}
+
+TPair<DXGI_FORMAT, int> DirectXRenderer::GetDXTextureFormat(ETextureFormat format)
+{
+	static constexpr DXGI_FORMAT formats[] = {
+	DXGI_FORMAT_R8_UNORM,
+	DXGI_FORMAT_R8G8_UNORM,
+	DXGI_FORMAT_R8G8B8A8_UNORM,
+	DXGI_FORMAT_R8G8B8A8_UNORM,
+	DXGI_FORMAT_R16G16B16A16_FLOAT,
+	DXGI_FORMAT_R32G32B32A32_FLOAT,
+	DXGI_FORMAT_BC1_UNORM,
+	DXGI_FORMAT_BC3_UNORM
+	};
+
+	static constexpr int formatSizes[] = {
+		1,
+		2,
+		3,
+		4,
+		8,
+		16,
+		2,
+		4
+	};
+
+	return { formats[format], formatSizes[format] };
+}
+
+void DirectXRenderer::ImGuiBeginFrame()
+{
+	ImGui_ImplDX11_NewFrame();
+	if (!bImGuiGlfw)
+		ImGui_ImplWin32_NewFrame();
+	else
+		ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+}
+
+void DirectXRenderer::ImGuiRender()
+{
+	ImGui::Render();
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+
+	if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	{
+		ImGui::UpdatePlatformWindows();
+		ImGui::RenderPlatformWindowsDefault();
+	}
 }
 
 //void DirectXRenderer::Resize(int width, int height)

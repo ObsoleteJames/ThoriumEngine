@@ -26,6 +26,8 @@ public:
 
 	inline const TArray<FFile*>& GetFiles() const { return files; }
 
+	inline FDirectory* Parent() const { return parent; }
+
 private:
 	WString name;
 	FDirectory* parent = nullptr;

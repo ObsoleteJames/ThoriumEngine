@@ -23,6 +23,7 @@ struct FInputActionBinding
 
 	TObjectPtr<CPlayerController> player;
 	TDelegate<> binding;
+	EInputMode layer;
 };
 
 struct FInputAxisBinding
@@ -31,6 +32,18 @@ struct FInputAxisBinding
 
 	TObjectPtr<CPlayerController> player;
 	TDelegate<float> binding;
+	EInputMode layer;
+};
+
+struct FInputKeyBinding
+{
+	uint16 key;
+	EInputMod mods;
+	EInputAction activactionAction;
+
+	TObjectPtr<CPlayerController> player;
+	TDelegate<> binding;
+	EInputMode layer;
 };
 
 struct FInputActionKey
@@ -92,6 +105,11 @@ public:
 
 	void SetShowCursor(bool b);
 	inline bool CursorVisible() const { return bShowCursor; }
+	
+	inline bool InputEnabled() const { return bEnableInput; }
+	inline void SetInputEnabled(bool b) { bEnableInput = b; }
+	inline void EnableInput() { bEnableInput = true; }
+	inline void DisableInput() { bEnableInput = false; }
 
 	inline TArray<FInputAction>& GetActions() { return actions; }
 	inline TArray<FInputAxis>& GetAxis() { return axis; }
@@ -100,10 +118,13 @@ public:
 	FInputAxis* GetAxis(const FString& name);
 
 	template<typename T>
-	void BindAction(FString name, EInputAction action, T* target, void(T::* func)());
+	void BindAction(FString name, EInputAction action, T* target, void(T::* func)(), EInputMode layer = EInputMode::GAME_ONLY);
 
 	template<typename T>
-	void BindAxis(FString name, T* target, void(T::* func)(float));
+	void BindAxis(FString name, T* target, void(T::* func)(float), EInputMode layer = EInputMode::GAME_ONLY);
+
+	template<typename T>
+	void BindKey(EKeyCode key, EInputAction action, EInputMod mods, T* target, void(T::* func)(), EInputMode layer = EInputMode::GAME_ONLY);
 
 protected:
 	void OnCharEvent(uint key);
@@ -112,11 +133,15 @@ protected:
 	void OnCursorMove(double x, double y);
 	void OnMouseButton(EMouseButton btn, EInputAction action, EInputMod mod);
 
+	void OnDelete() override;
+
 protected:
+	bool bEnableInput = true;
 	bool bShowCursor;
 	EInputMode inputMode;
 	IBaseWindow* inputWindow = nullptr;
 
+	TArray<FInputKeyBinding> keyBindings;
 	TArray<FInputAction> actions;
 	TArray<FInputAxis> axis;
 
@@ -129,7 +154,7 @@ protected:
 };
 
 template<typename T>
-void CInputManager::BindAction(FString name, EInputAction aAction, T* target, void(T::* func)())
+void CInputManager::BindAction(FString name, EInputAction aAction, T* target, void(T::* func)(), EInputMode layer)
 {
 	FInputAction* action = GetAction(name);
 	if (!action)
@@ -141,10 +166,11 @@ void CInputManager::BindAction(FString name, EInputAction aAction, T* target, vo
 	ab.activactionAction = aAction;
 	ab.player = Cast<CPlayerController>(target->GetController());
 	ab.binding.Bind(target, func);
+	ab.layer = layer;
 }
 
 template<typename T>
-void CInputManager::BindAxis(FString name, T* target, void(T::* func)(float))
+void CInputManager::BindAxis(FString name, T* target, void(T::* func)(float), EInputMode layer)
 {
 	FInputAxis* axis = GetAxis(name);
 	if (!axis)
@@ -155,4 +181,18 @@ void CInputManager::BindAxis(FString name, T* target, void(T::* func)(float))
 	ab.axisName = name;
 	ab.player = Cast<CPlayerController>(target->GetController());
 	ab.binding.Bind(target, func);
+	ab.layer = layer;
+}
+
+template<typename T>
+void CInputManager::BindKey(EKeyCode key, EInputAction action, EInputMod mods, T* target, void(T::* func)(), EInputMode layer)
+{
+	keyBindings.Add();
+	FInputKeyBinding& ab = *keyBindings.last();
+	ab.key = (uint16)key;
+	ab.activactionAction = action;
+	ab.mods = mods;
+	ab.player = Cast<CPlayerController>(target->GetController());
+	ab.binding.Bind(target, func);
+	ab.layer = layer;
 }

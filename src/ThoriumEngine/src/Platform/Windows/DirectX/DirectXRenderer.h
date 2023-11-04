@@ -25,7 +25,8 @@ public:
 	virtual IShaderBuffer* CreateShaderBuffer(void* data, SizeType size);
 
 	virtual ISwapChain* CreateSwapChain(IBaseWindow* window);
-	virtual IDepthBuffer* CreateDepthBuffer(int width, int height);
+	virtual IDepthBuffer* CreateDepthBuffer(FDepthBufferInfo depthInfo);
+	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, ETextureFormat format);
 
 	virtual ITexture2D* CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter);
 	virtual ITexture2D* CreateTexture2D(void** data, int numMipMaps, int width, int height, ETextureFormat format, ETextureFilter filter);
@@ -42,14 +43,26 @@ public:
 
 	virtual void SetShaderBuffer(IShaderBuffer* buffer, int _register);
 
+	virtual void SetShaderResource(ITexture2D* texture, int _register);
+	virtual void SetShaderResource(IDepthBuffer* depthTex, int _register);
+
 	virtual void SetFrameBuffer(IFrameBuffer* framebuffer, IDepthBuffer* depth);
 	virtual void SetFrameBuffers(IFrameBuffer** framebuffers, SizeType count, IDepthBuffer* depth);
 
 	virtual void SetViewport(float x, float y, float width, float height);
 
+	virtual void SetBlendMode(EBlendMode mode);
+
 	virtual void BindGBuffer();
 
 	virtual void Present();
+
+	static TPair<DXGI_FORMAT, int> GetDXTextureFormat(ETextureFormat format);
+
+	virtual void InitImGui(IBaseWindow* wnd);
+	virtual void ImGuiShutdown();
+	virtual void ImGuiBeginFrame();
+	virtual void ImGuiRender();
 
 	//virtual void Resize(int width, int height);
 
@@ -59,12 +72,17 @@ protected:
 public:
 	int width, height;
 
+	bool bImGuiGlfw;
+
 	ID3D11Device* device;
 	ID3D11DeviceContext* deviceContext;
 	IDXGIFactory2* factory;
 
 	ID3D11DepthStencilState* depthStateOff;
 	ID3D11DepthStencilState* depthStateReadOnly;
+
+	//ID3D11BlendState* blendDisabled;
+	ID3D11BlendState* blendAdditive;
 
 	//IDXGISwapChain* swapchain;
 	//ID3D11RenderTargetView* renderTarget;

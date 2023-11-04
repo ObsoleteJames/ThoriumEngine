@@ -81,7 +81,7 @@ void CWorldViewportWidget::Update(double dt)
 			pos += camera->GetRightVector() * -mouseDeltaX * dt;
 			camera->position = pos;
 		}
-		else
+		else if (mode == ECameraControlMode::Orbit)
 		{
 			orbitPos += camera->GetUpVector() * mouseDeltaY * dt;
 			orbitPos += camera->GetRightVector() * -mouseDeltaX * dt;
@@ -211,7 +211,7 @@ void CWorldViewportWidget::keyReleaseEvent(QKeyEvent *event)
 
 void CWorldViewportWidget::wheelEvent(QWheelEvent *event)
 {
-	if (bMouseRight || mode== ECameraControlMode::Orbit)
+	if (bMouseRight || mode == ECameraControlMode::Orbit)
 	{
 		int d = event->delta() > 0 ? 1 : (event->delta() < 0 ? -1 : 0);
 		cameraSpeed = FMath::Clamp(cameraSpeed + d, 1, 14);

@@ -26,6 +26,8 @@ public:
 	inline TObjectPtr<CModelAsset> GetModel() const { return model; }
 	inline const TArray<TObjectPtr<CMaterial>>& GetMaterials() const { return materials; }
 
+	inline bool CastShadows() const { return bCastShadows; }
+
 	CMaterial* GetMaterial(SizeType slot);
 
 	void SetMaterial(CMaterial* mat, SizeType slot = 0);
@@ -48,6 +50,9 @@ private:
 
 	PROPERTY(Editable, Category = Rendering)
 	TArray<TObjectPtr<CMaterial>> materials;
+
+	PROPERTY(Editable, Category = Rendering)
+	bool bCastShadows = true;
 
 	CModelComponentProxy* renderProxy;
 

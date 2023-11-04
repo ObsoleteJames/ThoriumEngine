@@ -8,13 +8,13 @@ DECLARE_STRUCT(FVector2, Engine)
 #define Engine_Vectors_h_79_GeneratedBody \
 DECLARE_STRUCT(FVector, Engine)
 
-#define Engine_Vectors_h_147_GeneratedBody \
+#define Engine_Vectors_h_154_GeneratedBody \
 DECLARE_STRUCT(FQuaternion, Engine)
 
-#define Engine_Vectors_h_195_GeneratedBody \
+#define Engine_Vectors_h_204_GeneratedBody \
 DECLARE_STRUCT(FRay, Engine)
 
-#define Engine_Vectors_h_211_GeneratedBody \
+#define Engine_Vectors_h_220_GeneratedBody \
 DECLARE_STRUCT(FMatrix, Engine)
 
 

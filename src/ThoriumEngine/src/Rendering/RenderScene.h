@@ -53,6 +53,10 @@ private:
 	TArray<CCameraProxy*> cameras;
 	TArray<CLightProxy*> lights;
 
+	// the position of the primary camera that was used for rendering the sun light shadow map,
+	FVector sunLightCamPos;
+	FVector sunLightCamDir;
+
 	//TArray<CTexture*> lightmaps;
 
 	CCameraProxy* primaryCamera;

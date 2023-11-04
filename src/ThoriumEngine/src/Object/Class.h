@@ -108,6 +108,12 @@ public:
 
 	inline FClass* Get() const { return ptr; }
 
+	bool operator==(const TClassPtr<T>& r) { return r.ptr == ptr; }
+	bool operator!=(const TClassPtr<T>& r) { return r.ptr != ptr; }
+
+	bool operator==(FClass* r) { return r == ptr; }
+	bool operator!=(FClass* r) { return r != ptr; }
+
 private:
 	FClass* ptr = nullptr;
 };
@@ -131,6 +137,7 @@ public:
 	inline const FString& GetNameByIndex(SizeType index) { return values[index].Key; }
 	inline int64_t GetValueByIndex(SizeType index) { return values[index].Value; }
 	int64_t GetValueByName(const FString& name);
+	FString GetNameByValue(int64 v);
 	
 protected:
 	TArray<TPair<FString, int64_t>> values;
@@ -226,7 +233,7 @@ protected:
 template<class T>
 TClassPtr<T>::TClassPtr(FClass* c)
 {
-	if (c->CanCast(T::StaticClass()))
+	if (c && c->CanCast(T::StaticClass()))
 		ptr = c;
 }
 

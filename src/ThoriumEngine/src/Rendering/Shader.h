@@ -49,7 +49,7 @@ struct ENGINE_API FShaderTexture
 	FString UiGroup;
 };
 
-ASSET(Extension = ".thcs", Hidden)
+ASSET(Extension = ".thcs", Hidden, AutoLoad)
 class ENGINE_API CShaderSource : public CAsset
 {
 	GENERATED_BODY()
@@ -81,6 +81,7 @@ public:
 	void LoadShaderObjects();
 
 	static CShaderSource* GetShader(const FString& name);
+	static const TArray<TObjectPtr<CShaderSource>>& GetAllShaders();
 
 private:
 	void LoadVersion05(IBaseFStream* stream);

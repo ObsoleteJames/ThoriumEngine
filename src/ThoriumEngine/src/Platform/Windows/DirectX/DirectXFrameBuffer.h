@@ -9,7 +9,7 @@ class ENGINE_API DirectXFrameBuffer : public IFrameBuffer
 {
 public:
 	DirectXFrameBuffer(ID3D11Texture2D* fromTexture, int w = 0, int h = 0);
-	DirectXFrameBuffer(int width, int height, int type);
+	DirectXFrameBuffer(int width, int height, ETextureFormat format);
 	virtual ~DirectXFrameBuffer();
 
 	virtual void Resize(int width, int height);
@@ -17,26 +17,39 @@ public:
 
 	inline ID3D11RenderTargetView*& Get() { return targetView; }
 
+private:
+	void Generate(int w, int h, ETextureFormat format);
+
 public:
-	int type;
+	ETextureFormat format;
 	ID3D11RenderTargetView* targetView;
 	ID3D11Texture2D* buffer;
+
+	ID3D11ShaderResourceView* view;
+	ID3D11SamplerState* sampler;
 
 };
 
 class ENGINE_API DirectXDepthBuffer : public IDepthBuffer
 {
 public:
-	DirectXDepthBuffer(int width, int height);
+	DirectXDepthBuffer(FDepthBufferInfo data);
 	virtual ~DirectXDepthBuffer();
 
+	virtual void Resize(int width, int height) override;
 	virtual void Clear(float a);
 
 	inline ID3D11DepthStencilView*& Get() { return depthView; }
 	
+private:
+	void Generate();
+
 public:
 	ID3D11DepthStencilView* depthView;
 	ID3D11Texture2D* depthBuffer;
+
+	ID3D11ShaderResourceView* view = nullptr;
+	ID3D11SamplerState* sampler = nullptr;
 
 };
 

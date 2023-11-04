@@ -13,6 +13,8 @@
 *.pch
 
 src/.vs
+intermediate/
+.vs/
 
 # Compiled Dynamic libraries
 *.so

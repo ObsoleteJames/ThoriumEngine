@@ -21,6 +21,8 @@ public:
 
 	FBounds Combine(const FBounds& b) const;
 
+	FBounds Rotate(const FQuaternion& r, const FVector& pivot = FVector()) const;
+
 public:
 	FVector position;
 	FVector extents;

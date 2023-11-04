@@ -1,9 +1,10 @@
 
+#include <string>
 #include "Console.h"
+#include "Math/Math.h"
 #include <Util/Assert.h>
 #include <Util/KeyValue.h>
 #include <mutex>
-#include <string>
 
 #define CONSOLE_MAX 512
 
@@ -65,7 +66,9 @@ void CConsole::LoadConfig()
 		if (!kv.IsOpen())
 			continue;
 
-		var->SetValue(std::stof(kv.GetValue(var->Name())->Value.c_str()));
+		const FString& v = kv.GetValue(var->Name())->Value;
+		if (!v.IsEmpty() && v.IsNumber())
+			var->SetValue(std::stof(v.c_str()));
 	}
 }
 
@@ -94,7 +97,9 @@ void CConsole::Exec(const FString& input)
 		{
 			if (args.Size() == 0 || args[0].IsEmpty())
 			{
-				CONSOLE_LogWarning("CConsole", "Insufficient arguments, expected 1 but got 0");
+				//CONSOLE_LogWarning("CConsole", "Insufficient arguments, expected 1 but got 0");
+
+				_log({ target + ": " + (FString)std::to_string(cmd->AsFloat()), {0, "", ""}, CONSOLE_PLAIN, FString(), 0, nullptr });
 				return;
 			}
 
@@ -208,24 +213,24 @@ void CConCmd::Exec(const TArray<FString>& args)
 	func(args);
 }
 
-CConVar::CConVar(const FString& n, float v) : value(v), name(n)
+CConVar::CConVar(const FString& n, float v, float _min, float _max, EConvarAuthority auth) : value(v), name(n), min(_min), max(_max), authority(auth)
 {
-	for (auto* cmd : CConsole::consoleCmds)
-		THORIUM_ASSERT(cmd->Name() != name, FString("Failed to register ConVar '") + name + "', ConCmd with the same name already exists!");
-	for (auto* var : CConsole::consoleVars)
-		THORIUM_ASSERT(var->Name() != name, FString("Failed to register ConVar '") + name + "', ConVar with the same name arleady exists!");
-
-	CConsole::consoleVars.Add(this);
+	Register();
 }
 
-CConVar::CConVar(const FString& n, const WString& c /*= FString()*/, float v /*= 0.f*/) : value(v), name(n), configPath(c)
+CConVar::CConVar(const FString& n, const WString& c /*= FString()*/, float v /*= 0.f*/, float _min, float _max, EConvarAuthority auth) : value(v), name(n), configPath(c), min(_min), max(_max), authority(auth)
 {
-	for (auto* cmd : CConsole::consoleCmds)
-		THORIUM_ASSERT(cmd->Name() != name, FString("Failed to register ConVar '") + name + "', ConCmd with the same name already exists!");
-	for (auto* var : CConsole::consoleVars)
-		THORIUM_ASSERT(var->Name() != name, FString("Failed to register ConVar '") + name + "', ConVar with the same name arleady exists!");
+	Register();
+}
 
-	CConsole::consoleVars.Add(this);
+CConVar::CConVar(const FString& n, const WString& c, float v, EConvarAuthority auth, float _min /*= 0.f*/, float _max /*= 0.f*/) : value(v), name(n), configPath(c), min(_min), max(_max), authority(auth)
+{
+	Register();
+}
+
+CConVar::CConVar(const FString& n, float v, EConvarAuthority auth, float _min /*= 0.f*/, float _max /*= 0.f*/) : value(v), name(n), min(_min), max(_max), authority(auth)
+{
+	Register();
 }
 
 CConVar::~CConVar()
@@ -233,4 +238,46 @@ CConVar::~CConVar()
 	auto it = CConsole::consoleVars.Find(this);
 	if (it != CConsole::consoleVars.end())
 		CConsole::consoleVars.Erase(it);
+}
+
+void CConVar::SetValue(float v)
+{
+	// TODO: Check Authority.
+
+	value = v;
+
+	if (min < max)
+		value = FMath::Clamp(value, min, max);
+
+	onValueChanged.Fire(value);
+}
+
+void CConVar::SetValue(int v)
+{
+	value = (float)v;
+
+	if (min < max)
+		value = FMath::Clamp(value, min, max);
+
+	onValueChanged.Fire(value);
+}
+
+void CConVar::SetValue(bool v)
+{
+	value = (float)v;
+
+	if (min < max)
+		value = FMath::Clamp(value, min, max);
+
+	onValueChanged.Fire(value);
+}
+
+void CConVar::Register()
+{
+	for (auto* cmd : CConsole::consoleCmds)
+		THORIUM_ASSERT(cmd->Name() != name, FString("Failed to register ConVar '") + name + "', ConCmd with the same name already exists!");
+	for (auto* var : CConsole::consoleVars)
+		THORIUM_ASSERT(var->Name() != name, FString("Failed to register ConVar '") + name + "', ConVar with the same name arleady exists!");
+
+	CConsole::consoleVars.Add(this);
 }

@@ -12,6 +12,14 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
+#ifdef IS_DEV
+static TPair<FString, FString> _FAssetClass_CShaderSource_Tags[] {
+	{ "Extension", ".thcs" },
+	{ "Hidden", "" },
+	{ "AutoLoad", "" },
+};
+#endif
+
 class FAssetClass_CShaderSource : public FAssetClass
 {
 public:
@@ -23,12 +31,16 @@ public:
 		numProperties = 0;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
+#ifdef IS_DEV
+		numTags = 3;
+		tags = _FAssetClass_CShaderSource_Tags;
+#endif
 		extension = ".thcs";
 		BaseClass = CAsset::StaticClass();
 		numFunctions = 0;
 		FunctionList = CLASS_NEXT_FUNCTION;
 		flags = CTAG_HIDDEN;
-		assetFlags = ASSET_NONE;
+		assetFlags = ASSET_NONE | ASSET_AUTO_LOAD;
 		GetModule_Engine().RegisterFClass(this);
 		GetModule_Engine().RegisterFAsset(this);
 	}

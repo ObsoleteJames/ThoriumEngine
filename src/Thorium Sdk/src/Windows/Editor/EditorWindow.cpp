@@ -330,7 +330,7 @@ void CEditorWindow::SetupUi()
 	QStatusBar* statusBar = new QStatusBar(this);
 	setStatusBar(statusBar);
 
-	FString projectName = FString("Project: ") + gEngine->GetProjectConfig().dispalyName;
+	FString projectName = FString("Project: ") + gEngine->GetProjectConfig().displayName;
 
 	projectLabel = new QLabel(this);
 	projectLabel->setText(projectName.c_str());
@@ -379,6 +379,7 @@ void CEditorWindow::SetupUi()
 		btnPlay->setProperty("type", QVariant("clear"));
 		btnStop->setMaximumWidth(20);
 		btnStop->setProperty("type", QVariant("clear"));
+		btnStop->setDisabled(true);
 
 		l2->addWidget(btnPlay);
 		l2->addWidget(btnStop);
@@ -391,6 +392,11 @@ void CEditorWindow::SetupUi()
 				return;
 			gEditorEngine()->bIsPlaying = true;
 			gWorld->Start();
+
+			worldViewport->SetControlMode(ECameraControlMode::Disabled);
+
+			btnPlay->setDisabled(true);
+			btnStop->setDisabled(false);
 		});
 
 		connect(btnStop, &QPushButton::clicked, this, [=]() {
@@ -400,6 +406,11 @@ void CEditorWindow::SetupUi()
 			gEditorEngine()->bIsPlaying = false;
 			gWorld->Stop();
 			gWorld->SetPrimaryCamera(gEditorEngine()->editorCamera);
+
+			worldViewport->SetControlMode(ECameraControlMode::FreeMode);
+
+			btnPlay->setDisabled(false);
+			btnStop->setDisabled(true);
 		});
 
 		toolbar->addWidget(worldBtnsFrame);
@@ -411,6 +422,7 @@ void CEditorWindow::SetupUi()
 	worldViewport = new CWorldViewportWidget(widget);
 	layout->addWidget(worldViewport);
 
+	worldViewport->bVSync = true;
 	worldViewport->SetCamera(gEditorEngine()->editorCamera);
 
 	consoleWidget = new CConsoleWidget(this);

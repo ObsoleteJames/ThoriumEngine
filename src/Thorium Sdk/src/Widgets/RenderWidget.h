@@ -45,6 +45,9 @@ protected:
 	void keyPressEvent(QKeyEvent* event) override;
 	void keyReleaseEvent(QKeyEvent* event) override;
 
+public:
+	bool bVSync = false;
+
 protected:
 	std::chrono::time_point<std::chrono::steady_clock> lastRenderTime;
 	double dt = 0.f;

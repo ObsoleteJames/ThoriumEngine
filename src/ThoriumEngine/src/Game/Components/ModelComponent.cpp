@@ -15,6 +15,7 @@ public:
 	{
 		meshes.Clear();
 		bVisible = model->IsVisible() && model->GetModel();
+		bCastShadows = model->CastShadows();
 		if (model->GetWorld()->IsActive() && model->bEditorOnly)
 			bVisible = false;
 		if (!bVisible)
@@ -42,7 +43,7 @@ public:
 	{
 		for (auto& m : meshes)
 		{
-			TObjectPtr<CMaterial> mat = materials[m.materialIndex] ? materials[m.materialIndex] : CResourceManager::GetResource<CMaterial>(L"materials\\error.thmat");
+			TObjectPtr<CMaterial> mat = (m.materialIndex < materials.Size() && materials[m.materialIndex]) ? materials[m.materialIndex] : CResourceManager::GetResource<CMaterial>(L"materials\\error.thmat");
 			out.DrawMesh(m, mat, transform, skeletonMatrices);
 		}
 	}

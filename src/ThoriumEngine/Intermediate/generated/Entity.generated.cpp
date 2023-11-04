@@ -51,6 +51,14 @@ DECLARE_PROPERTY(FOutputBinding, "Target Input", targetInput, "", "FString", EVT
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FOutputBinding, targetInput)
 
+DECLARE_PROPERTY(FOutputBinding, "Delay", delay, "", "float", EVT_FLOAT, VTAG_SERIALIZABLE , offsetof(FOutputBinding, delay), sizeof(float), nullptr, nullptr)
+#undef CLASS_NEXT_PROPERTY
+#define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FOutputBinding, delay)
+
+DECLARE_PROPERTY(FOutputBinding, "Only Once", bOnlyOnce, "", "bool", EVT_BOOL, VTAG_SERIALIZABLE , offsetof(FOutputBinding, bOnlyOnce), sizeof(bool), nullptr, nullptr)
+#undef CLASS_NEXT_PROPERTY
+#define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FOutputBinding, bOnlyOnce)
+
 class FStruct_FOutputBinding : public FStruct
 {
 public:
@@ -59,7 +67,7 @@ public:
 		name = "Output Binding";
 		cppName = "FOutputBinding";
 		size = sizeof(FOutputBinding);
-		numProperties = 4;
+		numProperties = 6;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = false;
 		GetModule_Engine().RegisterFStruct(this);
@@ -74,6 +82,7 @@ FStruct* FOutputBinding::StaticStruct() { return &__FStruct_FOutputBinding_Insta
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
+#if IS_DEV
 static TPair<FString, FString> _CEntity_bIsVisible_Meta_Tags[]{
 	{ "Editable", "" },
 	{ "Category", "Rendering" },
@@ -88,7 +97,11 @@ static FPropertyMeta _CEntity_bIsVisible_Meta {
 	_CEntity_bIsVisible_Meta_Tags
 };
 
-DECLARE_PROPERTY(CEntity, "Is Visible", bIsVisible, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, bIsVisible), sizeof(bool), &_CEntity_bIsVisible_Meta, nullptr)
+#define _CEntity_bIsVisible_Meta_Ptr &_CEntity_bIsVisible_Meta
+#else
+#define _CEntity_bIsVisible_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CEntity, "Is Visible", bIsVisible, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, bIsVisible), sizeof(bool), _CEntity_bIsVisible_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CEntity, bIsVisible)
 
@@ -96,6 +109,7 @@ DECLARE_PROPERTY(CEntity, "Is Enabled", bIsEnabled, "", "bool", EVT_BOOL, VTAG_S
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CEntity, bIsEnabled)
 
+#if IS_DEV
 static TPair<FString, FString> _CEntity_bOwnerOnlySee_Meta_Tags[]{
 	{ "Editable", "" },
 	{ "Category", "Rendering" },
@@ -110,10 +124,15 @@ static FPropertyMeta _CEntity_bOwnerOnlySee_Meta {
 	_CEntity_bOwnerOnlySee_Meta_Tags
 };
 
-DECLARE_PROPERTY(CEntity, "Owner Only See", bOwnerOnlySee, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, bOwnerOnlySee), sizeof(bool), &_CEntity_bOwnerOnlySee_Meta, nullptr)
+#define _CEntity_bOwnerOnlySee_Meta_Ptr &_CEntity_bOwnerOnlySee_Meta
+#else
+#define _CEntity_bOwnerOnlySee_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CEntity, "Owner Only See", bOwnerOnlySee, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, bOwnerOnlySee), sizeof(bool), _CEntity_bOwnerOnlySee_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CEntity, bOwnerOnlySee)
 
+#if IS_DEV
 static TPair<FString, FString> _CEntity_bOwnerCantSee_Meta_Tags[]{
 	{ "Editable", "" },
 	{ "Category", "Rendering" },
@@ -128,11 +147,16 @@ static FPropertyMeta _CEntity_bOwnerCantSee_Meta {
 	_CEntity_bOwnerCantSee_Meta_Tags
 };
 
-DECLARE_PROPERTY(CEntity, "Owner Cant See", bOwnerCantSee, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, bOwnerCantSee), sizeof(bool), &_CEntity_bOwnerCantSee_Meta, nullptr)
+#define _CEntity_bOwnerCantSee_Meta_Ptr &_CEntity_bOwnerCantSee_Meta
+#else
+#define _CEntity_bOwnerCantSee_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CEntity, "Owner Cant See", bOwnerCantSee, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, bOwnerCantSee), sizeof(bool), _CEntity_bOwnerCantSee_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CEntity, bOwnerCantSee)
 
 #if INCLUDE_EDITOR_DATA
+#if IS_DEV
 static TPair<FString, FString> _CEntity_bEditorOnly_Meta_Tags[]{
 	{ "Editable", "" },
 };
@@ -146,11 +170,16 @@ static FPropertyMeta _CEntity_bEditorOnly_Meta {
 	_CEntity_bEditorOnly_Meta_Tags
 };
 
-DECLARE_PROPERTY(CEntity, "Editor Only", bEditorOnly, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, bEditorOnly), sizeof(bool), &_CEntity_bEditorOnly_Meta, nullptr)
+#define _CEntity_bEditorOnly_Meta_Ptr &_CEntity_bEditorOnly_Meta
+#else
+#define _CEntity_bEditorOnly_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CEntity, "Editor Only", bEditorOnly, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, bEditorOnly), sizeof(bool), _CEntity_bEditorOnly_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CEntity, bEditorOnly)
 #endif
 
+#if IS_DEV
 static TPair<FString, FString> _CEntity_type_Meta_Tags[]{
 	{ "Editable", "" },
 };
@@ -164,10 +193,15 @@ static FPropertyMeta _CEntity_type_Meta {
 	_CEntity_type_Meta_Tags
 };
 
-DECLARE_PROPERTY(CEntity, "Type", type, "", "EEntityType", EVT_ENUM, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, type), sizeof(EEntityType), &_CEntity_type_Meta, nullptr)
+#define _CEntity_type_Meta_Ptr &_CEntity_type_Meta
+#else
+#define _CEntity_type_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CEntity, "Type", type, "", "EEntityType", EVT_ENUM, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, type), sizeof(EEntityType), _CEntity_type_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CEntity, type)
 
+#if IS_DEV
 static TPair<FString, FString> _CEntity_bCanBeDamaged_Meta_Tags[]{
 	{ "Editable", "" },
 	{ "Category", "Health" },
@@ -182,10 +216,15 @@ static FPropertyMeta _CEntity_bCanBeDamaged_Meta {
 	_CEntity_bCanBeDamaged_Meta_Tags
 };
 
-DECLARE_PROPERTY(CEntity, "Can Be Damaged", bCanBeDamaged, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, bCanBeDamaged), sizeof(bool), &_CEntity_bCanBeDamaged_Meta, nullptr)
+#define _CEntity_bCanBeDamaged_Meta_Ptr &_CEntity_bCanBeDamaged_Meta
+#else
+#define _CEntity_bCanBeDamaged_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CEntity, "Can Be Damaged", bCanBeDamaged, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, bCanBeDamaged), sizeof(bool), _CEntity_bCanBeDamaged_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CEntity, bCanBeDamaged)
 
+#if IS_DEV
 static TPair<FString, FString> _CEntity_health_Meta_Tags[]{
 	{ "Editable", "" },
 	{ "Category", "Health" },
@@ -200,7 +239,11 @@ static FPropertyMeta _CEntity_health_Meta {
 	_CEntity_health_Meta_Tags
 };
 
-DECLARE_PROPERTY(CEntity, "Health", health, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, health), sizeof(float), &_CEntity_health_Meta, nullptr)
+#define _CEntity_health_Meta_Ptr &_CEntity_health_Meta
+#else
+#define _CEntity_health_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CEntity, "Health", health, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntity, health), sizeof(float), _CEntity_health_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CEntity, health)
 

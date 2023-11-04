@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <mutex>
 #include <Util/FStream.h>
 #include "EngineCore.h"
 #include "Object/Object.h"
@@ -28,6 +29,8 @@ public:
 	virtual void PushData() = 0;
 
 public:
+	std::mutex loadLock;
+
 	// whether this resource is currently loading.
 	std::atomic<bool> bLoading;
 	// whether this resource has finished loading.
@@ -69,6 +72,8 @@ public:
 
 	template<class T>
 	inline static void LoadResources() { LoadResources((FAssetClass*)T::StaticClass()); }
+
+	inline static FAssetClass* GetResourceTypeByFile(FFile* file) { auto it = availableResources.find(file->Path()); if (it != availableResources.end()) return it->second.type; return nullptr; }
 
 	/**
 	 *	Loads all resources of the specified type.

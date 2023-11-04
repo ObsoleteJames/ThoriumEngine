@@ -11,6 +11,17 @@ int64_t FEnum::GetValueByName(const FString& name)
 	return -1;
 }
 
+FString FEnum::GetNameByValue(int64 val)
+{
+	for (auto& v : values)
+	{
+		if (v.Value == val)
+			return v.Key;
+	}
+
+	return FString();
+}
+
 const FFunction* FClass::GetFunction(const FString& name)
 {
 	for (const FFunction* func = FunctionList; func != nullptr; func = FunctionList->next)

@@ -9,6 +9,7 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
+#if IS_DEV
 static TPair<FString, FString> _CObject_bReplicated_Meta_Tags[]{
 	{ "Editable", "" },
 	{ "Category", "Networking" },
@@ -23,10 +24,15 @@ static FPropertyMeta _CObject_bReplicated_Meta {
 	_CObject_bReplicated_Meta_Tags
 };
 
-DECLARE_PROPERTY(CObject, "Replicated", bReplicated, "\n   Should this object be recplicated to other clients\n  ", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CObject, bReplicated), sizeof(bool), &_CObject_bReplicated_Meta, nullptr)
+#define _CObject_bReplicated_Meta_Ptr &_CObject_bReplicated_Meta
+#else
+#define _CObject_bReplicated_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CObject, "Replicated", bReplicated, "\n   Should this object be recplicated to other clients\n  ", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CObject, bReplicated), sizeof(bool), _CObject_bReplicated_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CObject, bReplicated)
 
+#if IS_DEV
 static TPair<FString, FString> _CObject_NetPriority_Meta_Tags[]{
 	{ "Editable", "" },
 	{ "Category", "Networking" },
@@ -41,7 +47,11 @@ static FPropertyMeta _CObject_NetPriority_Meta {
 	_CObject_NetPriority_Meta_Tags
 };
 
-DECLARE_PROPERTY(CObject, "Net Priority", NetPriority, "\n   Determines whether this object has net priority over others.\n  ", "uint8", EVT_INT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CObject, NetPriority), sizeof(uint8), &_CObject_NetPriority_Meta, nullptr)
+#define _CObject_NetPriority_Meta_Ptr &_CObject_NetPriority_Meta
+#else
+#define _CObject_NetPriority_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CObject, "Net Priority", NetPriority, "\n   Determines whether this object has net priority over others.\n  ", "uint8", EVT_INT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CObject, NetPriority), sizeof(uint8), _CObject_NetPriority_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CObject, NetPriority)
 
@@ -74,6 +84,12 @@ DECLARE_FUNCTION_PROPERTY(CObject, "OnNetDelete", "", OnNetDelete, &CObject::exe
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CObject, OnNetDelete)
 
+#ifdef IS_DEV
+static TPair<FString, FString> _FClass_CObject_Tags[] {
+	{ "Abstract", "" },
+};
+#endif
+
 class FClass_CObject : public FClass
 {
 public:
@@ -85,6 +101,10 @@ public:
 		numProperties = 5;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
+#ifdef IS_DEV
+		numTags = 1;
+		tags = _FClass_CObject_Tags;
+#endif
 		BaseClass = nullptr;
 		numFunctions = 1;
 		FunctionList = CLASS_NEXT_FUNCTION;

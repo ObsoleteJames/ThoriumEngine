@@ -148,6 +148,8 @@ public:
 	// Should be a networked function
 	void SetOwner(CObject* owner);
 
+	inline const TArray<TObjectPtr<CObject>>& GetChildren() const { return Children; }
+
 	template<class T = CObject>
 	TObjectPtr<T> GetOwner() const { return Owner ? Cast<T>(Owner) : nullptr; }
 

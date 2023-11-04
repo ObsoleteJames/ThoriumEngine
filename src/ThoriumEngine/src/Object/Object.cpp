@@ -74,6 +74,10 @@ void CObject::Load(FMemStream& in)
 		LoadProperties(in, t, this);
 		t = t->GetBaseClass();
 	}
+
+	for (auto it = Children.rbegin(); it != Children.rend(); it++)
+		if (!it->IsValid())
+			Children.Erase(it);
 }
 
 void CObject::SerializeProperties(FMemStream& out, FStruct* structType, void* object)

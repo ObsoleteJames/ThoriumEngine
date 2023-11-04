@@ -26,6 +26,9 @@ public:
 	PROPERTY(Editable)
 	bool bCastShadows = true;
 
+	PROPERTY(Editable, Name = "Shadow Bias", UIStepSize = 0.000001, UIFormat = "%.5f")
+	float shadowBias = 0.0002f;
+
 private:
 	CLightProxy* lightProxy;
 

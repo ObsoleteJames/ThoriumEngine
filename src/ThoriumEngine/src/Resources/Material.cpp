@@ -354,8 +354,12 @@ ERenderPass CMaterial::GetRenderPass()
 	uint8 matType = GetShaderSource()->type;
 	if (matType == CShaderSource::ST_DEFERRED)
 		rp = R_DEFERRED_PASS;
-	else if (matType == CShaderSource::ST_DEBUG)
-		rp = R_DEBUG_PASS;
+	else if (matType == CShaderSource::ST_DEBUG) {
+		if (DoDepthTest())
+			rp = R_DEBUG_PASS;
+		else
+			rp = R_DEBUG_OVERLAY_PASS;
+	}
 	else if (matType == CShaderSource::ST_FORWARD)
 		rp = GetAlpha() < 1.f ? R_TRANSPARENT_PASS : R_FORWARD_PASS;
 

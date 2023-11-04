@@ -157,6 +157,7 @@ public:
 
 	FVector position;
 	FVector direction;
+	FQuaternion rotation;
 
 	FVector color;
 	float range;
@@ -164,6 +165,10 @@ public:
 
 	float innerConeAngle;
 	float outerConeAngle;
+
+	float shadowBias;
+
+	int shadowIndex = -1;
 
 protected:
 	bool bEnabled;

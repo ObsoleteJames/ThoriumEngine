@@ -25,7 +25,7 @@ FQuaternion CSceneComponent::GetWorldRotation() const
 void CSceneComponent::SetWorldPosition(const FVector& pos)
 {
 	if (parent)
-		position = pos - parent->GetWorldRotation().Rotate(parent->GetWorldPosition()); // TODO: use rotational position
+		position = pos - parent->GetWorldRotation().Rotate(parent->GetWorldPosition()); // TODO: use scaled position
 	else
 		position = pos;
 }
@@ -90,7 +90,11 @@ FBounds CSceneComponent::Bounds() const
 	FQuaternion rot = GetWorldRotation();
 	FVector pos = GetWorldPosition();
 	FVector scale = GetWorldScale();
-	r.extents = (rot.Rotate(r.extents) * scale);
-	r.position = (rot.Rotate(r.position) * scale) + pos;
+
+	r = r.Rotate(rot, -r.position);
+	//r.extents = (rot.Rotate(r.extents) * scale);
+	//r.position = (rot.Rotate(r.position) * scale) + pos;
+	r.extents = r.extents * scale;
+	r.position = r.position * scale + pos;
 	return r;
 }

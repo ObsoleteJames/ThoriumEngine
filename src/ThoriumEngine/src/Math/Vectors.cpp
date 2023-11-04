@@ -4,6 +4,8 @@
 #include "Window.h"
 #include <DirectXMath.h>
 
+#include <glm/gtx/matrix_decompose.hpp>
+
 float FVector2::Distance(const FVector2& a, const FVector2& b)
 {
 	return FMath::Sqrt(FMath::Squared(b.x - a.x) + FMath::Squared(b.y - a.y));
@@ -68,6 +70,12 @@ FVector2& FVector2::operator/=(float f)
 	return *this;
 }
 
+FVector FVector::zero = FVector();
+FVector FVector::one = FVector(1);
+FVector FVector::up = FVector(0, 1, 0);
+FVector FVector::forward = FVector(0, 0, -1);
+FVector FVector::right = FVector(1, 0, 0);
+
 FVector FVector::Orthogonal() const
 {
 	FVector absVec(FMath::Abs(x), FMath::Abs(y), FMath::Abs(z));
@@ -80,7 +88,8 @@ FVector FVector::Orthogonal() const
 
 float FVector::Distance(const FVector& a, const FVector& b)
 {
-	return FMath::Sqrt(FMath::Squared(b.x - a.x) + FMath::Squared(b.y - a.y) + FMath::Squared(b.z - a.z));
+	//return FMath::Sqrt(FMath::Squared(b.x - a.x) + FMath::Squared(b.y - a.y) + FMath::Squared(b.z - a.z));
+	return (b - a).Magnitude();
 }
 
 float FVector::Dot(const FVector& a, const FVector& b)
@@ -173,6 +182,18 @@ FVector FQuaternion::Rotate(const FVector& r) const
 	return r + ((uv * w) + uuv) * 2.f;
 }
 
+FQuaternion FQuaternion::LookRotation(const FVector& dir, const FVector& up)
+{
+	FVector right = FVector::Cross(dir, up);
+	FQuaternion r;
+	r.w = FMath::Sqrt(1.f + right.x + up.y + dir.z) * 0.5f;
+	float w4 = 1.f / (4.f / r.w);
+	r.x = (up.z - dir.y) * w4;
+	r.y = (dir.x - right.z) * w4;
+	r.z = (right.y - up.x) * w4;
+	return r;
+}
+
 FQuaternion& FQuaternion::operator+=(const FQuaternion& right)
 {
 	glm::quat q = (glm::quat)*this += (glm::quat)right;
@@ -228,9 +249,74 @@ FMatrix FMatrix::Inverse() const
 	return (FMatrix)(glm::inverse((glm::mat4)*this));
 }
 
+FVector FMatrix::GetPosition() const
+{
+	FVector p;
+	FVector s;
+	FQuaternion r;
+	Decompose(p, s, r);
+	return p;
+}
+
+FVector FMatrix::GetScale() const
+{
+	FVector p;
+	FVector s;
+	FQuaternion r;
+	Decompose(p, s, r);
+	return s;
+}
+
+FQuaternion FMatrix::GetRotation() const
+{
+	FVector p;
+	FVector s;
+	FQuaternion r;
+	Decompose(p, s, r);
+	return r;
+}
+
+void FMatrix::Decompose(FVector& outPos, FVector& outScale, FQuaternion& outRot) const
+{
+	glm::vec3 scale;
+	glm::quat rotation;
+	glm::vec3 translation;
+	glm::vec3 skew;
+	glm::vec4 perspective;
+	glm::decompose(*(glm::mat4*)(this), scale, rotation, translation, skew, perspective);
+
+	outPos = scale;
+	outScale = scale;
+	outRot = rotation;
+}
+
+void FMatrix::Decompose(FVector& outPos, FVector& outScale, FQuaternion& outRot, FVector& outSkew, float outPerspective[4]) const
+{
+	glm::vec3 scale;
+	glm::quat rotation;
+	glm::vec3 translation;
+	glm::vec3 skew;
+	glm::vec4 perspective;
+	glm::decompose(*(glm::mat4*)(this), scale, rotation, translation, skew, perspective);
+
+	outPos = scale;
+	outScale = scale;
+	outRot = rotation;
+	outSkew = skew;
+	outPerspective[0] = perspective.x;
+	outPerspective[1] = perspective.y;
+	outPerspective[2] = perspective.z;
+	outPerspective[3] = perspective.w;
+}
+
 FMatrix FMatrix::Perspective(float fov, float aspectRatio, float nearPlane, float farPlane)
 {
 	return (FMatrix)glm::perspectiveLH_NO(fov, aspectRatio, nearPlane, farPlane);
+}
+
+FMatrix FMatrix::Orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane)
+{
+	return (FMatrix)glm::orthoLH_NO(left, right, bottom, top, nearPlane, farPlane);
 }
 
 FMatrix FMatrix::LookAt(const FVector& pos, const FVector& target, const FVector& up)

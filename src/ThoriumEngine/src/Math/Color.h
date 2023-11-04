@@ -11,6 +11,33 @@ struct ENGINE_API FColor
 	GENERATED_BODY()
 
 public:
+	static FColor white;
+	static FColor black;
+	static FColor grey;
+
+	static FColor red;
+	static FColor orange;
+	static FColor yellow;
+	static FColor green;
+	static FColor cyan;
+	static FColor blue;
+	static FColor magenta;
+	static FColor purple;
+	static FColor pink;
+	static FColor maroon;
+	static FColor brown;
+	static FColor beige;
+	static FColor tan;
+	static FColor peach;
+	static FColor lime;
+	static FColor olive;
+	static FColor turquoise;
+	static FColor teal;
+	static FColor navy_blue;
+	static FColor indigo;
+	static FColor violet;
+
+public:
 	FColor();
 	FColor(float red, float green, float blue, float alpha = 1.f);
 	
@@ -47,3 +74,6 @@ public:
 	PROPERTY(Editable)
 	float a;
 };
+
+// create an FColor from values ranged 0 - 255
+inline FColor UColor(uint8 r, uint8 g, uint8 b, uint8 a = 255) { return FColor(float(r) / 255.f, float(g) / 255.f, float(b) / 255.f, float(a) / 255.f); }

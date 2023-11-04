@@ -5,6 +5,7 @@
 #include "Game/Input/InputManager.h"
 #include "Game/Components/CameraComponent.h"
 
+#include "Engine.h"
 #include "Console.h"
 
 void CMgsPawn::Init()
@@ -35,18 +36,29 @@ void CMgsPawn::Update(double dt)
 void CMgsPawn::SetupInput(CInputManager* inputManager)
 {
 	inputManager->BindAction("Interact", IE_PRESS, this, &CMgsPawn::Tes);
+	//inputManager->BindAction("Tab", IE_PRESS, this, &CMgsPawn::Tab);
+	inputManager->BindKey(EKeyCode::ESCAPE, IE_RELEASE, IM_NONE, this, &CMgsPawn::Tab, EInputMode::GAME_UI);
 
 	inputManager->BindAxis("LookUp", this, &CMgsPawn::LookY);
 	inputManager->BindAxis("LookRight", this, &CMgsPawn::LookX);
 
 	inputManager->BindAxis("MoveForward", this, &CMgsPawn::MoveForward);
 	inputManager->BindAxis("MoveRight", this, &CMgsPawn::MoveStrafe);
+
+	inputManager->SetShowCursor(false);
 }
 
 void CMgsPawn::Tes()
 {
 	float rng = FMath::Clamp((float)FMath::Random(60, 120), 60.f, 120.f);
 	cam->fov = rng;
+}
+
+void CMgsPawn::Tab()
+{
+	//gEngine->InputManager()->SetShowCursor(!gEngine->InputManager()->CursorVisible());
+	auto uiMode = gEngine->InputManager()->GetInputMode();
+	gEngine->InputManager()->SetInputMode(uiMode == EInputMode::UI_ONLY ? EInputMode::GAME_ONLY : EInputMode::UI_ONLY);
 }
 
 void CMgsPawn::LookX(float v)

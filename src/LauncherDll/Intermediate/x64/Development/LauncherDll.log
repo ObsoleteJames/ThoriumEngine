@@ -1,9 +1,9 @@
 ﻿  launcher.cpp
      Creating library F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\Launcher.lib and object F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\Launcher.exp
   Generating code
-  1 of 20 functions ( 5.0%) were compiled, the rest were copied from previous compilation.
+  0 of 21 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
+    0 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   LauncherDll.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\Launcher.dll
   F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\Launcher.dll

@@ -15,6 +15,7 @@ class FEnum_ETextureFormat : public FEnum
 		values.Add({ "THTX_FORMAT_RG8_UINT", (int64)ETextureFormat::THTX_FORMAT_RG8_UINT });
 		values.Add({ "THTX_FORMAT_RGB8_UINT", (int64)ETextureFormat::THTX_FORMAT_RGB8_UINT });
 		values.Add({ "THTX_FORMAT_RGBA8_UINT", (int64)ETextureFormat::THTX_FORMAT_RGBA8_UINT });
+		values.Add({ "THTX_FORMAT_RGBA16_FLOAT", (int64)ETextureFormat::THTX_FORMAT_RGBA16_FLOAT });
 		values.Add({ "THTX_FORMAT_RGBA32_FLOAT", (int64)ETextureFormat::THTX_FORMAT_RGBA32_FLOAT });
 		values.Add({ "THTX_FORMAT_DXT1", (int64)ETextureFormat::THTX_FORMAT_DXT1 });
 		values.Add({ "THTX_FORMAT_DXT5", (int64)ETextureFormat::THTX_FORMAT_DXT5 });

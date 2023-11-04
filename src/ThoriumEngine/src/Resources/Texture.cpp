@@ -11,8 +11,9 @@
 #include "ThirdParty/stb_dxt.h"
 #include "ThirdParty/stb_image_resize.h"
 
-#define THTEX_VERSION 0x0002
+#define THTEX_VERSION 0x0003
 #define THTEX_VERSION_01 0x0001
+#define THTEX_VERSION_02 0x0002
 
 #define THTEX_MAGIC_SIZE 29
 static const char* thtexMagicStr = "\0\0ThoriumEngine Texture File\0";
@@ -75,7 +76,7 @@ public:
 	void PushData() override
 	{
 		tex->curMipMapLevel = currentMipMap;
-		if (data)
+		if (data && targetTex)
 			targetTex->UpdateData(data, currentMipMap);
 		//CONSOLE_LogInfo("Updated Texture with MipMap: " + FString::ToString(currentMipMap));
 		
@@ -143,7 +144,7 @@ void CTexture::Init()
 	version;
 	*stream >> &version;
 
-	if (version != THTEX_VERSION && version != THTEX_VERSION_01)
+	if (version != THTEX_VERSION && version != THTEX_VERSION_01 && version != THTEX_VERSION_02)
 	{
 		CONSOLE_LogError("CTexture", FString("Invalid Texture file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THTEX_VERSION) + "'");
 		return;
@@ -153,6 +154,9 @@ void CTexture::Init()
 	*stream >> &numMipmaps;
 	if (version != THTEX_VERSION_01)
 		*stream >> &filteringType;
+
+	if (version <= THTEX_VERSION_02 && format >= THTX_FORMAT_RGBA16_FLOAT)
+		format = (ETextureFormat)((int)format + 1);
 
 	*stream >> &dataSize;
 
@@ -176,7 +180,7 @@ void CTexture::Init(void* data, int width, int height, ETextureFormat format /*=
 
 void CTexture::Load(uint8 lodLevel)
 {
-	if (!file || curMipMapLevel <= lodLevel || bLoading)
+	if (!file || !bInitialized || curMipMapLevel <= lodLevel || bLoading)
 		return;
 
 	if (numMipmaps > 1)

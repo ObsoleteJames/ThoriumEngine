@@ -2,11 +2,13 @@
 #include "Module.h"
 #include "Object/Class.h"
 #include "Misc/FileHelper.h"
+#include "Console.h"
 #ifdef PLATFORM_WINDOWS
 #include <windows.h>
 #endif
 
 TArray<CModule*> CModuleManager::modules;
+TArray<FLibrary*> CModuleManager::libraries;
 
 FClass* CModuleManager::FindClass(const FString& name)
 {
@@ -144,7 +146,7 @@ void CModuleManager::GetClassesOfType(FClass* type, TArray<FClass*>& out)
 	}
 }
 
-int CModuleManager::LoadModule(const WString& path)
+int CModuleManager::LoadModule(const WString& path, CModule** outPtr)
 {
 	//FString path = name + "\\bin\\" + name + ".dll";
 	if (!FFileHelper::FileExists(path))
@@ -168,8 +170,11 @@ int CModuleManager::LoadModule(const WString& path)
 	if (!m)
 		return 3;
 
-	m->moduleHandle = wModule;
+	m->handle = wModule;
 #endif
+
+	if (outPtr)
+		*outPtr = m;
 
 	m->path = path;
 	modules.Add(m);
@@ -194,21 +199,81 @@ bool CModuleManager::UnloadModule(const FString& name)
 	modules.Erase(it);
 
 #ifdef PLATFORM_WINDOWS
-	FreeLibrary((HMODULE)it->moduleHandle);
+	FreeLibrary((HMODULE)it->handle);
 #endif
 
 	return true;
+}
+
+FLibrary* CModuleManager::LoadFLibrary(const FString& name, const WString& path)
+{
+	// Check if this library is already loaded
+	for (auto* l : libraries)
+	{
+		if (l->Path() == path)
+			return nullptr;
+	}
+
+	FLibrary* lib = new FLibrary();
+	lib->name = name;
+	lib->path = path;
+
+#ifdef PLATFORM_WINDOWS
+	HMODULE wModule = LoadLibraryW(path.c_str());
+	if (!wModule)
+	{
+		delete lib;
+		return nullptr;
+	}
+
+	lib->handle = (void*)wModule;
+#endif
+
+	libraries.Add(lib);
+	return lib;
+}
+
+bool CModuleManager::UnloadLibrary(FLibrary* lib)
+{
+	auto it = libraries.Find(lib);
+	if (it != libraries.end())
+	{
+		libraries.Erase(it);
+		return true;
+	}
+	return false;
+}
+
+bool CModuleManager::UnloadLibrary(const FString& name)
+{
+	for (auto* l : libraries)
+	{
+		if (l->Name() == name)
+			return UnloadLibrary(l);
+	}
+	return false;
 }
 
 void CModuleManager::Cleanup()
 {
 	for (auto m : modules)
 	{
-		if (m->moduleHandle)
+		if (m->handle)
 		{
 #ifdef PLATFORM_WINDOWS
-			FreeLibrary((HMODULE)m->moduleHandle);
+			FreeLibrary((HMODULE)m->handle);
 #endif
+		}
+	}
+
+	for (auto* l : libraries)
+	{
+		if (l->handle)
+		{
+#ifdef PLATFORM_WINDOWS
+			FreeLibrary((HMODULE)l->handle);
+#endif
+			delete l;
 		}
 	}
 }
@@ -220,4 +285,17 @@ CModule* CModuleManager::FindModule(const FString& name)
 			return m;
 
 	return nullptr;
+}
+
+FLibrary::FuncAdress FLibrary::GetFunctionPtr(const FString& fun)
+{
+	SizeType errCode = 0;
+#ifdef PLATFORM_WINDOWS
+	auto f = GetProcAddress((HMODULE)handle, fun.c_str());
+	errCode = GetLastError();
+#endif
+	if (!f)
+		CONSOLE_LogError("FLibrary", "Unable to obtain FuntionPtr '" + fun + "' from library '" + name + "', error code: " + FString::ToString(errCode));
+
+	return f;
 }

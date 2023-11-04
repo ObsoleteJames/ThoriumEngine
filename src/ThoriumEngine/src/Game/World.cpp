@@ -47,8 +47,9 @@ bool CWorld::IsInUpdate()
 	return bInWorldUpdate;
 }
 
-void CWorld::InitWorld(const InitializeInfo& initInfo)
+void CWorld::InitWorld(const InitializeInfo& i)
 {
+	initInfo = i;
 	if (initInfo.bCreateRenderScene)
 	{
 		renderScene = new CRenderScene();
@@ -353,4 +354,26 @@ void CWorld::OnDelete()
 		ent->Delete();
 
 	entities.Clear();
+
+	if (initInfo.bRegisterForRendering)
+		Events::OnRender.RemoveAll(this);
+}
+
+void CWorld::RemoveEntity(CEntity* ent)
+{
+	auto it = entities.Find(ent);
+	if (it != entities.end())
+	{
+		if (bActive)
+			ent->OnStop();
+
+		OnEntityDeleted.Invoke(ent);
+		entities.Erase(it);
+	}
+}
+
+void FWorldRegisterer::UnregisterEntity(CWorld* world, CEntity* ent)
+{
+	if (world)
+		world->RemoveEntity(ent);
 }

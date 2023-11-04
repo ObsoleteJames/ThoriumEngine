@@ -295,7 +295,7 @@ void CRenderWidget::Render()
 	gRenderer->PushScene(targetScene);
 	gRenderer->Render();
 
-	swapchain->Present(0, 0);
+	swapchain->Present(bVSync, 0);
 
 	// Update D.T.
 	{

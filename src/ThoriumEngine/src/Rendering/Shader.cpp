@@ -88,7 +88,7 @@ void CShaderSource::Init()
 		if (stream->Tell() == 0)
 		{
 			stream = nullptr;
-			if (Compile())
+			if (gRenderer && Compile())
 				bInitialized = true;
 		}
 		else
@@ -243,6 +243,7 @@ bool CShaderSource::Compile()
 		stream.Open(ToFString(file->Mod()->Path() + L"\\" + p), "wb");
 		if (stream.IsOpen())
 			stream.Write(vsData, size);
+		stream.Close();
 	}
 	if (!shader.pixelShader.IsEmpty())
 	{
@@ -260,6 +261,7 @@ bool CShaderSource::Compile()
 		stream.Open(ToFString(file->Mod()->Path() + L"\\" + p), "wb");
 		if (stream.IsOpen())
 			stream.Write(vsData, size);
+		stream.Close();
 	}
 	if (!shader.geoShader.IsEmpty())
 	{
@@ -277,8 +279,8 @@ bool CShaderSource::Compile()
 		stream.Open(ToFString(file->Mod()->Path() + L"\\" + p), "wb");
 		if (stream.IsOpen())
 			stream.Write(vsData, size);
+		stream.Close();
 	}
-	stream.Close();
 
 	shaderName = shader.name;
 	description = shader.description;
@@ -336,6 +338,11 @@ CShaderSource* CShaderSource::GetShader(const FString& name)
 			return it;
 
 	return nullptr;
+}
+
+const TArray<TObjectPtr<CShaderSource>>& CShaderSource::GetAllShaders()
+{
+	return _shaders;
 }
 
 void CShaderSource::LoadVersion05(IBaseFStream* stream)

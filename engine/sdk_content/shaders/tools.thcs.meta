@@ -70,12 +70,10 @@ PS
 
 	float4 DrawGrid(PS_Input input)
 	{
-		float distanceFromCam = distance(vCameraPos, input.vPositionWs) / 100.f;
+		float distanceFromCam = distance(vCameraPos.xz, input.vPositionWs.xz) / 30.f;
 		float3 col = input.vVertexColor;
 
-		col *= max(0.f, 1 - distanceFromCam);
-
-		return float4(col, 1.f);
+		return float4(col, clamp(1 - distanceFromCam, 0, 1));
 	}
 
 	float4 DrawGizmo(PS_Input input)

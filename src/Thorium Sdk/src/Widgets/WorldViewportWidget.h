@@ -8,6 +8,7 @@ class CCameraProxy;
 
 enum class ECameraControlMode
 {
+	Disabled,
 	FreeMode,
 	Orbit
 };

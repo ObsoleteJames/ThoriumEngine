@@ -2,7 +2,7 @@
 #include "Object/Class.h"
 #include "Object/ObjectMacros.h"
 
-#define Engine_InputManager_h_76_GeneratedBody \
+#define Engine_InputManager_h_89_GeneratedBody \
 DECLARE_CLASS(CInputManager, CObject, Engine)
 
 

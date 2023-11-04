@@ -15,6 +15,15 @@
 	float4(0.f, 0.f, 0.f, 0.f) \
 }
 
+#define ProcessVertexB(input) \
+	input.position, \
+	input.normal, \
+    input.texCoords, \
+	input.color, \
+    input.tangent, \
+	float3(0.f, 0.f, 0.f), \
+	float4(0.f, 0.f, 0.f, 0.f)
+
 
 #define FinalizeVertex( input, output ) \
 { \

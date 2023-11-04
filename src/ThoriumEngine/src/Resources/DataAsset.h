@@ -4,7 +4,7 @@
 #include "DataAsset.generated.h"
 
 /**
- *	an Asset for generic data storage, uses Object Properties as its method for storing data.
+ *	an Asset type for generic data storage, uses Object Properties as its method for storing data.
  */
 ASSET(Abstract)
 class ENGINE_API CDataAsset : public CAsset

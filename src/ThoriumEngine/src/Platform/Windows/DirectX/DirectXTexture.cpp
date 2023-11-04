@@ -2,26 +2,6 @@
 #include "DirectXTexture.h"
 #include "Console.h"
 
-static constexpr DXGI_FORMAT formats[] = {
-	DXGI_FORMAT_R8_UNORM,
-	DXGI_FORMAT_R8G8_UNORM,
-	DXGI_FORMAT_R8G8B8A8_UNORM,
-	DXGI_FORMAT_R8G8B8A8_UNORM,
-	DXGI_FORMAT_R32G32B32A32_FLOAT,
-	DXGI_FORMAT_BC1_UNORM,
-	DXGI_FORMAT_BC3_UNORM
-};
-
-static constexpr int formatSizes[] = {
-	1,
-	2,
-	3,
-	4,
-	16,
-	2,
-	4
-};
-
 DirectXTexture2D::DirectXTexture2D(void* data, int w, int h, ETextureFormat f, ETextureFilter filter) : format(f), width(w), height(h)
 {
 	D3D11_TEXTURE2D_DESC texd{};
@@ -29,7 +9,7 @@ DirectXTexture2D::DirectXTexture2D(void* data, int w, int h, ETextureFormat f, E
 	texd.Height = height;
 	texd.MipLevels = 1;
 	texd.ArraySize = 1;
-	texd.Format = formats[format];
+	texd.Format = DirectXRenderer::GetDXTextureFormat(format).Key;
 	texd.SampleDesc.Count = 1;
 	texd.SampleDesc.Quality = 0;
 	texd.Usage = D3D11_USAGE_DYNAMIC;
@@ -37,7 +17,7 @@ DirectXTexture2D::DirectXTexture2D(void* data, int w, int h, ETextureFormat f, E
 	texd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	//texd.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
-	int pitch = width * formatSizes[format];
+	int pitch = width * DirectXRenderer::GetDXTextureFormat(format).Value;
 
 	D3D11_SUBRESOURCE_DATA imgData{};
 	imgData.pSysMem = data;
@@ -91,7 +71,7 @@ DirectXTexture2D::DirectXTexture2D(void** data, int numMimMaps, int w, int h, ET
 	texd.Height = height;
 	texd.MipLevels = numMimMaps;
 	texd.ArraySize = 1;
-	texd.Format = formats[format];
+	texd.Format = DirectXRenderer::GetDXTextureFormat(format).Key;
 	texd.SampleDesc.Count = 1;
 	texd.SampleDesc.Quality = 0;
 	texd.Usage = D3D11_USAGE_DEFAULT;
@@ -103,7 +83,7 @@ DirectXTexture2D::DirectXTexture2D(void** data, int numMimMaps, int w, int h, ET
 		for (int i = 0; i < numMimMaps; i++)
 		{
 			imgData[i].pSysMem = data[i];
-			imgData[i].SysMemPitch = (width / std::pow(2, i)) * formatSizes[format];
+			imgData[i].SysMemPitch = (width / std::pow(2, i)) * DirectXRenderer::GetDXTextureFormat(format).Value;
 		}
 		suppliedMipMapData = numMimMaps;
 	}
@@ -111,12 +91,12 @@ DirectXTexture2D::DirectXTexture2D(void** data, int numMimMaps, int w, int h, ET
 	{
 		for (int i = 0; i < numMimMaps; i++)
 		{
-			SizeType size = (width * height) / std::pow(2, i) * formatSizes[format];
+			SizeType size = (width * height) / std::pow(2, i) * DirectXRenderer::GetDXTextureFormat(format).Value;
 			imgData[i].pSysMem = malloc(size);
 			if (i == numMimMaps - 1)
 				memset((void*)imgData[i].pSysMem, 0, size);
 
-			imgData[i].SysMemPitch = (width / std::pow(2, i)) * formatSizes[format];
+			imgData[i].SysMemPitch = (width / std::pow(2, i)) * DirectXRenderer::GetDXTextureFormat(format).Value;
 		}
 	}
 
@@ -188,7 +168,7 @@ void DirectXTexture2D::UpdateData(void* p, int mipmapLevel)
 	if (mipmapLevel >= mipMapCount)
 		return;
 
-	GetDirectXRenderer()->deviceContext->UpdateSubresource(tex, mipmapLevel, nullptr, p, (width / std::pow(2, mipmapLevel)) * formatSizes[format], (height / std::pow(2, mipmapLevel)) * formatSizes[format]);
+	GetDirectXRenderer()->deviceContext->UpdateSubresource(tex, mipmapLevel, nullptr, p, (width / std::pow(2, mipmapLevel)) * DirectXRenderer::GetDXTextureFormat(format).Value, (height / std::pow(2, mipmapLevel)) * DirectXRenderer::GetDXTextureFormat(format).Value);
 
 	//D3D11_MAPPED_SUBRESOURCE data;
 	//HRESULT hr = GetDirectXRenderer()->deviceContext->Map(tex, mipmapLevel, D3D11_MAP_WRITE_DISCARD, 0, &data);
@@ -209,7 +189,7 @@ void DirectXTexture2D::UpdateView()
 		view->Release();
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-	srvDesc.Format = formats[format];
+	srvDesc.Format = DirectXRenderer::GetDXTextureFormat(format).Key;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MostDetailedMip = mipMapCount - suppliedMipMapData;
 	srvDesc.Texture2D.MipLevels = -1;

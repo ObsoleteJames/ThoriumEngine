@@ -14,6 +14,9 @@
 
 void CInputManager::SetInputWindow(IBaseWindow* window)
 {
+	if (inputWindow == window)
+		return;
+
 	if (inputWindow)
 	{
 		inputWindow->OnKeyEvent.RemoveAll(this);
@@ -25,7 +28,7 @@ void CInputManager::SetInputWindow(IBaseWindow* window)
 	inputWindow = window;
 
 	// TODO: Fix crashing when in editor.
-	if (!gIsEditor)
+	//if (!gIsEditor)
 		window->OnKeyEvent.Bind(this, &CInputManager::KeyEvent);
 
 	window->OnCharEvent.Bind(this, &CInputManager::OnCharEvent);
@@ -168,6 +171,9 @@ void CInputManager::BuildInput()
 		}
 	}
 
+	if (!bEnableInput)
+		return;
+
 	if (inputMode != EInputMode::UI_ONLY)
 	{
 		for (auto& a : axis)
@@ -246,6 +252,9 @@ FInputAxis* CInputManager::GetAxis(const FString& name)
 
 void CInputManager::KeyEvent(EKeyCode key, EInputAction action, EInputMod mod)
 {
+	if (!bEnableInput)
+		return;
+
 	CKeyEvent event(key, action, mod);
 
 	keyStates[(SizeType)key] = action != IE_RELEASE;
@@ -272,17 +281,25 @@ void CInputManager::KeyEvent(EKeyCode key, EInputAction action, EInputMod mod)
 				break;
 		}*/
 	}
-	
-	if (inputMode != EInputMode::UI_ONLY)
+
+	for (auto& a : keyBindings)
 	{
-		for (auto& a : actions)
+		if (a.key == (uint16)key && a.mods == mod && a.activactionAction == action)
 		{
-			for (auto& k : a.keys)
+			if (a.layer != inputMode && a.layer != EInputMode::GAME_UI)
+				continue;
+
+			a.binding.Invoke();
+		}
+	}
+
+	for (auto& a : actions)
+	{
+		for (auto& k : a.keys)
+		{
+			if (k.type == 0 && k.key == (uint16)key && k.mods == mod)
 			{
-				if (k.type == 0 && k.key == (uint16)key && k.mods == mod)
-				{
-					a.FireBindings(action);
-				}
+				a.FireBindings(action);
 			}
 		}
 	}
@@ -300,6 +317,9 @@ void CInputManager::OnCursorMove(double x, double y)
 
 void CInputManager::OnMouseButton(EMouseButton btn, EInputAction action, EInputMod mod)
 {
+	if (!bEnableInput)
+		return;
+
 	mouseStates[(SizeType)btn] = action != IE_RELEASE;
 
 	for (auto& a : actions)
@@ -314,10 +334,23 @@ void CInputManager::OnMouseButton(EMouseButton btn, EInputAction action, EInputM
 	}
 }
 
+void CInputManager::OnDelete()
+{
+	BaseClass::OnDelete();
+
+	inputWindow->OnKeyEvent.RemoveAll(this);
+	inputWindow->OnCharEvent.RemoveAll(this);
+	inputWindow->OnCursorMove.RemoveAll(this);
+	inputWindow->OnMouseButton.RemoveAll(this);
+}
+
 void FInputAction::FireBindings(EInputAction action)
 {
 	for (auto& b : bindings)
 	{
+		if (b.layer != gEngine->InputManager()->GetInputMode() && b.layer != EInputMode::GAME_UI)
+			continue;
+
 		if (b.activactionAction == action)
 			b.binding.Invoke();
 	}
@@ -327,6 +360,9 @@ void FInputAxis::FireBindings()
 {
 	for (auto& b : bindings)
 	{
+		if (b.layer != gEngine->InputManager()->GetInputMode() && b.layer != EInputMode::GAME_UI)
+			continue;
+
 		b.binding.Invoke(cache);
 	}
 }

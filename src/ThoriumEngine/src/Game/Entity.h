@@ -25,6 +25,8 @@ struct FOutputBinding
 {
 	GENERATED_BODY()
 
+	friend class CEntity;
+
 public:
 	PROPERTY()
 	FString outputName;
@@ -37,6 +39,15 @@ public:
 
 	PROPERTY()
 	FString targetInput;
+
+	PROPERTY()
+	float delay = 0.f;
+
+	PROPERTY()
+	bool bOnlyOnce = false;
+
+protected:
+	int fireCount = 0;
 
 };
 

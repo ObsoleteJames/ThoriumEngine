@@ -27,6 +27,8 @@ CWindow::CWindow(int w, int h, int x, int y, const FString& title, EWindowMode m
 	width = w;
 	height = h;
 
+	bIsGlfwWindow = true;
+
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	//glfwWindowHint(GLFW_RESIZABLE, false);
 

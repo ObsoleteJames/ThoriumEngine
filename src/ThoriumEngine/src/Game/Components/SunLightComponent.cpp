@@ -21,9 +21,11 @@ void CSunLightComponent::Init()
 			bEnabled = lightComp->IsVisible();
 			bCastShadows = lightComp->bCastShadows;
 
-			direction = lightComp->GetForwardVector();
+			direction = -lightComp->GetForwardVector();
+			rotation = lightComp->GetWorldRotation();
 			color = lightComp->color;
 			intensity = lightComp->intensity;
+			shadowBias = lightComp->shadowBias;
 		}
 
 	public:

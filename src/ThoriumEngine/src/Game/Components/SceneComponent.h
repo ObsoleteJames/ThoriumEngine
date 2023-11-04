@@ -51,6 +51,7 @@ public:
 	void Detach(const FTransformSpace& space = FTransformSpace::KEEP_WORLD_TRANSFORM);
 
 	inline CSceneComponent* GetParent() const { return parent; }
+	inline const TArray<TObjectPtr<CSceneComponent>>& GetChildren() const { return children; }
 
 	FBounds Bounds() const;
 

@@ -8,6 +8,8 @@ struct FDirectionalLight
 	float _padding1;
 	float3 color;
 	float intensity;
+	float3 _padding2;
+	int shadowIndex;
 };
 
 struct FPointLight
@@ -16,8 +18,9 @@ struct FPointLight
 	float _padding1;
 	float3 color;
 	float intensity;
+	float2 _padding2;
 	float range;
-	float3 _padding2;
+	int shadowIndex;
 };
 
 struct FSpotLight
@@ -31,7 +34,7 @@ struct FSpotLight
 	float innerConeAngle;
 	float outerConeAngle;
 	float range;
-	float _padding3;
+	int shadowIndex;
 };
 
 #endif

@@ -4,7 +4,6 @@
   Main.cpp
   AssetBrowser.cpp
   CreateCppClassDialog.cpp
-  TextureImportDialog.cpp
   RenderWidget.cpp
   WorldViewportWidget.cpp
   EditorWindow.cpp
@@ -12,6 +11,7 @@
   ModelCreator.cpp
   ProjectManagerWindow.cpp
   ToolsWindow.cpp
+  moc_EditorWindow.cpp
   Util.lib(String.obj) : MSIL .netmodule or module compiled with /GL found; restarting link with /LTCG; add /LTCG to the link command line to improve linker performance
      Creating library F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\Thorium Sdk.lib and object F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Development\Thorium Sdk.exp
   Generating code

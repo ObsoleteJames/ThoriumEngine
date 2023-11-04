@@ -45,6 +45,9 @@ VS
 PS
 {
 	#include "common/forward_light_data.hlsl"
+	#include "common/shadow_data.hlsl"
+
+	#define SHADOW_SAMPLES 8
 
 	static const float PI = 3.14159265359;
 
@@ -113,8 +116,72 @@ PS
 		return F0 + mul(pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0), max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0);
 	}
 
-	float3 DirLight(float3 posWs, float3 normal, float roughness, float metallic, float3 diffuse, FDirectionalLight light)
+	float4 DirLight(float3 posWs, float3 normal, float roughness, float metallic, float3 diffuse, FDirectionalLight light)
 	{
+		// Is in shadow?
+		float shadow = 0.f;
+		if (light.shadowIndex != -1)
+		{
+			for (int i = 0; i < 4; i++)
+			{
+				float4x4 shadowMat = vSunShadowMatrix[0];
+				switch (i)
+				{
+				case 1:
+					shadowMat = vSunShadowMatrix[1];
+					break;
+				case 2:
+					shadowMat = vSunShadowMatrix[2];
+					break;
+				case 3:
+					shadowMat = vSunShadowMatrix[3];
+					break;
+				}
+
+				float4 fragPosLightSpace = mul(shadowMat, float4(posWs, 1.f));
+				float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+				projCoords = projCoords * 0.5 + 0.5;
+
+				if (projCoords.x < 1 && projCoords.y < 1 && projCoords.x > 0 && projCoords.y > 0)
+				{
+					if (i > 1)
+					{
+						float shadowDepth = SampleTexture2DLOD(vSunShadow, float2(projCoords.x / 4 + (0.25f * i), 1.f - projCoords.y), 0).r;
+						if (fragPosLightSpace.z - 0.0002 > shadowDepth)
+							return float4(0.f, 0.f, 0.f, 0.f);
+					}
+					else
+					{
+						float averageShadow = 0.f;
+
+						for (int j = 0; j < SHADOW_SAMPLES * SHADOW_SAMPLES; j++)
+						{
+							uint texHeight;
+							uint texWidth;
+							uint texLevels;
+							vSunShadow.GetDimensions(0, texHeight, texWidth, texLevels);
+
+							float pixelSize = 1.f / texHeight;
+							float2 offset = float2((float(j % SHADOW_SAMPLES) - 0.5f), ((float(j) / SHADOW_SAMPLES) - 0.5f)) * pixelSize;
+							float2 mapUv = float2(projCoords.x / 4 + (0.25f * i), 1.f - projCoords.y);
+
+							mapUv = mapUv + offset;
+							mapUv.x = clamp(mapUv.x, 0.25f * i, (0.25f * i) + 0.248888f);
+							mapUv.y = clamp(mapUv.y, 0, 1);
+
+							float shadowDepth = SampleTexture2DLOD(vSunShadow, mapUv, 0).r;
+
+							if (fragPosLightSpace.z - (i == 0 ? vSunShadowBias : 0.0005) > shadowDepth)
+								averageShadow = averageShadow + 1.f;
+						}
+
+						shadow = averageShadow / (SHADOW_SAMPLES * SHADOW_SAMPLES);
+						break;
+					}
+				}
+			}
+		}
+
 		float3 V = normalize(vCameraPos - posWs);
 		float3 H = normalize(V + light.direction);
 		float3 radiance = light.color * light.intensity;
@@ -134,10 +201,10 @@ PS
 		float3 kD = float3(1, 1, 1) - kS;
 		kD = kD * (1.0 - metallic);
 		float NdotL = max(dot(normal, light.direction), 0);
-		return (kD * diffuse / PI + specular) * radiance * NdotL;
+		return float4((kD * diffuse / PI + specular) * radiance * NdotL, length(specular)) * (1 - shadow);
 	}
 
-	float3 PointLight(float3 posWs, float3 normal, float roughness, float metallic, float3 diffuse, FPointLight light)
+	float4 PointLight(float3 posWs, float3 normal, float roughness, float metallic, float3 diffuse, FPointLight light)
 	{
 		float3 V = normalize(vCameraPos - posWs);
 		float3 L = normalize(light.position - posWs);
@@ -165,7 +232,7 @@ PS
 
 		float NdotL = max(dot(normal, L), 0);
 
-		return (kD * diffuse / PI + specular) * radiance * NdotL;
+		return float4((kD * diffuse / PI + specular) * radiance * NdotL, (specular.r + specular.g + specular.b) / 3);
 	}
 
     float4 Main(PS_Input input) : SV_TARGET
@@ -186,7 +253,7 @@ PS
 		float3 normal = CalculateNormal(input);
 		//float3 normal = normalize(input.vNormalWs);
 
-		float3 outColor = float3(0, 0, 0);
+		float4 outColor = float4(0, 0, 0, 0);
 
 		// FPointLight l;
 		// l.range = 10;
@@ -216,13 +283,13 @@ PS
 
 		//float3 amb = float3(0.01, 0.01, 0.01) * d2;
 		//float3 color = amb + outColor;
-		float3 color = outColor + emmision.xyz;
+		float3 color = outColor.xyz + emmision.xyz;
 
 		const float gamma = 1.6;
 
 		//color = color / (color + float3(1, 1, 1));
 		color = pow(abs(color), abs(float3(1 / gamma, 1 / gamma, 1 / gamma)));
 
-        return float4(color, diffuse.a * vAlpha);
+		return float4(color.xyz, min(1, diffuse.a * vAlpha + outColor.w));
     }
 }

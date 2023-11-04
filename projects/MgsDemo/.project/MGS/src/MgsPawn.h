@@ -19,6 +19,7 @@ public:
 	void SetupInput(CInputManager* inputManager) override;
 
 	void Tes();
+	void Tab();
 
 protected:
 	void LookX(float v);

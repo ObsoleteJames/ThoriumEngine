@@ -48,8 +48,6 @@ public:
 
 	/**
 	 * Loads the specified game.
-	 *
-	 * @param bFirst - used to tell if this is the first call during recursion. must always be true when called manually.
 	 */
 	void LoadGame();
 
@@ -74,7 +72,8 @@ public:
 
 	virtual bool LoadProject(const WString& path = L".");
 
-	void LoadAddon(const FAddon& addon);
+	// Load the addon's content and or module.
+	void LoadAddon(FAddon& addon);
 
 	void Exit();
 
@@ -86,6 +85,8 @@ public:
 #endif
 
 	static WString OSGetEnginePath(const FString& version);
+	static WString OSGetDataPath();
+	static WString OSGetDocumentsPath();
 
 public:
 	inline CWindow* GetGameWindow() const { return gameWindow; }
@@ -93,7 +94,7 @@ public:
 	inline TEvent<>& OnHotReloadEvent() { return eventOnHotReload; }
 
 	inline const FProject& GetProjectConfig() const { return projectConfig; }
-	inline const FGame& ActiveGame() const { return activeGame; }
+	inline FGame& ActiveGame() { return activeGame; }
 
 	inline CGameInstance* GameInstance() const { return gameInstance; }
 
@@ -114,15 +115,16 @@ public:
 protected:
 	virtual void OnExit();
 
+	void InitImGui();
+
 	void DoLoadWorld();
 
-	bool LoadProjectConfig(const WString& path);
+	bool LoadProjectConfig(const WString& path, FProject& outProject);
 	bool LoadUserConfig();
 
-	// Finds and loads core addons.
-	void LoadCoreAddons();
+	void FetchAddons(const WString& addonFolder, TArray<FAddon>& out);
 
-	void RegisterAddon(const WString& path);
+	bool LoadAddonConfig(const WString& path, FAddon& out);
 
 public:
 	FUserConfig userConfig;
@@ -147,6 +149,7 @@ protected:
 	TObjectPtr<CGameInstance> gameInstance;
 	TObjectPtr<CInputManager> inputManager;
 
+	bool bProjectLoaded = false;
 	FProject projectConfig;
 	FGame activeGame;
 

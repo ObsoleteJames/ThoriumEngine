@@ -1,8 +1,11 @@
-[Sat May 20 19:50:10 2023][CEngine] Initializing...
-[Sat May 20 19:50:10 2023][CResourceManager] Created resource threads (1)
-[Sat May 20 19:50:10 2023][CResourceManager] Initialized
-[Sat May 20 19:50:10 2023][CFileSystem] Mounting Mod: C:\Users\theon\Documents\VS_Projects\ThoriumEngine\engine\content
-[Sat May 20 19:50:10 2023][CResourceManager] Found 29 assets in 'Engine'
-[Sat May 20 19:50:10 2023][CFileSystem] Mounting Mod: MGS
-[Sat May 20 19:50:10 2023][CResourceManager] Found 20 assets in 'MGS'
-[Sat May 20 19:50:11 2023][CEngine] Loading scene 'ImHalfMeFoxy.thscene'
+[Fri Nov  3 19:05:03 2023][CEngine] Initializing...
+[Fri Nov  3 19:05:03 2023][CResourceManager] Created resource threads (2)
+[Fri Nov  3 19:05:03 2023][CResourceManager] Initialized
+[Fri Nov  3 19:05:03 2023][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
+[Fri Nov  3 19:05:03 2023][CResourceManager] Found 33 assets in 'Engine'
+[Fri Nov  3 19:05:04 2023][CEngine] Loading scene 'empty'
+[Fri Nov  3 19:05:04 2023][CEngine] ERROR: Failed to load addon module, file does not exist
+F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\physx_4.1.dll
+[Fri Nov  3 19:05:04 2023][CFileSystem] Mounting Mod: MGS
+[Fri Nov  3 19:05:04 2023][CResourceManager] Found 20 assets in 'MGS'
+[Fri Nov  3 19:05:04 2023][CEngine] Loading scene 'ImHalfMeFoxy.thscene'
