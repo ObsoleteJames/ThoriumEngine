@@ -20,6 +20,12 @@
 	#else
 		#define ENGINE_API __declspec(dllimport)
 	#endif
+#elif __GNUC__
+	#ifdef ENGINE_DLL
+		#define ENGINE_API __atribute__((visibility("default")))
+	#else
+		#define ENGINE_API
+	#endif
 #else
 	#define ENGINE_API
 #endif

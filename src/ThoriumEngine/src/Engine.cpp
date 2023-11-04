@@ -356,7 +356,13 @@ void CEngine::LoadAddon(FAddon& addon)
 	if (addon.bHasCode)
 	{
 		// We might need to change this for other platforms.
-		WString libPath = addon.path + L"\\" + ToWString(addon.identity) + L".dll";
+#if _DEBUG
+		WString libPath = addon.path + L"\\bin\\x64\\Debug\\" + ToWString(addon.identity) + L".dll";
+#elif _DEVELOPMENT
+		WString libPath = addon.path + L"\\bin\\x64\\Development\\" + ToWString(addon.identity) + L".dll";
+#else
+		WString libPath = addon.path + L"\\bin\\x64\\" + ToWString(addon.identity) + L".dll";
+#endif
 
 		CModule* lib;
 		if (int err = CModuleManager::LoadModule(libPath, &lib); err != 0)
@@ -787,6 +793,17 @@ WString CEngine::OSGetDocumentsPath()
 		return WString();
 
 	return WString(appdata);
+#endif
+}
+
+int CEngine::ExecuteProgram(const WString& cmd)
+{
+#if PLATFORM_WINDOWS
+	PROCESS_INFORMATION ht{};
+	STARTUPINFOW si{};
+	si.cb = sizeof(si);
+	int r = CreateProcessW(NULL, (wchar_t*)cmd.c_str(), nullptr, nullptr, false, 0, nullptr, nullptr, &si, &ht);
+	return r;
 #endif
 }
 

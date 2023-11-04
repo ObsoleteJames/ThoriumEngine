@@ -79,6 +79,13 @@ struct ENGINE_API FVector
 	GENERATED_BODY()
 
 public:
+	static FVector zero;
+	static FVector one;
+	static FVector up;
+	static FVector forward;
+	static FVector right;
+
+public:
 	FVector() = default;
 	FVector(float scalar) : x(scalar), y(scalar), z(scalar) {}
 	FVector(const FVector2& a, float _z = 0.0f) : x(a.x), y(a.y), z(_z) {}
@@ -160,6 +167,8 @@ public:
 	static FQuaternion EulerAngles(const FVector& angle);
 	inline FVector ToEuler() const { return (FVector)glm::eulerAngles((glm::quat)*this); }
 
+	static FQuaternion LookRotation(const FVector& dir, const FVector& up);
+
 	inline FQuaternion Conjugate() const { return glm::conjugate((glm::quat)*this); }
 	inline FQuaternion Invert() const { return glm::inverse((glm::quat)*this); }
 	FQuaternion Normalized() const;
@@ -230,6 +239,7 @@ public:
 	void Decompose(FVector& outPos, FVector& outScale, FQuaternion& outRot, FVector& outSkew, float outPerspective[4]) const;
 
 	static FMatrix Perspective(float fov, float aspectRatio, float nearPlane, float farPlane);
+	static FMatrix Orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane);
 	static FMatrix LookAt(const FVector& pos, const FVector& target, const FVector& up);
 
 	FMatrix& operator *=(const FMatrix& other);

@@ -1,6 +1,6 @@
 
 #include <Util/Core.h>
-#include "F:/MyProjects/VS_Projects/ThoriumEngine/projects/MgsDemo/.project/MGS/intermediate/../../MGS/src/TestEntity.h"
+#include "F:/MyProjects/VS_Projects/ThoriumEngine/projects/MgsDemo/.project/MGS/src/TestEntity.h"
 #include "Object/Class.h"
 #include "Module.h"
 
@@ -9,11 +9,47 @@ CModule& GetModule_MGS();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
-DECLARE_PROPERTY(FTestStruct, "Tes Float", tesFloat, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FTestStruct, tesFloat), sizeof(float), nullptr, nullptr)
+#if IS_DEV
+static TPair<FString, FString> _FTestStruct_tesFloat_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _FTestStruct_tesFloat_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_FTestStruct_tesFloat_Meta_Tags
+};
+
+#define _FTestStruct_tesFloat_Meta_Ptr &_FTestStruct_tesFloat_Meta
+#else
+#define _FTestStruct_tesFloat_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(FTestStruct, "Tes Float", tesFloat, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FTestStruct, tesFloat), sizeof(float), _FTestStruct_tesFloat_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FTestStruct, tesFloat)
 
-DECLARE_PROPERTY(FTestStruct, "Tes Int", tesInt, "", "int", EVT_INT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FTestStruct, tesInt), sizeof(int), nullptr, nullptr)
+#if IS_DEV
+static TPair<FString, FString> _FTestStruct_tesInt_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _FTestStruct_tesInt_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_FTestStruct_tesInt_Meta_Tags
+};
+
+#define _FTestStruct_tesInt_Meta_Ptr &_FTestStruct_tesInt_Meta
+#else
+#define _FTestStruct_tesInt_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(FTestStruct, "Tes Int", tesInt, "", "int", EVT_INT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(FTestStruct, tesInt), sizeof(int), _FTestStruct_tesInt_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FTestStruct, tesInt)
 
@@ -40,11 +76,47 @@ FStruct* FTestStruct::StaticStruct() { return &__FStruct_FTestStruct_Instance; }
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
-DECLARE_PROPERTY(CTestEntity, "Test Int", testInt, "", "int", EVT_INT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CTestEntity, testInt), sizeof(int), nullptr, nullptr)
+#if IS_DEV
+static TPair<FString, FString> _CTestEntity_testInt_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CTestEntity_testInt_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CTestEntity_testInt_Meta_Tags
+};
+
+#define _CTestEntity_testInt_Meta_Ptr &_CTestEntity_testInt_Meta
+#else
+#define _CTestEntity_testInt_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CTestEntity, "Test Int", testInt, "", "int", EVT_INT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CTestEntity, testInt), sizeof(int), _CTestEntity_testInt_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CTestEntity, testInt)
 
-DECLARE_PROPERTY(CTestEntity, "Tes Struct", tesStruct, "", "FTestStruct", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CTestEntity, tesStruct), sizeof(FTestStruct), nullptr, nullptr)
+#if IS_DEV
+static TPair<FString, FString> _CTestEntity_tesStruct_Meta_Tags[]{
+	{ "Editable", "" },
+};
+
+static FPropertyMeta _CTestEntity_tesStruct_Meta {
+	"",
+	"",
+	"",
+	"",
+	1,
+	_CTestEntity_tesStruct_Meta_Tags
+};
+
+#define _CTestEntity_tesStruct_Meta_Ptr &_CTestEntity_tesStruct_Meta
+#else
+#define _CTestEntity_tesStruct_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CTestEntity, "Tes Struct", tesStruct, "", "FTestStruct", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CTestEntity, tesStruct), sizeof(FTestStruct), _CTestEntity_tesStruct_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CTestEntity, tesStruct)
 

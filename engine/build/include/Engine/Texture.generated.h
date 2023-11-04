@@ -2,7 +2,7 @@
 #include "Object/Class.h"
 #include "Object/ObjectMacros.h"
 
-#define Engine_Texture_h_42_GeneratedBody \
+#define Engine_Texture_h_43_GeneratedBody \
 DECLARE_CLASS(CTexture, CAsset, Engine)
 
 

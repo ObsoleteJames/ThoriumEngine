@@ -12,6 +12,12 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
+#ifdef IS_DEV
+static TPair<FString, FString> _FAssetClass_CAsset_Tags[] {
+	{ "Abstract", "" },
+};
+#endif
+
 class FAssetClass_CAsset : public FAssetClass
 {
 public:
@@ -23,6 +29,10 @@ public:
 		numProperties = 0;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
+#ifdef IS_DEV
+		numTags = 1;
+		tags = _FAssetClass_CAsset_Tags;
+#endif
 		BaseClass = CObject::StaticClass();
 		numFunctions = 0;
 		FunctionList = CLASS_NEXT_FUNCTION;

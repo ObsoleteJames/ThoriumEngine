@@ -646,7 +646,7 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 
 void CParser::LoadModuleData(const FString& path)
 {
-	CFStream stream((path + "Intermediate\\module.bin").c_str(), "rb");
+	CFStream stream((path + "/module.bin").c_str(), "rb");
 	if (!stream.IsOpen())
 	{
 		std::cerr << "error: failed to open '" << path.c_str() << "Intermediate\\module.bin'";

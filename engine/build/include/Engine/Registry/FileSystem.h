@@ -26,6 +26,8 @@ public:
 
 	inline const TArray<FFile*>& GetFiles() const { return files; }
 
+	inline FDirectory* Parent() const { return parent; }
+
 private:
 	WString name;
 	FDirectory* parent = nullptr;
@@ -124,6 +126,7 @@ public:
 	static inline const TArray<FMod*>& GetMods() { return Mods; }
 
 	static void SetCurrentPath(const WString& path);
+	static WString GetCurrentPath();
 
 #if IS_DEV
 	static bool ReloadMod(FMod* mod);

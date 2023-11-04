@@ -27,6 +27,7 @@
 #include "Layers/ProjectSettings.h"
 #include "Layers/ObjectDebugger.h"
 #include "Layers/MaterialEditor.h"
+#include "Layers/AddonsWindow.h"
 
 #include <map>
 
@@ -49,6 +50,8 @@ void CEditorEngine::Init()
 	ioWidget = AddLayer<CInputOutputWidget>();
 	projSettingsWidget = AddLayer<CProjectSettingsWidget>();
 	projSettingsWidget->bEnabled = false;
+	addonsWindow = AddLayer<CAddonsWindow>();
+	addonsWindow->bEnabled = false;
 
 	objectDebuggerWidget = AddLayer<CObjectDebugger>();
 	objectDebuggerWidget->bEnabled = false;
@@ -304,9 +307,14 @@ void CEditorEngine::UpdateEditor()
 
 			ImGui::Separator();
 
+			if (ImGui::MenuItem("Generate Build Data"))
+				GenerateBuildData();
+
+			ImGui::Separator();
+
 			ImGui::MenuItem("Project Settings", 0, &projSettingsWidget->bEnabled);
 			ImGui::MenuItem("Editor Settings");
-			ImGui::MenuItem("Addons");
+			ImGui::MenuItem("Addons", 0, &addonsWindow->bEnabled);
 
 			ImGui::EndMenu();
 		}
@@ -635,6 +643,25 @@ void CEditorEngine::SaveEditorConfig()
 		projs->SetValue(p.name, ToFString(p.dir));
 
 	kv.Save();
+}
+
+void CEditorEngine::GenerateBuildData()
+{
+	WString cmd = OSGetEnginePath(ENGINE_VERSION) + L"/bin/BuildTool.exe ";
+	cmd += CFileSystem::GetCurrentPath() + L"/config/project.cfg -build ";
+#if PLATFORM_WINDOWS
+	cmd += L"-x64 ";
+#endif
+
+#if _DEBUG
+	cmd += L"-debug";
+#elif _DEVELOPMENT
+	cmd += L"-development";
+#elif _RELEASE
+	cmd += L"-release";
+#endif
+
+	ExecuteProgram(cmd);
 }
 
 void CEditorEngine::InitEditorData()

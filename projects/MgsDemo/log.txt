@@ -1,11 +1,18 @@
-[Fri Nov  3 19:05:03 2023][CEngine] Initializing...
-[Fri Nov  3 19:05:03 2023][CResourceManager] Created resource threads (2)
-[Fri Nov  3 19:05:03 2023][CResourceManager] Initialized
-[Fri Nov  3 19:05:03 2023][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
-[Fri Nov  3 19:05:03 2023][CResourceManager] Found 33 assets in 'Engine'
-[Fri Nov  3 19:05:04 2023][CEngine] Loading scene 'empty'
-[Fri Nov  3 19:05:04 2023][CEngine] ERROR: Failed to load addon module, file does not exist
-F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\physx_4.1.dll
-[Fri Nov  3 19:05:04 2023][CFileSystem] Mounting Mod: MGS
-[Fri Nov  3 19:05:04 2023][CResourceManager] Found 20 assets in 'MGS'
-[Fri Nov  3 19:05:04 2023][CEngine] Loading scene 'ImHalfMeFoxy.thscene'
+[Sat Nov  4 20:48:15 2023][CEngine] Initializing...
+[Sat Nov  4 20:48:15 2023][CResourceManager] Created resource threads (2)
+[Sat Nov  4 20:48:15 2023][CResourceManager] Initialized
+[Sat Nov  4 20:48:15 2023][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
+[Sat Nov  4 20:48:15 2023][CResourceManager] Found 33 assets in 'Engine'
+[Sat Nov  4 20:48:16 2023][CEngine] Loading scene 'empty'
+[Sat Nov  4 20:48:16 2023][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
+F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\bin\PhysXCommon_64.dll
+[Sat Nov  4 20:48:16 2023][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
+F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\bin\PhysXCooking_64.dll
+[Sat Nov  4 20:48:16 2023][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
+F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\bin\PhysXDevice64.dll
+[Sat Nov  4 20:48:16 2023][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
+F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\bin\PhysXFoundation_64.dll
+[Sat Nov  4 20:48:16 2023][CFileSystem] Mounting Mod: MGS
+[Sat Nov  4 20:48:16 2023][CResourceManager] Found 20 assets in 'MGS'
+[Sat Nov  4 20:48:16 2023][CEngine] Loading scene 'ImHalfMeFoxy.thscene'
+[Sat Nov  4 20:49:25 2023][CEngine] Loading scene 'ImHalfMeFoxy.thscene'

@@ -102,7 +102,8 @@
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>XCOPY $(TargetPath) $(SolutionDir)..\engine\bin\ /y
-XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
+XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y
+XCOPY $(TargetDir)Engine.lib $(SolutionDir)..\engine\build\x64\Engine-$(Configuration)\lib /y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

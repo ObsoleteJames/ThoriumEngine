@@ -186,6 +186,8 @@ public:
 
 	virtual void SetCursorMode(const ECursorMode& cm) {}
 
+	inline bool IsGlfwWindow() const { return bIsGlfwWindow; }
+
 public:
 	TDelegate<EKeyCode, EInputAction, EInputMod> OnKeyEvent;
 	TDelegate<uint> OnCharEvent;
@@ -196,6 +198,7 @@ public:
 	TDelegate<int, int> OnWindowResize;
 
 protected:
+	bool bIsGlfwWindow = false;
 	double mouseX, mouseY;
 	int width, height;
 
@@ -213,6 +216,7 @@ public:
 	};
 
 	friend class CEngine;
+	friend class CEditorEngine;
 
 public:
 	CWindow(int w, int h, int x, int y, const FString& title, EWindowMode mode = WM_WINDOWED);
@@ -234,6 +238,7 @@ public:
 	void SetWindowTitle(const FString& title);
 	bool WantsToClose() const;
 
+	inline void SetSwapChain(ISwapChain* sc) { swapChain = sc; }
 	inline ISwapChain* GetSwapChain() const { return swapChain; }
 
 	inline const FString& GetWindowTitle() const { return windowTitle; }
@@ -242,6 +247,8 @@ public:
 	inline bool IsMinimized() const { return bIsMinimized; }
 	inline bool IsFocused() const { return bFocused; }
 	inline bool IsFullscreen() const { return _WindowMode == WM_FULLSCREEN; }
+
+	inline GLFWwindow* GlfwWindow() const { return nativeHandle; }
 
 	void Present(int vSync, int flags);
 
@@ -256,8 +263,8 @@ protected:
 	void UpdateWindowRect();
 
 protected:
-	bool bIsMaximized;
-	bool bIsMinimized;
+	bool bIsMaximized = false;
+	bool bIsMinimized = false;
 	bool bFocused;
 
 	struct {

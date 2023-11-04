@@ -73,6 +73,8 @@ public:
 	template<class T>
 	inline static void LoadResources() { LoadResources((FAssetClass*)T::StaticClass()); }
 
+	inline static FAssetClass* GetResourceTypeByFile(FFile* file) { auto it = availableResources.find(file->Path()); if (it != availableResources.end()) return it->second.type; return nullptr; }
+
 	/**
 	 *	Loads all resources of the specified type.
 	 */

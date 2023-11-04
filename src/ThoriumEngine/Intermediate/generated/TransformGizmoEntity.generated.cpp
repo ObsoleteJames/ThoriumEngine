@@ -29,6 +29,12 @@ FEnum_EGizmoType __FEnum_EGizmoType_Instance;
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
+#ifdef IS_DEV
+static TPair<FString, FString> _FClass_CTransformGizmoEntity_Tags[] {
+	{ "Hidden", "" },
+};
+#endif
+
 class FClass_CTransformGizmoEntity : public FClass
 {
 public:
@@ -40,6 +46,10 @@ public:
 		numProperties = 0;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
+#ifdef IS_DEV
+		numTags = 1;
+		tags = _FClass_CTransformGizmoEntity_Tags;
+#endif
 		BaseClass = CEntity::StaticClass();
 		numFunctions = 0;
 		FunctionList = CLASS_NEXT_FUNCTION;

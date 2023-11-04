@@ -6,6 +6,7 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThoriumEngine", "ThoriumEngine\ThoriumEngine.vcxproj", "{44EE8B65-1575-4728-8E3C-62A1E839C290}"
 	ProjectSection(ProjectDependencies) = postProject
 		{278A4A3A-6443-446F-9921-C3FC7ACD0276} = {278A4A3A-6443-446F-9921-C3FC7ACD0276}
+		{DE25DB5F-AF32-44B7-B9B9-07BBA4A1D30D} = {DE25DB5F-AF32-44B7-B9B9-07BBA4A1D30D}
 		{01356978-6AAD-47C1-951C-3E30C26FBE22} = {01356978-6AAD-47C1-951C-3E30C26FBE22}
 	EndProjectSection
 EndProject
@@ -47,7 +48,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Thorium Editor", "Thorium E
 		{01356978-6AAD-47C1-951C-3E30C26FBE22} = {01356978-6AAD-47C1-951C-3E30C26FBE22}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Thorium Sdk", "Thorium Sdk\Thorium Sdk.vcxproj", "{D85C06B2-E441-4370-8DFE-E56C218C74F5}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Thorium Sdk (deprecated)", "Thorium Sdk\Thorium Sdk.vcxproj", "{D85C06B2-E441-4370-8DFE-E56C218C74F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

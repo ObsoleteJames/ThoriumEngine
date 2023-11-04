@@ -81,6 +81,7 @@ public:
 	void LoadShaderObjects();
 
 	static CShaderSource* GetShader(const FString& name);
+	static const TArray<TObjectPtr<CShaderSource>>& GetAllShaders();
 
 private:
 	void LoadVersion05(IBaseFStream* stream);

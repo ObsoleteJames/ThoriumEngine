@@ -9,6 +9,7 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
+#if IS_DEV
 static TPair<FString, FString> _CScene_gamemodeClass_Meta_Tags[]{
 	{ "Editable", "" },
 	{ "Category", "Gamemode" },
@@ -23,10 +24,15 @@ static FPropertyMeta _CScene_gamemodeClass_Meta {
 	_CScene_gamemodeClass_Meta_Tags
 };
 
-DECLARE_PROPERTY(CScene, "Gamemode Class", gamemodeClass, "", "CGameMode", EVT_CLASS_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CScene, gamemodeClass), sizeof(TClassPtr<CGameMode>), &_CScene_gamemodeClass_Meta, nullptr)
+#define _CScene_gamemodeClass_Meta_Ptr &_CScene_gamemodeClass_Meta
+#else
+#define _CScene_gamemodeClass_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CScene, "Gamemode Class", gamemodeClass, "", "CGameMode", EVT_CLASS_PTR, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CScene, gamemodeClass), sizeof(TClassPtr<CGameMode>), _CScene_gamemodeClass_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CScene, gamemodeClass)
 
+#if IS_DEV
 static TPair<FString, FString> _CScene_gravity_Meta_Tags[]{
 	{ "Editable", "" },
 	{ "Category", "Physics" },
@@ -41,12 +47,22 @@ static FPropertyMeta _CScene_gravity_Meta {
 	_CScene_gravity_Meta_Tags
 };
 
-DECLARE_PROPERTY(CScene, "Gravity", gravity, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CScene, gravity), sizeof(float), &_CScene_gravity_Meta, nullptr)
+#define _CScene_gravity_Meta_Ptr &_CScene_gravity_Meta
+#else
+#define _CScene_gravity_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CScene, "Gravity", gravity, "", "float", EVT_FLOAT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CScene, gravity), sizeof(float), _CScene_gravity_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CScene, gravity)
 
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
+
+#ifdef IS_DEV
+static TPair<FString, FString> _FAssetClass_CScene_Tags[] {
+	{ "Extension", ".thscene" },
+};
+#endif
 
 class FAssetClass_CScene : public FAssetClass
 {
@@ -59,6 +75,10 @@ public:
 		numProperties = 2;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
+#ifdef IS_DEV
+		numTags = 1;
+		tags = _FAssetClass_CScene_Tags;
+#endif
 		extension = ".thscene";
 		BaseClass = CAsset::StaticClass();
 		numFunctions = 0;

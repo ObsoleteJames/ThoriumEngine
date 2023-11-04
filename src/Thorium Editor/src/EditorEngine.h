@@ -19,6 +19,7 @@ class CConsoleWidget;
 class CInputOutputWidget;
 class CProjectSettingsWidget;
 class CAssetBrowserWidget;
+class CAddonsWindow;
 
 class CObjectDebugger;
 
@@ -36,6 +37,8 @@ public:
 public:
 	void LoadEditorConfig();
 	void SaveEditorConfig();
+
+	void GenerateBuildData();
 
 	void RegisterProject(const FProject& proj);
 
@@ -114,6 +117,7 @@ private:
 	CInputOutputWidget* ioWidget;
 	CProjectSettingsWidget* projSettingsWidget;
 	CAssetBrowserWidget* assetBrowser;
+	CAddonsWindow* addonsWindow;
 
 	CObjectDebugger* objectDebuggerWidget;
 

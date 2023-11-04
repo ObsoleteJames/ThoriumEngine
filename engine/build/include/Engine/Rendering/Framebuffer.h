@@ -16,17 +16,34 @@ protected:
 	int width, height;
 };
 
+enum EDepthBufferFormat
+{
+	TH_DBF_R16,
+	TH_DBF_R32,
+	TH_DBF_D24_S8
+};
+
+struct ENGINE_API FDepthBufferInfo
+{
+	int width;
+	int height;
+	EDepthBufferFormat format;
+	int arraySize;
+	bool bShaderResource;
+};
+
 class ENGINE_API IDepthBuffer
 {
 public:
 	virtual ~IDepthBuffer() = default;
 
+	virtual void Resize(int width, int height) = 0;
 	virtual void Clear(float a = 1.f) = 0;
 
-	inline void GetSize(int& w, int& h) const { w = width; h = height; }
+	inline void GetSize(int& w, int& h) const { w = info.width; h = info.height; }
 
 protected:
-	int width, height;
+	FDepthBufferInfo info;
 };
 
 class ENGINE_API ISwapChain

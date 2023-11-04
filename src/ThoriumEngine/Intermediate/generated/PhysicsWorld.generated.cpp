@@ -37,6 +37,12 @@ FEnum_EPhysicsLayer __FEnum_EPhysicsLayer_Instance;
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
+#ifdef IS_DEV
+static TPair<FString, FString> _FClass_IPhysicsWorld_Tags[] {
+	{ "Abstract", "" },
+};
+#endif
+
 class FClass_IPhysicsWorld : public FClass
 {
 public:
@@ -48,6 +54,10 @@ public:
 		numProperties = 0;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
+#ifdef IS_DEV
+		numTags = 1;
+		tags = _FClass_IPhysicsWorld_Tags;
+#endif
 		BaseClass = CObject::StaticClass();
 		numFunctions = 0;
 		FunctionList = CLASS_NEXT_FUNCTION;

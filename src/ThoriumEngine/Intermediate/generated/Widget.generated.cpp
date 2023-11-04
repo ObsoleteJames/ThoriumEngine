@@ -9,6 +9,7 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
+#if IS_DEV
 static TPair<FString, FString> _CWidget_zOrder_Meta_Tags[]{
 	{ "Editable", "" },
 };
@@ -22,10 +23,15 @@ static FPropertyMeta _CWidget_zOrder_Meta {
 	_CWidget_zOrder_Meta_Tags
 };
 
-DECLARE_PROPERTY(CWidget, "ZOrder", zOrder, "", "int", EVT_INT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CWidget, zOrder), sizeof(int), &_CWidget_zOrder_Meta, nullptr)
+#define _CWidget_zOrder_Meta_Ptr &_CWidget_zOrder_Meta
+#else
+#define _CWidget_zOrder_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CWidget, "ZOrder", zOrder, "", "int", EVT_INT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CWidget, zOrder), sizeof(int), _CWidget_zOrder_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CWidget, zOrder)
 
+#if IS_DEV
 static TPair<FString, FString> _CWidget_position_Meta_Tags[]{
 	{ "Editable", "" },
 };
@@ -39,10 +45,15 @@ static FPropertyMeta _CWidget_position_Meta {
 	_CWidget_position_Meta_Tags
 };
 
-DECLARE_PROPERTY(CWidget, "Position", position, "", "FVector2", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CWidget, position), sizeof(FVector2), &_CWidget_position_Meta, nullptr)
+#define _CWidget_position_Meta_Ptr &_CWidget_position_Meta
+#else
+#define _CWidget_position_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CWidget, "Position", position, "", "FVector2", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CWidget, position), sizeof(FVector2), _CWidget_position_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CWidget, position)
 
+#if IS_DEV
 static TPair<FString, FString> _CWidget_scale_Meta_Tags[]{
 	{ "Editable", "" },
 };
@@ -56,10 +67,15 @@ static FPropertyMeta _CWidget_scale_Meta {
 	_CWidget_scale_Meta_Tags
 };
 
-DECLARE_PROPERTY(CWidget, "Scale", scale, "", "FVector2", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CWidget, scale), sizeof(FVector2), &_CWidget_scale_Meta, nullptr)
+#define _CWidget_scale_Meta_Ptr &_CWidget_scale_Meta
+#else
+#define _CWidget_scale_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CWidget, "Scale", scale, "", "FVector2", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CWidget, scale), sizeof(FVector2), _CWidget_scale_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CWidget, scale)
 
+#if IS_DEV
 static TPair<FString, FString> _CWidget_anchorMin_Meta_Tags[]{
 	{ "Editable", "" },
 };
@@ -73,10 +89,15 @@ static FPropertyMeta _CWidget_anchorMin_Meta {
 	_CWidget_anchorMin_Meta_Tags
 };
 
-DECLARE_PROPERTY(CWidget, "Anchor Min", anchorMin, "", "FVector2", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CWidget, anchorMin), sizeof(FVector2), &_CWidget_anchorMin_Meta, nullptr)
+#define _CWidget_anchorMin_Meta_Ptr &_CWidget_anchorMin_Meta
+#else
+#define _CWidget_anchorMin_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CWidget, "Anchor Min", anchorMin, "", "FVector2", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CWidget, anchorMin), sizeof(FVector2), _CWidget_anchorMin_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CWidget, anchorMin)
 
+#if IS_DEV
 static TPair<FString, FString> _CWidget_anchorMax_Meta_Tags[]{
 	{ "Editable", "" },
 };
@@ -90,10 +111,15 @@ static FPropertyMeta _CWidget_anchorMax_Meta {
 	_CWidget_anchorMax_Meta_Tags
 };
 
-DECLARE_PROPERTY(CWidget, "Anchor Max", anchorMax, "", "FVector2", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CWidget, anchorMax), sizeof(FVector2), &_CWidget_anchorMax_Meta, nullptr)
+#define _CWidget_anchorMax_Meta_Ptr &_CWidget_anchorMax_Meta
+#else
+#define _CWidget_anchorMax_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CWidget, "Anchor Max", anchorMax, "", "FVector2", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CWidget, anchorMax), sizeof(FVector2), _CWidget_anchorMax_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CWidget, anchorMax)
 
+#if IS_DEV
 static TPair<FString, FString> _CWidget_pivot_Meta_Tags[]{
 	{ "Editable", "" },
 };
@@ -107,7 +133,11 @@ static FPropertyMeta _CWidget_pivot_Meta {
 	_CWidget_pivot_Meta_Tags
 };
 
-DECLARE_PROPERTY(CWidget, "Pivot", pivot, "", "FVector2", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CWidget, pivot), sizeof(FVector2), &_CWidget_pivot_Meta, nullptr)
+#define _CWidget_pivot_Meta_Ptr &_CWidget_pivot_Meta
+#else
+#define _CWidget_pivot_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CWidget, "Pivot", pivot, "", "FVector2", EVT_STRUCT, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CWidget, pivot), sizeof(FVector2), _CWidget_pivot_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CWidget, pivot)
 

@@ -455,6 +455,16 @@ void CFileSystem::SetCurrentPath(const WString& path)
 #endif
 }
 
+WString CFileSystem::GetCurrentPath()
+{
+#if _WIN32
+	wchar_t buff[128];
+	GetCurrentDirectoryW(128, buff);
+
+	return WString(buff);
+#endif
+}
+
 FFile::~FFile()
 {
 	CResourceManager::OnResourceFileDeleted(this);

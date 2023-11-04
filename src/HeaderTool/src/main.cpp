@@ -3,6 +3,7 @@
 #include <string>
 #include <Util/KeyValue.h>
 #include "CppParser.h"
+#include "EngineCore.h"
 
 #include <windows.h>
 #include <filesystem>
@@ -44,6 +45,8 @@ int main()
 	targetPath = Args[0];
 	if (targetPath[0] == ' ')
 		targetPath.Erase(targetPath.begin());
+	if (targetPath[targetPath.Size() - 1] == '\\' || targetPath[targetPath.Size() - 1] == '/')
+		targetPath.Erase(targetPath.last());
 
 	std::cout << "Path: " << targetPath.c_str() << std::endl;
 
@@ -78,49 +81,113 @@ int main()
 		}
 	}
 
-	if (ProjectType != ENGINE_DLL)
+	FString enginePath;
+
+	if (ProjectType == GAME_PROJECT)
 	{
-		FKeyValue kv(ToWString(targetPath));
-		if (!kv.IsOpen())
+		FKeyValue projCfg(ToWString(targetPath + "/../../config/project.cfg"));
+		if (!projCfg.IsOpen())
 		{
 			std::cerr << "error: failed to open project file!";
 			return 1;
 		}
 
-		KVCategory* projects = nullptr;
-		if (ProjectType == GAME_PROJECT)
-			projects = kv.GetCategory("games");
-		else if (ProjectType == DLC_PROJECT)
-			projects = kv.GetCategory("dlc");
+#if _WIN32
+		WString keyPath = ToWString("SOFTWARE\\ThoriumEngine\\" + *projCfg.GetValue("engine_version"));
 
-		if (!projects)
+		HKEY hKey;
+		LONG lRes = RegOpenKeyExW(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
+		if (lRes == ERROR_FILE_NOT_FOUND)
+			return 1;
+
+		WCHAR strBuff[MAX_PATH];
+		DWORD buffSize = sizeof(strBuff);
+		lRes = RegQueryValueExW(hKey, L"path", 0, NULL, (LPBYTE)strBuff, &buffSize);
+		if (lRes != ERROR_SUCCESS)
+			return 1;
+
+		enginePath = ToFString(strBuff);
+#endif
+
+		CParser::LoadModuleData(enginePath + "/build/include/engine");
+
+		projectName = *projCfg.GetValue("game");
+
+		/*auto* addons = projCfg.GetArray("addons");
+		if (addons)
 		{
-			std::cerr << "error: thproj file invalid";
+			for (auto a : *addons)
+			{
+				bool bCore;
+
+
+			}
+		}*/
+
+		//KVCategory* projects = nullptr;
+		//if (ProjectType == GAME_PROJECT)
+		//	projects = kv.GetCategory("games");
+		//else if (ProjectType == DLC_PROJECT)
+		//	projects = kv.GetCategory("dlc");
+
+		//if (!projects)
+		//{
+		//	std::cerr << "error: thproj file invalid";
+		//	return 1;
+		//}
+
+		//KVCategory* target = projects->GetCategory(projectName);
+		//if (!target)
+		//{
+		//	std::cerr << "error: failed to find target in project file!";
+		//	return 1;
+		//}
+
+		//KVCategory* dependencies = target->GetCategory("dependencies");
+		//for (auto dep : dependencies->GetCategories())
+		//{
+		//	KVValue* srcPath = dep->GetValue("src");
+		//	CParser::LoadModuleData(srcPath->Value);
+		//}
+
+		//targetPath.Erase(targetPath.begin() + targetPath.FindLastOf("/\\"), targetPath.end());
+		//targetPath += "\\";
+		//targetPath += projectName + "\\";
+	}
+	else if (ProjectType == LIBRARY_PROJECT)
+	{
+#if _WIN32
+		WString keyPath = ToWString(FString("SOFTWARE\\ThoriumEngine\\") + ENGINE_VERSION);
+
+		HKEY hKey;
+		LONG lRes = RegOpenKeyExW(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
+		if (lRes == ERROR_FILE_NOT_FOUND)
+			return 1;
+
+		WCHAR strBuff[MAX_PATH];
+		DWORD buffSize = sizeof(strBuff);
+		lRes = RegQueryValueExW(hKey, L"path", 0, NULL, (LPBYTE)strBuff, &buffSize);
+		if (lRes != ERROR_SUCCESS)
+			return 1;
+
+		enginePath = ToFString(strBuff);
+#endif
+
+		FKeyValue kv(ToWString(targetPath + "/addon.cfg"));
+		if (!kv.IsOpen())
+		{
+			std::cerr << "error: failed to open addon config!";
 			return 1;
 		}
 
-		KVCategory* target = projects->GetCategory(projectName);
-		if (!target)
-		{
-			std::cerr << "error: failed to find target in project file!";
-			return 1;
-		}
+		projectName = *kv.GetValue("identity");
 
-		KVCategory* dependencies = target->GetCategory("dependencies");
-		for (auto dep : dependencies->GetCategories())
-		{
-			KVValue* srcPath = dep->GetValue("src");
-			CParser::LoadModuleData(srcPath->Value);
-		}
-
-		targetPath.Erase(targetPath.begin() + targetPath.FindLastOf("/\\"), targetPath.end());
-		targetPath += "\\";
-		targetPath += projectName + "\\";
+		CParser::LoadModuleData(enginePath + "/build/include/engine");
 	}
 	else
 		projectName = "Engine";
 	
-	GeneratedOutput = targetPath + "Intermediate\\generated";
+	GeneratedOutput = targetPath + "\\Intermediate\\generated";
 
 	std::cout << "Running HeaderTool for project: " << projectName.c_str() << std::endl;
 
@@ -128,7 +195,7 @@ int main()
 
 	try
 	{
-		FString path = targetPath + "src\\";
+		FString path = targetPath + "\\src\\";
 		for (auto entry : std::filesystem::recursive_directory_iterator(path.c_str()))
 		{
 			if (!entry.is_regular_file())

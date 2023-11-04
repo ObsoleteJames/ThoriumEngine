@@ -131,11 +131,15 @@ public:
 protected:
 	void OnDelete() override;
 
+	void RemoveEntity(CEntity* ent);
+
 public: // Events
 	TDelegate<CEntity*> OnEntityCreated;
 	TDelegate<CEntity*> OnEntityDeleted;
 
 protected:
+	InitializeInfo initInfo;
+
 	CWorld* parent;
 	TArray<CWorld*> subWorlds;
 	TArray<TObjectPtr<CEntity>> entities;
@@ -183,5 +187,5 @@ TArray<TObjectPtr<T>> CWorld::FindEntitiesOfType()
 class ENGINE_API FWorldRegisterer
 {
 public:
-	static void UnregisterEntity(CWorld* world, CEntity* ent) { auto it = world->entities.Find(ent); if (it != world->entities.end()) { world->OnEntityDeleted.Invoke(ent); world->entities.Erase(it); } }
+	static void UnregisterEntity(CWorld* world, CEntity* ent);
 };

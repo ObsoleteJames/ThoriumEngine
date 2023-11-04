@@ -245,6 +245,7 @@
     <ClInclude Include="src\EditorWidgets.h" />
     <ClInclude Include="src\FileDialogs.h" />
     <ClInclude Include="src\Layer.h" />
+    <ClInclude Include="src\Layers\AddonsWindow.h" />
     <ClInclude Include="src\Layers\ConsoleWidget.h" />
     <ClInclude Include="src\Layers\InputOutputWidget.h" />
     <ClInclude Include="src\Layers\MaterialEditor.h" />
@@ -258,6 +259,7 @@
     <ClCompile Include="src\EditorEngine.cpp" />
     <ClCompile Include="src\EditorWidgets.cpp" />
     <ClCompile Include="src\FileDialogs.cpp" />
+    <ClCompile Include="src\Layers\AddonsWindow.cpp" />
     <ClCompile Include="src\Layers\ConsoleWidget.cpp" />
     <ClCompile Include="src\Layers\InputOutputWidget.cpp" />
     <ClCompile Include="src\Layers\MaterialEditor.cpp" />

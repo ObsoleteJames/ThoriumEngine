@@ -1,0 +1,1 @@
+F:\MyProjects\VS_Projects\ThoriumEngine\engine\bin\buildtool.exe "F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\Build.cfg" -x64 -debug

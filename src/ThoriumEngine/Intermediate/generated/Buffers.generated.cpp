@@ -12,6 +12,12 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
+#ifdef IS_DEV
+static TPair<FString, FString> _FClass_IVertexBuffer_Tags[] {
+	{ "Abstract", "" },
+};
+#endif
+
 class FClass_IVertexBuffer : public FClass
 {
 public:
@@ -23,6 +29,10 @@ public:
 		numProperties = 0;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
+#ifdef IS_DEV
+		numTags = 1;
+		tags = _FClass_IVertexBuffer_Tags;
+#endif
 		BaseClass = CObject::StaticClass();
 		numFunctions = 0;
 		FunctionList = CLASS_NEXT_FUNCTION;
@@ -43,6 +53,12 @@ FClass* IVertexBuffer::StaticClass() { return &__FClass_IVertexBuffer_Instance; 
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
+#ifdef IS_DEV
+static TPair<FString, FString> _FClass_IIndexBuffer_Tags[] {
+	{ "Abstract", "" },
+};
+#endif
+
 class FClass_IIndexBuffer : public FClass
 {
 public:
@@ -54,6 +70,10 @@ public:
 		numProperties = 0;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
+#ifdef IS_DEV
+		numTags = 1;
+		tags = _FClass_IIndexBuffer_Tags;
+#endif
 		BaseClass = CObject::StaticClass();
 		numFunctions = 0;
 		FunctionList = CLASS_NEXT_FUNCTION;
@@ -74,6 +94,12 @@ FClass* IIndexBuffer::StaticClass() { return &__FClass_IIndexBuffer_Instance; }
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
+#ifdef IS_DEV
+static TPair<FString, FString> _FClass_IShaderBuffer_Tags[] {
+	{ "Abstract", "" },
+};
+#endif
+
 class FClass_IShaderBuffer : public FClass
 {
 public:
@@ -85,6 +111,10 @@ public:
 		numProperties = 0;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
+#ifdef IS_DEV
+		numTags = 1;
+		tags = _FClass_IShaderBuffer_Tags;
+#endif
 		BaseClass = CObject::StaticClass();
 		numFunctions = 0;
 		FunctionList = CLASS_NEXT_FUNCTION;

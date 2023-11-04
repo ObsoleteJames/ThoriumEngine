@@ -1,6 +1,6 @@
 
 #include <Util/Core.h>
-#include "F:/MyProjects/VS_Projects/ThoriumEngine/projects/MgsDemo/.project/MGS/intermediate/../../MGS/src/MgsGameMode.h"
+#include "F:/MyProjects/VS_Projects/ThoriumEngine/projects/MgsDemo/.project/MGS/src/MgsGameMode.h"
 #include "Object/Class.h"
 #include "Module.h"
 

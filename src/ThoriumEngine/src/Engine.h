@@ -88,6 +88,8 @@ public:
 	static WString OSGetDataPath();
 	static WString OSGetDocumentsPath();
 
+	static int ExecuteProgram(const WString& cmd);
+
 public:
 	inline CWindow* GetGameWindow() const { return gameWindow; }
 

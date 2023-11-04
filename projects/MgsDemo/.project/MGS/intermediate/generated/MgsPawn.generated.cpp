@@ -1,6 +1,6 @@
 
 #include <Util/Core.h>
-#include "F:/MyProjects/VS_Projects/ThoriumEngine/projects/MgsDemo/.project/MGS/intermediate/../../MGS/src/MgsPawn.h"
+#include "F:/MyProjects/VS_Projects/ThoriumEngine/projects/MgsDemo/.project/MGS/src/MgsPawn.h"
 #include "Object/Class.h"
 #include "Module.h"
 

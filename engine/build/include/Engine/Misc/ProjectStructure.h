@@ -4,6 +4,7 @@
 #include "Object/Class.h"
 
 class CGameInstance;
+class FLibrary;
 struct FMod;
 
 struct ENGINE_API FDependency
@@ -18,6 +19,7 @@ struct ENGINE_API FDependency
 
 	EType type;
 	FString name;
+	void* instance = nullptr; // currently only used for type ::LIBRARY
 };
 
 struct ENGINE_API FAddon
@@ -25,7 +27,8 @@ struct ENGINE_API FAddon
 	enum EType
 	{
 		CORE_ADDON,
-		GAME_ADDON
+		GAME_ADDON,
+		INVALID_ADDON
 	};
 
 	FString identity;
@@ -38,10 +41,13 @@ struct ENGINE_API FAddon
 
 	EType type;
 
+	bool bHasCode;
 	bool bHasContent;
 	bool bShipSource;
 	bool bInProjectFolder;
 
+	CModule* module = nullptr;
+	FMod* mod;
 	TArray<FDependency> dependencies;
 };
 
@@ -55,20 +61,19 @@ struct ENGINE_API FGame
 
 	FString startupScene;
 	TClassPtr<CGameInstance> gameInstanceClass;
-
-	TArray<FAddon> addons;
 };
 
 struct ENGINE_API FProject
 {
 public:
 	FString name;
-	FString dispalyName;
+	FString displayName;
 	WString dir;
 	FString author;
 	FString game;
 
 	TArray<FString> addons;	/* A list of Addons used in this project. */
+	TArray<FAddon> projectAddons;
 
 public:
 	bool bIncludesSdk;		// does this project include an sdk.

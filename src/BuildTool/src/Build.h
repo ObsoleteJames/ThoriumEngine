@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Util/Core.h>
+#include <Util/KeyValue.h>
 
 enum ECompiler
 {
@@ -25,9 +26,25 @@ enum EConfig
 	CONFIG_RELEASE
 };
 
+enum ETarget
+{
+	TARGET_NONE,
+	TARGET_ENGINE,
+	TARGET_PROJECT,
+	TARGET_ADDON,
+	TARGET_BUILD_CFG
+};
+
+enum EBuildType
+{
+	BUILD_ENGINE,
+	BUILD_GAME,
+	BUILD_LIBRARY
+};
+
 struct FCompileConfig
 {
-	FString path;
+	FString path; // build.cfg path
 	EPlatform platform;
 	EConfig config;
 	ECompiler compiler;
@@ -37,6 +54,7 @@ struct FCompileConfig
 
 int CompileSource(const FCompileConfig& config);
 
-void CopyHeaders(const FString& source, const FString& out);
-void CopyBinaries(const FString& source, const FString& out);
+void CopyHeaders(FKeyValue& buildCfg, const FString& source, const FString& out);
+void CopyBinaries(const FCompileConfig& config, const FString& out);
 
+bool GenerateBuildFromProject(const FString& projectCfg);

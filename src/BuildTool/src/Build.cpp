@@ -5,6 +5,8 @@
 #include <filesystem>
 #include "Build.h"
 #include <Util/KeyValue.h>
+#include <chrono>
+#include <thread>
 
 #if _WIN32
 #include <Windows.h>
@@ -25,6 +27,69 @@ const char* ConfigStrings[] = {
 int CompileMSVC(FKeyValue& buildCfg, EPlatform platform, EConfig config, const FString& msvcPath);
 int CompileClang(const FString& path, EPlatform platform, EConfig config);
 int CompilerGcc(const FString& path, EPlatform platform, EConfig config);
+
+class FStringExpression
+{
+public:
+	void SetExpressionValue(const FString& key, const FString& value);
+	FString GetExpression(const FString& key);
+
+	FString ParseString(const FString& in);
+
+private:
+	TArray<TPair<FString, FString>> expressions;
+};
+
+void FStringExpression::SetExpressionValue(const FString& key, const FString& value)
+{
+	expressions.Add({ key.ToLowerCase(), value });
+}
+
+FString FStringExpression::GetExpression(const FString& _k)
+{
+	FString key = _k.ToLowerCase();
+	for (auto& k : expressions)
+		if (k.Key == key)
+			return k.Value;
+	return FString();
+}
+
+FString FStringExpression::ParseString(const FString& in)
+{
+	FString curExpression;
+	int mode = 0;
+
+	FString out;
+
+	for (int i = 0; i < in.Size(); i++)
+	{
+		if (mode == 0)
+		{
+			if (in[i] == '$' && in[i + 1] == '{')
+			{
+				curExpression.Clear();
+				mode = 1;
+				i++;
+				continue;
+			}
+
+			out += in[i];
+		}
+		else if (mode == 1)
+		{
+			if (in[i] == '}')
+			{
+				out += GetExpression(curExpression);
+				mode = 0;
+				continue;
+			}
+
+			curExpression += in[i];
+		}
+	}
+
+	return out;
+}
 
 bool IsFileExcluded(FKeyValue& buildCfg, const FString& file)
 {
@@ -49,13 +114,16 @@ bool IsFileExcluded(FKeyValue& buildCfg, const FString& file)
 	return false;
 }
 
-void GetCppFilesInDir(FKeyValue& buildCfg, const FString& path, TArray<FString>& out)
+void GetCppFilesInDir(FKeyValue& buildCfg, const FString& source, TArray<FString>& out)
 {
-	for (std::filesystem::directory_entry entry : std::filesystem::directory_iterator(path.c_str()))
+	if (!std::filesystem::exists(source.c_str()))
+		return;
+
+	for (std::filesystem::directory_entry entry : std::filesystem::recursive_directory_iterator(source.c_str()))
 	{
 		if (entry.is_directory())
 		{
-			GetCppFilesInDir(buildCfg, entry.path().generic_string().c_str(), out);
+			//GetCppFilesInDir(buildCfg, entry.path().generic_string().c_str(), out);
 			continue;
 		}
 
@@ -63,112 +131,131 @@ void GetCppFilesInDir(FKeyValue& buildCfg, const FString& path, TArray<FString>&
 			continue;
 
 		FString path = entry.path().generic_string();
-		if (path.Find("src") == 0)
-			path.Erase(path.begin(), path.begin() + 4);
+		//if (auto i = path.Find("src"); i != -1)
+		//	path.Erase(path.begin(), path.begin() + i + 4);
+
+		path.Erase(path.begin(), path.begin() + source.Size());
 
 		if (IsFileExcluded(buildCfg, path))
 			continue;
 
-		out.Add(path);
+		out.Add(entry.path().generic_string());
 	}
 }
 
 int CompileSource(const FCompileConfig& config)
 {
+	std::cout << "Generating build file for '" << config.path.c_str() << "'\n";
+
 	FString compilerPath;
 	FString enginePath;
 
+	FString targetPath = config.path;
+	if (auto i = targetPath.FindLastOf("\\/"); i != -1)
+		targetPath.Erase(targetPath.begin() + i, targetPath.end());
+	targetPath.ReplaceAll('\\', '/');
+
+	FStringExpression strExp;
+	strExp.SetExpressionValue("PLATFORM", PlatformStrings[config.platform]);
+	strExp.SetExpressionValue("CONFIG", ConfigStrings[config.config]);
+	strExp.SetExpressionValue("PATH", targetPath);
+
 #if _WIN32
-	SetCurrentDirectoryA(config.path.c_str());
+	SetCurrentDirectoryA(targetPath.c_str());
+
+	WString keyPath = ToWString("SOFTWARE\\ThoriumEngine\\" + config.engineVersion);
+
+	HKEY hKey;
+	LONG lRes = RegOpenKeyExW(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
+	if (lRes == ERROR_FILE_NOT_FOUND)
+		return 1;
+
+	WCHAR strBuff[MAX_PATH];
+	DWORD buffSize = sizeof(strBuff);
+	lRes = RegQueryValueExW(hKey, L"path", 0, NULL, (LPBYTE)strBuff, &buffSize);
+	if (lRes != ERROR_SUCCESS)
+		return 1;
+
+	enginePath = ToFString(strBuff);
 #endif
+	enginePath.ReplaceAll('\\', '/');
+
+	strExp.SetExpressionValue("ENGINE_PATH", enginePath);
+	strExp.SetExpressionValue("ENGINE_LIB", enginePath + "/build/" + PlatformStrings[config.platform] + "/Engine-" + ConfigStrings[config.config] + "/lib/Engine.lib");
+	strExp.SetExpressionValue("UTIL_LIB", enginePath + "/build/" + PlatformStrings[config.platform] + "/Util-" + ConfigStrings[config.config] + "/lib/Util.lib");
 
 	// Get the compiler path
-	if (config.compiler < COMPILER_CLANG)
-	{
-#if _WIN32
-		WString keyPath = ToWString("SOFTWARE\\ThoriumEngine\\" + config.engineVersion);
-
-		HKEY hKey;
-		LONG lRes = RegOpenKeyExW(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
-		if (lRes == ERROR_FILE_NOT_FOUND)
-			return 1;
-
-		WCHAR strBuff[MAX_PATH];
-		DWORD buffSize = sizeof(strBuff);
-		lRes = RegQueryValueExW(hKey, L"path", 0, NULL, (LPBYTE)strBuff, &buffSize);
-		if (lRes != ERROR_SUCCESS)
-			return 1;
-
-		enginePath = ToFString(strBuff);
-
-		HANDLE pRead;
-		HANDLE pWrite;
-		if (!CreatePipe(&pRead, &pWrite, nullptr, 0))
-		{
-			std::cerr << "error: failed to locate visual studio installation.\n";
-			return 1;
-		}
-
-		PROCESS_INFORMATION vswhereInfo{};
-		STARTUPINFO info{};
-		info.cb = sizeof(info);
-		info.hStdOutput = pWrite;
-
-		WString compilerVersion;
-		if (config.compiler == COMPILER_MSVC15)
-			compilerVersion = L"15";
-		else if (config.compiler == COMPILER_MSVC16)
-			compilerVersion = L"16";
-		else if (config.compiler == COMPILER_MSVC17)
-			compilerVersion = L"17";
-
-		if (!CreateProcessW((ToWString(enginePath) + L"\\bin\\vswhere.exe").c_str(), (LPWSTR)(L"-version " + compilerVersion + L" -property installationPath").c_str(), nullptr, nullptr, false, 0, nullptr, nullptr, &info, &vswhereInfo))
-		{
-			std::cerr << "error: failed to locate visual studio installation.\n";
-			return 2;
-		}
-
-		WaitForSingleObject(vswhereInfo.hProcess, INFINITE);
-
-		CloseHandle(vswhereInfo.hProcess);
-		CloseHandle(vswhereInfo.hThread);
-
-		char outBuff[260];
-		if (!ReadFile(pRead, outBuff, 260, 0, nullptr))
-		{
-			std::cerr << "error: failed to locate visual studio installation.\n";
-			return 3;
-		}
-		CloseHandle(pRead);
-		CloseHandle(pWrite);
-
-		compilerPath = FString((const char*)outBuff).Split('\n')[0];
-		if (compilerPath.IsEmpty())
-		{
-			std::cerr << "error: failed to locate visual studio installation.\n";
-			return 4;
-		}
-
-		std::ifstream vStream((compilerPath + "\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt").c_str());
-		if (!vStream.is_open())
-		{
-			std::cerr << "error: failed to get msvc version.\n";
-			return 1;
-		}
-
-		std::string msvcVersion;
-		std::getline(vStream, msvcVersion);
-		vStream.close();
-
-		if (msvcVersion.empty())
-		{
-			std::cerr << "error: failed to get msvc version.\n";
-			return 2;
-		}
-
-		compilerPath += FString("\\VC\\Tools\\MSVC\\") + msvcVersion + "\\bin\\Hostx64\\x64";
-#endif
-	}
+//	if (config.compiler < COMPILER_CLANG)
+//	{
+//#if _WIN32
+//		HANDLE pRead;
+//		HANDLE pWrite;
+//		if (!CreatePipe(&pRead, &pWrite, nullptr, 0))
+//		{
+//			std::cerr << "error: failed to locate visual studio installation.\n";
+//			return 1;
+//		}
+//
+//		PROCESS_INFORMATION vswhereInfo{};
+//		STARTUPINFO info{};
+//		info.cb = sizeof(info);
+//		info.hStdOutput = pWrite;
+//
+//		WString compilerVersion;
+//		if (config.compiler == COMPILER_MSVC15)
+//			compilerVersion = L"15";
+//		else if (config.compiler == COMPILER_MSVC16)
+//			compilerVersion = L"16";
+//		else if (config.compiler == COMPILER_MSVC17)
+//			compilerVersion = L"17";
+//
+//		if (!CreateProcessW((ToWString(enginePath) + L"\\bin\\vswhere.exe").c_str(), (LPWSTR)(L"-version " + compilerVersion + L" -property installationPath").c_str(), nullptr, nullptr, false, 0, nullptr, nullptr, &info, &vswhereInfo))
+//		{
+//			std::cerr << "error: failed to locate visual studio installation.\n";
+//			return 2;
+//		}
+//
+//		WaitForSingleObject(vswhereInfo.hProcess, INFINITE);
+//
+//		CloseHandle(vswhereInfo.hProcess);
+//		CloseHandle(vswhereInfo.hThread);
+//
+//		char outBuff[260];
+//		if (!ReadFile(pRead, outBuff, 260, 0, nullptr))
+//		{
+//			std::cerr << "error: failed to locate visual studio installation.\n";
+//			return 3;
+//		}
+//		CloseHandle(pRead);
+//		CloseHandle(pWrite);
+//
+//		compilerPath = FString((const char*)outBuff).Split('\n')[0];
+//		if (compilerPath.IsEmpty())
+//		{
+//			std::cerr << "error: failed to locate visual studio installation.\n";
+//			return 4;
+//		}
+//
+//		std::ifstream vStream((compilerPath + "\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt").c_str());
+//		if (!vStream.is_open())
+//		{
+//			std::cerr << "error: failed to get msvc version.\n";
+//			return 1;
+//		}
+//
+//		std::string msvcVersion;
+//		std::getline(vStream, msvcVersion);
+//		vStream.close();
+//
+//		if (msvcVersion.empty())
+//		{
+//			std::cerr << "error: failed to get msvc version.\n";
+//			return 2;
+//		}
+//
+//		compilerPath += FString("\\VC\\Tools\\MSVC\\") + msvcVersion + "\\bin\\Hostx64\\x64";
+//#endif
+//	}
 
 	FKeyValue buildCfg;
 	buildCfg.DefineMacro("PLATFORM_WINDOWS", config.platform == PLATFORM_WIN64);
@@ -178,33 +265,307 @@ int CompileSource(const FCompileConfig& config)
 	buildCfg.DefineMacro("_DEVELOPMENT", config.config == CONFIG_DEVELOPMENT);
 	buildCfg.DefineMacro("_RELEASE", config.config == CONFIG_RELEASE);
 
-	buildCfg.Open(config.path + "\\Build.cfg");
+	buildCfg.Open(ToWString(config.path));
 	if (!buildCfg.IsOpen())
 	{
-		std::cerr << "error: failed to locate build config!\n";
+		std::cerr << "error: failed to open build config!\n";
+		std::cerr << buildCfg.GetLastError().c_str();
+
 		return 1;
 	}
 
 	FString targetBuild = *buildCfg.GetValue("Target");
+	strExp.SetExpressionValue("TARGET", targetBuild);
+
 	FString type = *buildCfg.GetValue("Type");
 	FString version = *buildCfg.GetValue("Version");
-	bool bIsEngine = targetBuild == "Engine";
+	bool bIsEngine = type == "engine";
+	bool bIsGame = type == "game";
+	bool bIsLibrary = type == "library" || type == "game";
+	bool bIsStaticLib = type == "static_library";
 
-	// Run HeaderTool
-#if _WIN32
-	PROCESS_INFORMATION ht{};
-	STARTUPINFO si{};
-	si.cb = sizeof(si);
-	WString htCmd = ToWString(enginePath) + L"\\bin\\HeaderTool.exe \"" + ToWString(config.path) + L"\" -pt" + (type == "Engine" ? L"0" : L"1");
-	if (!CreateProcess(NULL, (wchar_t*)htCmd.c_str(), nullptr, nullptr, false, 0, nullptr, nullptr, &si, &ht))
+	FString cmakeProj = targetBuild.ToUpperCase();
+	cmakeProj.ReplaceAll('.', '_');
+	FString cmakeLib = cmakeProj.ToLowerCase();
+
+	bool bRunHeaderTool = buildCfg.GetValue("ExecuteHeaderTool")->AsBool();
+
+	if (!bIsEngine && !bIsGame && !bIsLibrary && !bIsStaticLib)
 	{
-		std::cerr << "error: failed to run HeaderTool!\n";
+		std::cerr << "error: invalid build type '" << type.c_str() << "'\n0";
 		return 1;
 	}
-#endif
 
-	CompileMSVC(buildCfg, config.platform, config.config, compilerPath);
+	// Run HeaderTool
+	if (bRunHeaderTool)
+	{
+#if _WIN32
+		PROCESS_INFORMATION ht{};
+		STARTUPINFO si{};
+		si.cb = sizeof(si);
+		WString htCmd = ToWString(enginePath) + L"\\bin\\HeaderTool.exe \"" + ToWString(targetPath) + L"\" -pt " + (bIsEngine ? L"0" : (bIsGame ? L"1" : L"3"));
+		if (!CreateProcess(NULL, (wchar_t*)htCmd.c_str(), nullptr, nullptr, false, 0, nullptr, nullptr, &si, &ht))
+		{
+			std::cerr << "error: failed to run HeaderTool!\n";
+			return 1;
+		}
+#endif
+	}
+
+	using namespace std::chrono_literals;
+	std::this_thread::sleep_for(10ms);
+
+	auto* includeOut = buildCfg.GetValue("IncludeOut", false);
+	if (includeOut)
+	{
+		FString io = strExp.ParseString(*includeOut);
+		std::filesystem::create_directories(io.c_str());
+		CopyHeaders(buildCfg, targetPath + "\\src", io);
+		CopyHeaders(buildCfg, targetPath + "\\intermediate\\generated", io);
+	}
+
+	// Generate CMakeLists.txt
+	std::ofstream stream((targetPath + "/intermediate/CMakeLists.txt").c_str());
+	if (!stream.is_open())
+	{
+		std::cerr << "error: failed to create file stream!";
+		return 1;
+	}
+
+	stream << "cmake_minimum_required(VERSION 3.1.0)\n";
+	stream << "project(" << cmakeProj.c_str() << ")\n";
+
+	if (config.config == CONFIG_DEBUG)
+		stream << "set(CMAKE_BUILD_TYPE Debug)\n";
+	if (config.config == CONFIG_DEVELOPMENT)
+		stream << "set(CMAKE_BUILD_TYPE RelWithDebInfo)\n";
+	if (config.config == CONFIG_RELEASE)
+		stream << "set(CMAKE_BUILD_TYPE Release)\n";
+
+	TArray<FString> files;
+	GetCppFilesInDir(buildCfg, targetPath + "/src", files);
+	GetCppFilesInDir(buildCfg, targetPath + "/intermediate/generated", files);
+
+	stream << "\nset(Files ";
+
+	for (auto& f : files)
+		stream << "\n\t" << f.c_str();
+
+	stream << ")\n\n";
+	stream << "include_directories(../src ../intermediate/generated ";
+
+	auto* includes = buildCfg.GetArray("Include");
+	if (includes)
+	{
+		for (auto i : *includes)
+		{
+			i.ReplaceAll('\\', '/');
+			stream << "\n\t" << strExp.ParseString(i).c_str();
+		}
+	}
+	stream << ")\n\n";
+
+	const char* platformStr = config.platform == PLATFORM_WIN64 ? "PLATFORM_WINDOWS" 
+		: (config.platform == PLATFORM_LINUX ? "PLATFORM_LINUX" : "PLATFORM_MACOS");
+	stream << "add_compile_definitions(" << platformStr << " CONFIG_" << FString(ConfigStrings[config.config]).ToUpperCase().c_str();
+	if (config.config != CONFIG_RELEASE)
+		stream << " IS_DEV";
+	stream << " " << cmakeProj.c_str() << "_DLL)\n";
+
+	stream << "add_library(" << cmakeLib.c_str() << (bIsStaticLib ? " STATIC " : " SHARED ") << " ${Files})\n\n";
+	stream << "set_property(TARGET " << cmakeLib.c_str() << " PROPERTY CXX_STANDARD 17)\n";
+	if (config.platform != PLATFORM_WIN64)
+		stream << "set_target_properties(" << cmakeLib.c_str() << " PROPERTIES PREFIX \"\" OUTPUT_NAME \"" << targetBuild.c_str() 
+			<< "\" IMPORT_PREFIX \"\" IMPORT_SUFFIX \"" << (config.platform == PLATFORM_WIN64 ? ".dll" : ".a") << "\")\n\n";
+
+	auto* dep = buildCfg.GetArray("Dependencies");
+	if (dep)
+	{
+		stream << "target_link_libraries(" << cmakeLib.c_str();
+
+		for (auto depend : *dep)
+		{
+			depend = strExp.ParseString(depend);
+			bool bIsAddon = false;
+			bool bIsBuildFile = false;
+			if (depend.Find("addon:") == 0)
+			{
+				continue;
+				bIsAddon = true;
+				depend.Erase(depend.begin(), depend.begin() + 6);
+			}
+			else if (depend.Find("Build.cfg") != -1)
+			{
+				bIsBuildFile = true;
+
+				FKeyValue depBuild;
+				depBuild.DefineMacro("PLATFORM_WINDOWS", config.platform == PLATFORM_WIN64);
+				depBuild.DefineMacro("PLATFORM_LINUX", config.platform == PLATFORM_LINUX);
+				depBuild.DefineMacro("PLATFORM_MAC", config.platform == PLATFORM_MAC);
+				depBuild.DefineMacro("_DEBUG", config.config == CONFIG_DEBUG);
+				depBuild.DefineMacro("_DEVELOPMENT", config.config == CONFIG_DEVELOPMENT);
+				depBuild.DefineMacro("_RELEASE", config.config == CONFIG_RELEASE);
+
+				depBuild.Open(ToWString(depend));
+				if (!depBuild.IsOpen())
+					continue;
+				
+				FString libTarget = *depBuild.GetValue("Target");
+				FString libOut = *depBuild.GetValue("LibOut");
+
+				FString libPath = depend;
+				if (auto i = libPath.FindLastOf("\\/"); i != -1)
+					libPath.Erase(libPath.begin() + i, libPath.end());
+
+				FStringExpression libExp;
+				libExp.SetExpressionValue("PLATFORM", PlatformStrings[config.platform]);
+				libExp.SetExpressionValue("CONFIG", ConfigStrings[config.config]);
+				libExp.SetExpressionValue("PATH", libPath);
+				libExp.SetExpressionValue("ENGINE_PATH", enginePath);
+
+				FString libFile = libExp.ParseString(libOut) + "/" + libTarget + (config.platform == PLATFORM_WIN64 ? ".dll" : ".a");
+				depend = libFile;
+
+				// TODO: compile this project
+			}
+
+			// TODO: if addon, find the addons lib file
+			
+			stream << "\n\t\"" << depend.c_str() << "\"";
+		}
+
+		stream << ")\n\n";
+	}
+
+	if (auto* libOut = buildCfg.GetValue("LibOut", false); libOut)
+	{
+		FString lo = strExp.ParseString(*libOut);
+		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
+			<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "/" << targetBuild.c_str() << ".dll\")\n";
+		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_LINKER_FILE:"
+			<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "/" << targetBuild.c_str() << ".dll\")\n";
+	}
+
+	if (includeOut)
+	{
+		FString lo = strExp.ParseString(*includeOut);
+		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"module.bin\" \""
+			<< lo.c_str() << "/module.bin\")\n";
+	}
+
+	if (auto* binOut = buildCfg.GetValue("BuildOut", false); binOut)
+	{
+		FString bo = strExp.ParseString(*binOut);
+		bo.ReplaceAll('\\', '/');
+		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
+			<< cmakeLib.c_str() << ">\" \"" << bo.c_str() << "/" << targetBuild.c_str() << ".dll\")\n";
+	}
+
+	stream.close();
+
+	//CompileMSVC(buildCfg, config.platform, config.config, compilerPath);
 	return 0;
+}
+
+void CopyHeaders(FKeyValue& buildCfg, const FString& source, const FString& out)
+{
+	TArray<FString> headers;
+	if (!std::filesystem::exists(source.c_str()))
+		return;
+	for (std::filesystem::directory_entry entry : std::filesystem::recursive_directory_iterator(source.c_str()))
+	{
+		if (entry.is_directory())
+			continue;
+
+		if (entry.path().extension() != ".h" && entry.path().extension() != ".hpp")
+			continue;
+
+		FString path = entry.path().generic_string();
+		if (IsFileExcluded(buildCfg, path))
+			continue;
+
+		headers.Add(entry.path().generic_string());
+	}
+
+	for (auto& h : headers)
+	{
+		FString file = h;
+		file.Erase(file.begin(), file.begin() + source.Size());
+
+		try
+		{
+			std::filesystem::copy(h.c_str(), (out + file).c_str(), std::filesystem::copy_options::overwrite_existing);
+		}
+		catch (std::exception e)
+		{
+			std::cerr << "error: " << e.what() << std::endl;
+		}
+	}
+}
+
+void CopyBinaries(const FCompileConfig& config, const FString& out)
+{
+
+}
+
+bool GenerateBuildFromProject(const FString& projectCfg)
+{
+	std::cout << "Generating Build.cfg from project.\n";
+
+	FKeyValue proj(ToWString(projectCfg));
+	if (!proj.IsOpen())
+		return false;
+
+	FString game = *proj.GetValue("game");
+
+	FString buildFile = projectCfg;
+	if (auto i = buildFile.FindLastOf("\\/"); i != -1)
+		buildFile.Erase(buildFile.begin() + i, buildFile.end());
+	if (auto i = buildFile.FindLastOf("\\/"); i != -1)
+		buildFile.Erase(buildFile.begin() + i, buildFile.end());
+
+	FString projFolder = buildFile;
+
+	buildFile += "/.project/" + game + "/Build.cfg";
+
+	FKeyValue buildCfg(ToWString(buildFile));
+
+	game.ReplaceAll('.', '_');
+	game.ReplaceAll(' ', '_');
+	buildCfg.SetValue("Target", game);
+	buildCfg.SetValue("Type", "game");
+	buildCfg.SetValue("Version", *proj.GetValue("version"));
+
+	buildCfg.SetValue("ExecuteHeaderTool", "true");
+	buildCfg.SetValue("IncludeOut", "${PATH}/include");
+
+	buildCfg.SetValue("LibOut", "${PATH}/bin");
+	buildCfg.SetValue("BuildOut", projFolder + "/" + game + "/bin");
+
+	auto* includes = buildCfg.GetArray("Include", true);
+	includes->Clear();
+	includes->Add("${ENGINE_PATH}/build/include/Engine");
+	includes->Add("${ENGINE_PATH}/build/include/Util");
+
+	auto* depend = buildCfg.GetArray("Dependencies", true);
+	depend->Clear();
+	depend->Add("${ENGINE_LIB}");
+	depend->Add("${UTIL_LIB}");
+
+	auto* addons = proj.GetArray("addons");
+	if (addons)
+	{
+		for (auto a : *addons)
+		{
+			if (auto i = a.FindLastOf(':'); i != -1)
+				a.Erase(a.begin(), a.begin() + i + 1);
+
+			depend->Add("addon:" + a);
+		}
+	}
+
+	buildCfg.Save();
+	return true;
 }
 
 int CompileMSVC(FKeyValue& buildCfg, EPlatform platform, EConfig config, const FString& msvcPath)
@@ -226,15 +587,16 @@ int CompileMSVC(FKeyValue& buildCfg, EPlatform platform, EConfig config, const F
 		clArgs += "/Gy ";
 
 	clArgs += "/Zc:wchar_t ";
+	return 0;
 }
 
 int CompileClang(const FString& path, EPlatform platform, EConfig config)
 {
-
+	return 0;
 }
 
 int CompilerGcc(const FString& path, EPlatform platform, EConfig config)
 {
-	
+	return 0;
 }
 

@@ -126,6 +126,7 @@ public:
 	static inline const TArray<FMod*>& GetMods() { return Mods; }
 
 	static void SetCurrentPath(const WString& path);
+	static WString GetCurrentPath();
 
 #if IS_DEV
 	static bool ReloadMod(FMod* mod);

@@ -9,6 +9,7 @@ CModule& GetModule_Engine();
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY nullptr
 
+#if IS_DEV
 static TPair<FString, FString> _CEntityComponent_bIsVisible_Meta_Tags[]{
 	{ "Editable", "" },
 	{ "Category", "Rendering" },
@@ -23,10 +24,15 @@ static FPropertyMeta _CEntityComponent_bIsVisible_Meta {
 	_CEntityComponent_bIsVisible_Meta_Tags
 };
 
-DECLARE_PROPERTY(CEntityComponent, "Is Visible", bIsVisible, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntityComponent, bIsVisible), sizeof(bool), &_CEntityComponent_bIsVisible_Meta, nullptr)
+#define _CEntityComponent_bIsVisible_Meta_Ptr &_CEntityComponent_bIsVisible_Meta
+#else
+#define _CEntityComponent_bIsVisible_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CEntityComponent, "Is Visible", bIsVisible, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntityComponent, bIsVisible), sizeof(bool), _CEntityComponent_bIsVisible_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CEntityComponent, bIsVisible)
 
+#if IS_DEV
 static TPair<FString, FString> _CEntityComponent_bEditorOnly_Meta_Tags[]{
 	{ "Editable", "" },
 };
@@ -40,7 +46,11 @@ static FPropertyMeta _CEntityComponent_bEditorOnly_Meta {
 	_CEntityComponent_bEditorOnly_Meta_Tags
 };
 
-DECLARE_PROPERTY(CEntityComponent, "Editor Only", bEditorOnly, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntityComponent, bEditorOnly), sizeof(bool), &_CEntityComponent_bEditorOnly_Meta, nullptr)
+#define _CEntityComponent_bEditorOnly_Meta_Ptr &_CEntityComponent_bEditorOnly_Meta
+#else
+#define _CEntityComponent_bEditorOnly_Meta_Ptr nullptr
+#endif
+DECLARE_PROPERTY(CEntityComponent, "Editor Only", bEditorOnly, "", "bool", EVT_BOOL, VTAG_EDITOR_EDITABLE | VTAG_SERIALIZABLE , offsetof(CEntityComponent, bEditorOnly), sizeof(bool), _CEntityComponent_bEditorOnly_Meta_Ptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(CEntityComponent, bEditorOnly)
 
@@ -50,6 +60,12 @@ DECLARE_PROPERTY(CEntityComponent, "User Created", bUserCreated, "", "bool", EVT
 
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
+
+#ifdef IS_DEV
+static TPair<FString, FString> _FClass_CEntityComponent_Tags[] {
+	{ "NotCreatable", "" },
+};
+#endif
 
 class FClass_CEntityComponent : public FClass
 {
@@ -62,6 +78,10 @@ public:
 		numProperties = 3;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
+#ifdef IS_DEV
+		numTags = 1;
+		tags = _FClass_CEntityComponent_Tags;
+#endif
 		BaseClass = CObject::StaticClass();
 		numFunctions = 0;
 		FunctionList = CLASS_NEXT_FUNCTION;

@@ -6,6 +6,7 @@
 #include "Resources/ModelAsset.h"
 #include "Resources/Texture.h"
 #include "Rendering/RenderProxies.h"
+#include "Framebuffer.h"
 #include "Buffers.h"
 
 #include <mutex>
@@ -77,6 +78,8 @@ struct FDirectionalLightData
 	float _padding;
 	FVector color;
 	float intensity;
+	FVector _padding2;
+	int shadowIndex;
 };
 
 struct FPointLightData
@@ -85,8 +88,9 @@ struct FPointLightData
 	float _padding1;
 	FVector color;
 	float intensity;
+	float _padding2[2];
 	float range;
-	FVector _padding2;
+	int shadowIndex;
 };
 
 struct FSpotLightData
@@ -100,7 +104,7 @@ struct FSpotLightData
 	float innerConeAngle;
 	float outerConeAngle;
 	float range;
-	float _padding3;
+	int shadowIndex;
 };
 
 struct FForwardLightsBuffer
@@ -113,6 +117,25 @@ struct FForwardLightsBuffer
 	int numPointLights;
 	int numSpotLights;
 };
+
+struct FShadowDataBuffer
+{
+	FMatrix vSpotShadowMatrix[8];
+	FMatrix vSunShadowMatrix[4];
+	FQuaternion vPointShadowPos[8]; // not actually a quat but I need a 16 byte structure
+
+	// -1 if there is none
+	int vSpotShadowId[8];
+	int vPointShadowId[8];
+
+	float vSpotShadowBias[8];
+	float vPointShadowBias[8];
+
+	int vSunShadowId;
+	float vSunShadowBias;
+};
+
+constexpr SizeType off = offsetof(FShadowDataBuffer, vSpotShadowId);
 
 struct FTextSDFBuffer
 {
@@ -168,7 +191,8 @@ public:
 	virtual IShaderBuffer* CreateShaderBuffer(void* data, SizeType size) = 0;
 
 	virtual ISwapChain* CreateSwapChain(IBaseWindow* window) = 0;
-	virtual IDepthBuffer* CreateDepthBuffer(int width, int height) = 0;
+	virtual IDepthBuffer* CreateDepthBuffer(FDepthBufferInfo depthInfo) = 0;
+	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, ETextureFormat format) = 0;
 
 	virtual ITexture2D* CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter) = 0;
 	virtual ITexture2D* CreateTexture2D(void** data, int numMipMaps, int width, int height, ETextureFormat format, ETextureFilter filter) = 0;
@@ -183,6 +207,9 @@ public:
 
 	virtual void SetShaderBuffer(IShaderBuffer* buffer, int _register) = 0;
 
+	virtual void SetShaderResource(ITexture2D* texture, int _register) = 0;
+	virtual void SetShaderResource(IDepthBuffer* depthTex, int _register) = 0;
+
 	virtual void SetFrameBuffer(IFrameBuffer* framebuffer, IDepthBuffer* depth = nullptr) = 0;
 	virtual void SetFrameBuffers(IFrameBuffer** framebuffers, SizeType count, IDepthBuffer* depth = nullptr) = 0;
 
@@ -193,6 +220,11 @@ public:
 	virtual void BindGBuffer() = 0;
 
 	virtual void Present() = 0;
+
+	virtual void InitImGui(IBaseWindow* wnd) = 0;
+	virtual void ImGuiShutdown() = 0;
+	virtual void ImGuiBeginFrame() = 0;
+	virtual void ImGuiRender() = 0;
 
 	//virtual void Resize(int width, int height) = 0;
 
@@ -226,10 +258,17 @@ protected:
 	TObjectPtr<IShaderBuffer> sceneBuffer;
 	TObjectPtr<IShaderBuffer> objectBuffer;
 	TObjectPtr<IShaderBuffer> forwardLightsBuffer;
+	TObjectPtr<IShaderBuffer> forwardShadowDataBuffer;
 
 	IFrameBuffer* gBuffers[4];
 
 	IFrameBuffer* ssaoBuffer;
+
+	int shadowTexSize;
+
+	IDepthBuffer* sunLightShadows;
+	IDepthBuffer* pointLightShadows;
+	IDepthBuffer* spotLightShadows;
 
 	FMesh* quadMesh;
 
