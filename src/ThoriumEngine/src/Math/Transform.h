@@ -33,6 +33,8 @@ public:
 	// Add the two transforms together
 	FTransform operator*(const FTransform&) const;
 
+	FMatrix ToMatrix() const;
+
 public:
 	PROPERTY()
 	FVector position;

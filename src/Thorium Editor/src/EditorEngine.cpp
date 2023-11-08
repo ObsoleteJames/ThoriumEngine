@@ -10,6 +10,7 @@
 #include "Misc/FileHelper.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/RenderScene.h"
+#include "Rendering/DebugRenderer.h"
 #include "Game/World.h"
 #include "Game/Events.h"
 #include "Game/GameInstance.h"
@@ -462,6 +463,9 @@ void CEditorEngine::UpdateEditor()
 		if (ImGui::IsItemClicked() && inputManager && !inputManager->InputEnabled() && bIsPlaying && !bPaused)
 			ToggleGameInput();
 
+		if (ImGui::IsItemClicked() && !bIsPlaying)
+			DoMousePick();
+
 		//ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0.5, 0, 1));
 		//ImGui::RenderText(cursorPos + ImGui::GetStyle().FramePadding, "Hello!!");
 		//ImGui::PopStyleColor();
@@ -704,8 +708,49 @@ void CEditorEngine::InitEditorData()
 	outlineMat = CreateObject<CMaterial>();
 	outlineMat->SetShader("Tools");
 	outlineMat->SetInt("vType", 4);
-	float col[3] = { 1.f, 0.88f, 0.4f };
-	outlineMat->SetVec3("vColorTint", col);
+	outlineMat->SetColor("vColorTint", FColor(1.f, 0.88f, 0.4f));
+}
+
+void CEditorEngine::DoMousePick()
+{
+	if (!gWorld)
+		return;
+
+	FRay ray = FRay::MouseToRay(editorCamera, InputManager()->GetMousePos(), { (float)viewportWidth, (float)viewportHeight });
+
+	auto* scene = gWorld->GetRenderScene();
+
+	FPrimitiveHitInfo hit;
+	if (scene->RayCast(ray.origin, ray.direction, &hit))
+	{
+		CEntity* ent = nullptr;
+
+		TObjectPtr<CObject> obj = hit.hitProxy->GetOwner();
+		if (auto comp = CastChecked<CSceneComponent>(obj); comp)
+		{
+			ent = comp->GetEntity();
+		}
+
+		gDebugRenderer->DrawLine(ray.origin, hit.position, FColor::green, 3, true);
+		gDebugRenderer->DrawLine(ray.origin, ray.origin + ray.direction * 2.f, FColor::red, 3, true);
+		gDebugRenderer->DrawBox(FTransform(ray.origin + ray.direction * 2.f, FQuaternion(), FVector(0.1f)), FColor::red.WithAlpha(0.3f), DebugDrawType_Wireframe, 3);
+		gDebugRenderer->DrawBox(FTransform(hit.position, FQuaternion(), FVector(0.1f)), FColor::cyan.WithAlpha(0.3f), DebugDrawType_Solid, 3);
+
+		gDebugRenderer->DrawLine(FVector::zero, FVector::up, FColor::red, 5, true);
+
+		if (ent)
+		{
+			if (ImGui::IsKeyDown(ImGuiKey_ModCtrl))
+			{
+				if (!IsEntitySelected(ent))
+					AddSelectedEntity(ent);
+				else
+					RemoveSelectedEntity(ent);
+			}
+			else
+				SetSelectedEntity(ent);
+		}
+	}
 }
 
 void CEditorEngine::OnLevelChange()

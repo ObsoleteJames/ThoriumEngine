@@ -11,6 +11,14 @@ class CCameraComponent;
 class CPrimitiveProxy;
 class CCameraProxy;
 
+struct FPrimitiveHitInfo
+{
+	CPrimitiveProxy* hitProxy;
+	FVector position;
+	FVector normal;
+	float distance; // distance from the ray position.
+};
+
 class ENGINE_API CRenderScene
 {
 	friend class IRenderer;
@@ -44,6 +52,8 @@ public:
 	inline void UnregisterLight(CLightProxy* proxy) { if (auto it = lights.Find(proxy); it != lights.end()) lights.Erase(it); }
 	inline const TArray<CLightProxy*>& GetLights() const { return lights; }
 	inline void SetLights(const TArray<CLightProxy*>& arr) { lights = arr; }
+
+	bool RayCast(const FVector& pos, const FVector& dir, FPrimitiveHitInfo* outHit, float maxDistance = 0.f);
 
 private:
 	TArray<FRenderCommand> renderQueue;

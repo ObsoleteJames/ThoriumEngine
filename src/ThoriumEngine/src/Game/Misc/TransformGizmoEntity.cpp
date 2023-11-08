@@ -123,7 +123,7 @@ void CTransformGizmoEntity::Update(double dt)
 	SetWorldPosition(targetObject->GetWorldPosition());
 
 	GetWorld()->GetRenderWindow()->GetMousePos(state.mouseX, state.mouseY);
-	state.mouseRay = FRay::MouseToRay(camera, state.mouseX, state.mouseY, GetWorld()->GetRenderWindow());
+	state.mouseRay = FRay::MouseToRay(camera, { (float)state.mouseX, (float)state.mouseY }, GetWorld()->GetRenderWindow());
 
 	float dist = FVector::Distance(rootComponent->GetWorldPosition(), camera->position);
 	drawScale = FMath::Max(FMath::Tan(camera->fov) * dist * 0.15f, 0.5f);

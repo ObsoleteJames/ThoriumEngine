@@ -1,26 +1,8 @@
 ﻿  Path: F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine
   Running HeaderTool for project: Engine
   Engine.init.cpp
-  Engine.cpp
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\shared\minwindef.h(130,1): warning C4005: 'APIENTRY': macro redefinition
-F:\MyProjects\VS_Projects\ThoriumEngine\src\dep\glfw\GLFW\glfw3.h(123): message : see previous definition of 'APIENTRY'
+  DebugRenderer.cpp
   Generating Code...
-     Creating library F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.lib and object F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.exp
-glfw3x64.lib(context.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(context.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(init.obj) : warning LNK4099: PDB '' was not found with 'glfw3x64.lib(init.obj)' or at ''; linking object as if no debug info
-glfw3x64.lib(input.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(input.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(monitor.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(monitor.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(vulkan.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(vulkan.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(window.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(window.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(win32_init.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_init.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(win32_joystick.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_joystick.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(win32_monitor.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_monitor.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(win32_time.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_time.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(win32_thread.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_thread.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(win32_window.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(win32_window.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(wgl_context.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(wgl_context.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(egl_context.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(egl_context.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
-glfw3x64.lib(osmesa_context.obj) : warning LNK4099: PDB 'glfw.pdb' was not found with 'glfw3x64.lib(osmesa_context.obj)' or at 'F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\glfw.pdb'; linking object as if no debug info
   ThoriumEngine.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.dll
   F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.dll
   1 File(s) copied

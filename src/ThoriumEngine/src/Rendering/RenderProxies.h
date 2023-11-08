@@ -107,7 +107,11 @@ public:
 
 	inline const FBounds& Bounds() const { return bounds; }
 
+	inline TObjectPtr<CObject> GetOwner() const { return owner; }
+
 protected:
+	TObjectPtr<CObject> owner;
+
 	FBounds bounds;
 
 	FVector position;

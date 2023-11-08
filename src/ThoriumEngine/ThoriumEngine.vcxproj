@@ -282,6 +282,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="src\Rendering\RenderCommands.cpp" />
     <ClCompile Include="src\Rendering\Renderer.cpp" />
     <ClCompile Include="src\Rendering\RenderProxies.cpp" />
+    <ClCompile Include="src\Rendering\RenderScene.cpp" />
     <ClCompile Include="src\Rendering\Shader.cpp" />
     <ClCompile Include="src\Rendering\ShaderParser.cpp" />
     <ClCompile Include="src\Resources\Asset.cpp" />
@@ -295,6 +296,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="src\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Intermediate\generated\HitInfo.generated.h" />
     <ClInclude Include="src\Console.h" />
     <ClInclude Include="src\Game\Components\BillboardComponent.h" />
     <ClInclude Include="src\Game\Components\CameraComponent.h" />
@@ -334,6 +336,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClInclude Include="src\Misc\Timer.h" />
     <ClInclude Include="src\Object\ObjectHandle.h" />
     <ClInclude Include="src\Object\ObjectSelector.h" />
+    <ClInclude Include="src\Physics\HitInfo.h" />
     <ClInclude Include="src\Physics\Jolt\JoltPhysApi.h" />
     <ClInclude Include="src\Physics\Jolt\JoltPhysWorld.h" />
     <ClInclude Include="src\Physics\PhysicsApi.h" />
@@ -342,6 +345,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClInclude Include="src\Rendering\DebugRenderer.h" />
     <ClInclude Include="src\Rendering\RenderProxies.h" />
     <ClInclude Include="src\Resources\DataAsset.h" />
+    <ClInclude Include="src\Resources\Mesh.h" />
     <ClInclude Include="src\Resources\Scene.h" />
     <ClInclude Include="src\Math\Math.h" />
     <ClInclude Include="src\Math\Vectors.h" />
@@ -381,6 +385,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClInclude Include="src\Resources\Material.h" />
     <ClInclude Include="src\Resources\ModelAsset.h" />
     <ClInclude Include="src\Resources\ResourceManager.h" />
+    <ClInclude Include="src\Resources\Skeleton.h" />
     <ClInclude Include="src\Resources\Texture.h" />
     <ClInclude Include="src\ThirdParty\stb_dxt.h" />
     <ClInclude Include="src\ThirdParty\stb_image.h" />

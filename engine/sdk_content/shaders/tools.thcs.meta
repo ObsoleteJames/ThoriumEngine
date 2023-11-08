@@ -32,9 +32,6 @@ Global
 	Property<int> vType(Name = "Draw Type");
 	Property<int> vInt1(Name = "Int1");
 	Property<float> vVar1(Name = "Variable1");
-	Property<float> vVar2(Name = "Variable2");
-	Property<float> vVar3(Name = "Variable3");
-	Property<float> vVar4(Name = "Variable4");
 }
 
 VS
@@ -111,7 +108,7 @@ PS
 			 r = DrawGizmo(input);
 			break;
 		case TYPE_SOLID:
-			r = float4(1.f, 0.88f, 0.4f, 1.f);
+			r = vColorTint;
 			break;
 		}
 		if (r.a == 0.f)

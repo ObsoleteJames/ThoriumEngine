@@ -4,6 +4,7 @@
 #include "Resources/Material.h"
 #include "Game/Components/CameraComponent.h"
 #include "Console.h"
+#include "DebugRenderer.h"
 #include <map>
 
 #include <algorithm>
@@ -188,10 +189,15 @@ void IRenderer::Init()
 	sunDepth.arraySize = 1;
 
 	sunLightShadows = gRenderer->CreateDepthBuffer(sunDepth);
+
+	gDebugRenderer = new CDebugRenderer();
 }
 
 void IRenderer::renderAll()
 {
+	if (gDebugRenderer)
+		gDebugRenderer->Render();
+
 	TArray<CRenderScene*>& renderQueue = gRenderer->renderScenes;
 
 	// Draw each scene.

@@ -8,7 +8,8 @@
 #include "Math/Math.h"
 
 #define THMDL_VERSION_3 0x0003
-#define THMDL_VERSION 0x0004
+#define THMDL_VERSION_4 0x0004
+#define THMDL_VERSION 0x0005
 
 #define THMDL_MAGIC_SIZE 27
 static const char* thmdlMagicStr = "\0\0ThoriumEngine Model File\0";
@@ -128,6 +129,9 @@ void CModelAsset::Init()
 		*stream >> bone.name;
 		*stream >> &bone.parent;
 		*stream >> &bone.position >> &bone.direction;
+
+		if (fileVersion > THMDL_VERSION_4)
+			*stream >> &bone.roll;
 	}
 
 	bInitialized = true;
@@ -255,6 +259,7 @@ void CModelAsset::Save()
 		*stream << bone.name;
 		*stream << &bone.parent;
 		*stream << &bone.position << &bone.direction;
+		*stream << &bone.roll;
 	}
 	
 	if (bLoadedMeshData)
@@ -329,6 +334,18 @@ void CModelAsset::Load(uint8 lodLevel)
 		meshes[it].indexBuffer = Renderer::CreateIndexBuffer(indices);
 		meshes[it].numVertices = (uint)numVertices;
 		meshes[it].numIndices = (uint)numIndices;
+
+		// keep vertex data loaded in ram if we're running the editor
+		if (gIsEditor)
+		{
+			meshes[it].vertexData = new FVertex[vertices.Size()];
+			meshes[it].numVertexData = vertices.Size();
+			memcpy(meshes[it].vertexData, vertices.Data(), vertices.Size() * sizeof(FVertex));
+
+			meshes[it].indexData = new uint[indices.Size()];
+			meshes[it].numIndexData = indices.Size();
+			memcpy(meshes[it].indexData, indices.Data(), indices.Size() * sizeof(uint));
+		}
 
 		*stream >> &meshes[it].materialIndex;
 

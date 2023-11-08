@@ -1,6 +1,6 @@
-[Fri Nov  3 03:27:48 2023][CEngine] Initializing...
-[Fri Nov  3 03:27:48 2023][CResourceManager] Created resource threads (2)
-[Fri Nov  3 03:27:48 2023][CResourceManager] Initialized
-[Fri Nov  3 03:27:48 2023][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
-[Fri Nov  3 03:27:48 2023][CResourceManager] Found 33 assets in 'Engine'
-[Fri Nov  3 03:27:49 2023][CEngine] Loading scene 'empty'
+[Tue Nov  7 23:34:13 2023][CEngine] Initializing...
+[Tue Nov  7 23:34:13 2023][CResourceManager] Created resource threads (2)
+[Tue Nov  7 23:34:13 2023][CResourceManager] Initialized
+[Tue Nov  7 23:34:13 2023][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
+[Tue Nov  7 23:34:13 2023][CResourceManager] Found 33 assets in 'Engine'
+[Tue Nov  7 23:34:14 2023][CEngine] Loading scene 'empty'

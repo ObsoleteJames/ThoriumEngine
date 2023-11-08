@@ -1,7 +1,9 @@
 
 #include "Math.h"
 #include "Vectors.h"
+#include "Resources/Mesh.h"
 #include <random>
+
 static std::random_device _randomDev;
 static std::mt19937_64 _engine64(_randomDev());
 static std::uniform_int_distribution<SizeType> UniformDist;
@@ -191,4 +193,78 @@ void FMath::RayCylinderIntersection(const FVector& cylinderCenter, const FVector
 		bIntersects = true;
 		out = rayParam[1];
 	}
+}
+
+bool FMath::RayTriangle(const FVector& v0, const FVector& v1, const FVector& v2, const FRay& ray, float& t, FVector* outPos /*= nullptr*/, FVector* outNormal /*= nullptr*/)
+{
+	FVector v0v1 = v1 - v0;
+	FVector v0v2 = v2 - v0;
+	FVector N = FVector::Cross(v0v1, v0v2);
+	float area2 = N.Magnitude();
+
+	float NdotDir = FVector::Dot(N, ray.direction);
+	if (Abs(NdotDir) < 0.0001f)
+		return false;
+
+	float d = -FVector::Dot(N, v0);
+	t = -(FVector::Dot(N, ray.origin) + d) / NdotDir;
+
+	if (t < 0)
+		return false;
+
+	FVector P = ray.origin + t * ray.direction;
+	FVector C;
+
+	FVector edge0 = v1 - v0;
+	FVector vp0 = P - v0;
+	C = FVector::Cross(edge0, vp0);
+	if (FVector::Dot(N, C) < 0)
+		return false;
+
+	FVector edge1 = v2 - v1;
+	FVector vp1 = P - v1;
+	C = FVector::Cross(edge1, vp1);
+	if (FVector::Dot(N, C) < 0)
+		return false;
+
+	FVector edge2 = v0 - v2;
+	FVector vp2 = P - v2;
+	C = FVector::Cross(edge2, vp2);
+	if (FVector::Dot(N, C) < 0)
+		return false;
+
+	if (outPos)
+		*outPos = ray.origin + ray.direction * t;
+	if (outNormal)
+		*outNormal = N;
+
+	return true;
+}
+
+bool FMath::RaySphere(const FVector& pos, float radius, const FRay& ray, FVector* outPos /*= nullptr*/, FVector* outNormal /*= nullptr*/)
+{
+	return false;
+}
+
+bool FMath::RayAABB(const FBounds& aabb, const FRay& ray, FVector* outPos /*= nullptr*/, FVector* outNormal /*= nullptr*/)
+{
+	return false;
+}
+
+bool FMath::RayBox(const FBounds& box, const FQuaternion& rot, const FRay& ray, FVector* outPos /*= nullptr*/, FVector* outNormal /*= nullptr*/)
+{
+	FRay r;
+	r.origin = rot.Conjugate().Rotate(ray.origin - box.position) + box.position;
+	r.direction = rot.Conjugate().Rotate(ray.direction);
+
+	FVector p;
+	FVector n;
+
+	bool result = RayAABB(box, r, &p, &n);
+	if (result && outPos)
+		*outPos = rot.Rotate(p - box.position) + box.position;
+	if (result && outNormal)
+		*outNormal = rot.Rotate(n);
+
+	return result;
 }

@@ -184,6 +184,8 @@ FVector FQuaternion::Rotate(const FVector& r) const
 
 FQuaternion FQuaternion::LookRotation(const FVector& dir, const FVector& up)
 {
+	glm::quat q = glm::quatLookAtLH((glm::vec3)dir, (glm::vec3)up);
+	return q;
 	FVector right = FVector::Cross(dir, up);
 	FQuaternion r;
 	r.w = FMath::Sqrt(1.f + right.x + up.y + dir.z) * 0.5f;
@@ -346,10 +348,25 @@ FQuaternion operator*(const FQuaternion& a, const FQuaternion& b)
 	return r;
 }
 
-FRay FRay::MouseToRay(CCameraProxy* cam, float x, float y, IBaseWindow* window)
+FVector operator*(const FVector& a, const FMatrix& b)
+{
+	return glm::vec3((glm::mat4x4)b * glm::vec4((glm::vec3)a, 0.f));
+}
+
+FRay FRay::MouseToRay(CCameraProxy* cam, FVector2 mouse, IBaseWindow* window)
 {
 	int w, h;
 	window->GetSize(w, h);
+
+	return MouseToRay(cam, mouse, { (float)w, (float)h });
+}
+
+FRay FRay::MouseToRay(CCameraProxy* cam, FVector2 mouse, FVector2 wndSize)
+{
+	float& w = wndSize.x;
+	float& h = wndSize.y;
+	float& x = mouse.x;
+	float& y = mouse.y;
 
 	y = h - y;
 

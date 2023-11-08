@@ -61,6 +61,8 @@ public:
 private:
 	void InitEditorData();
 
+	void DoMousePick();
+
 	void OnLevelChange();
 	
 	void ToggleGameInput();

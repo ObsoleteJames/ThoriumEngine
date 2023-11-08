@@ -18,3 +18,8 @@ FTransform FTransform::operator*(const FTransform& t) const
 	r.scale = scale * t.scale;
 	return r;
 }
+
+FMatrix FTransform::ToMatrix() const
+{
+	return FMatrix(1.f).Translate(position).Scale(scale) * rotation;
+}

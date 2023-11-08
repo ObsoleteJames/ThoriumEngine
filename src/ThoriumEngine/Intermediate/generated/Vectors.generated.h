@@ -14,7 +14,7 @@ DECLARE_STRUCT(FQuaternion, Engine)
 #define Engine_Vectors_h_204_GeneratedBody \
 DECLARE_STRUCT(FRay, Engine)
 
-#define Engine_Vectors_h_220_GeneratedBody \
+#define Engine_Vectors_h_224_GeneratedBody \
 DECLARE_STRUCT(FMatrix, Engine)
 
 

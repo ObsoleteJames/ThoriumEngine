@@ -111,6 +111,8 @@ public:
 	inline void EnableInput() { bEnableInput = true; }
 	inline void DisableInput() { bEnableInput = false; }
 
+	inline FVector2 GetMousePos() const { return mousePos; }
+
 	inline TArray<FInputAction>& GetActions() { return actions; }
 	inline TArray<FInputAxis>& GetAxis() { return axis; }
 

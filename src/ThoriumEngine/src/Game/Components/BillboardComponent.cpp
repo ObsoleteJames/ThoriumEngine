@@ -11,6 +11,7 @@ void CBillboardComponent::Init()
 	public:
 		CBillboardPrimitiveProxy(CBillboardComponent* obj) : comp(obj)
 		{
+			owner = obj;
 		}
 
 		void FetchData() override

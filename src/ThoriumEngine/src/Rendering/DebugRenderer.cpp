@@ -1,23 +1,47 @@
 
 #include "DebugRenderer.h"
+#include "Resources/Material.h"
+#include "Resources/ModelAsset.h"
+#include "Renderer.h"
+#include "RenderScene.h"
+#include "Game/World.h"
 
+CDebugRenderer* gDebugRenderer;
+
+CDebugRenderer::CDebugRenderer()
+{
+	lineMesh.numVertices = 2;
+	lineMesh.vertexBuffer = gRenderer->CreateVertexBuffer({ { FVector::zero }, { -FVector::forward } });
+	lineMesh.topologyType = FMesh::TOPOLOGY_LINES;
+
+	cube = CResourceManager::GetResource<CModelAsset>(L"models\\Cube.thmdl");
+	sphere = CResourceManager::GetResource<CModelAsset>(L"models\\Sphere.thmdl");
+}
 
 void CDebugRenderer::DrawLine(const FVector& begin, const FVector& end, const FColor& color, float time /*= 0.f*/, bool bOverlay /*= false*/)
 {
 	FTransform t;
 	t.position = begin;
-	t.rotation = FQuaternion::LookRotation((end - begin).Normalize(), FVector::up);
+	FVector dir = (end - begin).Normalize();
+	t.rotation = FQuaternion::LookRotation(dir, dir == FVector::up ? FVector::forward : FVector::up);
 	t.scale = (end - begin).Magnitude();
+
+	CMaterial* mat = CreateObject<CMaterial>();
+	mat->SetName("DebugDrawLine");
+	mat->SetShader("Tools");
+	mat->SetInt("vType", 4);
+	mat->SetColor("vColorTint", color);
 
 	FDebugDrawCmd cmd{
 		FDebugDrawCmd::LINE,
-		DebugDrawType_None,
+		bOverlay ? DebugDrawType_Overlay : DebugDrawType_None,
 		t,
 		color,
 		FString(),
 		0, 0,
-		time,
-		scene
+		time != 0.f ? time + GetScene()->GetTime() : 0.f,
+		GetScene(),
+		mat
 	};
 	drawCalls.Add(cmd);
 	scene = nullptr;
@@ -25,6 +49,12 @@ void CDebugRenderer::DrawLine(const FVector& begin, const FVector& end, const FC
 
 void CDebugRenderer::DrawPlane(const FTransform& t, const FColor& col, EDebugDrawType drawType, float time /*= 0.f*/)
 {
+	CMaterial* mat = CreateObject<CMaterial>();
+	mat->SetName("DebugDrawPlane");
+	mat->SetShader("Tools");
+	mat->SetInt("vType", 4);
+	mat->SetColor("vColorTint", col);
+
 	FDebugDrawCmd cmd{
 		FDebugDrawCmd::PLANE,
 		drawType,
@@ -32,8 +62,9 @@ void CDebugRenderer::DrawPlane(const FTransform& t, const FColor& col, EDebugDra
 		col,
 		FString(),
 		0, 0,
-		time,
-		scene
+		time != 0.f ? time + GetScene()->GetTime() : 0.f,
+		GetScene(),
+		mat
 	};
 	drawCalls.Add(cmd);
 	scene = nullptr;
@@ -41,6 +72,12 @@ void CDebugRenderer::DrawPlane(const FTransform& t, const FColor& col, EDebugDra
 
 void CDebugRenderer::DrawBox(const FTransform& t, const FColor& col, EDebugDrawType drawType, float time /*= 0.f*/)
 {
+	CMaterial* mat = CreateObject<CMaterial>();
+	mat->SetName("DebugDrawBox");
+	mat->SetShader("Tools");
+	mat->SetInt("vType", 4);
+	mat->SetColor("vColorTint", col);
+
 	FDebugDrawCmd cmd{
 		FDebugDrawCmd::BOX,
 		drawType,
@@ -48,8 +85,9 @@ void CDebugRenderer::DrawBox(const FTransform& t, const FColor& col, EDebugDrawT
 		col,
 		FString(),
 		0, 0,
-		time,
-		scene
+		time != 0.f ? time + GetScene()->GetTime() : 0.f,
+		GetScene(),
+		mat
 	};
 	drawCalls.Add(cmd);
 	scene = nullptr;
@@ -62,6 +100,12 @@ void CDebugRenderer::DrawCircle(const FVector& pos, const FVector& angle, float 
 	t.rotation = FQuaternion::LookRotation(angle, FVector::up);
 	t.scale = radius;
 
+	CMaterial* mat = CreateObject<CMaterial>();
+	mat->SetName("DebugDrawCircle");
+	mat->SetShader("Tools");
+	mat->SetInt("vType", 4);
+	mat->SetColor("vColorTint", col);
+
 	FDebugDrawCmd cmd{
 		FDebugDrawCmd::CIRCLE,
 		drawType,
@@ -69,8 +113,9 @@ void CDebugRenderer::DrawCircle(const FVector& pos, const FVector& angle, float 
 		col,
 		FString(),
 		0, 0,
-		time,
-		scene
+		time != 0.f ? time + GetScene()->GetTime() : 0.f,
+		GetScene(),
+		mat
 	};
 	drawCalls.Add(cmd);
 	scene = nullptr;
@@ -82,6 +127,12 @@ void CDebugRenderer::DrawSphere(const FVector& pos, float radius, const FColor& 
 	t.position = pos;
 	t.scale = radius;
 
+	CMaterial* mat = CreateObject<CMaterial>();
+	mat->SetName("DebugDrawSphere");
+	mat->SetShader("Tools");
+	mat->SetInt("vType", 4);
+	mat->SetColor("vColorTint", col);
+
 	FDebugDrawCmd cmd{
 		FDebugDrawCmd::SPHERE,
 		drawType,
@@ -89,8 +140,9 @@ void CDebugRenderer::DrawSphere(const FVector& pos, float radius, const FColor& 
 		col,
 		FString(),
 		0, 0,
-		time,
-		scene
+		time != 0.f ? time + GetScene()->GetTime() : 0.f,
+		GetScene(),
+		mat
 	};
 	drawCalls.Add(cmd);
 	scene = nullptr;
@@ -102,6 +154,12 @@ void CDebugRenderer::DrawCylinder(const FVector& center, const FQuaternion& rot,
 	t.position = center;
 	t.rotation = rot;
 
+	CMaterial* mat = CreateObject<CMaterial>();
+	mat->SetName("DebugDrawCylinder");
+	mat->SetShader("Tools");
+	mat->SetInt("vType", 4);
+	mat->SetColor("vColorTint", col);
+
 	FDebugDrawCmd cmd{
 		FDebugDrawCmd::CYLINDER,
 		drawType,
@@ -109,8 +167,9 @@ void CDebugRenderer::DrawCylinder(const FVector& center, const FQuaternion& rot,
 		col,
 		FString(),
 		height, radius,
-		time,
-		scene
+		time != 0.f ? time + GetScene()->GetTime() : 0.f,
+		GetScene(),
+		mat
 	};
 	drawCalls.Add(cmd);
 	scene = nullptr;
@@ -122,6 +181,12 @@ void CDebugRenderer::DrawCapsule(const FVector& center, const FQuaternion& rot, 
 	t.position = center;
 	t.rotation = rot;
 
+	CMaterial* mat = CreateObject<CMaterial>();
+	mat->SetName("DebugDrawCapsule");
+	mat->SetShader("Tools");
+	mat->SetInt("vType", 4);
+	mat->SetColor("vColorTint", col);
+
 	FDebugDrawCmd cmd{
 		FDebugDrawCmd::CAPSULE,
 		drawType,
@@ -129,8 +194,9 @@ void CDebugRenderer::DrawCapsule(const FVector& center, const FQuaternion& rot, 
 		col,
 		FString(),
 		height, radius,
-		time,
-		scene
+		time != 0.f ? time + GetScene()->GetTime() : 0.f,
+		GetScene(),
+		mat
 	};
 	drawCalls.Add(cmd);
 	scene = nullptr;
@@ -148,8 +214,8 @@ void CDebugRenderer::DrawText(const FVector2& screenPos, const FString& text, co
 		col,
 		text,
 		0, 0,
-		time,
-		scene
+		time + GetScene()->GetTime(),
+		GetScene()
 	};
 	drawCalls.Add(cmd);
 	scene = nullptr;
@@ -181,5 +247,96 @@ void CDebugRenderer::SetNextRenderScene(CRenderScene* scene)
 
 void CDebugRenderer::Render()
 {
+	for (auto it = drawCalls.rbegin(); it != drawCalls.rend(); it++)
+	{
+		CRenderScene* scene = it->target;
 
+		switch (it->type)
+		{
+		case FDebugDrawCmd::LINE:
+			_Line(it->transform, it->mat, scene, it->drawType & DebugDrawType_Overlay);
+			break;
+		case FDebugDrawCmd::BOX:
+		{
+			if (it->drawType & DebugDrawType_Wireframe)
+			{
+				FVector& pos = it->transform.position;
+				FVector& scale = it->transform.scale;
+				FQuaternion& rot = it->transform.rotation;
+				_Line(rot.Rotate(pos + (FVector(-0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, -0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(0.5f, 0.5f, -0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(-0.5f, -0.5f, 0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, 0.5f) * scale)), rot.Rotate(pos + (FVector(0.5f, 0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+
+				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(0.5f, -0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(-0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, -0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, 0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(0.5f, 0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(-0.5f, 0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+
+				_Line(rot.Rotate(pos + (FVector(0.5f, 0.5f, 0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, 0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, -0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, 0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, -0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, -0.5f, -0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+			}
+			if (it->drawType & DebugDrawType_Solid)
+			{
+				FDrawMeshCmd cmd{};
+				cmd.mesh = (FMesh*)&cube->GetMeshes()[0];
+				cmd.material = it->mat;
+				cmd.transform = it->transform.ToMatrix();
+
+				scene->PushCommand(FRenderCommand(cmd, it->drawType & DebugDrawType_Overlay ? R_DEBUG_OVERLAY_PASS : R_DEBUG_PASS));
+			}
+		}
+			break;
+		case FDebugDrawCmd::SPHERE:
+			if (it->drawType & DebugDrawType_Wireframe)
+			{
+
+			}
+			if (it->drawType & DebugDrawType_Solid)
+			{
+				FDrawMeshCmd cmd{};
+				cmd.mesh = (FMesh*)&sphere->GetMeshes()[0];
+				cmd.material = it->mat;
+				cmd.transform = it->transform.ToMatrix();
+
+				scene->PushCommand(FRenderCommand(cmd, it->drawType & DebugDrawType_Overlay ? R_DEBUG_OVERLAY_PASS : R_DEBUG_PASS));
+			}
+			break;
+		}
+
+		if (it->time < scene->GetTime())
+		{
+			drawCalls.Erase(it);
+			continue;
+		}
+	}
+}
+
+CRenderScene* CDebugRenderer::GetScene()
+{
+	return scene ? scene : gWorld->GetRenderScene();
+}
+
+void CDebugRenderer::_Line(const FVector& begin, const FVector& end, CMaterial* mat, CRenderScene* scene, bool bOverlay)
+{
+	FDrawMeshCmd cmd{};
+	cmd.mesh = &lineMesh;
+	cmd.material = mat;
+	cmd.drawType = MESH_DRAW_PRIMITIVE_LINES;
+	cmd.transform = FMatrix(1.f).Translate(begin).Scale((end - begin).Magnitude()) * FQuaternion::LookRotation((end - begin).Normalize(), FVector::up);
+
+	scene->PushCommand(FRenderCommand(cmd, bOverlay ? R_DEBUG_OVERLAY_PASS : R_DEBUG_PASS));
+}
+
+void CDebugRenderer::_Line(const FTransform& t, CMaterial* mat, CRenderScene* scene, bool bOverlay)
+{
+	FDrawMeshCmd cmd{};
+	cmd.mesh = &lineMesh;
+	cmd.material = mat;
+	cmd.drawType = MESH_DRAW_PRIMITIVE_LINES;
+	cmd.transform = t.ToMatrix();
+
+	scene->PushCommand(FRenderCommand(cmd, bOverlay ? R_DEBUG_OVERLAY_PASS : R_DEBUG_PASS));
 }

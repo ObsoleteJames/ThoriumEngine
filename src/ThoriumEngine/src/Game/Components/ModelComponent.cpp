@@ -9,6 +9,7 @@ class CModelComponentProxy : public CPrimitiveProxy
 public:
 	CModelComponentProxy(CModelComponent* mdl) : model(mdl)
 	{
+		owner = mdl;
 	}
 
 	void FetchData() override

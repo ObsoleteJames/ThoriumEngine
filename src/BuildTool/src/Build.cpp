@@ -378,7 +378,7 @@ int CompileSource(const FCompileConfig& config)
 		stream << "set_target_properties(" << cmakeLib.c_str() << " PROPERTIES PREFIX \"\" OUTPUT_NAME \"" << targetBuild.c_str() 
 			<< "\" IMPORT_PREFIX \"\" IMPORT_SUFFIX \"" << (config.platform == PLATFORM_WIN64 ? ".dll" : ".a") << "\")\n\n";
 
-	auto* dep = buildCfg.GetArray("Dependencies");
+	auto* dep = buildCfg.GetArray("LinkTargets");
 	if (dep)
 	{
 		stream << "target_link_libraries(" << cmakeLib.c_str();
@@ -388,11 +388,17 @@ int CompileSource(const FCompileConfig& config)
 			depend = strExp.ParseString(depend);
 			bool bIsAddon = false;
 			bool bIsBuildFile = false;
+			bool bIsCmakeLists = false;
 			if (depend.Find("addon:") == 0)
 			{
 				continue;
 				bIsAddon = true;
 				depend.Erase(depend.begin(), depend.begin() + 6);
+			}
+			else if (depend.Find("CMakeLists.txt") != -1)
+			{
+				bIsCmakeLists = true;
+				continue;
 			}
 			else if (depend.Find("Build.cfg") != -1)
 			{
@@ -435,6 +441,17 @@ int CompileSource(const FCompileConfig& config)
 		}
 
 		stream << ")\n\n";
+	}
+
+	dep = buildCfg.GetArray("Dependencies");
+	if (dep && dep->Size() > 0)
+	{
+		for (auto depend : *dep)
+		{
+			depend = strExp.ParseString(depend);
+			stream << "add_subdirectory(\"" << depend.c_str() << "\")\n";
+		}
+		stream << std::endl;
 	}
 
 	if (auto* libOut = buildCfg.GetValue("LibOut", false); libOut)
@@ -547,7 +564,7 @@ bool GenerateBuildFromProject(const FString& projectCfg)
 	includes->Add("${ENGINE_PATH}/build/include/Engine");
 	includes->Add("${ENGINE_PATH}/build/include/Util");
 
-	auto* depend = buildCfg.GetArray("Dependencies", true);
+	auto* depend = buildCfg.GetArray("LinkTargets", true);
 	depend->Clear();
 	depend->Add("${ENGINE_LIB}");
 	depend->Add("${UTIL_LIB}");

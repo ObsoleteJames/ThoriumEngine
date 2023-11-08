@@ -3,79 +3,19 @@
 #include "Asset.h"
 #include "Math/Vectors.h"
 #include "Math/Bounds.h"
+#include "Mesh.h"
+#include "Skeleton.h"
 #include "ModelAsset.generated.h"
 
 class IVertexBuffer;
 class IIndexBuffer;
 class CMaterial;
 
-struct FVertex
-{
-	FVector position;
-	FVector normal;
-	FVector tangent;
-	FVector color;
-	float uv1[2];
-	float uv2[2];
-
-	int bones[4];
-	float boneInfluence[4];
-};
-
-struct ENGINE_API FMesh
-{
-	enum ETopologyType
-	{
-		TOPOLOGY_TRIANGLES,
-		TOPOLOGY_LINES,
-		TOPOLOGY_POINTS,
-	};
-
-public:
-	TObjectPtr<IVertexBuffer> vertexBuffer;
-	TObjectPtr<IIndexBuffer> indexBuffer;
-
-	uint32 numIndices;
-	uint32 numVertices;
-	uint32 materialIndex;
-
-	ETopologyType topologyType = TOPOLOGY_TRIANGLES;
-	FString meshName;
-
-	FBounds bounds;
-
-public:
-	void CalculateBounds();
-
-public:
-	// This is only used for saving new mesh data.
-	SizeType numVertexData;
-	FVertex* vertexData;
-
-	SizeType numIndexData;
-	uint* indexData;
-
-	SizeType meshDataOffset;
-};
-
-struct FBone
-{
-	FString name;
-	uint32 parent;
-	FVector position;
-	FVector direction;
-};
-
 struct FMaterial
 {
 	FString name;
 	WString path;
 	TObjectPtr<CMaterial> obj;
-};
-
-struct FSkeleton
-{
-	TArray<FBone> bones;
 };
 
 struct FLODGroup
