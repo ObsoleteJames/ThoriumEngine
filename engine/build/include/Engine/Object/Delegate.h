@@ -23,9 +23,9 @@ public:
 	{
 		void** funcPtr = reinterpret_cast<void**>(&func);
 
-		bindings.Add();
+		bindings.push_back(FDelegateBinding<TArgs...>());
 
-		FDelegateBinding<TArgs...>& binding = *bindings.last();
+		FDelegateBinding<TArgs...>& binding = bindings[bindings.size() - 1];
 		binding.receiver = obj;
 		binding.funcPtr = funcPtr;
 		if constexpr (std::is_member_function_pointer<TFunc>::value)
@@ -59,7 +59,7 @@ public:
 		{
 			if (it->receiver == obj && it->funcPtr == funcPtr)
 			{
-				bindings.Erase(it);
+				bindings.erase(it);
 				break;
 			}
 		}
@@ -67,15 +67,22 @@ public:
 
 	void RemoveAll(CObject* obj)
 	{
-		for (auto it = bindings.rbegin(); it != bindings.rend(); it++)
+		/*for (auto it = bindings.rbegin(); it != bindings.rend(); it++)
 		{
 			if (it->receiver == obj)
 			{
-				bindings.Erase(it);
+				bindings.erase(++(it.base()));
+			}
+		}*/
+		for (auto i = bindings.size(); i > 0; i--)
+		{
+			if (bindings[i - 1].receiver == obj)
+			{
+				bindings.erase(bindings.begin() + (i - 1));
 			}
 		}
 	}
 
 private:
-	TArray<FDelegateBinding<TArgs...>> bindings;
+	std::vector<FDelegateBinding<TArgs...>> bindings;
 };

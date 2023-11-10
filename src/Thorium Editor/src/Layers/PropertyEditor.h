@@ -2,6 +2,7 @@
 
 #include "Layer.h"
 #include "EngineCore.h"
+#include "Math/Vectors.h"
 
 class FStruct;
 class FProperty;
@@ -25,5 +26,7 @@ public:
 public:
 	CEntityComponent* selectedComp = nullptr;
 	CEntity* prevEnt = nullptr;
+
+	FVector rotCache;
 
 };

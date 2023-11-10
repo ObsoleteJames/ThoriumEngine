@@ -38,7 +38,7 @@ PS
 	float4 Main(PS_Input input) : SV_TARGET
 	{
 		float3 camRelativePos = vCameraPos - input.vPositionWs;
-		float shade = max(0.5, dot(input.vNormalWs, normalize(camRelativePos)));
+		float shade = max(0.5, dot(normalize(input.vNormalWs), normalize(camRelativePos)));
 		float4 col = SampleTexture2D(vBaseColor, input.vTextureCoords);
 		col = mul(shade, col);
 

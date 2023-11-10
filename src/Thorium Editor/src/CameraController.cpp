@@ -12,7 +12,7 @@ float GetCameraSpeed(int index)
 
 void CCameraController::Update(double dt)
 {
-	bool bHovered = ImGui::IsItemHovered();
+	bool bHovered = ImGui::IsWindowFocused() || ImGui::IsWindowHovered();
 	bMouseLeft = bHovered && ImGui::IsMouseDown(ImGuiMouseButton_Left);
 	bMouseRight = bHovered && ImGui::IsMouseDown(ImGuiMouseButton_Right);
 	bMouseMiddle = bHovered && ImGui::IsMouseDown(ImGuiMouseButton_Middle);

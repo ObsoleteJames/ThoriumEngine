@@ -61,10 +61,10 @@ bool ParseShaderSourceFile(const WString& file, FShaderSourceFile& out)
 				continue;
 			}
 
-			if (ch == '{')
+			if (ch == '{' && curMode != 3)
 				blockIndex++;
 
-			if (ch == '}')
+			if (ch == '}' && curMode != 3)
 				blockIndex--;
 
 			if (curBlock == EShaderBlock_NONE && ch == '{')
@@ -72,30 +72,35 @@ bool ParseShaderSourceFile(const WString& file, FShaderSourceFile& out)
 				if (prevValue == "Shader")
 				{
 					curBlock = EShaderBlock_SHADER;
+					curMode = 0;
 					value.Clear();
 					continue;
 				}
 				if (prevValue == "Global")
 				{
 					curBlock = EShaderBlock_GLOBAL;
+					curMode = 0;
 					value.Clear();
 					continue;
 				}
 				if (prevValue == "VS")
 				{
 					curBlock = EShaderBlock_VERTEX;
+					curMode = 0;
 					value.Clear();
 					continue;
 				}
 				if (prevValue == "PS")
 				{
 					curBlock = EShaderBlock_PIXEL;
+					curMode = 0;
 					value.Clear();
 					continue;
 				}
 				if (prevValue == "GEO")
 				{
 					curBlock = EShaderBlock_GEO;
+					curMode = 0;
 					value.Clear();
 					continue;
 				}
@@ -197,7 +202,19 @@ bool ParseShaderSourceFile(const WString& file, FShaderSourceFile& out)
 						else if (prevValue == "Group")
 							out.properties.last()->uiGroup = value;
 
+						if (ch == ')')
+							curMode = 3;
+
 						continue;
+					}
+
+					if (curMode == 3)
+					{
+						if (ch == ';')
+						{
+							out.properties.last()->initValue = value;
+							curMode = 2;
+						}
 					}
 				}
 			}

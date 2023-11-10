@@ -9,10 +9,14 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "ImGui/ImGui.h"
 #include "ImGui/imgui_internal.h"
+#include "ImGui/imgui_thorium.h"
 
 static bool bInit = false;
 static bool bSelected = false;
 static bool bClose = false;
+static int bMode = 0;
+
+static FString saveFileName;
 
 static CAssetBrowserWidget* browser;
 static SizeType curId = 0;
@@ -25,6 +29,7 @@ public:
 	{
 		name = "ThFileDialogHandler";
 		browser = new CAssetBrowserWidget();
+		browser->bAllowFileEdit = false;
 		Events::OnRender.Bind(this, &CThFileDialog::Update);
 	}
 
@@ -76,6 +81,9 @@ public:
 
 			browser->RenderUI(0, size.y - 32);
 
+			ImGui::InputText("Name", &saveFileName);
+			ImGui::SameLine();
+
 			ImGui::SetCursorPosX(size.x - 90);
 
 			if (ImGui::Button("Cancel"))
@@ -86,17 +94,17 @@ public:
 			}
 			ImGui::SameLine();
 
-			if (!browser->GetSelectedFile())
+			if (saveFileName.IsEmpty())
 			{
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.1f, 0.1f, 1.f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.1f, 0.1f, 1.f));
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.1f, 0.1f, 0.1f, 1.f));
 			}
 
-			if (ImGui::Button("Save") && browser->GetSelectedFile())
+			if (ImGui::Button("Save") && !saveFileName.IsEmpty())
 				bSelected = true;
 
-			if (!browser->GetSelectedFile())
+			if (saveFileName.IsEmpty())
 				ImGui::PopStyleColor(3);
 
 			if (bClose)
@@ -145,6 +153,7 @@ bool ThFileDialog::OpenFile(const FString& id, FAssetClass* type, const WString&
 	browser->bDoubleClickedFile = false;
 	curId = id.Hash();
 	bSelected = false;
+	bMode = 1;
 
 	ImGui::OpenPopup("Open File##thFileDialogOpenFile");
 	return true;
@@ -158,6 +167,24 @@ bool ThFileDialog::SaveFile(const FString& id, FAssetClass* type, const WString&
 	if (curId != 0)
 		return false;
 
+	if (!dir.IsEmpty())
+	{
+		WString m;
+		WString d;
+		browser->ExtractPath(dir, m, d);
+		browser->SetDir(m, d);
+	}
+	else
+		browser->SetDir(gEditorEngine()->ActiveGame().mod->Name(), WString());
+
+	browser->viewFilter = type;
+	browser->bDoubleClickedFile = false;
+	curId = id.Hash();
+	bSelected = false;
+	bMode = 2;
+	saveFileName.Clear();
+
+	ImGui::OpenPopup("Save File##thFileDialogSaveFile");
 	return true;
 }
 
@@ -166,7 +193,7 @@ bool ThFileDialog::AcceptFile(const FString& id, WString* outFile, WString* outM
 	if (curId != id.Hash())
 		return false;
 
-	if (bSelected && browser->GetSelectedFile())
+	if (bMode == 1 && bSelected && browser->GetSelectedFile())
 	{
 		*outFile = browser->GetSelectedFile()->Path();
 		if (outMod)
@@ -174,6 +201,17 @@ bool ThFileDialog::AcceptFile(const FString& id, WString* outFile, WString* outM
 		curId = 0;
 		bSelected = false;
 		bClose = true;
+		bMode = 0;
+	}
+	if (bMode == 2 && bSelected)
+	{
+		*outFile = browser->dir + L"\\" + ToWString(saveFileName);
+		if (outMod)
+			*outMod = browser->mod;
+		curId = 0;
+		bSelected = false;
+		bClose = true;
+		bMode = 0;
 	}
 	return true;
 }
@@ -185,5 +223,6 @@ void ThFileDialog::Cancel(const FString& id)
 
 	bSelected = false;
 	curId = 0;
+	bMode = 0;
 	bClose = true;
 }

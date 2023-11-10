@@ -1,4 +1,5 @@
 
+#include "Engine.h"
 #include "AssetBrowserWidget.h"
 #include "Registry/FileSystem.h"
 #include "Math/Math.h"
@@ -11,6 +12,13 @@
 #include "ImGui/imgui_internal.h"
 #include "ImGui/imgui_thorium.h"
 #include "EditorWidgets.h"
+
+FAssetBrowserAction::FAssetBrowserAction()
+{
+	actions.Add(this);
+}
+
+FAssetBrowserAction::FActionList FAssetBrowserAction::actions;
 
 void CAssetBrowserWidget::RenderUI(float width, float height)
 {
@@ -25,7 +33,7 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 	{
 		for (auto& m : mods)
 		{
-			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen;
 			if (dir.IsEmpty() && m->Name() == mod)
 				flags |= ImGuiTreeNodeFlags_Selected;
 
@@ -87,6 +95,15 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 			}
 		}
 
+		if (bAllowFileEdit)
+		{
+			ImGui::SameLine();
+			if (ImGui::Button("Import"))
+			{
+				ImportAsset();
+			}
+		}
+
 		ImVec2 itemSize = ImVec2(48 + (48 * iconsSize) / 2, 80 + (80 * iconsSize) / 2);
 		ImVec2 contentSize = ImGui::GetContentRegionAvail();
 		int columns = FMath::Max((int)(contentSize.x / (itemSize.x + 10.f)), 1);
@@ -136,24 +153,48 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 
 					// TODO: open file editor
 				}
-				if (ImGui::BeginPopupContextItem())
+				if (bAllowFileEdit && ImGui::BeginPopupContextItem())
 				{
 					ImGui::MenuItem("Rename");
 					ImGui::MenuItem("Delete");
-					if (type == (FAssetClass*)CShaderSource::StaticClass())
+					for (auto* action : FAssetBrowserAction::GetActions())
 					{
-						ImGui::Separator();
-						if (ImGui::MenuItem("Compile"))
+						if (action->Type() == BA_FILE_CONTEXTMENU && action->TargetClass() == type)
 						{
-							auto shader = CResourceManager::GetResource<CShaderSource>(f->Path());
-							shader->Compile();
+							ImGui::Separator();
+
+							FBADataBase data{ f };
+							action->Invoke(&data);
 						}
 					}
+
+					//if (type == (FAssetClass*)CShaderSource::StaticClass())
+					//{
+					//	ImGui::Separator();
+					//	if (ImGui::MenuItem("Compile"))
+					//	{
+					//		auto shader = CResourceManager::GetResource<CShaderSource>(f->Path());
+					//		shader->Compile();
+					//	}
+					//}
 					ImGui::EndPopup();
 				}
 
 				if (!bDoubleClickedFile)
 					bDoubleClickedFile = ImGui::IsItemClicked() && ImGui::IsMouseDoubleClicked(0);
+
+				if (ImGui::IsItemClicked() && ImGui::IsMouseDoubleClicked(0) && bAllowFileEdit)
+				{
+					for (auto* action : FAssetBrowserAction::GetActions())
+					{
+						if (action->Type() == BA_OPENFILE && action->TargetClass() == type)
+						{
+							FBADataBase data{ f };
+							action->Invoke(&data);
+							break;
+						}
+					}
+				}
 
 				if (bSelected)
 					ImGui::PopStyleColor();
@@ -262,6 +303,9 @@ void CAssetBrowserWidget::DrawDirTree(FDirectory* _dir, FDirectory* parent, FMod
 	if (bSelected)
 		flags |= ImGuiTreeNodeFlags_Selected;
 
+	if (_mod->Name() == mod && !dir.IsEmpty() && _dir->GetPath().Find(dir) == 0)
+		flags |= ImGuiTreeNodeFlags_DefaultOpen;
+
 	bool bOpen = ImGui::TreeNodeEx(ToFString(_dir->GetName() + L"##_" + _mod->Name() + _dir->GetPath()).c_str(), flags);
 
 	if (ImGui::IsItemClicked())
@@ -317,4 +361,78 @@ bool CAssetBrowserWidget::ExtractPath(const WString& combined, WString& outMod, 
 		return true;
 	}
 	return false;
+}
+
+void CAssetBrowserWidget::ImportAsset()
+{
+	FString filter;
+	TArray<FAssetClass*> importableClasses;
+	for (auto* m : CModuleManager::GetModules())
+	{
+		for (auto* c : m->Assets)
+		{
+			if (c->ImportableAs().IsEmpty())
+				continue;
+
+			TArray<FString> imports = c->ImportableAs().Split(';');
+
+			filter += c->GetName();
+			filter += " (";
+
+			for (auto& i : imports)
+				filter += "*" + i + ' ';
+
+			filter.Erase(filter.last());
+			filter += ')';
+			filter += '\0';
+
+			for (auto& i : imports)
+				filter += "*" + i + ";";
+
+			filter.Erase(filter.last());
+			filter += '\0';
+			importableClasses.Add(c);
+		}
+	}
+
+	FString file = CEngine::OpenFileDialog(filter);
+	if (file.IsEmpty())
+		return;
+
+	FString ext = file;
+	ext.Erase(ext.begin(), ext.begin() + ext.FindLastOf('.'));
+
+	FAssetClass* targetClass = nullptr;
+
+	for (auto* c : importableClasses)
+	{
+		TArray<FString> imports = c->ImportableAs().Split(';');
+
+		for (auto& i : imports)
+		{
+			if (i == ext)
+			{
+				targetClass = c;
+				goto foundClass;
+			}
+		}
+	}
+
+foundClass:
+	if (!targetClass)
+		return;
+	
+	FString fileName = file;
+	fileName.Erase(fileName.begin(), fileName.begin() + fileName.FindLastOf("\\/") + 1);
+	fileName.Erase(fileName.begin() + fileName.FindLastOf("."), fileName.end());
+
+	for (auto* a : FAssetBrowserAction::GetActions())
+	{
+		if (a->Type() == BA_FILE_IMPORT && a->TargetClass() == targetClass)
+		{
+			FBAImportFile data{ nullptr, file, dir + L"\\" + ToWString(fileName) + ToWString(targetClass->GetExtension()), mod };
+			a->Invoke(&data);
+			break;
+		}
+	}
 }

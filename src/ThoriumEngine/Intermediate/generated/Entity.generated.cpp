@@ -264,6 +264,82 @@ DECLARE_PROPERTY(CEntity, "Bound Outputs", boundOutputs, "", "FOutputBinding", E
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
+static FFuncArg _funcArgs_CEntity_SetWorldPosition[] = {
+	{ "p", EVT_STRUCT, VTAG_NONE, FVector::StaticStruct() },
+};
+
+DECLARE_FUNCTION_PROPERTY(CEntity, "SetWorldPosition", "", SetWorldPosition, &CEntity::execSetWorldPosition, FFunction::GENERAL, _funcArgs_CEntity_SetWorldPosition, 1, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
+#undef CLASS_NEXT_FUNCTION
+#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CEntity, SetWorldPosition)
+
+static FFuncArg _funcArgs_CEntity_SetPosition[] = {
+	{ "p", EVT_STRUCT, VTAG_NONE, FVector::StaticStruct() },
+};
+
+DECLARE_FUNCTION_PROPERTY(CEntity, "SetPosition", "", SetPosition, &CEntity::execSetPosition, FFunction::GENERAL, _funcArgs_CEntity_SetPosition, 1, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
+#undef CLASS_NEXT_FUNCTION
+#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CEntity, SetPosition)
+
+static FFuncArg _funcArgs_CEntity_SetWorldRotation[] = {
+	{ "r", EVT_STRUCT, VTAG_NONE, FQuaternion::StaticStruct() },
+};
+
+DECLARE_FUNCTION_PROPERTY(CEntity, "SetWorldRotation", "", SetWorldRotation, &CEntity::execSetWorldRotation, FFunction::GENERAL, _funcArgs_CEntity_SetWorldRotation, 1, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
+#undef CLASS_NEXT_FUNCTION
+#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CEntity, SetWorldRotation)
+
+static FFuncArg _funcArgs_CEntity_SetRotation[] = {
+	{ "r", EVT_STRUCT, VTAG_NONE, FQuaternion::StaticStruct() },
+};
+
+DECLARE_FUNCTION_PROPERTY(CEntity, "SetRotation", "", SetRotation, &CEntity::execSetRotation, FFunction::GENERAL, _funcArgs_CEntity_SetRotation, 1, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
+#undef CLASS_NEXT_FUNCTION
+#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CEntity, SetRotation)
+
+static FFuncArg _funcArgs_CEntity_SetWorldScale[] = {
+	{ "s", EVT_STRUCT, VTAG_NONE, FVector::StaticStruct() },
+};
+
+DECLARE_FUNCTION_PROPERTY(CEntity, "SetWorldScale", "", SetWorldScale, &CEntity::execSetWorldScale, FFunction::GENERAL, _funcArgs_CEntity_SetWorldScale, 1, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
+#undef CLASS_NEXT_FUNCTION
+#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CEntity, SetWorldScale)
+
+static FFuncArg _funcArgs_CEntity_SetScale[] = {
+	{ "s", EVT_STRUCT, VTAG_NONE, FVector::StaticStruct() },
+};
+
+DECLARE_FUNCTION_PROPERTY(CEntity, "SetScale", "", SetScale, &CEntity::execSetScale, FFunction::GENERAL, _funcArgs_CEntity_SetScale, 1, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
+#undef CLASS_NEXT_FUNCTION
+#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CEntity, SetScale)
+
+DECLARE_FUNCTION_PROPERTY(CEntity, "OnStart", "", outputOnStart, &CEntity::execoutputOnStart, FFunction::OUTPUT, nullptr, 0, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
+#undef CLASS_NEXT_FUNCTION
+#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CEntity, outputOnStart)
+
+DECLARE_FUNCTION_PROPERTY(CEntity, "Hide", "", Hide, &CEntity::execHide, FFunction::GENERAL, nullptr, 0, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
+#undef CLASS_NEXT_FUNCTION
+#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CEntity, Hide)
+
+DECLARE_FUNCTION_PROPERTY(CEntity, "Show", "", Show, &CEntity::execShow, FFunction::GENERAL, nullptr, 0, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
+#undef CLASS_NEXT_FUNCTION
+#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CEntity, Show)
+
+DECLARE_FUNCTION_PROPERTY(CEntity, "Enable", "", inputEnable, &CEntity::execinputEnable, FFunction::GENERAL, nullptr, 0, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
+#undef CLASS_NEXT_FUNCTION
+#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CEntity, inputEnable)
+
+DECLARE_FUNCTION_PROPERTY(CEntity, "Disable", "", inputDisable, &CEntity::execinputDisable, FFunction::GENERAL, nullptr, 0, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
+#undef CLASS_NEXT_FUNCTION
+#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CEntity, inputDisable)
+
+static FFuncArg _funcArgs_CEntity_inputSetHealth[] = {
+	{ "health", EVT_FLOAT, VTAG_NONE, nullptr },
+};
+
+DECLARE_FUNCTION_PROPERTY(CEntity, "SetHealth", "", inputSetHealth, &CEntity::execinputSetHealth, FFunction::GENERAL, _funcArgs_CEntity_inputSetHealth, 1, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
+#undef CLASS_NEXT_FUNCTION
+#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CEntity, inputSetHealth)
+
 class FClass_CEntity : public FClass
 {
 public:
@@ -276,7 +352,7 @@ public:
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
 		BaseClass = CObject::StaticClass();
-		numFunctions = 0;
+		numFunctions = 12;
 		FunctionList = CLASS_NEXT_FUNCTION;
 		flags = CTAG_NONE;
 		GetModule_Engine().RegisterFClass(this);
@@ -289,3 +365,75 @@ FClass* CEntity::StaticClass() { return &__FClass_CEntity_Instance; }
 
 #undef CLASS_NEXT_PROPERTY
 #undef CLASS_NEXT_FUNCTION
+
+void CEntity::execSetWorldPosition(CObject* obj, FStack& stack)
+{
+	POP_STACK_VARIABLE(FVector, p);
+	((CEntity*)obj)->SetWorldPosition(p);
+}
+
+void CEntity::execSetPosition(CObject* obj, FStack& stack)
+{
+	POP_STACK_VARIABLE(FVector, p);
+	((CEntity*)obj)->SetPosition(p);
+}
+
+void CEntity::execSetWorldRotation(CObject* obj, FStack& stack)
+{
+	POP_STACK_VARIABLE(FQuaternion, r);
+	((CEntity*)obj)->SetWorldRotation(r);
+}
+
+void CEntity::execSetRotation(CObject* obj, FStack& stack)
+{
+	POP_STACK_VARIABLE(FQuaternion, r);
+	((CEntity*)obj)->SetRotation(r);
+}
+
+void CEntity::execSetWorldScale(CObject* obj, FStack& stack)
+{
+	POP_STACK_VARIABLE(FVector, s);
+	((CEntity*)obj)->SetWorldScale(s);
+}
+
+void CEntity::execSetScale(CObject* obj, FStack& stack)
+{
+	POP_STACK_VARIABLE(FVector, s);
+	((CEntity*)obj)->SetScale(s);
+}
+
+void CEntity::outputOnStart()
+{
+	FireOutput("OnStart");
+}
+
+void CEntity::execoutputOnStart(CObject* obj, FStack& stack)
+{
+	((CEntity*)obj)->outputOnStart();
+}
+
+void CEntity::execHide(CObject* obj, FStack& stack)
+{
+	((CEntity*)obj)->Hide();
+}
+
+void CEntity::execShow(CObject* obj, FStack& stack)
+{
+	((CEntity*)obj)->Show();
+}
+
+void CEntity::execinputEnable(CObject* obj, FStack& stack)
+{
+	((CEntity*)obj)->inputEnable();
+}
+
+void CEntity::execinputDisable(CObject* obj, FStack& stack)
+{
+	((CEntity*)obj)->inputDisable();
+}
+
+void CEntity::execinputSetHealth(CObject* obj, FStack& stack)
+{
+	POP_STACK_VARIABLE(float, health);
+	((CEntity*)obj)->inputSetHealth(health);
+}

@@ -796,6 +796,82 @@ WString CEngine::OSGetDocumentsPath()
 #endif
 }
 
+FString CEngine::OpenFileDialog(const FString& filter /*= FString()*/)
+{
+#ifdef _WIN32
+	OPENFILENAMEA ofn;
+	CHAR szFile[255] = { 0 };
+	CHAR currentDir[255] = { 0 };
+	ZeroMemory(&ofn, sizeof(OPENFILENAMEA));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.lpstrFile = szFile;
+	ofn.nMaxFile = sizeof(szFile);
+
+	if (GetCurrentDirectoryA(255, currentDir))
+		ofn.lpstrInitialDir = currentDir;
+
+	ofn.lpstrFilter = filter.c_str();
+	ofn.nFilterIndex = 1;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+	if (GetOpenFileNameA(&ofn) == TRUE)
+		return ofn.lpstrFile;
+
+	return FString();
+#endif
+}
+
+FString CEngine::SaveFileDialog(const FString& filter /*= FString()*/)
+{
+#ifdef _WIN32
+	OPENFILENAMEA ofn;
+	CHAR szFile[256] = { 0 };
+	CHAR currentDir[256] = { 0 };
+	ZeroMemory(&ofn, sizeof(OPENFILENAMEA));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.lpstrFile = szFile;
+	ofn.nMaxFile = sizeof(szFile);
+
+	if (GetCurrentDirectoryA(256, currentDir))
+		ofn.lpstrInitialDir = currentDir;
+
+	ofn.lpstrFilter = filter.c_str();
+	ofn.nFilterIndex = 1;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+	ofn.lpstrDefExt = strchr(filter.c_str(), '\0') + 1;
+
+	if (GetSaveFileNameA(&ofn) == TRUE)
+		return ofn.lpstrFile;
+
+	return FString();
+#endif
+}
+
+FString CEngine::OpenFolderDialog()
+{
+#ifdef _WIN32
+	BROWSEINFO bi = { 0 };
+	LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+
+	CHAR currentDir[256] = { 0 };
+	if (GetCurrentDirectoryA(256, currentDir))
+		bi.lParam = (LPARAM)currentDir;
+
+	if (pidl != NULL)
+	{
+		TCHAR path[MAX_PATH];
+		if (SHGetPathFromIDList(pidl, path))
+		{
+			FString sPath = path;
+			return sPath;
+		}
+	}
+
+	return FString();
+#endif
+}
+
 int CEngine::ExecuteProgram(const WString& cmd)
 {
 #if PLATFORM_WINDOWS

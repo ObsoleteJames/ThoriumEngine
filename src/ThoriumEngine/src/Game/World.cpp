@@ -344,6 +344,7 @@ void CWorld::OnDelete()
 		w->Delete();
 
 	delete renderScene;
+	renderScene = nullptr;
 
 	subWorlds.Clear();
 

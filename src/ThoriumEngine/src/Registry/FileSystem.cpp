@@ -469,3 +469,11 @@ FFile::~FFile()
 {
 	CResourceManager::OnResourceFileDeleted(this);
 }
+
+CFStream FFile::GetSdkStream(const char* mode)
+{
+	WString sdkPath = GetSdkPath();
+	if (sdkPath.IsEmpty())
+		return CFStream();
+	return CFStream(ToFString(sdkPath), mode);
+}

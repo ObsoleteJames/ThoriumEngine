@@ -249,9 +249,11 @@
     <ClInclude Include="src\Layers\ConsoleWidget.h" />
     <ClInclude Include="src\Layers\InputOutputWidget.h" />
     <ClInclude Include="src\Layers\MaterialEditor.h" />
+    <ClInclude Include="src\Layers\ModelEditor.h" />
     <ClInclude Include="src\Layers\ObjectDebugger.h" />
     <ClInclude Include="src\Layers\ProjectSettings.h" />
     <ClInclude Include="src\Layers\PropertyEditor.h" />
+    <ClInclude Include="src\Layers\TextureViewer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetBrowserWidget.cpp" />
@@ -263,10 +265,14 @@
     <ClCompile Include="src\Layers\ConsoleWidget.cpp" />
     <ClCompile Include="src\Layers\InputOutputWidget.cpp" />
     <ClCompile Include="src\Layers\MaterialEditor.cpp" />
+    <ClCompile Include="src\Layers\ModelEditor.cpp" />
     <ClCompile Include="src\Layers\ObjectDebugger.cpp" />
     <ClCompile Include="src\Layers\ProjectSettings.cpp" />
     <ClCompile Include="src\Layers\PropertyEditor.cpp" />
+    <ClCompile Include="src\Layers\TextureViewer.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Misc\ShaderContextMenu.cpp" />
+    <ClCompile Include="src\Misc\TextureImporter.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

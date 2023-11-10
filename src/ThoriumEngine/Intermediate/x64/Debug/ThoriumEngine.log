@@ -1,7 +1,14 @@
-﻿  Path: F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine
+﻿  Path: F:/MyProjects/VS_Projects/ThoriumEngine/src/ThoriumEngine
   Running HeaderTool for project: Engine
+  Generating build file for 'F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\Build.cfg'
   Engine.init.cpp
-  DebugRenderer.cpp
+  Renderer.cpp
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Rendering\Renderer.cpp(449,29): warning C4244: '=': conversion from 'uint64' to 'uint32', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Rendering\Renderer.cpp(548,29): warning C4244: '=': conversion from 'uint64' to 'uint32', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Rendering\Renderer.cpp(679,95): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Rendering\Renderer.cpp(679,69): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Rendering\Renderer.cpp(679,52): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\src\Rendering\Renderer.cpp(681,20): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
   Generating Code...
   ThoriumEngine.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.dll
   F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\Engine.dll

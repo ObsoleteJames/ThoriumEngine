@@ -144,7 +144,11 @@ bool ImGui::AssetPtrWidget(const char* label, TObjectPtr<CAsset>** values, int n
 	ImGui::Button("Browse");
 
 	ImGui::SetCursorScreenPos(p + ImVec2(0, 28));
-	ImGui::Text(label);
+	FString l = label;
+	if (auto i = l.Find("##"); i != -1)
+		l.Erase(l.begin() + i, l.end());
+
+	ImGui::Text(l.c_str());
 
 	return r;
 }

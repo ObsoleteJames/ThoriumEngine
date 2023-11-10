@@ -197,46 +197,81 @@ void FMath::RayCylinderIntersection(const FVector& cylinderCenter, const FVector
 
 bool FMath::RayTriangle(const FVector& v0, const FVector& v1, const FVector& v2, const FRay& ray, float& t, FVector* outPos /*= nullptr*/, FVector* outNormal /*= nullptr*/)
 {
+	//---------- METHOD 1 ----------
+	//FVector v0v1 = v1 - v0;
+	//FVector v0v2 = v2 - v0;
+	//FVector N = FVector::Cross(v0v1, v0v2);
+	//float area2 = N.Magnitude();
+
+	//float NdotDir = FVector::Dot(N, ray.direction);
+	//if (Abs(NdotDir) < 0.0001f)
+	//	return false;
+
+	//float d = -FVector::Dot(N, v0);
+	//t = -(FVector::Dot(N, ray.origin) + d) / NdotDir;
+
+	//if (t < 0)
+	//	return false;
+
+	//FVector P = ray.origin + t * ray.direction;
+	//FVector C;
+
+	//FVector edge0 = v1 - v0;
+	//FVector vp0 = P - v0;
+	//C = FVector::Cross(edge0, vp0);
+	//if (FVector::Dot(N, C) < 0)
+	//	return false;
+
+	//FVector edge1 = v2 - v1;
+	//FVector vp1 = P - v1;
+	//C = FVector::Cross(edge1, vp1);
+	//if (FVector::Dot(N, C) < 0)
+	//	return false;
+
+	//FVector edge2 = v0 - v2;
+	//FVector vp2 = P - v2;
+	//C = FVector::Cross(edge2, vp2);
+	//if (FVector::Dot(N, C) < 0)
+	//	return false;
+
+	//if (outPos)
+	//	*outPos = ray.origin + ray.direction * t;
+	//if (outNormal)
+	//	*outNormal = N;
+
+	//return true;
+
+	//---------- METHOD 2 ----------
 	FVector v0v1 = v1 - v0;
 	FVector v0v2 = v2 - v0;
+	FVector pvec = FVector::Cross(ray.direction, v0v2);
+	float det = FVector::Dot(v0v1, pvec);
+
+	if (det < 0.000001 && det > -0.0000001)
+		return false;
+
+	float invDet = 1.f / det;
+	FVector tvec = ray.origin - v0;
+
+	float u = FVector::Dot(tvec, pvec) * invDet;
+
+	if (u < 0.f || u > 1.f)
+		return false;
+
+	FVector qvec = FVector::Cross(tvec, v0v1);
+
+	float v = FVector::Dot(ray.direction, qvec) * invDet;
+
+	if (v < 0 || u + v > 1)
+		return false;
+
+	t = FVector::Dot(v0v2, qvec) * invDet;
 	FVector N = FVector::Cross(v0v1, v0v2);
-	float area2 = N.Magnitude();
-
-	float NdotDir = FVector::Dot(N, ray.direction);
-	if (Abs(NdotDir) < 0.0001f)
-		return false;
-
-	float d = -FVector::Dot(N, v0);
-	t = -(FVector::Dot(N, ray.origin) + d) / NdotDir;
-
-	if (t < 0)
-		return false;
-
-	FVector P = ray.origin + t * ray.direction;
-	FVector C;
-
-	FVector edge0 = v1 - v0;
-	FVector vp0 = P - v0;
-	C = FVector::Cross(edge0, vp0);
-	if (FVector::Dot(N, C) < 0)
-		return false;
-
-	FVector edge1 = v2 - v1;
-	FVector vp1 = P - v1;
-	C = FVector::Cross(edge1, vp1);
-	if (FVector::Dot(N, C) < 0)
-		return false;
-
-	FVector edge2 = v0 - v2;
-	FVector vp2 = P - v2;
-	C = FVector::Cross(edge2, vp2);
-	if (FVector::Dot(N, C) < 0)
-		return false;
 
 	if (outPos)
-		*outPos = ray.origin + ray.direction * t;
+		*outPos = ray.origin + (ray.direction * t);
 	if (outNormal)
-		*outNormal = N;
+		*outNormal = N.Normalize();
 
 	return true;
 }
@@ -248,7 +283,29 @@ bool FMath::RaySphere(const FVector& pos, float radius, const FRay& ray, FVector
 
 bool FMath::RayAABB(const FBounds& aabb, const FRay& ray, FVector* outPos /*= nullptr*/, FVector* outNormal /*= nullptr*/)
 {
-	return false;
+	//FVector p = aabb.Clamp(ray.origin);
+	//FVector pd = (p - ray.origin).Normalize();
+	//float t = FVector::Dot(pd, ray.direction);
+
+	//if (t > 0.0001 || t < -0.0001)
+	//	return false;
+
+	FVector tMin = (aabb.Min() - ray.origin) / ray.direction;
+	FVector tMax = (aabb.Max() - ray.origin) / ray.direction;
+
+	FVector t1 = FVector(Min(tMin.x, tMax.x), Min(tMin.y, tMax.y), Min(tMin.z, tMax.z));
+	FVector t2 = FVector(Max(tMin.x, tMax.x), Max(tMin.y, tMax.y), Max(tMin.z, tMax.z));
+
+	float tNear = Max(Max(t1.x, t1.y), t1.z);
+	float tFar = Min(Min(t2.x, t2.y), t2.z);
+
+	if (tNear > tFar)
+		return false;
+
+	if (outPos)
+		*outPos = ray.origin + ray.direction * tNear;
+
+	return true;
 }
 
 bool FMath::RayBox(const FBounds& box, const FQuaternion& rot, const FRay& ray, FVector* outPos /*= nullptr*/, FVector* outNormal /*= nullptr*/)

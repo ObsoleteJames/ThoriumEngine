@@ -35,6 +35,7 @@ public:
 	FMatrix view;
 	FMatrix projection;
 
+	bool bOrthographic = false;
 	float fov = 70.f;
 	float nearPlane = 0.1f;
 	float farPlane = 10000.f;
@@ -101,8 +102,9 @@ public:
 	inline bool CastShadows() const { return bCastShadows; }
 	inline bool ReceiveShadows() const { return bReceiveShadows; }
 
-	inline const FVector& GetPosition() const { return position; }
-	inline const FMatrix& GetTransform() const { return transform; }
+	inline const FVector& GetPosition() const { return transform.position; }
+	inline const FTransform& GetTransform() const { return transform; }
+	inline const FMatrix& GetMatrix() const { return matrix; }
 	inline const TArray<FMatrix>& GetSkeletonMatrices() const { return skeletonMatrices; }
 
 	inline const FBounds& Bounds() const { return bounds; }
@@ -114,8 +116,8 @@ protected:
 
 	FBounds bounds;
 
-	FVector position;
-	FMatrix transform;
+	FTransform transform;
+	FMatrix matrix;
 	TArray<FMatrix> skeletonMatrices;
 
 	bool bHasLod;

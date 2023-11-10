@@ -36,7 +36,7 @@ struct FBodyGroup
 	TArray<FBodyGroupOption> options;
 };
 
-ASSET(Extension = ".thmdl")
+ASSET(Extension = ".thmdl", ImportableAs = ".fbx;.obj;.gltf")
 class ENGINE_API CModelAsset : public CAsset
 {
 	GENERATED_BODY()

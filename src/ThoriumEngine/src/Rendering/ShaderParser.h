@@ -12,6 +12,7 @@ struct ENGINE_API FShaderSourceFile
 		FString internalName;
 		FString uiGroup;
 		SizeType bufferOffset;
+		FString initValue;
 		int type;
 		int uiType;
 	};

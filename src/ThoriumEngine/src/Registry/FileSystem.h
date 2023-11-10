@@ -94,10 +94,7 @@ public:
 		return new CFStream(mod->Path() + L"\\" + Path(), ToWString(mode).c_str());
 	}
 
-	inline CFStream GetSdkStream(const char* mode)
-	{
-		return CFStream(ToFString(GetSdkPath()), mode);
-	}
+	CFStream GetSdkStream(const char* mode);
 
 	inline WString GetSdkPath() const { if (mod->HasSdkContent()) { return mod->GetSdkPath() + L"\\" + Path() + L".meta"; } return WString(); }
 

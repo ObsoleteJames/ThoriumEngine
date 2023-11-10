@@ -40,6 +40,7 @@ void CPropertyEditor::OnUIRender()
 			else if (selectedEntities[0] != prevEnt)
 			{
 				prevEnt = selectedEntities[0];
+				rotCache = prevEnt->RootComponent()->GetRotation().ToEuler().Degrees();
 				selectedComp = nullptr;
 			}
 
@@ -214,6 +215,9 @@ void CPropertyEditor::OnUIRender()
 					if (ImGui::Selectable(("##_compSelect" + c->Name() + FString::ToString((SizeType)c)).c_str(), bSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap))
 					{
 						selectedComp = c;
+
+						if (auto* sc = Cast<CSceneComponent>(c); sc)
+							rotCache = sc->GetRotation().ToEuler().Degrees();
 					}
 					ImGui::PopStyleColor();
 					ImGui::SameLine();
@@ -847,17 +851,17 @@ void CPropertyEditor::RenderQuatProperty(SizeType offset, bool bReadOnly)
 		bool bUpdate = false;
 
 		ImGui::SetNextItemWidth(tWidth);
-		bUpdate = ImGui::DragFloat(("##_vectorInputX" + FString::ToString(offset + (SizeType)v)).c_str(), &euler.x, 0.1f, 0, 0, "X:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0);
+		bUpdate = ImGui::DragFloat(("##_vectorInputX" + FString::ToString(offset + (SizeType)v)).c_str(), &rotCache.x, 0.1f, 0, 0, "X:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0);
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(tWidth);
-		bUpdate = ImGui::DragFloat(("##_vectorInputY" + FString::ToString(offset + (SizeType)v)).c_str(), &euler.y, 0.1f, 0, 0, "Y:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0) || bUpdate;
+		bUpdate = ImGui::DragFloat(("##_vectorInputY" + FString::ToString(offset + (SizeType)v)).c_str(), &rotCache.y, 0.1f, 0, 0, "Y:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0) || bUpdate;
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(tWidth);
-		bUpdate = ImGui::DragFloat(("##_vectorInputZ" + FString::ToString(offset + (SizeType)v)).c_str(), &euler.z, 0.1f, 0, 0, "Z:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0) || bUpdate;
+		bUpdate = ImGui::DragFloat(("##_vectorInputZ" + FString::ToString(offset + (SizeType)v)).c_str(), &rotCache.z, 0.1f, 0, 0, "Z:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0) || bUpdate;
 
 		if (bUpdate)
 		{
-			*v = FQuaternion::EulerAngles(euler.Radians());
+			*v = FQuaternion::EulerAngles(rotCache.Radians());
 		}
 	}
 }

@@ -62,6 +62,9 @@ private:
 	void InitEditorData();
 
 	void DoMousePick();
+	// Handle asset dropping
+	void DoMaterialDrop(TObjectPtr<CMaterial> mat, bool bPeek);
+	void DoModelAssetDrop(TObjectPtr<CModelAsset> mdl, bool bPeek);
 
 	void OnLevelChange();
 	
@@ -70,7 +73,6 @@ private:
 	void DrawSelectionDebug();
 
 	void OutlinerDrawEntity(CEntity* ent, bool bRoot = true);
-	void DrawAssetBrowser();
 
 public:
 	IFrameBuffer* sceneFrameBuffer;

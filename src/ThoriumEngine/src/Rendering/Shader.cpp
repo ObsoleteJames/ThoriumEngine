@@ -5,7 +5,8 @@
 
 #include <Util/FStream.h>
 
-#define THCS_VERSION 6
+#define THCS_VERSION_06 6
+#define THCS_VERSION 7
 
 #define THCS_MAGIC_SIZE 28
 static const char* thcsMagicStr = "\0\0ThoriumEngine Shader File\0";
@@ -101,7 +102,7 @@ void CShaderSource::Init()
 	uint16 version;
 	*stream >> &version;
 	
-	if (version != THCS_VERSION)
+	if (version != THCS_VERSION && version != THCS_VERSION_06)
 	{
 		if (version == 5)
 		{
@@ -131,6 +132,7 @@ void CShaderSource::Init()
 		FString pUiGroup;
 		FShaderProperty::UiType pUiType;
 		SizeType pBufferOffset;
+		FString initValue;
 
 		*stream >> pName;
 		*stream >> pDisplayName;
@@ -139,15 +141,17 @@ void CShaderSource::Init()
 		*stream >> pUiGroup;
 		*stream >> &pUiType;
 		*stream >> &pBufferOffset;
+		if (version > THCS_VERSION_06)
+			*stream >> initValue;
 
 		if (pType > FShaderProperty::VEC4)
 		{
-			FShaderTexture tex{ pName, pDisplayName, (uint8)pBufferOffset, pUiGroup };
+			FShaderTexture tex{ pName, pDisplayName, (uint8)pBufferOffset, pUiGroup, initValue };
 			textures.Add(tex);
 		}
 		else
 		{
-			FShaderProperty p{ pName, pDisplayName, pDescription, pUiGroup, (FShaderProperty::EType)pType, (FShaderProperty::UiType)pUiType, pBufferOffset };
+			FShaderProperty p{ pName, pDisplayName, pDescription, pUiGroup, initValue, (FShaderProperty::EType)pType, (FShaderProperty::UiType)pUiType, pBufferOffset };
 			properties.Add(p);
 		}
 	}
@@ -190,6 +194,7 @@ void CShaderSource::Save()
 		*stream << p.UiGroup;
 		*stream << &p.uiType;
 		*stream << &p.offset;
+		*stream << p.initValue;
 	}
 	for (auto& t : textures)
 	{
@@ -206,6 +211,7 @@ void CShaderSource::Save()
 		*stream << t.UiGroup;
 		*stream << &pUiType;
 		*stream << &reg;
+		*stream << t.initValue;
 	}
 }
 
@@ -290,19 +296,19 @@ bool CShaderSource::Compile()
 	properties.Clear();
 	textures.Clear();
 
-	properties.Add({ "vColorTint", "Color Tint", "", "Color", FShaderProperty::VEC4, FShaderProperty::COLOR, 0 });
-	properties.Add({ "vNormalIntensity", "Normal Map Strength", "", "Normal", FShaderProperty::FLOAT, FShaderProperty::SLIDER, 16 });
-	properties.Add({ "vAlpha", "Alpha", "", "Color", FShaderProperty::FLOAT, FShaderProperty::SLIDER, 20 });
+	properties.Add({ "vColorTint", "Color Tint", "", "Color", "{ 1, 1, 1, 1 }", FShaderProperty::VEC4, FShaderProperty::COLOR, 0 });
+	properties.Add({ "vNormalIntensity", "Normal Map Strength", "", "Normal", FString(), FShaderProperty::FLOAT, FShaderProperty::SLIDER, 16 });
+	properties.Add({ "vAlpha", "Alpha", "", "Color", "1.0", FShaderProperty::FLOAT, FShaderProperty::SLIDER, 20 });
 
-	textures.Add({ "vBaseColor", "Base Color", 5, "Color" });
-	textures.Add({ "vNormalMap", "Normal Map", 6, "Normal" });
+	textures.Add({ "vBaseColor", "Base Color", 5, "Color", "Color(1, 1, 1, 1)"});
+	textures.Add({ "vNormalMap", "Normal Map", 6, "Normal", "misc\\normal_flat.thtex" });
 
 	for (auto& p : shader.properties)
 	{
 		if (p.type > FShaderProperty::VEC4)
-			textures.Add({ p.internalName, p.name, (uint8)p.bufferOffset });
+			textures.Add({ p.internalName, p.name, (uint8)p.bufferOffset, p.initValue });
 		else
-			properties.Add({ p.internalName, p.name, p.description, p.uiGroup, (FShaderProperty::EType)p.type, (FShaderProperty::UiType)p.uiType, p.bufferOffset });
+			properties.Add({ p.internalName, p.name, p.description, p.uiGroup, p.initValue, (FShaderProperty::EType)p.type, (FShaderProperty::UiType)p.uiType, p.bufferOffset });
 	}
 
 	Save();
@@ -375,12 +381,12 @@ void CShaderSource::LoadVersion05(IBaseFStream* stream)
 
 		if (pType > FShaderProperty::VEC4)
 		{
-			FShaderTexture tex{ pName, pName, (uint8)pBufferOffset, pUiGroup };
+			FShaderTexture tex{ pName, pName, (uint8)pBufferOffset, FString(), pUiGroup};
 			textures.Add(tex);
 		}
 		else
 		{
-			FShaderProperty p{ pName, pName, pDescription, pUiGroup, (FShaderProperty::EType)pType, (FShaderProperty::UiType)pUiType, pBufferOffset};
+			FShaderProperty p{ pName, pName, pDescription, pUiGroup, FString(), (FShaderProperty::EType)pType, (FShaderProperty::UiType)pUiType, pBufferOffset};
 			properties.Add(p);
 		}
 	}

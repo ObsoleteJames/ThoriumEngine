@@ -6,7 +6,7 @@
 class IPhysicsWorld;
 
 CLASS(Abstract)
-class IPhysicsApi : public CObject
+class ENGINE_API IPhysicsApi : public CObject
 {
 	GENERATED_BODY()
 

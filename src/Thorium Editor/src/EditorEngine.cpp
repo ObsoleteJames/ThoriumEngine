@@ -16,6 +16,8 @@
 #include "Game/GameInstance.h"
 #include "Game/Input/InputManager.h"
 #include "Game/Components/CameraComponent.h"
+#include "Game/Components/ModelComponent.h"
+#include "Game/Entities/ModelEntity.h"
 #include "Resources/Material.h"
 #include "Resources/Scene.h"
 #include "Misc/Timer.h"
@@ -29,6 +31,7 @@
 #include "Layers/ObjectDebugger.h"
 #include "Layers/MaterialEditor.h"
 #include "Layers/AddonsWindow.h"
+#include "Layers/ModelEditor.h"
 
 #include <map>
 
@@ -323,7 +326,8 @@ void CEditorEngine::UpdateEditor()
 		if (ImGui::BeginMenu("Tools"))
 		{
 			ImGui::MenuItem("Data Asset Editor");
-			ImGui::MenuItem("Model Creator");
+			if (ImGui::MenuItem("Model Editor"))
+				AddLayer<CModelEditor>();
 			if (ImGui::MenuItem("Material Editor"))
 				AddLayer<CMaterialEditor>();
 
@@ -438,7 +442,7 @@ void CEditorEngine::UpdateEditor()
 		wndSize = ImGui::GetContentRegionAvail();
 		cursorPos = ImGui::GetCursorScreenPos();
 		viewportX = cursorPos.x;
-		viewportY = cursorPos.y;
+		viewportY = cursorPos.y - 24.f;
 
 		DirectXFrameBuffer* fb = (DirectXFrameBuffer*)sceneFrameBuffer;
 		ImGui::Image(fb->view, { wndSize.x, wndSize.y });
@@ -446,6 +450,7 @@ void CEditorEngine::UpdateEditor()
 		if (ImGui::BeginDragDropTarget())
 		{
 			const ImGuiPayload* content = ImGui::AcceptDragDropPayload("THORIUM_ASSET_FILE");
+			const ImGuiPayload* peek = ImGui::AcceptDragDropPayload("THORIUM_ASSET_FILE", ImGuiDragDropFlags_AcceptPeekOnly);
 			if (content)
 			{
 				FFile* file = *(FFile**)content->Data;
@@ -453,6 +458,26 @@ void CEditorEngine::UpdateEditor()
 				if (type == (FAssetClass*)CScene::StaticClass())
 				{
 					LoadWorld(file->Path());
+				}
+				if (type == (FAssetClass*)CMaterial::StaticClass())
+				{
+					CMaterial* mat = CResourceManager::GetResource<CMaterial>(file->Path());
+					DoMaterialDrop(mat, false);
+				}
+				if (type == (FAssetClass*)CModelAsset::StaticClass())
+				{
+					CModelAsset* mdl = CResourceManager::GetResource<CModelAsset>(file->Path());
+					DoModelAssetDrop(mdl, false);
+				}
+			}
+			if (peek)
+			{
+				FFile* file = *(FFile**)peek->Data;
+				FAssetClass* type = CResourceManager::GetResourceTypeByFile(file);
+				if (type == (FAssetClass*)CMaterial::StaticClass())
+				{
+					CMaterial* mat = CResourceManager::GetResource<CMaterial>(file->Path());
+					DoMaterialDrop(mat, true);
 				}
 			}
 			ImGui::EndDragDropTarget();
@@ -465,6 +490,49 @@ void CEditorEngine::UpdateEditor()
 
 		if (ImGui::IsItemClicked() && !bIsPlaying)
 			DoMousePick();
+
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.75f, 0.75f, 0.75f, 0.5f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.6f, 0.6f, 0.6f, 0.7f));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.6f, 0.6f, 0.6f, 0.3f));
+		ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1, 1, 1, 0.25f));
+		ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
+
+		ImGui::SetCursorScreenPos(cursorPos + ImVec2(8, 8));
+
+		ImGui::SetNextItemWidth(24);
+		ImGui::Button("=##_buttonCameraSettings");
+
+		if (ImGui::BeginPopupContextItem(nullptr, ImGuiPopupFlags_MouseButtonLeft))
+		{
+			ImGui::PopStyleVar();
+			ImGui::DragFloat("FOV", &editorCamera->fov, 1.f, 25, 160);
+			ImGui::DragFloat("Near Clip", &editorCamera->nearPlane, 0.1f, 0.001f, 10000.f);
+			ImGui::DragFloat("Far Clip", &editorCamera->farPlane, 0.1f, 0.001f, 10000.f);
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
+			ImGui::EndPopup();
+		}
+
+		ImGui::SetNextItemWidth(24);
+		ImGui::SameLine();
+		ImGui::Button("View##_renderSettings");
+
+		if (ImGui::BeginPopupContextItem(nullptr, ImGuiPopupFlags_MouseButtonLeft))
+		{
+			ImGui::PopStyleVar();
+			if (ImGui::MenuItem("Lit"))
+				CConsole::Exec("r.materialmode 0");
+			if (ImGui::MenuItem("Unlit"))
+				CConsole::Exec("r.materialmode 1");
+			if (ImGui::MenuItem("Normal"))
+				CConsole::Exec("r.materialmode 2");
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
+			ImGui::EndPopup();
+		}
+
+		ImGui::PopStyleVar();
+		ImGui::PopStyleColor(4);
 
 		//ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0.5, 0, 1));
 		//ImGui::RenderText(cursorPos + ImGui::GetStyle().FramePadding, "Hello!!");
@@ -716,11 +784,13 @@ void CEditorEngine::DoMousePick()
 	if (!gWorld)
 		return;
 
-	FRay ray = FRay::MouseToRay(editorCamera, InputManager()->GetMousePos(), { (float)viewportWidth, (float)viewportHeight });
+	FRay ray = FRay::MouseToRay(editorCamera, InputManager()->GetMousePos() - FVector2(viewportX, viewportY), { (float)viewportWidth, (float)viewportHeight });
+	ray.direction = ray.direction.Normalize();
 
 	auto* scene = gWorld->GetRenderScene();
 
 	FPrimitiveHitInfo hit;
+
 	if (scene->RayCast(ray.origin, ray.direction, &hit))
 	{
 		CEntity* ent = nullptr;
@@ -731,12 +801,11 @@ void CEditorEngine::DoMousePick()
 			ent = comp->GetEntity();
 		}
 
-		gDebugRenderer->DrawLine(ray.origin, hit.position, FColor::green, 3, true);
-		gDebugRenderer->DrawLine(ray.origin, ray.origin + ray.direction * 2.f, FColor::red, 3, true);
-		gDebugRenderer->DrawBox(FTransform(ray.origin + ray.direction * 2.f, FQuaternion(), FVector(0.1f)), FColor::red.WithAlpha(0.3f), DebugDrawType_Wireframe, 3);
-		gDebugRenderer->DrawBox(FTransform(hit.position, FQuaternion(), FVector(0.1f)), FColor::cyan.WithAlpha(0.3f), DebugDrawType_Solid, 3);
+		//gDebugRenderer->DrawLine(ray.origin, hit.position, FColor::green, 3, true);
+		//gDebugRenderer->DrawLine(ray.origin, ray.origin + ray.direction * 2.f, FColor::red, 3, true);
+		//gDebugRenderer->DrawLine(hit.position, hit.position + hit.normal, FColor::navy_blue, 6, true);
 
-		gDebugRenderer->DrawLine(FVector::zero, FVector::up, FColor::red, 5, true);
+		//gDebugRenderer->DrawBox(FTransform(hit.position, FQuaternion(), FVector(0.02f)), FColor::cyan.WithAlpha(0.3f), DebugDrawType_Solid | DebugDrawType_Overlay, 3);
 
 		if (ent)
 		{
@@ -750,6 +819,92 @@ void CEditorEngine::DoMousePick()
 			else
 				SetSelectedEntity(ent);
 		}
+	}
+	else
+		SetSelectedEntity(nullptr);
+}
+
+void CEditorEngine::DoMaterialDrop(TObjectPtr<CMaterial> mat, bool bPeek)
+{
+	if (bPeek)
+	{
+		//static FPrimitiveHitInfo prevHit{};
+		//static CMaterial* prevMat = nullptr;
+
+		//FPrimitiveHitInfo hit;
+		//auto* scene = gWorld->GetRenderScene();
+		//FRay ray = FRay::MouseToRay(editorCamera, InputManager()->GetMousePos() - FVector2(viewportX, viewportY), { (float)viewportWidth, (float)viewportHeight });
+		//ray.direction = ray.direction.Normalize();
+
+		//if (scene->RayCast(ray.origin, ray.direction, &hit))
+		//{
+		//	if (prevHit.hitProxy && (prevHit.hitProxy != hit.hitProxy || prevHit.materialIndex != hit.materialIndex))
+		//	{
+		//		TObjectPtr<CObject> obj = prevHit.hitProxy->GetOwner();
+		//		if (auto comp = CastChecked<CModelComponent>(obj); comp)
+		//		{
+		//			comp->SetMaterial(prevMat, hit.materialIndex);
+		//		}
+		//	}
+
+		//	TObjectPtr<CObject> obj = hit.hitProxy->GetOwner();
+		//	if (auto comp = CastChecked<CModelComponent>(obj); comp)
+		//	{
+		//		if (prevHit.hitProxy != hit.hitProxy || prevHit.materialIndex != hit.materialIndex)
+		//			prevMat = comp->GetMaterial(hit.materialIndex);
+
+		//		comp->SetMaterial(mat, hit.materialIndex);
+		//	}
+
+		//	prevHit = hit;
+		//}
+		//else if (prevHit.hitProxy)
+		//{
+		//	TObjectPtr<CObject> obj = prevHit.hitProxy->GetOwner();
+		//	if (auto comp = CastChecked<CModelComponent>(obj); comp)
+		//	{
+		//		comp->SetMaterial(prevMat, prevHit.materialIndex);
+		//	}
+		//}
+	}
+	else
+	{
+		FPrimitiveHitInfo hit;
+		auto* scene = gWorld->GetRenderScene();
+		FRay ray = FRay::MouseToRay(editorCamera, InputManager()->GetMousePos() - FVector2(viewportX, viewportY), { (float)viewportWidth, (float)viewportHeight });
+		ray.direction = ray.direction.Normalize();
+
+		if (scene->RayCast(ray.origin, ray.direction, &hit))
+		{
+			TObjectPtr<CObject> obj = hit.hitProxy->GetOwner();
+			if (auto comp = CastChecked<CModelComponent>(obj); comp)
+			{
+				comp->SetMaterial(mat, hit.materialIndex);
+			}
+		}
+	}
+}
+
+void CEditorEngine::DoModelAssetDrop(TObjectPtr<CModelAsset> mdl, bool bPeek)
+{
+	if (bPeek)
+	{
+		
+
+	}
+	else
+	{
+		FPrimitiveHitInfo hit;
+		auto* scene = gWorld->GetRenderScene();
+		FRay ray = FRay::MouseToRay(editorCamera, InputManager()->GetMousePos() - FVector2(viewportX, viewportY), { (float)viewportWidth, (float)viewportHeight });
+		ray.direction = ray.direction.Normalize();
+
+		if (!scene->RayCast(ray.origin, ray.direction, &hit))
+			hit.position = ray.origin + ray.direction;
+
+		CModelEntity* mdlEnt = gWorld->CreateEntity<CModelEntity>(mdl->Name() + " Entity");
+		mdlEnt->SetModel(mdl);
+		mdlEnt->SetPosition(hit.position);
 	}
 }
 
@@ -868,7 +1023,8 @@ void CEditorEngine::RemoveSelectedEntity(CEntity* ent)
 void CEditorEngine::SetSelectedEntity(CEntity* ent)
 {
 	selectedEntities.Clear();
-	selectedEntities.Add(ent);
+	if (ent)
+		selectedEntities.Add(ent);
 	selectedObject = ent;
 }
 
@@ -966,9 +1122,4 @@ void CEditorEngine::OutlinerDrawEntity(CEntity* ent, bool bRoot)
 		ImGui::TableNextColumn();
 		ImGui::Text(type.c_str());
 	}
-}
-
-void CEditorEngine::DrawAssetBrowser()
-{
-
 }

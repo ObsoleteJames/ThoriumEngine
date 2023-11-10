@@ -40,6 +40,14 @@ struct FMacro
 
 		return -1;
 	}
+	FString* ArgValue(const FString& key)
+	{
+		for (SizeType i = 0; i < Arguments.Size(); i++)
+			if (Arguments[i].Key == key)
+				return &Arguments[i].Value;
+
+		return nullptr;
+	}
 };
 
 struct FEnumVariable
@@ -67,6 +75,8 @@ struct CppProperty : public CppField
 
 	bool bPrivate : 1;
 	bool bPointer : 1;
+	bool bConst : 1;
+	bool bRef : 1;
 	bool bTemplateType : 1;
 	bool bStatic : 1;
 };
@@ -76,7 +86,7 @@ struct CppFunction : public CppField
 	enum EType
 	{
 		GENERAL,
-		INPUT,
+		OUTPUT,
 		COMMAND,
 		SERVER_RPC,
 		CLIENT_RPC,

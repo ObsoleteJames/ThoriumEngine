@@ -2,7 +2,7 @@
 #include "Object/Class.h"
 #include "Object/ObjectMacros.h"
 
-#define Engine_Bounds_h_9_GeneratedBody \
+#define Engine_Bounds_h_10_GeneratedBody \
 DECLARE_STRUCT(FBounds, Engine)
 
 

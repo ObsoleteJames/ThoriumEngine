@@ -24,7 +24,7 @@ enum class EPhysicsLayer
 };
 
 CLASS(Abstract)
-class IPhysicsWorld : public CObject
+class ENGINE_API IPhysicsWorld : public CObject
 {
 	GENERATED_BODY()
 

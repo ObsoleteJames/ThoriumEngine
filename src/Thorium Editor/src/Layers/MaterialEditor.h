@@ -3,6 +3,8 @@
 #include "Layer.h"
 #include "EngineCore.h"
 #include "Object/Object.h"
+#include "Resources/Material.h"
+#include <map>
 
 class CWorld;
 class CModelEntity;
@@ -35,6 +37,10 @@ protected:
 
 	void DrawProperties();
 
+	void UpdateCache();
+
+	void Revert();
+
 private:
 	void OnSaveOpenMaterial(int result);
 	void OnSaveExit(int result);
@@ -61,13 +67,24 @@ private:
 	FString openMatId;
 	FString saveMatId;
 
-	float sizeL = 260;
+	float sizeL = 360;
 	float sizeR = 200;
 
 	int viewportWidth, viewportHeight;
 	float viewportX = 0.f, viewportY = 0.f;
 
-private:
 	funcSaveCallback saveCallback = nullptr;
+
+private:
+	struct PropertyCache
+	{
+		int type = 0; // 0 = property, 1 = texture
+		union {
+			CMaterial::MatProperty* prop;
+			CMaterial::MatTexture* tex;
+		};
+	};
+
+	std::multimap<std::string, PropertyCache> cache;
 
 };

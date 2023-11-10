@@ -509,13 +509,19 @@ void CopyHeaders(FKeyValue& buildCfg, const FString& source, const FString& out)
 		FString file = h;
 		file.Erase(file.begin(), file.begin() + source.Size());
 
+		FString outFile = out + file;
+
+		FString outDir = outFile;
+		outDir.Erase(outDir.begin() + outDir.FindLastOf("\\/"), outDir.end());
+
 		try
 		{
-			std::filesystem::copy(h.c_str(), (out + file).c_str(), std::filesystem::copy_options::overwrite_existing);
+			std::filesystem::create_directories(outDir.c_str());
+			std::filesystem::copy(h.c_str(), outFile.c_str(), std::filesystem::copy_options::overwrite_existing);
 		}
 		catch (std::exception e)
 		{
-			std::cerr << "error: " << e.what() << std::endl;
+			std::cerr << "error: " << e.what() << " in: " << h.c_str() << " - out: " << (out + file).c_str() << std::endl;
 		}
 	}
 }

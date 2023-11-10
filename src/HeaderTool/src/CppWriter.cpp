@@ -20,7 +20,7 @@ TArray<FHeaderData> Headers;
 
 const char* funcCommmandTypes[] = {
 	"GENERAL",
-	"INPUT",
+	"OUTPUT",
 	"COMMAND",
 	"SERVER_RPC",
 	"CLIENT_RPC",
@@ -161,7 +161,7 @@ void CParser::WriteGeneratedHeader(const FHeaderData& data)
 			//	continue;
 			//}
 
-			bool bRequiresImpl = f.type != CppFunction::GENERAL && f.type != CppFunction::COMMAND && f.type != CppFunction::INPUT;
+			bool bRequiresImpl = f.type != CppFunction::COMMAND && f.type != CppFunction::GENERAL && f.type != CppFunction::OUTPUT;
 
 			stream << "DECLARE_EXEC_FUNCTION(" << f.name.c_str() << ")\\\n";
 			
@@ -449,37 +449,74 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 
 			FString CmdType = funcCommmandTypes[f.type];
 
+			if (f.Arguments.Size() > 0)
+			{
+				stream << "static FFuncArg _funcArgs_" << Class.name.c_str() << "_" << f.name.c_str() << "[] = {\n";
+
+				for (auto& arg : f.Arguments)
+				{
+					FString typeId = GetVariableType(arg);
+					if (typeId == "EVT_END" || typeId == "EVT_ARRAY" || typeId == "EVT_MAP")
+					{
+						std::cerr << "ERROR: invalid function arg '" << arg.name.c_str() << "'  '" << Class.name.c_str() << "::" << f.name.c_str() << "'!\n";
+						continue;
+					}
+
+					FString flags = "VTAG_NONE";
+					if (arg.bPointer)
+						flags += " | VTAG_TYPE_POINTER";
+
+					FString objType = "nullptr";
+					if (typeId == "EVT_CLASS")
+						objType = arg.typeName + "::StaticClass()";
+					else if (typeId == "EVT_STRUCT")
+						objType = arg.typeName + "::StaticStruct()";
+
+					stream << "\t{ \"" << arg.name.c_str() << "\", " << typeId.c_str() << ", " << flags.c_str() << ", " << objType.c_str() << " },\n";
+				}
+
+				stream << "};\n\n";
+			}
+
 			stream << "DECLARE_FUNCTION_PROPERTY("
 				<< Class.name.c_str() << ", \""
 				<< displayName.c_str() << "\", \""
 				<< f.comment.c_str() << "\", "
 				<< f.name.c_str() << ", "
 				<< "&" << Class.name.c_str() << "::exec" << f.name.c_str() << ", "
-				<< "FFunction::" << CmdType.c_str() << ", { ";
+				<< "FFunction::" << CmdType.c_str();
+			if (f.Arguments.Size() > 0)
+				stream << ", _funcArgs_" << Class.name.c_str() << "_" << f.name.c_str() << ", " << f.Arguments.Size() << ", ";
+			else
+				stream << ", nullptr, 0, ";
 
-			for (auto& arg : f.Arguments)
-			{
-				FString typeId = GetVariableType(arg);
-				if (typeId == "EVT_END")
-				{
-					std::cerr << "ERROR: invalid function arg '" << arg.name.c_str() << "'  '" << Class.name.c_str() << "::" << f.name.c_str() << "'!\n";
-					continue;
-				}
+			//for (auto& arg : f.Arguments)
+			//{
+			//	FString typeId = GetVariableType(arg);
+			//	if (typeId == "EVT_END" || typeId == "EVT_ARRAY" || typeId == "EVT_MAP")
+			//	{
+			//		std::cerr << "ERROR: invalid function arg '" << arg.name.c_str() << "'  '" << Class.name.c_str() << "::" << f.name.c_str() << "'!\n";
+			//		continue;
+			//	}
 
-				FString flags = "VTAG_NONE";
-				if (arg.bPointer)
-					flags += " | VTAG_TYPE_POINTER";
+			//	FString flags = "VTAG_NONE";
+			//	if (arg.bPointer)
+			//		flags += " | VTAG_TYPE_POINTER";
 
-				FString objType = "nullptr";
-				if (typeId == "EVT_CLASS")
-					objType = arg.typeName + "::StaticClass()";
-				else if (typeId == "EVT_STRUCT")
-					objType = arg.typeName + "::StaticStruct()";
+			//	FString objType = "nullptr";
+			//	if (typeId == "EVT_CLASS")
+			//		objType = arg.typeName + "::StaticClass()";
+			//	else if (typeId == "EVT_STRUCT")
+			//		objType = arg.typeName + "::StaticStruct()";
 
-				stream << "{ \"" << arg.name.c_str() << "\", " << typeId.c_str() << ", " << flags.c_str() << ", " << objType.c_str() << " }, ";
-			}
+			//	stream << "{ \"" << arg.name.c_str() << "\", " << typeId.c_str() << ", " << flags.c_str() << ", " << objType.c_str() << " }, ";
+			//}
 
-			stream << "}, " << (f.bStatic ? "1" : "0") << ")\n";
+			FString funcFlags = "FunctionFlags_NONE";
+			if (f.macro.ArgIndex("NoEntityInput") == -1)
+				funcFlags += " | FunctionFlags_ALLOW_AS_INPUT";
+
+			stream << (f.bStatic ? "1" : "0") << ", " << funcFlags.c_str() << ")\n";
 			stream << "#undef CLASS_NEXT_FUNCTION\n" << "#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(" << Class.name.c_str() << ", " << f.name.c_str() << ")\n\n";
 		}
 
@@ -608,9 +645,20 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			bool bIsNetFunc = f.type == CppFunction::SERVER_RPC || f.type == f.type == CppFunction::CLIENT_RPC || f.type == CppFunction::MUTLICAST_RPC;
 			bool bHasImpl = bIsNetFunc;
 
+			FString displayName;
+			if (SizeType dnI = f.macro.ArgIndex("Name"); dnI == -1)
+				displayName = GetDisplayName(f.name);
+			else
+				displayName = f.macro.Arguments[dnI].Value;
+
 			if (bIsNetFunc)
 			{
 
+			}
+
+			if (f.type == CppFunction::OUTPUT)
+			{
+				stream << "\nvoid " << Class.name.c_str() << "::" << f.name.c_str() << "()\n{\n\tFireOutput(\"" << displayName.c_str() << "\");\n}\n";
 			}
 
 			stream << "\nvoid " << Class.name.c_str() << "::exec" << f.name.c_str() << "(CObject* obj, FStack& stack)\n{\n";
@@ -625,7 +673,7 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 				if (it->bPointer)
 					typeName += "*";
 
-				stream << "\tPOP_STACK_VARIABLE(" << typeName.c_str() << ", " << it->name.c_str() << ");";
+				stream << "\tPOP_STACK_VARIABLE(" << typeName.c_str() << ", " << it->name.c_str() << ");\n";
 			}
 			stream << "\t((" << Class.name.c_str() << "*)obj)->" << f.name.c_str();
 			if (bHasImpl)

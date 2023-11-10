@@ -350,7 +350,7 @@ FQuaternion operator*(const FQuaternion& a, const FQuaternion& b)
 
 FVector operator*(const FVector& a, const FMatrix& b)
 {
-	return glm::vec3((glm::mat4x4)b * glm::vec4((glm::vec3)a, 0.f));
+	return glm::vec3((glm::mat4x4)b * glm::vec4((glm::vec3)a, 1.f));
 }
 
 FRay FRay::MouseToRay(CCameraProxy* cam, FVector2 mouse, IBaseWindow* window)

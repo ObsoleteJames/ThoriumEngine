@@ -27,10 +27,13 @@ public:
 		int lodLevel = model->GetModel()->GetLodFromDistance(distanceFromCamera);
 		model->GetModel()->Load(lodLevel);
 
-		position = model->GetWorldPosition();
-		transform = FMatrix(1.f).Translate(position).Scale(model->GetWorldScale()) * model->GetWorldRotation();
+		transform.position = model->GetWorldPosition();
+		transform.rotation = model->GetWorldRotation();
+		transform.scale = model->GetWorldScale();
+		matrix = FMatrix(1.f).Translate(transform.position).Scale(transform.scale) * transform.rotation;
 		meshes = model->GetVisibleMeshes(lodLevel);
 		materials.Resize(model->GetMaterials().Size());
+		bounds = model->Bounds();
 		
 		for (SizeType i = 0; i < materials.Size(); i++)
 		{
@@ -45,7 +48,7 @@ public:
 		for (auto& m : meshes)
 		{
 			TObjectPtr<CMaterial> mat = (m.materialIndex < materials.Size() && materials[m.materialIndex]) ? materials[m.materialIndex] : CResourceManager::GetResource<CMaterial>(L"materials\\error.thmat");
-			out.DrawMesh(m, mat, transform, skeletonMatrices);
+			out.DrawMesh(m, mat, matrix, skeletonMatrices);
 		}
 	}
 
@@ -54,8 +57,8 @@ public:
 
 	TArray<TObjectPtr<CMaterial>> materials;
 	TArray<FMesh> meshes;
-	FMatrix transform;
-	TArray<FMatrix> skeletonMatrices;
+	//FMatrix transform;
+	//TArray<FMatrix> skeletonMatrices;
 
 };
 

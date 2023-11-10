@@ -32,9 +32,9 @@ enum ETextureFilter
 
 struct FTextureImportSettings
 {
-	uint numMipMaps = 5;
-	ETextureFormat format;
-	ETextureFilter filter;
+	uint numMipMaps = 12;
+	ETextureFormat format = THTX_FORMAT_AUTO_COMPRESSED;
+	ETextureFilter filter = THTX_FILTER_ANISOTROPIC;
 };
 
 ASSET(Extension = ".thtex", ImportableAs = ".png;.jpg;.tga")
@@ -60,6 +60,12 @@ public:
 
 	inline int GetWidth() const { return width; }
 	inline int GetHeight() const { return height; }
+
+	inline ETextureFormat Format() const { return format; }
+	inline ETextureFilter FilterType() const { return filteringType; }
+	inline uint8 MipMapCount() const { return numMipmaps; }
+
+	inline SizeType DataSize() const { return dataSize; }
 
 	inline ITexture2D* GetTextureObject() const { return tex; }
 

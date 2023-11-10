@@ -1,8 +1,9 @@
 
 #include "RenderScene.h"
 #include "RenderProxies.h"
+#include "Math/Transform.h"
 
-bool CRenderScene::RayCast(const FVector& pos, const FVector& dir, FPrimitiveHitInfo* outHit, float maxDistance /*= 0.f*/)
+bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitiveHitInfo* outHit, float maxDistance /*= 0.f*/)
 {
 	float closesthit = FLT_MAX;
 	bool r = false;
@@ -13,6 +14,9 @@ bool CRenderScene::RayCast(const FVector& pos, const FVector& dir, FPrimitiveHit
 	{
 		FMeshBuilder mb;
 		p->GetDynamicMeshes(mb);
+
+		if (!FMath::RayAABB(p->Bounds(), FRay(raypos, dir)))
+			continue;
 
 		for (auto& m : mb.GetMeshes())
 		{
@@ -42,7 +46,7 @@ bool CRenderScene::RayCast(const FVector& pos, const FVector& dir, FPrimitiveHit
 				FVector pos;
 				FVector normal;
 
-				bool bHit = FMath::RayTriangle(v0, v1, v2, FRay(pos, dir), dist, &pos, &normal);
+				bool bHit = FMath::RayTriangle(v0, v1, v2, FRay(raypos, dir), dist, &pos, &normal);
 				if (bHit && dist < closesthit && dist > 0.f)
 				{
 					r = true;
@@ -53,11 +57,46 @@ bool CRenderScene::RayCast(const FVector& pos, const FVector& dir, FPrimitiveHit
 						outHit->hitProxy = p;
 						outHit->normal = normal;
 						outHit->position = pos;
+						outHit->hitFace = i * 3;
+						outHit->materialIndex = mesh.materialIndex;
 					}
 				}
 			}
 		}
 	}
 
+	return r;
+}
+
+bool CRenderScene::RayCastBounds(const FRay& ray, FPrimitiveHitInfo* outHit, float maxDistance /*= 0.f*/)
+{
+	float closesthit = FLT_MAX;
+	bool r = false;
+
+	for (auto* p : primitves)
+	{
+		FMeshBuilder mb;
+		p->GetDynamicMeshes(mb);
+
+		FBounds b = p->Bounds();
+		if (b.Size().Magnitude() == 0.f)
+			continue;
+
+		FVector pos;
+
+		bool bHit = FMath::RayAABB(b, ray, &pos);
+		float dist = FVector::Distance(pos, ray.origin);
+		if (bHit && dist < closesthit && dist > 0.f)
+		{
+			r = true;
+			closesthit = dist;
+			if (outHit)
+			{
+				outHit->distance = dist;
+				outHit->hitProxy = p;
+				outHit->position = pos;
+			}
+		}
+	}
 	return r;
 }

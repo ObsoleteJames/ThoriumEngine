@@ -91,7 +91,7 @@ FBounds CSceneComponent::Bounds() const
 	FVector pos = GetWorldPosition();
 	FVector scale = GetWorldScale();
 
-	r = r.Rotate(rot, -r.position);
+	r = r.Rotate(rot);
 	//r.extents = (rot.Rotate(r.extents) * scale);
 	//r.position = (rot.Rotate(r.position) * scale) + pos;
 	r.extents = r.extents * scale;

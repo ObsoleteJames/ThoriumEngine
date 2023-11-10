@@ -106,7 +106,7 @@ DECLARE_PROPERTY(CModelComponent, "Active Body Groups", activeBodyGroups, "", "i
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
-DECLARE_FUNCTION_PROPERTY(CModelComponent, "OnModelEdit", "", OnModelEdit, &CModelComponent::execOnModelEdit, FFunction::GENERAL, { }, 0)
+DECLARE_FUNCTION_PROPERTY(CModelComponent, "OnModelEdit", "", OnModelEdit, &CModelComponent::execOnModelEdit, FFunction::GENERAL, nullptr, 0, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CModelComponent, OnModelEdit)
 

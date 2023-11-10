@@ -43,8 +43,8 @@
     outPos = mul(vObjectMatrix, outPos); \
     \
     float3x3 normalMat = transpose((float3x3)inverse(mul(skeletonTransform, vObjectMatrix)));\
-    output.vNormalWs = mul(normalMat, output.vNormalWs);\
-    output.vTangentUWs = mul(normalMat, output.vTangentUWs);\
+    output.vNormalWs = normalize(mul(normalMat, output.vNormalWs));\
+    output.vTangentUWs = normalize(mul(normalMat, output.vTangentUWs));\
     output.vTangentVWs = normalize(cross(output.vNormalWs, output.vTangentUWs));\
     \
     output.vPositionWs = (float3)outPos; \

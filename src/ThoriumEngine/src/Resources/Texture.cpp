@@ -222,7 +222,7 @@ void CTexture::Unload(uint8 lodLevel)
 
 bool CTexture::Import(const WString& file, const FTextureImportSettings& settings)
 {
-	if (!this->file)
+	if (!this->file || bLoading)
 		return false;
 
 	FILE* f;
@@ -239,7 +239,8 @@ bool CTexture::Import(const WString& file, const FTextureImportSettings& setting
 		4,
 		4,
 		4,
-		0,
+		4,
+		4,
 		4
 	};
 
@@ -347,6 +348,13 @@ bool CTexture::Import(const WString& file, const FTextureImportSettings& setting
 	//	data = compressedTex;
 	//}
 
+	if (tex)
+	{
+		delete tex;
+		tex = nullptr;
+		curMipMapLevel = numMipmaps;
+	}
+
 	FFile* texFile = this->file;
 	TUniquePtr<IBaseFStream> stream = texFile->GetStream("wb");
 
@@ -378,6 +386,13 @@ bool CTexture::Import(const WString& file, const FTextureImportSettings& setting
 	
 	for (auto& mp : mipMaps)
 		free(mp.Key);
+
+	CFStream sdkStream = texFile->GetSdkStream("wb");
+	if (sdkStream.IsOpen())
+	{
+		sdkStream << file;
+		sdkStream.Close();
+	}
 	
 	return true;
 }

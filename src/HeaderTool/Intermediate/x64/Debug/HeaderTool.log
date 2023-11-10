@@ -1,4 +1,5 @@
-﻿  main.cpp
+﻿  CppWriter.cpp
+F:\MyProjects\VS_Projects\ThoriumEngine\src\HeaderTool\src\CppWriter.cpp(645,92): warning C4806: '==': unsafe operation: no value of type 'bool' promoted to type 'CppFunction::EType' can equal the given constant
   HeaderTool.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\HeaderTool.exe
   F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\HeaderTool.exe
   1 File(s) copied

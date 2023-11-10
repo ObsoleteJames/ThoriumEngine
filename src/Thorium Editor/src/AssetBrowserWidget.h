@@ -7,6 +7,54 @@ struct FMod;
 struct FDirectory;
 class FAssetClass;
 
+enum EBrowserActionType
+{
+	BA_INVALID,
+	BA_OPENFILE, // file has been double clicked
+	BA_FILE_CONTEXTMENU, // draw context menu for file
+	BA_FILE_IMPORT,
+	// BA_FILE_REIMPORT - Use context menu for this
+	BA_FILE_DUPLICATE
+};
+
+struct FBADataBase
+{
+	FFile* file;
+};
+struct FBADataDuplicate : public FBADataBase 
+{
+	FFile* sourceFile;
+};
+struct FBAImportFile : public FBADataBase
+{
+	FString sourceFile;
+	WString outPath;
+	WString outMod;
+};
+
+typedef FBADataBase FBrowserActionData;
+
+class FAssetBrowserAction
+{
+	typedef TArray<FAssetBrowserAction*> FActionList;
+
+public:
+	FAssetBrowserAction();
+
+	virtual void Invoke(FBrowserActionData* data) = 0;
+
+	inline EBrowserActionType Type() const { return type; }
+	inline FAssetClass* TargetClass() const { return targetClass; }
+
+	inline static const FActionList& GetActions() { return actions; }
+
+protected:
+	EBrowserActionType type;
+	FAssetClass* targetClass;
+
+	static FActionList actions;
+};
+
 class CAssetBrowserWidget
 {
 public:
@@ -34,6 +82,8 @@ private:
 	void AddSelectedFile(FFile* file);
 	void RemoveSelectedFile(FFile* file);
 	bool IsFileSelected(FFile* file);
+
+	void ImportAsset();
 
 public:
 	bool bAllowFileEdit = true;

@@ -15,6 +15,7 @@ CModule& GetModule_Engine();
 #ifdef IS_DEV
 static TPair<FString, FString> _FAssetClass_CModelAsset_Tags[] {
 	{ "Extension", ".thmdl" },
+	{ "ImportableAs", ".fbx;.obj;.gltf" },
 };
 #endif
 
@@ -30,10 +31,11 @@ public:
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = true;
 #ifdef IS_DEV
-		numTags = 1;
+		numTags = 2;
 		tags = _FAssetClass_CModelAsset_Tags;
 #endif
 		extension = ".thmdl";
+		importableAs = ".fbx;.obj;.gltf";
 		BaseClass = CAsset::StaticClass();
 		numFunctions = 0;
 		FunctionList = CLASS_NEXT_FUNCTION;

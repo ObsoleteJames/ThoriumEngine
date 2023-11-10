@@ -29,15 +29,16 @@ void CBillboardComponent::Init()
 			mat->SetTexture("vBaseColor", sprite);
 			mat->Load(0);
 
-			position = comp->GetWorldPosition();
-			transform = FMatrix(1.f).Translate(position).Scale(comp->GetWorldScale());
+			transform.position = comp->GetWorldPosition();
+			transform.scale = comp->GetWorldScale();
+			matrix = FMatrix(1.f).Translate(transform.position).Scale(transform.scale);
 		}
 
 		void GetDynamicMeshes(FMeshBuilder& out) override
 		{
 			FMesh mesh{};
 			mesh.numVertices = 6;
-			out.DrawMesh(mesh, mat, transform);
+			out.DrawMesh(mesh, mat, matrix);
 		}
 
 	private:

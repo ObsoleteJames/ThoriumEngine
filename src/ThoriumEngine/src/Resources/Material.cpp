@@ -47,6 +47,9 @@ void CMaterial::Init()
 		return;
 	}
 
+	properties.Clear();
+	textures.Clear();
+
 	FString shaderName;
 	*stream >> shaderName;
 
@@ -455,24 +458,50 @@ void CMaterial::Validate()
 			switch (sp.type)
 			{
 			case FShaderProperty::BOOL:
-				p.pBool = *(bool*)data;
+				if (sp.initValue == "true")
+					p.pBool = true;
+				else if (sp.initValue == "false")
+					p.pBool = false;
+				else
+					p.pBool = *(bool*)data;
 				break;
 			case FShaderProperty::INT:
-				p.pInt = *(int*)data;
+				if (sp.initValue.IsNumber() && !sp.initValue.IsEmpty())
+					p.pInt = std::stoi(sp.initValue.c_str());
+				else
+					p.pInt = *(int*)data;
 				break;
 			case FShaderProperty::FLOAT:
-				p.pFloat = *(float*)data;
+				if (sp.initValue.IsNumber() && !sp.initValue.IsEmpty())
+					p.pFloat = std::stof(sp.initValue.c_str());
+				else
+					p.pFloat = *(float*)data;
 				break;
 			case FShaderProperty::VEC3:
-				p.pVec3[0] = *(float*)data;
-				p.pVec3[1] = *(float*)data;
-				p.pVec3[2] = *(float*)data;
+				if (sp.initValue.IsEmpty())
+				{
+					p.pVec3[0] = *(float*)data;
+					p.pVec3[1] = *(float*)data;
+					p.pVec3[2] = *(float*)data;
+				}
+				else
+				{
+					FVector v = GetVec3FromString(sp.initValue);
+					p.pVec3[0] = v.x;
+					p.pVec3[1] = v.y;
+					p.pVec3[2] = v.z;
+				}
 				break;
 			case FShaderProperty::VEC4:
-				p.pVec4[0] = *(float*)data;
-				p.pVec4[1] = *(float*)data;
-				p.pVec4[2] = *(float*)data;
-				p.pVec4[3] = *(float*)data;
+				if (sp.initValue.IsEmpty())
+				{
+					p.pVec4[0] = *(float*)data;
+					p.pVec4[1] = *(float*)data;
+					p.pVec4[2] = *(float*)data;
+					p.pVec4[3] = *(float*)data;
+				}
+				else
+					GetVec4FromString(sp.initValue, p.pVec4);
 				break;
 			}
 
@@ -497,6 +526,40 @@ void CMaterial::Validate()
 			t.name = st.name;
 			t.registerId = st.registerId;
 			t.tex = nullptr;
+
+			if (st.initValue.IsEmpty())
+			{
+				if (auto i = st.initValue.Find("Color("); i != -1)
+				{
+					t.bIsCustom = true;
+
+					float color[4];
+					FString v = st.initValue;
+					v.Erase(v.begin(), v.begin() + 6);
+
+					GetVec4FromString(v, color);
+
+					t.color[0] = uint8(color[0] * 255.f);
+					t.color[1] = uint8(color[1] * 255.f);
+					t.color[2] = uint8(color[2] * 255.f);
+					t.color[3] = uint8(color[3] * 255.f);
+
+					uint8 data[] = {
+						t.color[0], t.color[1], t.color[2], t.color[3],
+						t.color[0], t.color[1], t.color[2], t.color[3],
+						t.color[0], t.color[1], t.color[2], t.color[3],
+						t.color[0], t.color[1], t.color[2], t.color[3]
+					};
+
+					t.tex = CreateObject<CTexture>();
+					t.tex->Init(data, 2, 2);
+				}
+				else if (!st.initValue.IsEmpty())// else this must be an asset path.
+				{
+					t.bIsCustom = false;
+					t.tex = CResourceManager::GetResource<CTexture>(ToWString(st.initValue));
+				}
+			}
 
 			textures.Add(t);
 		}
@@ -531,4 +594,81 @@ FShaderTexture* CMaterial::GetShaderTexture(MatTexture& prop)
 	}
 
 	return nullptr;
+}
+
+FVector CMaterial::GetVec3FromString(const FString& str)
+{
+	FVector r;
+	int chI = 0;
+	for (int i = 0; i < 3; i++)
+	{
+		FString value;
+		for (; chI < str.Size(); chI++)
+		{
+			if (str[chI] == '{' || str[chI] == '(')
+				continue;
+			if (str[chI] == '}' || str[chI] == ')')
+				break;
+
+			if (str[chI] == ' ' || str[chI] == '\t')
+				continue;
+
+			if (str[chI] == ',')
+			{
+				chI++;
+				break;
+			}
+
+			value += str[chI];
+		}
+
+		if (!value.IsNumber())
+			continue;
+
+		switch (i)
+		{
+		case 0:
+			r.x = std::stof(value.c_str());
+			break;
+		case 1:
+			r.y = std::stof(value.c_str());
+			break;
+		case 2:
+			r.z = std::stof(value.c_str());
+			break;
+		}
+	}
+	return r;
+}
+
+void CMaterial::GetVec4FromString(const FString& str, float* out)
+{
+	int chI = 0;
+	for (int i = 0; i < 4; i++)
+	{
+		FString value;
+		for (; chI < str.Size(); chI++)
+		{
+			if (str[chI] == '{' || str[chI] == '(')
+				continue;
+			if (str[chI] == '}' || str[chI] == ')')
+				break;
+
+			if (str[chI] == ' ' || str[chI] == '\t')
+				continue;
+
+			if (str[chI] == ',')
+			{
+				chI++;
+				break;
+			}
+
+			value += str[chI];
+		}
+
+		if (value.IsEmpty() || !value.IsNumber())
+			out[i] = 0.f;
+		else
+			out[i] = std::stof(value.c_str());
+	}
 }

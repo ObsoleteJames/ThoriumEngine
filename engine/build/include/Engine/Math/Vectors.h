@@ -204,7 +204,11 @@ struct ENGINE_API FRay
 	GENERATED_BODY()
 
 public:
-	static FRay MouseToRay(CCameraProxy* cam, float mousex, float mousey, IBaseWindow* window);
+	FRay() = default;
+	inline FRay(FVector pos, FVector dir) : origin(pos), direction(dir) {}
+
+	static FRay MouseToRay(CCameraProxy* cam, FVector2 mouse, IBaseWindow* window);
+	static FRay MouseToRay(CCameraProxy* cam, FVector2 mouse, FVector2 wndSize);
 
 public:
 	PROPERTY(Editable)
@@ -245,9 +249,11 @@ public:
 	FMatrix& operator *=(const FMatrix& other);
 	FMatrix& operator *=(const FQuaternion& quat);
 
+
 public:
 	float v[16] = { 0.f };
 };
 
+FVector operator*(const FVector& a, const FMatrix& b);
 inline FMatrix operator*(const FMatrix& a, const FMatrix& b) { return FMatrix(a) *= b; }
 inline FMatrix operator*(const FMatrix& a, const FQuaternion& b) { return FMatrix(a) *= b; }

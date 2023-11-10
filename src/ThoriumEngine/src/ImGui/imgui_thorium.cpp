@@ -122,3 +122,8 @@ bool ImGui::Splitter(const char* _id, bool bVertical, float thickness, float* si
 	//bb.Max = bb.Min + CalcItemSize(bVertical ? ImVec2(thickness, -1) : ImVec2(-1, thickness), 0.0f, 0.0f);
 	//return SplitterBehavior(bb, id, bVertical ? ImGuiAxis_X : ImGuiAxis_Y, size0, size1, padding, padding, 0.0f);
 }
+
+void ImGui::Text(const FString& txt)
+{
+	ImGui::Text(txt.c_str());
+}

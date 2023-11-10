@@ -41,7 +41,7 @@ public:
 	void DrawText3D(const FVector& pos, const FString& text, const FColor& col = FColor(), float time = 0.f, bool bOverlay = false);
 
 	// Set RenderScene for the next draw call, by default the gWorld's RenderScene is used.
-	void SetNextRenderScene(CRenderScene* scene);
+	void SetScene(CRenderScene* scene);
 
 private:
 	void Render();

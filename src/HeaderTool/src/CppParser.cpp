@@ -658,6 +658,16 @@ int CParser::ParseHeader(FHeaderData& data)
 						p.bPointer = true;
 						p.typeName.Erase(p.typeName.At(i));
 					}
+					if (SizeType i = p.typeName.FindLastOf('&'); i != -1)
+					{
+						p.bRef = true;
+						p.typeName.Erase(p.typeName.At(i));
+					}
+					if (SizeType i = p.typeName.Find("const "); i != -1)
+					{
+						p.bConst = true;
+						p.typeName.Erase(p.typeName.begin() + i, p.typeName.begin() + i + 6);
+					}
 
 					func.Arguments.Add(p);
 					p = CppProperty();
@@ -695,11 +705,11 @@ int CParser::ParseHeader(FHeaderData& data)
 
 							funcRM = 1;
 						}
-						else if (keyword == 1)
-						{
-							std::cerr << "ERROR - Invalid function! line: " << CurLine << "\n";
-							return 5;
-						}
+						//else if (keyword != 2)
+						//{
+						//	std::cerr << "ERROR - Invalid function! line: " << CurLine << "\n";
+						//	return 5;
+						//}
 						else if (keyword == 2)
 							func.bStatic = true;
 					}
@@ -731,11 +741,11 @@ int CParser::ParseHeader(FHeaderData& data)
 					goto funcErr;
 				else
 					type = CppFunction::MUTLICAST_RPC;
-			if (func.macro.ArgIndex("Input") != -1)
+			if (func.macro.ArgIndex("Output") != -1)
 				if (type > 0)
 					goto funcErr;
 				else
-					type = CppFunction::INPUT;
+					type = CppFunction::OUTPUT;
 			if (func.macro.ArgIndex("ConCmd") != -1)
 				if (type > 0)
 					goto funcErr;
@@ -746,7 +756,7 @@ int CParser::ParseHeader(FHeaderData& data)
 
 			goto endFunc;
 		funcErr:
-			std::cerr << "error: function can only be of one type line:" << std::to_string(CurLine) << " '" << data.FilePath.c_str() << "'" << std::endl;
+			std::cerr << "error: function can only be of one type! line:" << std::to_string(CurLine) << " '" << data.FilePath.c_str() << "'" << std::endl;
 
 		endFunc:
 			continue;

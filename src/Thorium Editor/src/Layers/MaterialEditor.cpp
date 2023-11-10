@@ -1,4 +1,5 @@
 
+#include <string>
 #include "EditorEngine.h"
 #include "MaterialEditor.h"
 #include "Resources/ResourceManager.h"
@@ -10,6 +11,7 @@
 #include "Game/Components/SkyboxComponent.h"
 #include "Rendering/RenderScene.h"
 #include "Rendering/RenderProxies.h"
+#include "AssetBrowserWidget.h"
 
 #include "FileDialogs.h"
 
@@ -20,6 +22,22 @@
 #include "ImGui/imgui_internal.h"
 #include "ImGui/imgui_thorium.h"
 #include "EditorWidgets.h"
+
+class FMaterialOpenAction : public FAssetBrowserAction
+{
+public:
+	FMaterialOpenAction()
+	{
+		type = BA_OPENFILE;
+		targetClass = (FAssetClass*)CMaterial::StaticClass();
+	}
+
+	void Invoke(FBrowserActionData* data) override
+	{
+		auto* editor = gEditorEngine()->AddLayer<CMaterialEditor>();
+		editor->SetMaterial(CResourceManager::GetResource<CMaterial>(data->file->Path()));
+	}
+} static FMaterialOpenAction_instance;
 
 CMaterialEditor::CMaterialEditor()
 {
@@ -56,6 +74,8 @@ void CMaterialEditor::SetMaterial(CMaterial* m, bool bNew)
 {
 	mat = m;
 	bSaved = !bNew;
+
+	UpdateCache();
 }
 
 void CMaterialEditor::OnUpdate(double dt)
@@ -64,8 +84,8 @@ void CMaterialEditor::OnUpdate(double dt)
 	fbView->GetSize(w, h);
 	if (w != viewportWidth || h != viewportHeight)
 	{
-		fbView->Resize(viewportWidth, viewportHeight);
-		dbView->Resize(viewportWidth, viewportHeight);
+		fbView->Resize(FMath::Max(viewportWidth, 16), FMath::Max(viewportHeight, 16));
+		dbView->Resize(FMath::Max(viewportWidth, 16), FMath::Max(viewportHeight, 16));
 	}
 
 	scene->Update(dt);
@@ -120,7 +140,7 @@ void CMaterialEditor::OnUIRender()
 				if (ImGui::MenuItem("Open", "Ctrl+O"))
 					openPopup = 2;
 				if (ImGui::MenuItem("Save", "Ctrl+S"))
-					SaveMat();
+					openPopup = 3;
 				ImGui::MenuItem("Save As");
 
 				ImGui::EndMenu();
@@ -130,7 +150,8 @@ void CMaterialEditor::OnUIRender()
 			{
 				ImGui::MenuItem("Undo");
 				ImGui::MenuItem("Redo");
-				ImGui::MenuItem("Revert");
+				if (ImGui::MenuItem("Revert"))
+					Revert();
 
 				ImGui::EndMenu();
 			}
@@ -139,7 +160,7 @@ void CMaterialEditor::OnUIRender()
 		}
 
 		if (ImGui::IsWindowFocused() && ImGui::IsKeyPressed(ImGuiKey_S) && ImGui::IsKeyDown(ImGuiKey_ModCtrl))
-			SaveMat();
+			openPopup = 3;
 
 		if (ImGui::IsWindowFocused() && ImGui::IsKeyPressed(ImGuiKey_N) && ImGui::IsKeyDown(ImGuiKey_ModCtrl))
 			OnSaveNewMaterial(1);
@@ -156,12 +177,10 @@ void CMaterialEditor::OnUIRender()
 				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 0.4));
 				ImGui::Text("No material loaded");
 				ImGui::PopStyleColor();
-				goto mateditorPropEnd;
 			}
 			else
 				DrawProperties();
 		}
-	mateditorPropEnd:
 		ImGui::EndChild();
 
 		ImGui::SameLine();
@@ -199,6 +218,10 @@ void CMaterialEditor::OnUIRender()
 		else
 			ThFileDialog::OpenFile(openMatId, (FAssetClass*)CMaterial::StaticClass());
 	}
+	else if (openPopup == 3)
+	{
+		SaveMat();
+	}
 
 	if (!bOpen)
 	{
@@ -220,8 +243,8 @@ void CMaterialEditor::OnUIRender()
 
 		if (ImGui::Button("Save"))
 		{
-			SaveMat();
 			ImGui::CloseCurrentPopup();
+			SaveMat();
 			savePopupResult = 1;
 		}
 
@@ -230,6 +253,7 @@ void CMaterialEditor::OnUIRender()
 		if (ImGui::Button("Don't Save"))
 		{
 			//gEditorEngine()->PollRemoveLayer(this);
+			Revert();
 			ImGui::CloseCurrentPopup();
 			savePopupResult = 2;
 		}
@@ -286,7 +310,10 @@ void CMaterialEditor::DrawProperties()
 		{
 			bool bSelected = s == mat->GetShaderSource();
 			if (ImGui::Selectable(s->shaderName.c_str(), bSelected))
+			{
 				mat->SetShader(s->shaderName);
+				UpdateCache();
+			}
 			if (bSelected)
 				ImGui::SetItemDefaultFocus();
 		}
@@ -294,15 +321,219 @@ void CMaterialEditor::DrawProperties()
 		ImGui::EndCombo();
 	}
 
-	for (auto& t : mat->textures)
+	//for (auto& t : mat->textures)
+	//{
+	//	TObjectPtr<CTexture>* tex = &t.tex;
+	//	if (!t.bIsCustom)
+	//		if (ImGui::AssetPtrWidget(t.name.c_str(), &tex, 1))
+	//			bSaved = false;
+	//}
+
+	if (ImGui::BeginTable("matPropertiesTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY))
 	{
-		TObjectPtr<CTexture>* tex = &t.tex;
-		if (!t.bIsCustom)
-			if (ImGui::AssetPtrWidget(t.name.c_str(), &tex, 1))
-				bSaved = false;
+		FString curCat = cache.size() > 0 ? cache.begin()->first : "";
+		ImGuiTreeNodeFlags treeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAllColumns | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_FrameDontExpand;
+		bool bOpen = ImGui::TableTreeHeader(curCat.c_str(), treeFlags);
+
+		for (auto& p : cache)
+		{
+			if (curCat != p.first)
+			{
+				curCat = p.first;
+				if (bOpen)
+					ImGui::TreePop();
+				bOpen = ImGui::TableTreeHeader(curCat.c_str(), treeFlags);
+			}
+
+			if (!bOpen)
+				continue;
+
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::SetCursorScreenPos(ImGui::GetCursorScreenPos() + ImVec2(0, 4));
+			ImGui::Text(p.second.type == 0 ? p.second.prop->name.c_str() : p.second.tex->name.c_str());
+			ImGui::TableNextColumn();
+
+			if (p.second.type == 1)
+			{
+				auto* t = p.second.tex;
+				TObjectPtr<CTexture>* tex = &p.second.tex->tex;
+				bool bSwitch = false;
+				if (!p.second.tex->bIsCustom)
+				{
+					if (ImGui::AssetPtrWidget(("##_" + p.second.tex->name).c_str(), &tex, 1))
+						bSaved = false;
+					ImGui::SameLine();
+					bSwitch = ImGui::Button(("Color##" + t->name).c_str());
+				}
+				else
+				{
+					float col[4];
+					col[0] = (float)t->color[0] / 255.f;
+					col[1] = (float)t->color[1] / 255.f;
+					col[2] = (float)t->color[2] / 255.f;
+					col[3] = (float)t->color[3] / 255.f;
+					if (ImGui::ColorEdit4(("##_" + t->name).c_str(), col))
+					{
+						t->color[0] = int(col[0] * 255.f);
+						t->color[1] = int(col[1] * 255.f);
+						t->color[3] = int(col[3] * 255.f);
+						t->color[2] = int(col[2] * 255.f);
+						
+						uint8 data[] = {
+							t->color[0], t->color[1], t->color[2], t->color[3],
+							t->color[0], t->color[1], t->color[2], t->color[3],
+							t->color[0], t->color[1], t->color[2], t->color[3],
+							t->color[0], t->color[1], t->color[2], t->color[3]
+						};
+
+						if (!t->tex)
+							t->tex = CreateObject<CTexture>();
+						t->tex->Init(data, 2, 2);
+						bSaved = false;
+					}
+					bSwitch = ImGui::Button(("Texture##" + t->name).c_str());
+				}
+				if (bSwitch)
+				{
+					t->bIsCustom = !t->bIsCustom;
+					t->tex = nullptr;
+					bSaved = false;
+				}
+			}
+			if (p.second.type == 0)
+			{
+				CMaterial::MatProperty* prop = p.second.prop;
+				FShaderProperty* sp = mat->GetShaderProperty(*prop);
+
+				switch (prop->type)
+				{
+				case FShaderProperty::BOOL:
+					if (ImGui::Checkbox(("##_matPBool" + prop->name).c_str(), (bool*)&prop->pBool))
+					{
+						prop->bRequiresUpdate = true;
+						bSaved = false;
+					}
+					break;
+				case FShaderProperty::INT:
+					if (ImGui::DragInt(("##_matPInt" + prop->name).c_str(), &prop->pInt))
+					{
+						prop->bRequiresUpdate = true;
+						bSaved = false;
+					}
+					break;
+				case FShaderProperty::FLOAT:
+					if (ImGui::DragFloat(("##_matPFloat" + prop->name).c_str(), &prop->pFloat, 0.1f))
+					{
+						prop->bRequiresUpdate = true;
+						bSaved = false;
+					}
+					break;
+				case FShaderProperty::VEC3:
+					if (sp->uiType != FShaderProperty::COLOR)
+					{
+						float size = ImGui::GetContentRegionAvail().x / 3 - 15.f;
+						ImGui::SetNextItemWidth(size);
+						if (ImGui::DragFloat(("X##_matPVec3X" + prop->name).c_str(), &prop->pVec3[0], 0.1f))
+						{
+							bSaved = false;
+							prop->bRequiresUpdate = true;
+						}
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(size);
+						if (ImGui::DragFloat(("Y##_matPVec3Y" + prop->name).c_str(), &prop->pVec3[1], 0.1f))
+						{
+							bSaved = false;
+							prop->bRequiresUpdate = true;
+						}
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(size);
+						if (ImGui::DragFloat(("Z##_matPVec3Z" + prop->name).c_str(), &prop->pVec3[2], 0.1f))
+						{
+							bSaved = false;
+							prop->bRequiresUpdate = true;
+						}
+					}
+					else
+					{
+						if (ImGui::ColorEdit3(("##_matPColor3" + prop->name).c_str(), prop->pVec3))
+						{
+							prop->bRequiresUpdate = true;
+							bSaved = false;
+						}
+					}
+					break;
+				case FShaderProperty::VEC4:
+					if (sp->uiType != FShaderProperty::COLOR)
+					{
+						bool bUpdate = false;
+						float size = ImGui::GetContentRegionAvail().x / 3 - 20.f;
+						ImGui::SetNextItemWidth(size);
+						bUpdate = ImGui::DragFloat(("X##_matPVec4X" + prop->name).c_str(), &prop->pVec4[0], 0.1f) || bUpdate;
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(size);
+						bUpdate = ImGui::DragFloat(("Y##_matPVec4Y" + prop->name).c_str(), &prop->pVec4[1], 0.1f) || bUpdate;
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(size);
+						bUpdate = ImGui::DragFloat(("Z##_matPVec4Z" + prop->name).c_str(), &prop->pVec4[2], 0.1f) || bUpdate;
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(size);
+						bUpdate = ImGui::DragFloat(("W##_matPVec4W" + prop->name).c_str(), &prop->pVec4[3], 0.1f) || bUpdate;
+
+						if (bUpdate)
+							prop->bRequiresUpdate = true;
+					}
+					else
+					{
+						if (ImGui::ColorEdit4(("##_matPColor4" + prop->name).c_str(), prop->pVec4))
+						{
+							prop->bRequiresUpdate = true;
+							bSaved = false;
+						}
+					}
+					break;
+				}
+			}
+		}
+
+		if (bOpen)
+			ImGui::TreePop();
+
+		ImGui::EndTable();
 	}
 
+}
 
+void CMaterialEditor::UpdateCache()
+{
+	cache.clear();
+
+	if (!mat)
+		return;
+
+	for (auto& t : mat->textures)
+	{
+		auto* st = mat->GetShaderTexture(t);
+		PropertyCache tc;
+		tc.type = 1;
+		tc.tex = &t;
+		cache.insert(std::make_pair(st->UiGroup.c_str(), tc));
+	}
+
+	for (auto& p : mat->properties)
+	{
+		auto* sp = mat->GetShaderProperty(p);
+		PropertyCache pc;
+		pc.type = 0;
+		pc.prop = &p;
+		cache.insert(std::make_pair(sp->UiGroup.c_str(), pc));
+	}
+}
+
+void CMaterialEditor::Revert()
+{
+	mat->Init();
+	bSaved = true;
 }
 
 void CMaterialEditor::OnSaveOpenMaterial(int result)

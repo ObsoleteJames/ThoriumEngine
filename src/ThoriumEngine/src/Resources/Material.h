@@ -99,6 +99,10 @@ public:
 	FShaderProperty* GetShaderProperty(MatProperty& prop);
 	FShaderTexture* GetShaderTexture(MatTexture& prop);
 
+private:
+	FVector GetVec3FromString(const FString& str);
+	void GetVec4FromString(const FString& str, float* out);
+
 protected:
 	TArray<MatTexture> textures;
 	TArray<MatProperty> properties;

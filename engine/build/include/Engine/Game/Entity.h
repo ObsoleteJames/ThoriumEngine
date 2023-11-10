@@ -98,13 +98,19 @@ public:
 
 	inline CSceneComponent* RootComponent() const { return rootComponent; }
 
+	FUNCTION()
 	inline void SetWorldPosition(const FVector& p) { rootComponent->SetWorldPosition(p); }
+	FUNCTION()
 	inline void SetPosition(const FVector& p) { rootComponent->SetPosition(p); }
 
+	FUNCTION()
 	inline void SetWorldRotation(const FQuaternion& r) { rootComponent->SetWorldRotation(r); }
+	FUNCTION()
 	inline void SetRotation(const FQuaternion& r) { rootComponent->SetRotation(r); }
 
+	FUNCTION()
 	inline void SetWorldScale(const FVector& s) { rootComponent->SetWorldScale(s); }
+	FUNCTION()
 	inline void SetScale(const FVector& s) { rootComponent->SetScale(s); }
 
 	inline FVector GetWorldPosition() const { return rootComponent->GetWorldPosition(); }
@@ -112,6 +118,23 @@ public:
 	inline FVector GetWorldScale() const { return rootComponent->GetWorldScale(); }
 
 	FBounds GetBounds();
+
+private:
+	FUNCTION(Output, Name = "OnStart")
+	void outputOnStart();
+
+	FUNCTION()
+	void Hide() { bIsVisible = false; }
+	FUNCTION()
+	void Show() { bIsVisible = true; }
+
+	FUNCTION(Name = "Enable")
+	void inputEnable() { bIsEnabled = true; }
+	FUNCTION(Name = "Disable")
+	void inputDisable() { bIsEnabled = false; }
+
+	FUNCTION(Name = "SetHealth")
+	void inputSetHealth(float health) { this->health = health; }
 
 protected:
 	virtual void Init();

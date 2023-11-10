@@ -63,12 +63,20 @@ struct FFuncArg
 	void* classPtr;
 };
 
+enum EFunctionFlags_
+{
+	FunctionFlags_NONE = 0,
+	FunctionFlags_ALLOW_AS_INPUT = 1 << 0, // can this function be called from entity IO.
+};
+
+typedef int EFunctionFlags;
+
 struct FFunction : public FBaseField
 {
 	enum EType
 	{
 		GENERAL,
-		INPUT,
+		OUTPUT,
 		COMMAND,
 		SERVER_RPC,
 		CLIENT_RPC,
@@ -78,9 +86,12 @@ struct FFunction : public FBaseField
 	FFunctionExecPtr execFunc;
 	EType type;
 
-	TArray<FFuncArg> Arguments;
+	//TArray<FFuncArg> Arguments;
+	SizeType numArguments;
+	FFuncArg* Arguments;
 
 	bool bStatic : 1;
+	EFunctionFlags flags;
 	FFunction* next;
 };
 

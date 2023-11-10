@@ -40,3 +40,6 @@ private:
 	uint32 rsp; // pointer to the top of the stack
 	uint8* stack = nullptr;
 };
+
+#define STACK_POP_VAR(type, var, stack) type var; \
+	stack.Pop(var)

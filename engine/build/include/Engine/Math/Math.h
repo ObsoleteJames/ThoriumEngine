@@ -5,6 +5,9 @@
 #include <cmath>
 
 struct FVector;
+struct FRay;
+struct FBounds;
+struct FQuaternion;
 
 class ENGINE_API FMath
 {
@@ -60,6 +63,10 @@ public:
 
 	static void RayCylinderIntersection(const FVector& cylinderCenter, const FVector& cylinderDir, double cylinderRadius, double cylinderHeight,
 		const FVector& rayOrigin, const FVector& rayDir, bool& bIntersects, double& out);
+	static bool RayTriangle(const FVector& v0, const FVector& v1, const FVector& v2, const FRay& ray, float& dist, FVector* outPos = nullptr, FVector* outNormal = nullptr);
+	static bool RaySphere(const FVector& pos, float radius, const FRay& ray, FVector* outPos = nullptr, FVector* outNormal = nullptr);
+	static bool RayAABB(const FBounds& aabb, const FRay& ray, FVector* outPos = nullptr, FVector* outNormal = nullptr);
+	static bool RayBox(const FBounds& box, const FQuaternion& rot, const FRay& ray, FVector* outPos = nullptr, FVector* outNormal = nullptr);
 };
 
 template<typename T>

@@ -88,6 +88,10 @@ public:
 	static WString OSGetDataPath();
 	static WString OSGetDocumentsPath();
 
+	static FString OpenFileDialog(const FString& filter = FString());
+	static FString SaveFileDialog(const FString& filter = FString());
+	static FString OpenFolderDialog();
+
 	static int ExecuteProgram(const WString& cmd);
 
 public:

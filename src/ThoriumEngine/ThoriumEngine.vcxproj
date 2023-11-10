@@ -98,7 +98,7 @@
       </DelayLoadDLLs>
     </Link>
     <PreBuildEvent>
-      <Command>"$(OutputPath)HeaderTool.exe" "$(ProjectDir)" -pt 0</Command>
+      <Command>"$(OutputPath)BuildTool.exe" "$(ProjectDir)Build.cfg"</Command>
     </PreBuildEvent>
     <PostBuildEvent>
       <Command>XCOPY $(TargetPath) $(SolutionDir)..\engine\bin\ /y
@@ -184,6 +184,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="Intermediate\generated\Buffers.generated.cpp" />
     <ClCompile Include="Intermediate\generated\CameraComponent.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Canvas.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Color.generated.cpp" />
     <ClCompile Include="Intermediate\generated\DataAsset.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Engine.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Engine.init.cpp" />
@@ -216,6 +217,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClCompile Include="Intermediate\generated\SunLightComponent.generated.cpp" />
     <ClCompile Include="Intermediate\generated\SunLightEntity.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Texture.generated.cpp" />
+    <ClCompile Include="Intermediate\generated\Transform.generated.cpp" />
     <ClCompile Include="Intermediate\generated\TransformGizmoEntity.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Vectors.generated.cpp" />
     <ClCompile Include="Intermediate\generated\Widget.generated.cpp" />

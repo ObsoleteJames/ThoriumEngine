@@ -2,7 +2,7 @@
 #include "Object/Class.h"
 #include "Object/ObjectMacros.h"
 
-#define Engine_Shader_h_55_GeneratedBody \
+#define Engine_Shader_h_57_GeneratedBody \
 DECLARE_CLASS(CShaderSource, CAsset, Engine)
 
 

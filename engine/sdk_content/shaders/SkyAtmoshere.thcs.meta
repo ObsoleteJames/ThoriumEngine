@@ -19,8 +19,8 @@ Global
 		#include "common/pixel_input.hlsl"
 	};
 
-	Property<float3> zenithColor(Name = "Zenith Color", UiGroup = "Atmopshere");
-	Property<float3> horizonColor(Name = "Horizon Color", UiGroup = "Atmosphere");
+	Property<float3> zenithColor(Name = "Zenith Color", UiGroup = "Atmopshere", UiType = COLOR);
+	Property<float3> horizonColor(Name = "Horizon Color", UiGroup = "Atmosphere", UiType = COLOR);
 	Property<float> horizonFalloff(Name = "Falloff", UiGroup = "Atmosphere");
 
 }

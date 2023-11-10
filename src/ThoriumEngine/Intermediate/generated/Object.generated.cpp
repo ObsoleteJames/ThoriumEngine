@@ -80,7 +80,7 @@ DECLARE_PROPERTY(CObject, "Children", Children, "", "CObject", EVT_ARRAY, VTAG_S
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
-DECLARE_FUNCTION_PROPERTY(CObject, "OnNetDelete", "", OnNetDelete, &CObject::execOnNetDelete, FFunction::MULTICAST_RPC, { }, 0)
+DECLARE_FUNCTION_PROPERTY(CObject, "OnNetDelete", "", OnNetDelete, &CObject::execOnNetDelete, FFunction::MULTICAST_RPC, nullptr, 0, 0, FunctionFlags_NONE)
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CObject, OnNetDelete)
 

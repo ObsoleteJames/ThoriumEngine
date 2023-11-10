@@ -8,6 +8,7 @@
 #include "Material.generated.h"
 
 class IShaderBuffer;
+struct FColor;
 
 ASSET(Extension = ".thmat")
 class ENGINE_API CMaterial : public CAsset
@@ -74,6 +75,7 @@ public:
 	inline void SetBool(const FString& property, const bool& value) { SetShaderValue(property, FShaderProperty::BOOL, (void*)&value); }
 	inline void SetVec3(const FString& property, float value[3]) { SetShaderValue(property, FShaderProperty::VEC3, value); }
 	inline void SetVec4(const FString& property, float value[4]) { SetShaderValue(property, FShaderProperty::VEC4, value); }
+	inline void SetColor(const FString& property, const FColor& col) { SetShaderValue(property, FShaderProperty::VEC4, (float*)&col); }
 
 	float GetAlpha();
 	ERenderPass GetRenderPass();
@@ -96,6 +98,10 @@ public:
 public:
 	FShaderProperty* GetShaderProperty(MatProperty& prop);
 	FShaderTexture* GetShaderTexture(MatTexture& prop);
+
+private:
+	FVector GetVec3FromString(const FString& str);
+	void GetVec4FromString(const FString& str, float* out);
 
 protected:
 	TArray<MatTexture> textures;

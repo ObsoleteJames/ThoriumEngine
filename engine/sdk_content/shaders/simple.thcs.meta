@@ -22,8 +22,8 @@ Global
 	//Property<float> vRoughness(Name = "Roughness", UiGroup = "Specular");
 	//Property<float> vMetallic(Name = "Metallic", UiGroup = "Specular");
 
-	Property<Texture2D> vRoughness(Name = "Roughness", UiGroup = "Specular");
-	Property<Texture2D> vMetallic(Name = "Metallic", UiGroup = "Specular");
+	Property<Texture2D> vRoughness(Name = "Roughness", UiGroup = "Specular") = "misc\\grey_127.thtex";
+	Property<Texture2D> vMetallic(Name = "Metallic", UiGroup = "Specular") = "misc\\black.thtex";
 
 	Property<Texture2D> vEmission(Name = "Emmision", UiGroup = "Color");
 	Property<float> vEmissionIntensity(Name = "Emmision Intensity", UiGroup = "Color");

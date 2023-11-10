@@ -35,6 +35,7 @@ struct ENGINE_API FShaderProperty
 	FString displayName;
 	FString description;
 	FString UiGroup;
+	FString initValue;
 
 	EType type;
 	UiType uiType;
@@ -47,6 +48,7 @@ struct ENGINE_API FShaderTexture
 	FString displayName;
 	uint8 registerId;
 	FString UiGroup;
+	FString initValue;
 };
 
 ASSET(Extension = ".thcs", Hidden, AutoLoad)

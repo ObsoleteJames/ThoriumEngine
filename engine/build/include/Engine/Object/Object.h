@@ -164,7 +164,7 @@ protected:
 protected:
 	virtual void OnDelete() {}
 
-	FUNCTION(MulticastRpc)
+	FUNCTION(MulticastRpc, NoEntityInput)
 	void OnNetDelete();
 
 	template<typename T>

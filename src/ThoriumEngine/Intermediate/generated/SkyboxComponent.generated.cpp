@@ -35,7 +35,7 @@ DECLARE_PROPERTY(CSkyboxComponent, "Mat", mat, "", "CMaterial", EVT_OBJECT_PTR, 
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION nullptr
 
-DECLARE_FUNCTION_PROPERTY(CSkyboxComponent, "OnMaterialChanged", "", OnMaterialChanged, &CSkyboxComponent::execOnMaterialChanged, FFunction::GENERAL, { }, 0)
+DECLARE_FUNCTION_PROPERTY(CSkyboxComponent, "OnMaterialChanged", "", OnMaterialChanged, &CSkyboxComponent::execOnMaterialChanged, FFunction::GENERAL, nullptr, 0, 0, FunctionFlags_NONE | FunctionFlags_ALLOW_AS_INPUT)
 #undef CLASS_NEXT_FUNCTION
 #define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(CSkyboxComponent, OnMaterialChanged)
 

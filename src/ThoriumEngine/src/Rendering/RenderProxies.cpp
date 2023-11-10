@@ -13,7 +13,10 @@ void CCameraProxy::CalculateMatrix(float aspectRatio)
 {
 	view = FMatrix(1.f).Translate(position) * rotation;
 	view = view.Inverse();
-	projection = FMatrix::Perspective(FMath::Radians(fov), aspectRatio, nearPlane, farPlane);
+	if (!bOrthographic)
+		projection = FMatrix::Perspective(FMath::Radians(fov), aspectRatio, nearPlane, farPlane);
+	else
+		projection = FMatrix::Orthographic(-(fov * aspectRatio), fov * aspectRatio, -(fov), fov, nearPlane, farPlane);
 }
 
 void FMeshBuilder::DrawLine(const FVector& begin, const FVector& end, const FVector& color /*= { 255, 255, 255 }*/, bool bDepthTest)

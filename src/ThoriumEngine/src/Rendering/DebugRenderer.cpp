@@ -44,7 +44,6 @@ void CDebugRenderer::DrawLine(const FVector& begin, const FVector& end, const FC
 		mat
 	};
 	drawCalls.Add(cmd);
-	scene = nullptr;
 }
 
 void CDebugRenderer::DrawPlane(const FTransform& t, const FColor& col, EDebugDrawType drawType, float time /*= 0.f*/)
@@ -67,7 +66,6 @@ void CDebugRenderer::DrawPlane(const FTransform& t, const FColor& col, EDebugDra
 		mat
 	};
 	drawCalls.Add(cmd);
-	scene = nullptr;
 }
 
 void CDebugRenderer::DrawBox(const FTransform& t, const FColor& col, EDebugDrawType drawType, float time /*= 0.f*/)
@@ -90,7 +88,6 @@ void CDebugRenderer::DrawBox(const FTransform& t, const FColor& col, EDebugDrawT
 		mat
 	};
 	drawCalls.Add(cmd);
-	scene = nullptr;
 }
 
 void CDebugRenderer::DrawCircle(const FVector& pos, const FVector& angle, float radius, const FColor& col, EDebugDrawType drawType, float time /*= 0.f*/)
@@ -118,7 +115,6 @@ void CDebugRenderer::DrawCircle(const FVector& pos, const FVector& angle, float 
 		mat
 	};
 	drawCalls.Add(cmd);
-	scene = nullptr;
 }
 
 void CDebugRenderer::DrawSphere(const FVector& pos, float radius, const FColor& col, EDebugDrawType drawType, float time /*= 0.f*/)
@@ -145,7 +141,6 @@ void CDebugRenderer::DrawSphere(const FVector& pos, float radius, const FColor& 
 		mat
 	};
 	drawCalls.Add(cmd);
-	scene = nullptr;
 }
 
 void CDebugRenderer::DrawCylinder(const FVector& center, const FQuaternion& rot, float height, float radius, const FColor& col, EDebugDrawType drawType, float time /*= 0.f*/)
@@ -172,7 +167,6 @@ void CDebugRenderer::DrawCylinder(const FVector& center, const FQuaternion& rot,
 		mat
 	};
 	drawCalls.Add(cmd);
-	scene = nullptr;
 }
 
 void CDebugRenderer::DrawCapsule(const FVector& center, const FQuaternion& rot, float height, float radius, const FColor& col, EDebugDrawType drawType, float time /*= 0.f*/)
@@ -199,7 +193,6 @@ void CDebugRenderer::DrawCapsule(const FVector& center, const FQuaternion& rot, 
 		mat
 	};
 	drawCalls.Add(cmd);
-	scene = nullptr;
 }
 
 void CDebugRenderer::DrawText(const FVector2& screenPos, const FString& text, const FColor& col /*= FColor()*/, float time /*= 0.f*/)
@@ -218,7 +211,6 @@ void CDebugRenderer::DrawText(const FVector2& screenPos, const FString& text, co
 		GetScene()
 	};
 	drawCalls.Add(cmd);
-	scene = nullptr;
 }
 
 void CDebugRenderer::DrawText3D(const FVector& pos, const FString& text, const FColor& col /*= FColor()*/, float time /*= 0.f*/, bool bOverlay /*= false*/)
@@ -237,10 +229,9 @@ void CDebugRenderer::DrawText3D(const FVector& pos, const FString& text, const F
 		scene
 	};
 	drawCalls.Add(cmd);
-	scene = nullptr;
 }
 
-void CDebugRenderer::SetNextRenderScene(CRenderScene* scene)
+void CDebugRenderer::SetScene(CRenderScene* scene)
 {
 	this->scene = scene;
 }

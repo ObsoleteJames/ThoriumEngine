@@ -49,7 +49,7 @@ static FProperty  EVALUATE_PROPERTY_NAME(TClass, InternalName)##{ DisplayName, #
 
 #define EVALUATE_FUNCTION_NAME(TClass, InternalName) TClass##_##InternalName##_Function
 
-#define DECLARE_FUNCTION_PROPERTY(TClass, DisplayName, Description, InternalName, TFuncPtr, TType, TArgList, isStatic) \
-static FFunction EVALUATE_FUNCTION_NAME(TClass, InternalName)##{ DisplayName, #InternalName, Description, TFuncPtr, TType, ##TArgList, isStatic, CLASS_NEXT_FUNCTION };
+#define DECLARE_FUNCTION_PROPERTY(TClass, DisplayName, Description, InternalName, TFuncPtr, TType, TArgList, TArgCount, isStatic, flags) \
+static FFunction EVALUATE_FUNCTION_NAME(TClass, InternalName)##{ DisplayName, #InternalName, Description, TFuncPtr, TType, TArgCount, TArgList, isStatic, flags, CLASS_NEXT_FUNCTION };
 
-#define POP_STACK_VARIABLE(Type, OutVar) Type OutVar; stack.Pop(&OutVar)
+#define POP_STACK_VARIABLE(Type, OutVar) Type OutVar; stack.Pop(OutVar)

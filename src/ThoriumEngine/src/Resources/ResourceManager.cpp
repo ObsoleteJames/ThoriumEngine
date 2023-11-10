@@ -209,16 +209,25 @@ void CResourceManager::RegisterNewFile(FFile* file)
 
 TObjectPtr<CAsset> CResourceManager::GetResource(FAssetClass* type, const WString& path)
 {
-	CAsset* asset;
+	if (path.IsEmpty())
+		return nullptr;
+
+	CAsset* asset = nullptr;
 	auto it = allocatedResources.find(path);
 	if (it == allocatedResources.end())
 	{
 		auto file = availableResources.find(path);
 		if (file == availableResources.end())
+		{
+			CONSOLE_LogError("CResourceManager", "Failed to get resource '" + ToFString(path) + "', resource doesn't exist!");
 			return nullptr;
+		}
 
 		if (type && file->second.type != type)
+		{
+			CONSOLE_LogError("CResourceManager", "Failed to get resource '" + ToFString(path) + "', Invalid Type! expected " + type->GetName());
 			return nullptr;
+		}
 
 		asset = AllocateResource(file->second.type, path);
 		asset->file = file->second.file;
@@ -229,7 +238,10 @@ TObjectPtr<CAsset> CResourceManager::GetResource(FAssetClass* type, const WStrin
 	{
 		asset = it->second;
 		if ((FAssetClass*)asset->GetClass() != type)
+		{
+			CONSOLE_LogError("CResourceManager", "Failed to get resource '" + ToFString(path) + "', Invalid Type! expected " + type->GetName());
 			return nullptr;
+		}
 	}
 
 	return asset;
