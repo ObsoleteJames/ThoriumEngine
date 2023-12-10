@@ -3,6 +3,7 @@
 #include "RenderScene.h"
 #include "Renderer.h"
 #include "Resources/Material.h"
+#include "PostProcessing.h"
 
 //CCameraProxy::~CCameraProxy()
 //{
@@ -99,17 +100,77 @@ void FMeshBuilder::DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& tr
 	meshes.Add({ mesh, mat, transform, skeletonMatrix, rp });
 }
 
-//CPrimitiveProxy::~CPrimitiveProxy()
-//{
-//	scene->UnregisterPrimitve(this);
-//}
-
 bool CPrimitiveProxy::DoFrustumCull(CCameraProxy* cam)
 {
 	return true;
 }
 
-//CLightProxy::~CLightProxy()
-//{
-//	scene->UnregisterLight(this);
-//}
+bool CPostProcessVolumeProxy::IsCameraInsideVolume(CCameraProxy* proxy) const
+{
+	FVector camPos = proxy->position - bounds.position;
+	camPos = rotation.Rotate(camPos) + bounds.position;
+
+	FVector min = bounds.Min();
+	FVector max = bounds.Max();
+
+	if (camPos.x > min.x && camPos.x < max.x &&
+		camPos.y > min.y && camPos.y < max.y &&
+		camPos.z > min.z && camPos.z < max.z)
+		return true;
+
+	return false;
+}
+
+float CPostProcessVolumeProxy::GetInfluence(CCameraProxy* proxy) const
+{
+	FVector camPos = proxy->position - bounds.position;
+	camPos = rotation.Rotate(camPos) + bounds.position;
+
+	FVector min = bounds.Min();
+	FVector max = bounds.Max();
+
+	float distanceFromEdge = FLT_MAX;
+
+	float distMinX = FMath::Abs(min.x - camPos.x);
+	float distMinY = FMath::Abs(min.y - camPos.y);
+	float distMinZ = FMath::Abs(min.z - camPos.z);
+
+	float distMaxX = FMath::Abs(max.x - camPos.x);
+	float distMaxY = FMath::Abs(max.y - camPos.y);
+	float distMaxZ = FMath::Abs(max.z - camPos.z);
+
+	if (distMinX < distMaxX)
+	{
+		if (distMinX < distanceFromEdge)
+			distanceFromEdge = distMinX;
+	}
+	else
+	{
+		if (distMaxX < distanceFromEdge)
+			distanceFromEdge = distMaxX;
+	}
+
+	if (distMinY < distMaxY)
+	{
+		if (distMinY < distanceFromEdge)
+			distanceFromEdge = distMinY;
+	}
+	else
+	{
+		if (distMaxY < distanceFromEdge)
+			distanceFromEdge = distMaxY;
+	}
+
+	if (distMinZ < distMaxZ)
+	{
+		if (distMinZ < distanceFromEdge)
+			distanceFromEdge = distMinZ;
+	}
+	else
+	{
+		if (distMaxZ < distanceFromEdge)
+			distanceFromEdge = distMaxZ;
+	}
+
+	return FMath::Clamp(distanceFromEdge / fade, 0.f, 1.f);
+}

@@ -26,8 +26,7 @@ CModelEditor::CModelEditor()
 
 	modelEnt = scene->CreateEntity<CModelEntity>();
 
-	framebuffer = gRenderer->CreateFrameBuffer(1280, 720, THTX_FORMAT_RGBA8_UINT);
-	depthbuffer = gRenderer->CreateDepthBuffer({ 1280, 720, TH_DBF_D24_S8, 1, false });
+	framebuffer = gRenderer->CreateFrameBuffer(1280, 720, TEXTURE_FORMAT_RGBA8_UNORM);
 
 	camera = new CCameraProxy();
 	camera->position = { 0, 0, -2 };
@@ -53,12 +52,10 @@ void CModelEditor::OnUpdate(double dt)
 	if (w != viewportWidth || h != viewportHeight)
 	{
 		framebuffer->Resize(FMath::Max(viewportWidth, 16), FMath::Max(viewportHeight, 16));
-		depthbuffer->Resize(FMath::Max(viewportWidth, 16), FMath::Max(viewportHeight, 16));
 	}
 
 	scene->Update(dt);
 	scene->GetRenderScene()->SetFrameBuffer(framebuffer);
-	scene->GetRenderScene()->SetDepthBuffer(depthbuffer);
 
 	scene->SetPrimaryCamera(camera);
 }
@@ -87,8 +84,23 @@ void CModelEditor::OnUIRender()
 			{
 				if (ImGui::MenuItem("New", "Ctrl+N"));
 				if (ImGui::MenuItem("Open", "Ctrl+O"));
-				if (ImGui::MenuItem("Save", "Ctrl+S"));
+				if (ImGui::MenuItem("Save", "Ctrl+S") && mdl && mdl->File())
+				{
+					mdl->Save();
+				}
 				if (ImGui::MenuItem("Save As", "Ctrl+Shift+S"));
+
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Edit"))
+			{
+				if (ImGui::MenuItem("Recalculate Bounds") && mdl)
+				{
+					for (auto& m : mdl->GetMeshes())
+						m.CalculateBounds();
+					mdl->CalculateBounds();
+				}
 
 				ImGui::EndMenu();
 			}
@@ -117,6 +129,20 @@ void CModelEditor::OnUIRender()
 		DirectXFrameBuffer* fb = (DirectXFrameBuffer*)framebuffer;
 		ImGui::Image(fb->view, { wndSize.x, wndSize.y });
 
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (auto* p = ImGui::AcceptDragDropPayload("THORIUM_ASSET_FILE"); p != nullptr)
+			{
+				FFile* file = *(FFile**)p->Data;
+				FAssetClass* type = CResourceManager::GetResourceTypeByFile(file);
+				if (type == (FAssetClass*)CModelAsset::StaticClass())
+				{
+					SetModel(CResourceManager::GetResource<CModelAsset>(file->Path()));
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+
 		viewportWidth = FMath::Max((int)wndSize.x, 32);
 		viewportHeight = FMath::Max((int)wndSize.y, 32);
 	}
@@ -134,6 +160,5 @@ void CModelEditor::OnDetach()
 {
 	scene->Delete();
 	delete framebuffer;
-	delete depthbuffer;
 	delete camera;
 }

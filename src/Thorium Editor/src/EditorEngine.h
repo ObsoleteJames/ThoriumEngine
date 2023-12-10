@@ -20,6 +20,7 @@ class CInputOutputWidget;
 class CProjectSettingsWidget;
 class CAssetBrowserWidget;
 class CAddonsWindow;
+class FClass;
 
 class CObjectDebugger;
 
@@ -61,7 +62,15 @@ public:
 private:
 	void InitEditorData();
 
+	void NewScene();
+	bool SaveScene();
+
+	void StartPlay();
+	void StopPlay();
+
 	void DoMousePick();
+	void DoEntRightClick();
+
 	// Handle asset dropping
 	void DoMaterialDrop(TObjectPtr<CMaterial> mat, bool bPeek);
 	void DoModelAssetDrop(TObjectPtr<CModelAsset> mdl, bool bPeek);
@@ -71,12 +80,20 @@ private:
 	void ToggleGameInput();
 
 	void DrawSelectionDebug();
+	void FocusOnSelection();
 
 	void OutlinerDrawEntity(CEntity* ent, bool bRoot = true);
+	void EntityContextMenu(CEntity* ent, const FVector& clickPos);
+	void DoEntityShortcuts();
+
+	void CopyEntity();
+	void PasteEntity(const FVector& pos);
+
+	void DupeEntity();
 
 public:
 	IFrameBuffer* sceneFrameBuffer;
-	IDepthBuffer* sceneDepthBuffer;
+	//IDepthBuffer* sceneDepthBuffer;
 	int viewportWidth, viewportHeight;
 	float viewportX = 0.f, viewportY = 0.f;
 
@@ -112,6 +129,19 @@ public:
 		int wndHeight = 900;
 		int wndMode = 1;
 	} editorCfg;
+
+	enum ECopyBufferData
+	{
+		CB_NONE,
+		CB_ENTITY,
+		CB_ENTITY_COMPONENT
+	};
+
+	struct {
+		ECopyBufferData dataType = CB_NONE;
+		FMemStream data;
+		FClass* type = nullptr;
+	} copyBuffer;
 
 private:
 	CCameraController* camController;

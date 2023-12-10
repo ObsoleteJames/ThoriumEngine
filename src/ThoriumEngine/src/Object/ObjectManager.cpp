@@ -1,6 +1,7 @@
 
 #include "ObjectManager.h"
 #include "Object.h"
+#include "Console.h"
 
 TMap<FGuid, CObject*> CObjectManager::Objects;
 TArray<CObject*> CObjectManager::ObjectsToDelete;
@@ -44,7 +45,11 @@ TArray<CObject*> CObjectManager::FindObjects(FClass* type)
 
 void CObjectManager::IdChanged(CObject* obj, SizeType oldId)
 {
-	Objects.erase(oldId);
+	auto it = Objects.find(oldId);
+	
+	THORIUM_ASSERT(it != Objects.end(), "Failed to change object ID, original ID index couldn't be located!");
+
+	Objects.erase(it);
 	Objects[obj->Id()] = obj;
 }
 
@@ -57,10 +62,15 @@ bool CObjectManager::DeleteObject(CObject* obj, bool bNoErase)
 	{
 		auto it = Objects.find(obj->id);
 		if (it == Objects.end())
+		{
+			//CONSOLE_LogError("CObjectManager", "Attempted to delete object: " + obj->Name() + ", but object does not exist in the object database!");
+			THORIUM_ASSERT(it != Objects.end(), "Attempted to delete object: " + obj->Name() + ", but object does not exist in the object database!");
 			return false;
-
+		}
 		Objects.erase(it);
 	}
+	obj->bMarkedForDeletion = true;
+
 	obj->OnDelete();
 
 	if (obj->users == 0)
@@ -70,13 +80,14 @@ bool CObjectManager::DeleteObject(CObject* obj, bool bNoErase)
 	}
 	
 	ObjectsToDelete.Add(obj);
-
-	obj->bMarkedForDeletion = true;
 	return true;
 }
 
 void CObjectManager::RegisterObject(CObject* obj)
 {
+	for (auto it = Objects.find(obj->Id()); it != Objects.end(); it = Objects.find(obj->Id()))
+		obj->id = FGuid();
+
 	Objects[obj->id] = obj;
 }
 

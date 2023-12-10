@@ -4,9 +4,10 @@
 #include "Texture.generated.h"
 
 class ITexture2D;
+enum ETextureFormat;
 
 ENUM()
-enum ETextureFormat
+enum ETextureAssetFormat
 {
 	THTX_FORMAT_R8_UINT,
 	THTX_FORMAT_RG8_UINT,
@@ -33,7 +34,7 @@ enum ETextureFilter
 struct FTextureImportSettings
 {
 	uint numMipMaps = 12;
-	ETextureFormat format = THTX_FORMAT_AUTO_COMPRESSED;
+	ETextureAssetFormat format = THTX_FORMAT_AUTO_COMPRESSED;
 	ETextureFilter filter = THTX_FILTER_ANISOTROPIC;
 };
 
@@ -49,7 +50,7 @@ public:
 	//CTexture(void* data, int width, int height, ETextureFormat format = THTX_FORMAT_RGBA8_UINT);
 	virtual ~CTexture();
 
-	void Init(void* data, int width, int height, ETextureFormat format = THTX_FORMAT_RGBA8_UINT, ETextureFilter filter = THTX_FILTER_LINEAR);
+	void Init(void* data, int width, int height, ETextureAssetFormat format = THTX_FORMAT_RGBA8_UINT, ETextureFilter filter = THTX_FILTER_LINEAR);
 	virtual void Init();
 
 	virtual void Save() {}
@@ -61,7 +62,7 @@ public:
 	inline int GetWidth() const { return width; }
 	inline int GetHeight() const { return height; }
 
-	inline ETextureFormat Format() const { return format; }
+	inline ETextureAssetFormat Format() const { return format; }
 	inline ETextureFilter FilterType() const { return filteringType; }
 	inline uint8 MipMapCount() const { return numMipmaps; }
 
@@ -69,10 +70,12 @@ public:
 
 	inline ITexture2D* GetTextureObject() const { return tex; }
 
+	static ETextureFormat ToTextureFormat(ETextureAssetFormat format);
+
 private:
 	uint16 version;
 
-	ETextureFormat format;
+	ETextureAssetFormat format;
 	ETextureFilter filteringType = THTX_FILTER_ANISOTROPIC;
 	SizeType dataSize;
 	uint8 numMipmaps;

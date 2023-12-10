@@ -65,8 +65,8 @@ public:
 
 		layout->addLayout(l3);
 
-		connect(btnImport, &QPushButton::clicked, this, [=]() { settings.format = (ETextureFormat)formatEdit->currentIndex(); settings.numMipMaps = mimmapEdit->value(); done(true); });
-		connect(btnImportAll, &QPushButton::clicked, this, [=]() { settings.format = (ETextureFormat)formatEdit->currentIndex(); settings.numMipMaps = mimmapEdit->value(); done(2); });
+		connect(btnImport, &QPushButton::clicked, this, [=]() { settings.format = (ETextureAssetFormat)formatEdit->currentIndex(); settings.numMipMaps = mimmapEdit->value(); done(true); });
+		connect(btnImportAll, &QPushButton::clicked, this, [=]() { settings.format = (ETextureAssetFormat)formatEdit->currentIndex(); settings.numMipMaps = mimmapEdit->value(); done(2); });
 		connect(btnCancel, &QPushButton::clicked, this, [=]() { done(false); });
 	}
 	

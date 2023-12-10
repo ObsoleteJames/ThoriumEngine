@@ -44,7 +44,7 @@ bool ImGui::ObjectPtrWidget(const char* label, TObjectPtr<CObject>** values, int
 				continue;
 
 			bool bSelected = bEqual ? *values[0] == obj.second : false;
-			if (ImGui::Selectable(obj.second->Name().c_str(), bSelected))
+			if (ImGui::Selectable((obj.second->Name() + "##_" + FString::ToString((SizeType)obj.second)).c_str(), bSelected))
 			{
 				for (int i = 0; i < numValues; i++)
 				{

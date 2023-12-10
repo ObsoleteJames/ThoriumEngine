@@ -35,6 +35,13 @@ public:
 		rsp += sizeof(T);
 	}
 
+	void Push(void* data, SizeType size)
+	{
+		THORIUM_ASSERT(rsp + size <= size, "stack out of data");
+		memcpy(stack + rsp, data, size);
+		rsp += (uint32)size;
+	}
+
 private:
 	uint32 size;
 	uint32 rsp; // pointer to the top of the stack

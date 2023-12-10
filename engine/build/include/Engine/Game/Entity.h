@@ -7,6 +7,7 @@
 #include "Math/Vectors.h"
 #include "Math/Bounds.h"
 #include "Game/Components/SceneComponent.h"
+#include "Object/ObjectHandle.h"
 #include "Entity.generated.h"
 
 class CEntityComponent;
@@ -26,6 +27,7 @@ struct FOutputBinding
 	GENERATED_BODY()
 
 	friend class CEntity;
+	friend class CEntityIOManager;
 
 public:
 	PROPERTY()
@@ -35,7 +37,7 @@ public:
 	TArray<uint8> arguments;
 
 	PROPERTY()
-	TObjectPtr<CEntity> targetObject;
+	FObjectHandle targetObject;
 
 	PROPERTY()
 	FString targetInput;
@@ -47,6 +49,7 @@ public:
 	bool bOnlyOnce = false;
 
 protected:
+	PROPERTY()
 	int fireCount = 0;
 
 };
@@ -117,6 +120,10 @@ public:
 	inline FQuaternion GetWorldRotation() const { return rootComponent->GetWorldRotation(); }
 	inline FVector GetWorldScale() const { return rootComponent->GetWorldScale(); }
 
+	inline const TArray<FOutputBinding>& GetOutputs() const { return boundOutputs; }
+	inline const FOutputBinding& GetOutput(SizeType index) const { return boundOutputs[index]; }
+	FOutputBinding& AddOutput();
+
 	FBounds GetBounds();
 
 private:
@@ -124,26 +131,27 @@ private:
 	void outputOnStart();
 
 	FUNCTION()
-	void Hide() { bIsVisible = false; }
+	inline void Hide() { bIsVisible = false; }
 	FUNCTION()
-	void Show() { bIsVisible = true; }
+	inline void Show() { bIsVisible = true; }
 
 	FUNCTION(Name = "Enable")
-	void inputEnable() { bIsEnabled = true; }
+	inline void inputEnable() { bIsEnabled = true; }
 	FUNCTION(Name = "Disable")
-	void inputDisable() { bIsEnabled = false; }
+	inline void inputDisable() { bIsEnabled = false; }
 
 	FUNCTION(Name = "SetHealth")
-	void inputSetHealth(float health) { this->health = health; }
+	inline void inputSetHealth(float health) { this->health = health; }
+
+public:
+	virtual void Serialize(FMemStream& out);
+	virtual void Load(FMemStream& in);
 
 protected:
 	virtual void Init();
 	virtual void OnStart();
 	virtual void OnStop();
 	virtual void Update(double dt);
-
-	virtual void Serialize(FMemStream& out);
-	virtual void Load(FMemStream& in);
 
 	virtual void OnDelete();
 

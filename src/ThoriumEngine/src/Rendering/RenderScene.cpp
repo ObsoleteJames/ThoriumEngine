@@ -2,10 +2,62 @@
 #include "RenderScene.h"
 #include "RenderProxies.h"
 #include "Math/Transform.h"
+#include "Renderer.h"
+
+CRenderScene::CRenderScene(int fbWidth /*= 1280*/, int fbHeight /*= 720*/)
+{
+	bufferWidth = fbWidth;
+	bufferHeight = fbHeight;
+
+	colorBuffer = gRenderer->CreateFrameBuffer(fbWidth, fbHeight, TEXTURE_FORMAT_RGBA16_FLOAT);
+	GBufferA = gRenderer->CreateFrameBuffer(fbWidth, fbHeight, TEXTURE_FORMAT_R10G10B10A2_UNORM);
+	GBufferB = gRenderer->CreateFrameBuffer(fbWidth, fbHeight, TEXTURE_FORMAT_RGBA8_UNORM);
+	GBufferC = gRenderer->CreateFrameBuffer(fbWidth, fbHeight, TEXTURE_FORMAT_RGBA8_UNORM);
+	GBufferD = gRenderer->CreateFrameBuffer(fbWidth, fbHeight, TEXTURE_FORMAT_RGBA8_UNORM);
+
+	preTranslucentBuff = gRenderer->CreateFrameBuffer(fbWidth, fbHeight, TEXTURE_FORMAT_RGBA16_FLOAT);
+
+	aoBuffer = gRenderer->CreateFrameBuffer(fbWidth / 2, fbHeight / 2, TEXTURE_FORMAT_R8_UNORM);
+
+	depth = gRenderer->CreateDepthBuffer({ fbWidth, fbHeight, TH_DBF_D24_S8, 1, false });
+}
+
+CRenderScene::~CRenderScene()
+{
+	delete colorBuffer;
+	delete GBufferA;
+	delete GBufferB;
+	delete GBufferC;
+	delete GBufferD;
+	delete preTranslucentBuff;
+	delete aoBuffer;
+	delete depth;
+}
+
+void CRenderScene::ResizeBuffers(int width, int height)
+{
+	if (width == bufferWidth && height == bufferHeight)
+		return;
+
+	bufferWidth = width;
+	bufferHeight = height;
+
+	colorBuffer->Resize(width, height);
+	GBufferA->Resize(width, height);
+	GBufferB->Resize(width, height);
+	GBufferC->Resize(width, height);
+	GBufferD->Resize(width, height);
+
+	preTranslucentBuff->Resize(width, height);
+
+	aoBuffer->Resize(width / 2, height / 2);
+
+	depth->Resize(width, height);
+}
 
 bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitiveHitInfo* outHit, float maxDistance /*= 0.f*/)
 {
-	float closesthit = FLT_MAX;
+	float closesthit = maxDistance > 0.f ? maxDistance : FLT_MAX;
 	bool r = false;
 
 	// this is fucking disgusting. who ever wrote this, kill yourself.
@@ -70,7 +122,7 @@ bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitive
 
 bool CRenderScene::RayCastBounds(const FRay& ray, FPrimitiveHitInfo* outHit, float maxDistance /*= 0.f*/)
 {
-	float closesthit = FLT_MAX;
+	float closesthit = maxDistance > 0.f ? maxDistance : FLT_MAX;
 	bool r = false;
 
 	for (auto* p : primitves)

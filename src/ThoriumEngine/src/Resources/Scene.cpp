@@ -2,6 +2,7 @@
 #include "Scene.h"
 #include "Console.h"
 #include "Game/World.h"
+#include "Game/Entity.h"
 #include <Util/FStream.h>
 
 void CScene::Save(CWorld* world)

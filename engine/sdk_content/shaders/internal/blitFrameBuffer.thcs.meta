@@ -1,0 +1,32 @@
+
+Shader
+{
+	Name = "blitFrameBuffer";
+    Type = SHADER_INTERNAL;
+}
+
+Global
+{
+	#include "common/common.hlsl"
+
+	struct VS_Input
+	{
+		#include "common/vertex_input.hlsl"
+	};
+
+	struct PS_Input
+	{
+		#include "common/pixel_input.hlsl"
+	};
+}
+
+PS
+{
+	Texture2D vInFB : TEXTURE : register(t1);
+	SamplerState vSampler : SAMPLER : register(s1);
+
+	float4 Main(PS_Input input) : SV_TARGET
+	{
+		return float4(vInFB.Sample(vSampler, input.vTextureCoords).xyz, 1.f);
+	}
+}

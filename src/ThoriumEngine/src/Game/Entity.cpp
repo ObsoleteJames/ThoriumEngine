@@ -58,6 +58,12 @@ void CEntity::RemoveComponent(CEntityComponent* comp)
 	}
 }
 
+FOutputBinding& CEntity::AddOutput()
+{
+	boundOutputs.Add();
+	return *boundOutputs.last();
+}
+
 FBounds CEntity::GetBounds()
 {
 	FBounds r;
@@ -78,6 +84,8 @@ void CEntity::OnStart()
 {
 	for (auto& comp : components)
 		comp->OnStart();
+
+	outputOnStart();
 }
 
 void CEntity::OnStop()
@@ -179,13 +187,23 @@ void CEntity::Load(FMemStream& in)
 
 void CEntity::OnDelete()
 {
-	for (auto& comp : components)
-		comp->Delete();
+	for (auto it = components.rbegin(); it != components.rend(); it++)
+		(*it)->Delete();
+	components.Clear();
 
 	FWorldRegisterer::UnregisterEntity(world, this);
 }
 
 void CEntity::FireOutput(const FString& output)
 {
+	for (int i = 0; i < boundOutputs.Size(); i++)
+	{
+		if (boundOutputs[i].outputName == output)
+		{
+			if (boundOutputs[i].bOnlyOnce && boundOutputs[i].fireCount > 0)
+				continue;
 
+			GetWorld()->GetEntityIOManager()->FireEvent(this, i);
+		}
+	}
 }

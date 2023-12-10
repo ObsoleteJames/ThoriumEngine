@@ -39,7 +39,7 @@ public:
 	{
 		bLoading = true;
 
-		SizeType offset = THTEX_MAGIC_SIZE + sizeof(uint16) + sizeof(ETextureFormat) + 4 + 4 + 1;
+		SizeType offset = THTEX_MAGIC_SIZE + sizeof(uint16) + sizeof(ETextureAssetFormat) + 4 + 4 + 1;
 		if (tex->version != THTEX_VERSION_01)
 			offset += sizeof(ETextureFilter);
 
@@ -156,25 +156,25 @@ void CTexture::Init()
 		*stream >> &filteringType;
 
 	if (version <= THTEX_VERSION_02 && format >= THTX_FORMAT_RGBA16_FLOAT)
-		format = (ETextureFormat)((int)format + 1);
+		format = (ETextureAssetFormat)((int)format + 1);
 
 	*stream >> &dataSize;
 
 	curMipMapLevel = numMipmaps;
 
 	if (numMipmaps > 1)
-		tex = gRenderer->CreateTexture2D(nullptr, numMipmaps, width, height, format, filteringType);
+		tex = gRenderer->CreateTexture2D(nullptr, numMipmaps, width, height, ToTextureFormat(format), filteringType);
 
 	bLoading = false;
 	bInitialized = true;
 }
 
-void CTexture::Init(void* data, int width, int height, ETextureFormat format /*= THTX_FORMAT_RGBA8_UINT*/, ETextureFilter filter)
+void CTexture::Init(void* data, int width, int height, ETextureAssetFormat format /*= THTX_FORMAT_RGBA8_UINT*/, ETextureFilter filter)
 {
 	if (tex)
 		delete tex;
 
-	tex = gRenderer->CreateTexture2D(data, width, height, format, filter);
+	tex = gRenderer->CreateTexture2D(data, width, height, ToTextureFormat(format), filter);
 	bInitialized = true;
 }
 
@@ -211,7 +211,7 @@ void CTexture::Load(uint8 lodLevel)
 	if (tex)
 		delete tex;
 
-	tex = gRenderer->CreateTexture2D(data, width, height, format, filteringType);
+	tex = gRenderer->CreateTexture2D(data, width, height, ToTextureFormat(format), filteringType);
 	curMipMapLevel = 0;
 }
 
@@ -395,4 +395,30 @@ bool CTexture::Import(const WString& file, const FTextureImportSettings& setting
 	}
 	
 	return true;
+}
+
+ETextureFormat CTexture::ToTextureFormat(ETextureAssetFormat format)
+{
+	switch (format)
+	{
+	case THTX_FORMAT_R8_UINT:
+		return TEXTURE_FORMAT_R8_UNORM;
+	case THTX_FORMAT_RG8_UINT:
+		return TEXTURE_FORMAT_RG8_UNORM;
+	case THTX_FORMAT_RGB8_UINT:
+		return TEXTURE_FORMAT_RGB8_UNORM;
+	case THTX_FORMAT_RGBA8_UINT:
+		return TEXTURE_FORMAT_RGBA8_UNORM;
+
+	case THTX_FORMAT_RGBA16_FLOAT:
+		return TEXTURE_FORMAT_RGBA16_FLOAT;
+	case THTX_FORMAT_RGBA32_FLOAT:
+		return TEXTURE_FORMAT_RGBA32_FLOAT;
+
+	case THTX_FORMAT_DXT1:
+		return TEXTURE_FORMAT_DXT1;
+	case THTX_FORMAT_DXT5:
+		return TEXTURE_FORMAT_DXT5;
+	}
+	return TEXTURE_FORMAT_INVALID;
 }

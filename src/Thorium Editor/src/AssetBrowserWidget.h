@@ -6,6 +6,7 @@ struct FFile;
 struct FMod;
 struct FDirectory;
 class FAssetClass;
+class CAssetBrowserWidget;
 
 enum EBrowserActionType
 {
@@ -14,11 +15,13 @@ enum EBrowserActionType
 	BA_FILE_CONTEXTMENU, // draw context menu for file
 	BA_FILE_IMPORT,
 	// BA_FILE_REIMPORT - Use context menu for this
-	BA_FILE_DUPLICATE
+	BA_FILE_DUPLICATE,
+	BA_WINDOW_CONTEXTMENU
 };
 
 struct FBADataBase
 {
+	CAssetBrowserWidget* browser;
 	FFile* file;
 };
 struct FBADataDuplicate : public FBADataBase 
@@ -30,6 +33,11 @@ struct FBAImportFile : public FBADataBase
 	FString sourceFile;
 	WString outPath;
 	WString outMod;
+};
+struct FBAWindowContext : public FBADataBase
+{
+	WString mod;
+	WString dir;
 };
 
 typedef FBADataBase FBrowserActionData;
@@ -75,6 +83,9 @@ public:
 	// Extract the mod and dir, format: 'MOD:\DIR\DIR2'
 	bool ExtractPath(const WString& combined, WString& outMod, WString& outDir);
 
+	void PrepareNewFile(void(*onFinishFun)(const WString& outPath, const WString& mod) = nullptr, FAssetClass* type = nullptr);
+	void PrepareNewFolder();
+
 private:
 	void DrawDirTree(FDirectory* dir, FDirectory* parent, FMod* mod);
 
@@ -99,6 +110,12 @@ public:
 	WString mod = L"Engine";
 
 	int iconsSize = 2;
+
+	FString newFileStr;
+	FAssetClass* newFileType = nullptr;
+	bool bCreatingFile = false;
+	bool bCreatingFolder = false;
+	void(*onCreatedFileFun)(const WString& outPath, const WString& mod) = nullptr;
 
 private:
 	FString dirInput;

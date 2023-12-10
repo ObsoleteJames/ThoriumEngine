@@ -268,12 +268,12 @@ TObjectPtr<CAsset> CResourceManager::CreateResource(FAssetClass* type, const WSt
 	if (!mod)
 		return nullptr;
 
-	if (SizeType i = path.FindLastOf('.'); path.begin() + i != path.end())
+	if (SizeType i = path.FindLastOf('.'); i != -1)
 		path.Erase(path.begin() + i, path.end());
 
 	WString fileNoExt = path;
 	WString ext = ToWString(type->GetExtension());
-	path += ext;
+	path = path + ext;
 
 	int numCopies = 0;
 	while (FFile* f = mod->FindFile(path))

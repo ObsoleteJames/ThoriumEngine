@@ -21,6 +21,7 @@ Global
 
 	Property<float3> zenithColor(Name = "Zenith Color", UiGroup = "Atmopshere", UiType = COLOR);
 	Property<float3> horizonColor(Name = "Horizon Color", UiGroup = "Atmosphere", UiType = COLOR);
+	Property<float3> sunCol(Name = "Sun Color", UiGroup = "Atmosphere", UiType = COLOR);
 	Property<float> horizonFalloff(Name = "Falloff", UiGroup = "Atmosphere");
 
 }
@@ -42,6 +43,8 @@ PS
 {
 	static const float maxFloat = 3.402823466e+38;
 
+	#include "common/forward_light_data.hlsl"
+
 	float3 Atmosphere(float3 normal)
 	{
 		float p = max(0, dot(normalize(normal), float3(0, -1, 0)));
@@ -49,6 +52,18 @@ PS
 		float p2 = clamp(pow(abs(p), horizonFalloff), 0, 1);
 		
 		float3 col = lerp(zenithColor, horizonColor, p2);
+
+		float sun = 0.f;
+
+		if (numDirectionalLights > 0)
+		{
+			float sunD = max(0, dot(normalize(-normal), directionalLights[0].direction));
+			sun = max(0, sunD - 0.92) * 5;
+			if (sunD > 0.985f)
+				sun = 1.f;
+		}
+
+		col += sun * sunCol;
 		return col;
 	}
 

@@ -6,6 +6,7 @@
 #include "Resources/ModelAsset.h"
 #include "Resources/Texture.h"
 #include "Rendering/RenderProxies.h"
+#include "Rendering/Texture.h"
 #include "Framebuffer.h"
 #include "Buffers.h"
 
@@ -208,6 +209,7 @@ public:
 	virtual void SetShaderBuffer(IShaderBuffer* buffer, int _register) = 0;
 
 	virtual void SetShaderResource(ITexture2D* texture, int _register) = 0;
+	virtual void SetShaderResource(IFrameBuffer* fb, int _register) = 0;
 	virtual void SetShaderResource(IDepthBuffer* depthTex, int _register) = 0;
 
 	virtual void SetFrameBuffer(IFrameBuffer* framebuffer, IDepthBuffer* depth = nullptr) = 0;
@@ -232,6 +234,8 @@ protected:
 	virtual void Init();
 	//virtual void BindGlobalData() = 0;
 
+	static void Blit(IFrameBuffer* source, IFrameBuffer* destination);
+
 private:
 	static void renderAll();
 
@@ -255,14 +259,17 @@ protected:
 	TObjectPtr<CShaderSource> debugUnlit;
 	TObjectPtr<CShaderSource> debugNormalForward;
 
+	TObjectPtr<CShaderSource> shaderScreenPlane;
+	TObjectPtr<CShaderSource> shaderBlit;
+
 	TObjectPtr<IShaderBuffer> sceneBuffer;
 	TObjectPtr<IShaderBuffer> objectBuffer;
 	TObjectPtr<IShaderBuffer> forwardLightsBuffer;
 	TObjectPtr<IShaderBuffer> forwardShadowDataBuffer;
 
-	IFrameBuffer* gBuffers[4];
+	//IFrameBuffer* gBuffers[4];
 
-	IFrameBuffer* ssaoBuffer;
+	//IFrameBuffer* ssaoBuffer;
 
 	int shadowTexSize;
 

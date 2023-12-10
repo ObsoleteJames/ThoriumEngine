@@ -43,7 +43,7 @@ DECLARE_PROPERTY(FOutputBinding, "Arguments", arguments, "", "uint8", EVT_ARRAY,
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FOutputBinding, arguments)
 
-DECLARE_PROPERTY(FOutputBinding, "Target Object", targetObject, "", "CEntity", EVT_OBJECT_PTR, VTAG_SERIALIZABLE , offsetof(FOutputBinding, targetObject), sizeof(TObjectPtr<CEntity>), nullptr, nullptr)
+DECLARE_PROPERTY(FOutputBinding, "Target Object", targetObject, "", "FObjectHandle", EVT_STRUCT, VTAG_SERIALIZABLE , offsetof(FOutputBinding, targetObject), sizeof(FObjectHandle), nullptr, nullptr)
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FOutputBinding, targetObject)
 
@@ -59,6 +59,10 @@ DECLARE_PROPERTY(FOutputBinding, "Only Once", bOnlyOnce, "", "bool", EVT_BOOL, V
 #undef CLASS_NEXT_PROPERTY
 #define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FOutputBinding, bOnlyOnce)
 
+DECLARE_PROPERTY(FOutputBinding, "Fire Count", fireCount, "", "int", EVT_INT, VTAG_SERIALIZABLE , FOutputBinding::__private_fireCount_offset(), sizeof(int), nullptr, nullptr)
+#undef CLASS_NEXT_PROPERTY
+#define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(FOutputBinding, fireCount)
+
 class FStruct_FOutputBinding : public FStruct
 {
 public:
@@ -67,7 +71,7 @@ public:
 		name = "Output Binding";
 		cppName = "FOutputBinding";
 		size = sizeof(FOutputBinding);
-		numProperties = 6;
+		numProperties = 7;
 		PropertyList = CLASS_NEXT_PROPERTY;
 		bIsClass = false;
 		GetModule_Engine().RegisterFStruct(this);

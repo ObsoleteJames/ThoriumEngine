@@ -67,7 +67,7 @@ void CPropertyEditor::OnUIRender()
 
 						for (TObjectPtr<CSceneComponent>& c : comp->GetChildren())
 						{
-							if (c)
+							if (c && c->GetEntity() == comp->GetEntity())
 								t->AddChild(c);
 						}
 
@@ -87,7 +87,7 @@ void CPropertyEditor::OnUIRender()
 						return nullptr;
 					}
 
-					void DrawUI(CEntityComponent*& selectedComp)
+					void DrawUI(CEntityComponent*& selectedComp, FVector& rotCache)
 					{
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
@@ -99,14 +99,41 @@ void CPropertyEditor::OnUIRender()
 						else
 							ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.21f, 0.26f, 0.38f, 1.00f));
 
-						if (ImGui::Selectable(("##_compSelect" + comp->Name()).c_str(), bSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap))
+						if (ImGui::Selectable(("##_compSelect" + comp->Name() + FString::ToString((SizeType)&*comp)).c_str(), bSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap))
 						{
 							selectedComp = comp;
+
+							if (auto sc = Cast<CSceneComponent>(comp); sc)
+								rotCache = sc->GetRotation().ToEuler().Degrees();
 						}
+						if (ImGui::BeginDragDropSource())
+						{
+							ImGui::SetDragDropPayload("ENTITY_COMPONENT_PAYLOAD", &comp, sizeof(void*));
+							ImGui::EndDragDropSource();
+						}
+
+						if (ImGui::BeginDragDropTarget())
+						{
+							const auto* payload = ImGui::AcceptDragDropPayload("ENTITY_COMPONENT_PAYLOAD");
+							if (payload)
+							{
+								TObjectPtr<CEntityComponent> c = *(CEntityComponent**)payload->Data;
+								TObjectPtr<CSceneComponent> cScene = CastChecked<CSceneComponent>(c);
+								TObjectPtr<CSceneComponent> compScene = Cast<CSceneComponent>(comp);
+								if (c != comp && cScene && compScene)
+								{
+									cScene->AttachTo(compScene);
+								}
+							}
+
+							ImGui::EndDragDropTarget();
+						}
+
 						ImGui::PopStyleColor();
 						ImGui::SameLine();
 
 						ImVec2 cursor = ImGui::GetCursorScreenPos();
+						FString compName = comp->Name().IsEmpty() ? comp->GetClass()->GetName() : comp->Name();
 						if (childTrees.Size() > 0)
 						{
 							ImGui::SetNextItemWidth(10);
@@ -115,13 +142,13 @@ void CPropertyEditor::OnUIRender()
 							ImGui::SameLine();
 
 							ImGui::SetCursorScreenPos(cursor + ImVec2(6, 0));
-							ImGui::Text(comp->Name().c_str());
+							ImGui::Text(compName.c_str());
 							
 							if (bOpen)
 							{
 								for (auto& c : childTrees)
 								{
-									c.DrawUI(selectedComp);
+									c.DrawUI(selectedComp, rotCache);
 								}
 								ImGui::TreePop();
 							}
@@ -129,7 +156,7 @@ void CPropertyEditor::OnUIRender()
 						else
 						{
 							ImGui::SetCursorScreenPos(cursor + ImVec2(6, 0));
-							ImGui::Text(comp->Name().c_str());
+							ImGui::Text(compName.c_str());
 						}
 					}
 				};
@@ -147,6 +174,20 @@ void CPropertyEditor::OnUIRender()
 						if (scene->GetParent() == nullptr && scene != selectedEntities[0]->RootComponent())
 						{
 							nonSceneComps.Add(comp);
+						}
+						if (scene->GetParent())
+						{
+							bool bInvalid = true;
+							for (auto it : scene->GetParent()->GetChildren())
+							{
+								if (it == scene)
+								{
+									bInvalid = false;
+									break;
+								}
+							}
+							if (bInvalid)
+								nonSceneComps.Add(comp);
 						}
 					}
 					else
@@ -176,6 +217,22 @@ void CPropertyEditor::OnUIRender()
 				{
 					selectedComp = nullptr;
 				}
+				if (ImGui::BeginDragDropTarget())
+				{
+					const auto* payload = ImGui::AcceptDragDropPayload("ENTITY_COMPONENT_PAYLOAD");
+					if (payload)
+					{
+						TObjectPtr<CEntityComponent> c = *(CEntityComponent**)payload->Data;
+						TObjectPtr<CSceneComponent> cScene = CastChecked<CSceneComponent>(c);
+						if (cScene)
+						{
+							cScene->AttachTo(selectedEntities[0]->RootComponent());
+						}
+					}
+
+					ImGui::EndDragDropTarget();
+				}
+
 				ImGui::PopStyleColor();
 				ImGui::SameLine();
 
@@ -192,7 +249,7 @@ void CPropertyEditor::OnUIRender()
 				if (bOpen)
 				{
 					for (auto& c : compTree.childTrees)
-						c.DrawUI(selectedComp);
+						c.DrawUI(selectedComp, rotCache);
 
 					ImGui::TreePop();
 				}
@@ -215,10 +272,17 @@ void CPropertyEditor::OnUIRender()
 					if (ImGui::Selectable(("##_compSelect" + c->Name() + FString::ToString((SizeType)c)).c_str(), bSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap))
 					{
 						selectedComp = c;
-
-						if (auto* sc = Cast<CSceneComponent>(c); sc)
-							rotCache = sc->GetRotation().ToEuler().Degrees();
 					}
+
+					CSceneComponent* sceneComp = Cast<CSceneComponent>(TObjectPtr<CEntityComponent>(c));
+					if (sceneComp && ImGui::BeginPopupContextItem())
+					{
+						if (ImGui::MenuItem("Attach to entity root"))
+							sceneComp->AttachTo(c->GetEntity()->RootComponent(), FTransformSpace::KEEP_LOCAL_TRANSFORM);
+
+						ImGui::EndPopup();
+					}
+
 					ImGui::PopStyleColor();
 					ImGui::SameLine();
 

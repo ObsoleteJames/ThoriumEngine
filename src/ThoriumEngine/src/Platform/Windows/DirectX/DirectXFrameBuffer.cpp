@@ -53,7 +53,7 @@ void DirectXFrameBuffer::Generate(int w, int h, ETextureFormat f)
 	height = h;
 	format = f;
 
-	THORIUM_ASSERT(format < THTX_FORMAT_DXT1, "Invalid format for framebuffer");
+	//THORIUM_ASSERT(format < THTX_FORMAT_DXT1, "Invalid format for framebuffer");
 
 	IRenderer::LockGPU();
 	D3D11_TEXTURE2D_DESC tex{};

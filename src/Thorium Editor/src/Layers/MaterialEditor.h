@@ -61,7 +61,6 @@ private:
 	CPointLightComponent* light2;
 
 	IFrameBuffer* fbView;
-	IDepthBuffer* dbView;
 
 	// Dialog IDs
 	FString openMatId;

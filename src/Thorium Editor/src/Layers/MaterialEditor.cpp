@@ -52,8 +52,8 @@ CMaterialEditor::CMaterialEditor()
 	modelEnt = scene->CreateEntity<CModelEntity>();
 	modelEnt->SetModel(previewModel);
 
-	fbView = gRenderer->CreateFrameBuffer(1280, 720, THTX_FORMAT_RGBA8_UINT);
-	dbView = gRenderer->CreateDepthBuffer({ 1280, 720, TH_DBF_D24_S8, 1, false });
+	fbView = gRenderer->CreateFrameBuffer(1280, 720, TEXTURE_FORMAT_RGBA8_UNORM);
+	//dbView = gRenderer->CreateDepthBuffer({ 1280, 720, TH_DBF_D24_S8, 1, false });
 
 	camera = new CCameraProxy();
 	camera->position = { 0, 0, -2 };
@@ -85,12 +85,11 @@ void CMaterialEditor::OnUpdate(double dt)
 	if (w != viewportWidth || h != viewportHeight)
 	{
 		fbView->Resize(FMath::Max(viewportWidth, 16), FMath::Max(viewportHeight, 16));
-		dbView->Resize(FMath::Max(viewportWidth, 16), FMath::Max(viewportHeight, 16));
 	}
 
 	scene->Update(dt);
 	scene->GetRenderScene()->SetFrameBuffer(fbView);
-	scene->GetRenderScene()->SetDepthBuffer(dbView);
+	//scene->GetRenderScene()->SetDepthBuffer(dbView);
 
 	scene->SetPrimaryCamera(camera);
 
@@ -281,7 +280,6 @@ void CMaterialEditor::OnDetach()
 {
 	scene->Delete();
 	delete fbView;
-	delete dbView;
 	delete camera;
 }
 

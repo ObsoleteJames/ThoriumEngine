@@ -2,7 +2,6 @@
 
 #include <Util/Core.h>
 #include <Util/Event.h>
-#include "Game/Entity.h"
 #include "EngineCore.h"
 #include "Object/Delegate.h"
 #include <mutex>
@@ -15,8 +14,10 @@ class IBaseWindow;
 class CPrimitiveProxy;
 class CLightProxy;
 class CCameraProxy;
+class CPostProcessVolumeProxy;
 class CRenderScene;
 class CGameMode;
+class CEntity;
 
 extern ENGINE_API CWorld* gWorld;
 
@@ -26,6 +27,40 @@ enum ENetMode
 	NetMode_Dedicated, // A Dedicated server which clients can join.
 	NetMode_Host, // A Client running a server which other clients can join.
 	NetMode_Client // A Client connected to a server.
+};
+
+struct FEntityOutputEvent
+{
+public:
+	TObjectPtr<CEntity> caller;
+	SizeType outputIndex;
+
+	// activation time
+	float time;
+};
+
+class CEntityIOManager
+{
+public:
+	CEntityIOManager(CWorld* world);
+
+	void Update();
+
+	void FireEvent(CEntity* caller, SizeType outputIndex);
+
+	inline CEntity* GetInstigator() const { return curInstigator; }
+	inline CEntity* GetCaller() const { if (callerStack.Size() > 0) return *callerStack.last(); return nullptr; }
+
+private:
+	void _Fire(FEntityOutputEvent* event);
+
+private:
+	CWorld* world;
+
+	CEntity* curInstigator;
+	TArray<CEntity*> callerStack;
+
+	TArray<FEntityOutputEvent> delayedEvents;
 };
 
 /*
@@ -125,6 +160,9 @@ public:
 	inline void UnregisterCamera(CCameraProxy* proxy) { if (auto it = cameras.Find(proxy); it != cameras.end()) cameras.Erase(it); }
 	inline const TArray<CCameraProxy*>& GetCameras() const { return cameras; }
 	
+	inline void RegisterPPVolume(CPostProcessVolumeProxy* proxy) { ppVolumes.Add(proxy); }
+	inline void UnregisterPPVolume(CPostProcessVolumeProxy* proxy) { if (auto it = ppVolumes.Find(proxy); it != ppVolumes.end()) ppVolumes.Erase(it); }
+
 	inline CCameraProxy* GetPrimaryCamera() const { return primaryCamera; }
 	inline void SetPrimaryCamera(CCameraProxy* cam) { primaryCamera = cam; }
 
@@ -132,6 +170,8 @@ protected:
 	void OnDelete() override;
 
 	void RemoveEntity(CEntity* ent);
+
+	CEntityIOManager* GetEntityIOManager() const;
 
 public: // Events
 	TDelegate<CEntity*> OnEntityCreated;
@@ -152,11 +192,15 @@ protected:
 	TArray<CLightProxy*> lights;
 	TArray<CPrimitiveProxy*> primitives;
 	TArray<CCameraProxy*> cameras;
+	TArray<CPostProcessVolumeProxy*> ppVolumes;
 
 	CCameraProxy* primaryCamera;
 
 	TObjectPtr<CScene> scene;
 	CRenderScene* renderScene;
+
+	// Entity IO Data
+	CEntityIOManager* entityIOManager;
 
 	ENetMode netMode;
 

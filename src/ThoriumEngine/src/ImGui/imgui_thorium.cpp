@@ -20,6 +20,9 @@ static int InputTextCallback(ImGuiInputTextCallbackData* data)
 		str->Resize(data->BufTextLen);
 		
 		data->Buf = (char*)str->c_str();
+		
+		SizeType& _size = *(SizeType*)(((SizeType)str) + sizeof(void*) + sizeof(SizeType));
+		_size = data->BufTextLen;
 	}
 	else if (userData->callback)
 	{

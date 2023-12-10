@@ -5,6 +5,7 @@
 #include "Game/Components/CameraComponent.h"
 #include "Console.h"
 #include "DebugRenderer.h"
+#include "PostProcessing.h"
 #include <map>
 
 #include <algorithm>
@@ -30,6 +31,8 @@ static CConVar cvRenderSsaoQuality("r.ssao.quality", L"config\\graphics.cfg", 4,
 // Screen space shadows.
 static CConVar cvRenderSsShadows("r.ssshadows.enabled", L"config\\graphics.cfg", 1);
 static CConVar cvRenderSsShadowsQuality("r.ssshadows.quality", L"config\\graphics.cfg", 4, 0, 4);
+
+static FPostProcessSettings defaultPostProcess;
 
 IRenderer::IRenderer()
 {
@@ -155,8 +158,14 @@ void IRenderer::Init()
 	debugUnlit = CShaderSource::GetShader("Unlit");
 	debugNormalForward = CShaderSource::GetShader("DebugNormalForward");
 
+	shaderScreenPlane = CShaderSource::GetShader("ScreenPlaneVS");
+	shaderBlit = CShaderSource::GetShader("blitFrameBuffer");
+
 	debugUnlit->LoadShaderObjects();
 	debugNormalForward->LoadShaderObjects();
+
+	shaderScreenPlane->LoadShaderObjects();
+	shaderBlit->LoadShaderObjects();
 
 	sceneBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FSceneInfoBuffer));
 	objectBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FObjectInfoBuffer));
@@ -191,6 +200,22 @@ void IRenderer::Init()
 	sunLightShadows = gRenderer->CreateDepthBuffer(sunDepth);
 
 	gDebugRenderer = new CDebugRenderer();
+}
+
+void IRenderer::Blit(IFrameBuffer* a, IFrameBuffer* b)
+{
+	int w, h;
+	a->GetSize(w, h);
+
+	gRenderer->SetViewport(0, 0, (float)w, (float)h);
+	gRenderer->SetFrameBuffer(b);
+	gRenderer->SetShaderResource(a, 1);
+	gRenderer->SetVsShader(gRenderer->shaderScreenPlane->vsShader);
+	gRenderer->SetPsShader(gRenderer->shaderBlit->psShader);
+
+	FMesh mesh;
+	mesh.numVertices = 3;
+	gRenderer->DrawMesh(&mesh);
 }
 
 void IRenderer::renderAll()
@@ -229,8 +254,11 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 	int viewWidth, viewHeight;
 	scene->frameBuffer->GetSize(viewWidth, viewHeight);
 	scene->frameBuffer->Clear();
-	if (scene->depthBuffer)
-		scene->depthBuffer->Clear();
+	
+	scene->colorBuffer->Clear();
+
+	if (viewWidth > scene->GetFrameBufferWidth() || viewHeight > scene->GetFrameBufferHeight())
+		scene->ResizeBuffers(viewWidth, viewHeight);
 
 	gRenderer->SetViewport(0.f, 0.f, (float)viewWidth, (float)viewHeight);
 
@@ -327,6 +355,9 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 	gRenderer->SetVsShader(nullptr);
 #endif
 
+	Blit(scene->colorBuffer, scene->preTranslucentBuff);
+	gRenderer->SetViewport(0.f, 0.f, (float)viewWidth, (float)viewHeight);
+
 	// ------------- FORWARD PASS -------------
 	{
 		curCommands.Clear();
@@ -339,13 +370,14 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		LockGPU();
 		gRenderer->SetBlendMode(EBlendMode::BLEND_DISABLED);
 
-		gRenderer->SetFrameBuffer(scene->frameBuffer, scene->depthBuffer);
+		gRenderer->SetFrameBuffer(scene->colorBuffer, scene->depth);
 		gRenderer->SetShaderBuffer(gRenderer->sceneBuffer, 1);
 		gRenderer->SetShaderBuffer(gRenderer->forwardLightsBuffer, 2);
 		gRenderer->SetShaderBuffer(gRenderer->objectBuffer, 3);
 		gRenderer->SetShaderBuffer(gRenderer->forwardShadowDataBuffer, 4);
 		
 		gRenderer->SetShaderResource(gRenderer->sunLightShadows, 2);
+		gRenderer->SetShaderResource(scene->preTranslucentBuff, 3);
 
 		IShader* overridePsShader = nullptr;
 		if (cvRenderMaterialMode.AsInt() == 1 || scene->lights.Size() == 0)
@@ -394,6 +426,9 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		UnlockGPU();
 	}
 
+	Blit(scene->colorBuffer, scene->preTranslucentBuff);
+	gRenderer->SetViewport(0.f, 0.f, (float)viewWidth, (float)viewHeight);
+
 	// ------------- FORWARD TRANSPARENT PASS -------------
 	{
 		curCommands.Clear();
@@ -406,10 +441,13 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		LockGPU();
 		gRenderer->SetBlendMode(EBlendMode::BLEND_ADDITIVE);
 
-		gRenderer->SetFrameBuffer(scene->frameBuffer, scene->depthBuffer);
+		gRenderer->SetFrameBuffer(scene->colorBuffer, scene->depth);
 		gRenderer->SetShaderBuffer(gRenderer->sceneBuffer, 1);
 		gRenderer->SetShaderBuffer(gRenderer->forwardLightsBuffer, 2);
 		gRenderer->SetShaderBuffer(gRenderer->objectBuffer, 3);
+
+		gRenderer->SetShaderResource(gRenderer->sunLightShadows, 2);
+		gRenderer->SetShaderResource(scene->preTranslucentBuff, 3);
 
 		IShader* overridePsShader = nullptr;
 		if (cvRenderMaterialMode.AsInt() == 1 || scene->lights.Size() == 0)
@@ -512,10 +550,10 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		LockGPU();
 		gRenderer->SetBlendMode(EBlendMode::BLEND_ADDITIVE);
 
-		if (pass == 1 && scene->depthBuffer)
-			scene->depthBuffer->Clear();
+		if (pass == 1)
+			scene->depth->Clear();
 
-		gRenderer->SetFrameBuffer(scene->frameBuffer, scene->depthBuffer);
+		gRenderer->SetFrameBuffer(scene->colorBuffer, scene->depth);
 		gRenderer->SetShaderBuffer(gRenderer->sceneBuffer, 1);
 		gRenderer->SetShaderBuffer(gRenderer->objectBuffer, 3);
 
@@ -588,6 +626,7 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 		UnlockGPU();
 	}
+	Blit(scene->colorBuffer, scene->frameBuffer);
 }
 
 void IRenderer::RenderShadowMaps(CRenderScene* scene)

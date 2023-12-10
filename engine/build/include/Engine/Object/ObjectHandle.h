@@ -18,9 +18,9 @@ public:
 	FObjectHandle& operator=(CObject* obj);
 	
 	template<typename T>
-	inline T* Get() { return CastChecked<T>(CObjectManager::FindObject(objectId)); }
+	inline T* GetAs() const { return CastChecked<T, CObject>(CObjectManager::FindObject(objectId)); }
 
-	inline CObject* Get() { return CObjectManager::FindObject(objectId); }
+	inline CObject* Get() const { return CObjectManager::FindObject(objectId); }
 
 	bool operator==(const FObjectHandle& other) { return other.objectId == objectId; }
 	bool operator==(CObject* obj) { return objectId == obj->Id(); }

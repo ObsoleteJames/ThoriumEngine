@@ -209,7 +209,7 @@ int CEngine::Run()
 		Events::OnRender.Invoke();
 
 		gWorld->renderScene->SetFrameBuffer(gameWindow->swapChain->GetFrameBuffer());
-		gWorld->renderScene->SetDepthBuffer(gameWindow->swapChain->GetDepthBuffer());
+		//gWorld->renderScene->SetDepthBuffer(gameWindow->swapChain->GetDepthBuffer());
 
 		gWorld->Render();
 		gRenderer->PushScene(gWorld->renderScene);

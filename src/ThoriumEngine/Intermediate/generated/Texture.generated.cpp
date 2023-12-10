@@ -6,29 +6,29 @@
 
 CModule& GetModule_Engine();
 
-class FEnum_ETextureFormat : public FEnum
+class FEnum_ETextureAssetFormat : public FEnum
 {
 	public:
-	FEnum_ETextureFormat()
+	FEnum_ETextureAssetFormat()
 	{
-		values.Add({ "THTX_FORMAT_R8_UINT", (int64)ETextureFormat::THTX_FORMAT_R8_UINT });
-		values.Add({ "THTX_FORMAT_RG8_UINT", (int64)ETextureFormat::THTX_FORMAT_RG8_UINT });
-		values.Add({ "THTX_FORMAT_RGB8_UINT", (int64)ETextureFormat::THTX_FORMAT_RGB8_UINT });
-		values.Add({ "THTX_FORMAT_RGBA8_UINT", (int64)ETextureFormat::THTX_FORMAT_RGBA8_UINT });
-		values.Add({ "THTX_FORMAT_RGBA16_FLOAT", (int64)ETextureFormat::THTX_FORMAT_RGBA16_FLOAT });
-		values.Add({ "THTX_FORMAT_RGBA32_FLOAT", (int64)ETextureFormat::THTX_FORMAT_RGBA32_FLOAT });
-		values.Add({ "THTX_FORMAT_DXT1", (int64)ETextureFormat::THTX_FORMAT_DXT1 });
-		values.Add({ "THTX_FORMAT_DXT5", (int64)ETextureFormat::THTX_FORMAT_DXT5 });
-		values.Add({ "THTX_FORMAT_AUTO", (int64)ETextureFormat::THTX_FORMAT_AUTO });
-		values.Add({ "THTX_FORMAT_AUTO_COMPRESSED", (int64)ETextureFormat::THTX_FORMAT_AUTO_COMPRESSED });
-		name = "TextureFormat";
-		cppName = "ETextureFormat";
-		size = sizeof(ETextureFormat);
+		values.Add({ "THTX_FORMAT_R8_UINT", (int64)ETextureAssetFormat::THTX_FORMAT_R8_UINT });
+		values.Add({ "THTX_FORMAT_RG8_UINT", (int64)ETextureAssetFormat::THTX_FORMAT_RG8_UINT });
+		values.Add({ "THTX_FORMAT_RGB8_UINT", (int64)ETextureAssetFormat::THTX_FORMAT_RGB8_UINT });
+		values.Add({ "THTX_FORMAT_RGBA8_UINT", (int64)ETextureAssetFormat::THTX_FORMAT_RGBA8_UINT });
+		values.Add({ "THTX_FORMAT_RGBA16_FLOAT", (int64)ETextureAssetFormat::THTX_FORMAT_RGBA16_FLOAT });
+		values.Add({ "THTX_FORMAT_RGBA32_FLOAT", (int64)ETextureAssetFormat::THTX_FORMAT_RGBA32_FLOAT });
+		values.Add({ "THTX_FORMAT_DXT1", (int64)ETextureAssetFormat::THTX_FORMAT_DXT1 });
+		values.Add({ "THTX_FORMAT_DXT5", (int64)ETextureAssetFormat::THTX_FORMAT_DXT5 });
+		values.Add({ "THTX_FORMAT_AUTO", (int64)ETextureAssetFormat::THTX_FORMAT_AUTO });
+		values.Add({ "THTX_FORMAT_AUTO_COMPRESSED", (int64)ETextureAssetFormat::THTX_FORMAT_AUTO_COMPRESSED });
+		name = "TextureAssetFormat";
+		cppName = "ETextureAssetFormat";
+		size = sizeof(ETextureAssetFormat);
 		flags = EnumFlag_NONE;
 		GetModule_Engine().RegisterFEnum(this);
 	}
 };
-FEnum_ETextureFormat __FEnum_ETextureFormat_Instance;
+FEnum_ETextureAssetFormat __FEnum_ETextureAssetFormat_Instance;
 
 class FEnum_ETextureFilter : public FEnum
 {

@@ -41,7 +41,6 @@ private:
 	CPointLightComponent* light1;
 	
 	IFrameBuffer* framebuffer;
-	IDepthBuffer* depthbuffer;
 
 	FString openMdlId;
 	FString saveMdlId;

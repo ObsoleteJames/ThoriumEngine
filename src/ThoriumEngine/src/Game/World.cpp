@@ -3,14 +3,17 @@
 
 #include "World.h"
 #include "Engine.h"
+#include "Game/Entity.h"
 #include "Game/Events.h"
 #include "Game/GameInstance.h"
 #include "Game/Components/ModelComponent.h"
 #include "Rendering/RenderScene.h"
 #include "Rendering/RenderProxies.h"
+#include "Rendering/PostProcessing.h"
 #include "Rendering/Renderer.h"
 #include "Resources/Scene.h"
 #include "Console.h"
+#include "Object/ObjectHandle.h"
 #include <Util/Assert.h>
 #include <Util/FStream.h>
 
@@ -60,6 +63,8 @@ void CWorld::InitWorld(const InitializeInfo& i)
 		Events::OnRender.Bind(this, [=]() { this->Render(); gRenderer->PushScene(renderScene); });
 	}
 
+	if (!parent)
+		entityIOManager = new CEntityIOManager(this);
 
 	bInitialized = true;
 }
@@ -121,7 +126,7 @@ void CWorld::LoadScene(CScene* ptr)
 
 		if (!ent)
 		{
-			CONSOLE_LogError("CWorld", "Serialized entity with invalid type '" + typeName + "'");
+			CONSOLE_LogError("CWorld", "Serialized entity with unkown type '" + typeName + "'");
 			stream->Seek(dataSize, SEEK_CUR);
 			continue;
 		}
@@ -200,6 +205,9 @@ void CWorld::Start()
 		SetGameMode(gm);
 	}
 
+	bActive = true;
+	time = 0.f;
+
 	gEngine->GameInstance()->Start();
 	gamemode->OnStart();
 
@@ -210,9 +218,6 @@ void CWorld::Start()
 
 	for (auto& ent : entities)
 		ent->OnStart();
-
-	bActive = true;
-	time = 0.f;
 }
 
 void CWorld::Stop()
@@ -245,6 +250,9 @@ void CWorld::Update(double dt)
 
 		for (auto* world : subWorlds)
 			world->Update(dt);
+
+		if (entityIOManager)
+			entityIOManager->Update();
 	}
 
 	if (gIsEditor)
@@ -290,52 +298,15 @@ void CWorld::Render()
 	for (auto* c : cameras)
 		c->FetchData();
 
+	for (auto* p : ppVolumes)
+		p->FetchData();
+
 	renderScene->SetPrimitives(primitives);
 	renderScene->SetLights(lights);
+	renderScene->SetPostProcessVolumes(ppVolumes);
 
 	renderScene->SetCameras(cameras);
 	renderScene->SetPrimaryCamera(primaryCamera);
-
-	//for (CModelComponent* mdl : models)
-	//{
-	//	CEntity* ent = mdl->GetEntity();
-	//	
-	//	// TODO: Check if this is visible from ownership.
-	//	if (!ent || !ent->bIsVisible || !mdl->bIsVisible || !mdl->GetModel())
-	//		continue;
-
-	//	float distanceFromCamera = FVector::Distance(renderScene->GetCamera()->GetWorldPosition(), mdl->GetWorldPosition());
-	//	int lodLevel = mdl->GetModel()->GetLodFromDistance(distanceFromCamera);
-	//	mdl->GetModel()->Load(lodLevel);
-
-	//	FMatrix modelMatrix = FMatrix(1.f).Translate(mdl->GetWorldPosition()).Scale(mdl->GetWorldScale()) * mdl->GetWorldRotation();
-	//	//modelMatrix = modelMatrix.Scale(mdl->GetWorldScale()).Translate(mdl->GetWorldPosition());
-
-	//	TArray<FMesh*> meshes = mdl->GetVisibleMeshes(lodLevel);
-	//	for (auto* mesh : meshes)
-	//	{
-	//		FDrawMeshCmd cmd;
-	//		CMaterial* mat = mdl->GetMaterial(mesh->materialIndex);
-	//		if (!mat)
-	//			continue;
-
-	//		cmd.transform = modelMatrix;
-	//		cmd.mesh = mesh;
-	//		cmd.material = mat;
-	//		
-	//		if (mesh->topologyType != FMesh::TOPOLOGY_TRIANGLES)
-	//			cmd.drawType |= (mesh->topologyType == FMesh::TOPOLOGY_LINES ? MESH_DRAW_PRIMITIVE_LINES : MESH_DRAW_PRIMITIVE_POINTS);
-
-	//		ERenderPass rp{};
-	//		uint8 matType = mat->GetShaderSource()->type;
-	//		if (matType == CShaderSource::ST_DEFERRED)
-	//			rp = R_DEFERRED_PASS;
-	//		else if (matType == CShaderSource::ST_FORWARD)
-	//			rp = mat->GetAlpha() < 1.f ? R_TRANSPARENT_PASS : R_FORWARD_PASS;
-
-	//		renderScene->PushCommand(FRenderCommand(cmd, rp));
-	//	}
-	//}
 }
 
 void CWorld::OnDelete()
@@ -346,13 +317,15 @@ void CWorld::OnDelete()
 	delete renderScene;
 	renderScene = nullptr;
 
+	delete entityIOManager;
+
 	subWorlds.Clear();
 
 	if (gamemode)
 		gamemode->Delete();
 
-	for (CEntity* ent : entities)
-		ent->Delete();
+	for (auto ent = entities.rbegin(); ent != entities.rend(); ent++)
+		(*ent)->Delete();
 
 	entities.Clear();
 
@@ -373,8 +346,96 @@ void CWorld::RemoveEntity(CEntity* ent)
 	}
 }
 
+CEntityIOManager* CWorld::GetEntityIOManager() const
+{
+	if (parent) 
+		return parent->GetEntityIOManager(); 
+	return entityIOManager;
+}
+
 void FWorldRegisterer::UnregisterEntity(CWorld* world, CEntity* ent)
 {
 	if (world)
 		world->RemoveEntity(ent);
+}
+
+CEntityIOManager::CEntityIOManager(CWorld* w) : world(w)
+{
+}
+
+void CEntityIOManager::Update()
+{
+	for (auto it = delayedEvents.rbegin(); it != delayedEvents.rend(); it++)
+	{
+		if (world->CurTime() > it->time)
+		{
+			_Fire(&*it);
+			delayedEvents.Erase(it);
+		}
+	}
+}
+
+void CEntityIOManager::FireEvent(CEntity* caller, SizeType outputIndex)
+{
+	const FOutputBinding& binding = caller->GetOutput(outputIndex);
+
+	FEntityOutputEvent e = { caller, outputIndex, binding.delay + world->CurTime() };
+	if (binding.delay > 0.f)
+	{
+		delayedEvents.Add(e);
+		return;
+	}
+
+	_Fire(&e);
+}
+
+void CEntityIOManager::_Fire(FEntityOutputEvent* event)
+{
+	if (!curInstigator)
+		curInstigator = event->caller;
+
+	callerStack.Add(event->caller);
+
+	const FOutputBinding& binding = event->caller->GetOutput(event->outputIndex);
+
+	CEntity* target = binding.targetObject.GetAs<CEntity>();
+	const FFunction* func = nullptr;
+	FStack funcStack(FMath::Max(binding.arguments.Size(), 1ull));
+
+	if (!target)
+	{
+		CONSOLE_LogError("CEntityIOManager", "Entity output has invalid target object! Entity: " + event->caller->Name() + "  Output Index: " + FString::ToString(event->outputIndex));
+		goto exit;
+	}
+
+	for (FClass* c = target->GetClass(); c != nullptr; c = c->GetBaseClass())
+	{
+		for (const FFunction* f = c->GetFunctionList(); f != nullptr; f = f->next)
+		{
+			if (f->name == binding.targetInput)
+			{
+				func = f;
+				goto foundFunc;
+			}
+		}
+	}
+foundFunc:
+
+	if (binding.arguments.Size() > 0)
+		funcStack.Push((void*)binding.arguments.Data(), binding.arguments.Size());
+
+	if (!func)
+	{
+		CONSOLE_LogError("CEntityIOManager", "Entity output has invalid input! Entity: " + event->caller->Name() + "  Output Index: " + FString::ToString(event->outputIndex));
+		goto exit;
+	}
+
+	func->execFunc(target, funcStack);
+
+	((FOutputBinding*)&binding)->fireCount++;
+
+exit:
+	callerStack.PopBack();
+	if (callerStack.Size() == 0)
+		curInstigator = nullptr;
 }

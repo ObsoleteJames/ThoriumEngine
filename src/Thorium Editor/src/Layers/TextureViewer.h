@@ -38,15 +38,17 @@ private:
 	FTextureImportSettings reimportSettings;
 
 	TObjectPtr<CTexture> tex;
-	TObjectPtr<CMaterial> matUnlit;
-	TObjectPtr<CModelEntity> modelEnt;
+	//TObjectPtr<CMaterial> matUnlit;
+	//TObjectPtr<CModelEntity> modelEnt;
 
-	TObjectPtr<CWorld> scene;
+	//TObjectPtr<CWorld> scene;
 
-	CCameraProxy* camera;
+	//CCameraProxy* camera;
 
-	IFrameBuffer* framebuffer;
-	IDepthBuffer* depthbuffer;
+	//IFrameBuffer* framebuffer;
+	//IDepthBuffer* depthbuffer;
+
+	float scale = 1.f;
 
 	FString openTexId;
 	FString saveTexId;

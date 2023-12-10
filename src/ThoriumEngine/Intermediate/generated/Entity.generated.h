@@ -2,10 +2,11 @@
 #include "Object/Class.h"
 #include "Object/ObjectMacros.h"
 
-#define Engine_Entity_h_26_GeneratedBody \
+#define Engine_Entity_h_27_GeneratedBody \
+PRIVATE_MEMBER_OFFSET_ACCESSOR(FOutputBinding, fireCount) \
 DECLARE_STRUCT(FOutputBinding, Engine)
 
-#define Engine_Entity_h_57_GeneratedBody \
+#define Engine_Entity_h_60_GeneratedBody \
 PRIVATE_MEMBER_OFFSET_ACCESSOR(CEntity, boundOutputs) \
 DECLARE_EXEC_FUNCTION(SetWorldPosition)\
 DECLARE_EXEC_FUNCTION(SetPosition)\

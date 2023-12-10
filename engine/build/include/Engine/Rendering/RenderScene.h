@@ -10,6 +10,7 @@ class ILightComponent;
 class CCameraComponent;
 class CPrimitiveProxy;
 class CCameraProxy;
+class CPostProcessVolumeProxy;
 
 struct FPrimitiveHitInfo
 {
@@ -26,14 +27,22 @@ class ENGINE_API CRenderScene
 	friend class IRenderer;
 
 public:
-	inline void SetCamera(CCameraComponent* newCam) { camera = newCam; }
-	inline TObjectPtr<CCameraComponent> GetCamera() const { return camera; }
+	CRenderScene(int fbWidth = 1280, int fbHeight = 720);
+	~CRenderScene();
+
+	//inline void SetCamera(CCameraComponent* newCam) { camera = newCam; }
+	//inline TObjectPtr<CCameraComponent> GetCamera() const { return camera; }
+
+	inline int GetFrameBufferWidth() const { return bufferWidth; }
+	inline int GetFrameBufferHeight() const { return bufferHeight; }
 
 	inline float GetTime() const { return time; }
 	inline void SetTime(float f) { time = f; }
 
 	inline void SetFrameBuffer(IFrameBuffer* target) { frameBuffer = target; }
-	inline void SetDepthBuffer(IDepthBuffer* depth) { depthBuffer = depth; }
+
+	UTIL_DEPRECATED("This function has been deprecated")
+	inline void SetDepthBuffer(IDepthBuffer* depth) { }
 
 	inline void PushCommand(const FRenderCommand& cmd) { renderQueue.Add(cmd); }
 	
@@ -55,16 +64,24 @@ public:
 	inline const TArray<CLightProxy*>& GetLights() const { return lights; }
 	inline void SetLights(const TArray<CLightProxy*>& arr) { lights = arr; }
 
+	inline void RegisterPPVolume(CPostProcessVolumeProxy* proxy) { ppVolumes.Add(proxy); }
+	inline void UnregisterPPVolume(CPostProcessVolumeProxy* proxy) { if (auto it = ppVolumes.Find(proxy); it != ppVolumes.end()) ppVolumes.Erase(it); }
+	inline const TArray<CPostProcessVolumeProxy*>& GetPostProcessVolumes() const { return ppVolumes; }
+	inline void SetPostProcessVolumes(const TArray<CPostProcessVolumeProxy*>& arr) { ppVolumes = arr; }
+
 	bool RayCast(const FVector& pos, const FVector& dir, FPrimitiveHitInfo* outHit, float maxDistance = 0.f);
 	bool RayCastBounds(const FRay& ray, FPrimitiveHitInfo* outHit, float maxDistance = 0.f);
 
 private:
+	void ResizeBuffers(int width, int height);
+
+private:
 	TArray<FRenderCommand> renderQueue;
-	TObjectPtr<CCameraComponent> camera;
 
 	TArray<CPrimitiveProxy*> primitves;
 	TArray<CCameraProxy*> cameras;
 	TArray<CLightProxy*> lights;
+	TArray<CPostProcessVolumeProxy*> ppVolumes;
 
 	// the position of the primary camera that was used for rendering the sun light shadow map,
 	FVector sunLightCamPos;
@@ -72,10 +89,24 @@ private:
 
 	//TArray<CTexture*> lightmaps;
 
-	CCameraProxy* primaryCamera;
+	CCameraProxy* primaryCamera = nullptr;
 
 	float time;
 
-	IFrameBuffer* frameBuffer;
-	IDepthBuffer* depthBuffer;
+	int bufferWidth, bufferHeight;
+	IFrameBuffer* colorBuffer; // float16 output buffer
+	IFrameBuffer* GBufferA; // Normal
+	IFrameBuffer* GBufferB; // Material (red = metallic, green = roughness, blue = metallic, alpha = specular)
+	IFrameBuffer* GBufferC; // Albedo
+	IFrameBuffer* GBufferD; // ?? maybe material type
+
+	// Frame buffer used for things like refraction.
+	IFrameBuffer* preTranslucentBuff;
+
+	// Ambient occlusion buffer.
+	IFrameBuffer* aoBuffer;
+
+	IDepthBuffer* depth;
+
+	IFrameBuffer* frameBuffer = nullptr;
 };

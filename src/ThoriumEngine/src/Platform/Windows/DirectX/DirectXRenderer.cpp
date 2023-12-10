@@ -368,8 +368,11 @@ void DirectXRenderer::DrawMesh(FMesh* mesh)
 
 	deviceContext->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	deviceContext->OMSetDepthStencilState(nullptr, 0);
-
-	deviceContext->DrawIndexed(mesh->numIndices, 0, 0);
+	
+	if (mesh->indexBuffer)
+		deviceContext->DrawIndexed(mesh->numIndices, 0, 0);
+	else
+		deviceContext->Draw(mesh->numVertices, 0);
 }
 
 void DirectXRenderer::DrawMesh(FDrawMeshCmd* info)
@@ -512,6 +515,13 @@ void DirectXRenderer::SetShaderResource(IDepthBuffer* depthTex, int _register)
 	deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
 }
 
+void DirectXRenderer::SetShaderResource(IFrameBuffer* fb, int _register)
+{
+	DirectXFrameBuffer* tex = (DirectXFrameBuffer*)fb;
+	deviceContext->PSSetShaderResources(_register, 1, &tex->view);
+	deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
+}
+
 void DirectXRenderer::SetFrameBuffer(IFrameBuffer* framebuffer, IDepthBuffer* depth)
 {
 	deviceContext->OMSetRenderTargets(framebuffer != nullptr, framebuffer != nullptr ? &((DirectXFrameBuffer*)framebuffer)->Get() : 0, depth != nullptr ? ((DirectXDepthBuffer*)depth)->depthView : 0);
@@ -560,20 +570,26 @@ void DirectXRenderer::Present()
 TPair<DXGI_FORMAT, int> DirectXRenderer::GetDXTextureFormat(ETextureFormat format)
 {
 	static constexpr DXGI_FORMAT formats[] = {
-	DXGI_FORMAT_R8_UNORM,
-	DXGI_FORMAT_R8G8_UNORM,
-	DXGI_FORMAT_R8G8B8A8_UNORM,
-	DXGI_FORMAT_R8G8B8A8_UNORM,
-	DXGI_FORMAT_R16G16B16A16_FLOAT,
-	DXGI_FORMAT_R32G32B32A32_FLOAT,
-	DXGI_FORMAT_BC1_UNORM,
-	DXGI_FORMAT_BC3_UNORM
+		DXGI_FORMAT_UNKNOWN,
+		DXGI_FORMAT_R8_UNORM,
+		DXGI_FORMAT_R8G8_UNORM,
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+		DXGI_FORMAT_R8G8B8A8_UNORM,
+		DXGI_FORMAT_R10G10B10A2_UNORM,
+		DXGI_FORMAT_R11G11B10_FLOAT,
+		DXGI_FORMAT_R16G16B16A16_FLOAT,
+		DXGI_FORMAT_R32G32B32A32_FLOAT,
+		DXGI_FORMAT_BC1_UNORM,
+		DXGI_FORMAT_BC3_UNORM
 	};
 
 	static constexpr int formatSizes[] = {
+		0,
 		1,
 		2,
 		3,
+		4,
+		4,
 		4,
 		8,
 		16,

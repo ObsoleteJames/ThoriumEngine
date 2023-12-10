@@ -79,7 +79,9 @@ void CSceneComponent::Detach(const FTransformSpace& space /*= FTransformSpace::K
 	if ((int)space & (int)FTransformSpace::KEEP_WORLD_ROTATION)
 		rotation *= parent->GetWorldRotation();
 
-	parent->children.Erase(parent->children.Find(this));
+	auto it = parent->children.Find(this);
+	if (it != parent->children.end())
+		parent->children.Erase(it);
 	parent = nullptr;
 }
 

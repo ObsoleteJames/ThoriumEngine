@@ -44,6 +44,7 @@ public:
 	virtual void SetShaderBuffer(IShaderBuffer* buffer, int _register);
 
 	virtual void SetShaderResource(ITexture2D* texture, int _register);
+	virtual void SetShaderResource(IFrameBuffer* fb, int _register);
 	virtual void SetShaderResource(IDepthBuffer* depthTex, int _register);
 
 	virtual void SetFrameBuffer(IFrameBuffer* framebuffer, IDepthBuffer* depth);

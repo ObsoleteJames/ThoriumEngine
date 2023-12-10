@@ -11,6 +11,7 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/RenderScene.h"
 #include "Rendering/DebugRenderer.h"
+#include "Rendering/Texture.h"
 #include "Game/World.h"
 #include "Game/Events.h"
 #include "Game/GameInstance.h"
@@ -87,8 +88,8 @@ void CEditorEngine::Init()
 
 	viewportWidth = 1280;
 	viewportHeight = 720;
-	sceneFrameBuffer = gRenderer->CreateFrameBuffer(1280, 720, THTX_FORMAT_RGBA8_UINT);
-	sceneDepthBuffer = gRenderer->CreateDepthBuffer({ 1280, 720, TH_DBF_D24_S8, 1, false });
+	sceneFrameBuffer = gRenderer->CreateFrameBuffer(1280, 720, TEXTURE_FORMAT_RGBA8_UNORM);
+	//sceneDepthBuffer = gRenderer->CreateDepthBuffer({ 1280, 720, TH_DBF_D24_S8, 1, false });
 
 	InitImGui();
 	ImGuiIO& io = ImGui::GetIO();
@@ -182,7 +183,7 @@ int CEditorEngine::Run()
 			if (w != viewportWidth || h != viewportHeight)
 			{
 				sceneFrameBuffer->Resize(viewportWidth, viewportHeight);
-				sceneDepthBuffer->Resize(viewportWidth, viewportHeight);
+				//sceneDepthBuffer->Resize(viewportWidth, viewportHeight);
 			}
 		}
 
@@ -197,7 +198,7 @@ int CEditorEngine::Run()
 		Events::OnRender.Invoke();
 
 		gWorld->renderScene->SetFrameBuffer(sceneFrameBuffer);
-		gWorld->renderScene->SetDepthBuffer(sceneDepthBuffer);
+		//gWorld->renderScene->SetDepthBuffer(sceneDepthBuffer);
 
 		if (!bIsPlaying)
 		{
@@ -278,14 +279,27 @@ void CEditorEngine::UpdateEditor()
 	ImGuiID dockspace_id = ImGui::GetID("EditorDockSpace");
 	ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
 
+	enum EMenuAction {
+		MenuAction_NONE,
+		MenuAction_NewScene,
+		MenuAction_OpenScene,
+		MenuAction_SaveScene,
+		MenuAction_SaveSceneAs
+	};
+	int menuAction = 0;
+
 	if (ImGui::BeginMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
 		{
-			ImGui::MenuItem("New Scene", "Ctrl+N");
-			ImGui::MenuItem("Open Scene", "Ctrl+O");
-			ImGui::MenuItem("Save", "Ctrl+S");
-			ImGui::MenuItem("Save As");
+			if (ImGui::MenuItem("New Scene", "Ctrl+N"))
+				menuAction = MenuAction_NewScene;
+			if (ImGui::MenuItem("Open Scene", "Ctrl+O"))
+				menuAction = MenuAction_OpenScene;
+			if (ImGui::MenuItem("Save", "Ctrl+S"))
+				menuAction = MenuAction_SaveScene;
+			if (ImGui::MenuItem("Save As"))
+				menuAction = MenuAction_SaveSceneAs;
 
 			ImGui::Separator();
 
@@ -358,6 +372,11 @@ void CEditorEngine::UpdateEditor()
 
 	ImGui::End();
 
+	if (menuAction == MenuAction_SaveScene || (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_S)))
+		SaveScene();
+	if (menuAction == MenuAction_NewScene || (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_N)))
+		NewScene();
+
 	if (!bProjectLoaded)
 		ImGui::OpenPopup("Open Project");
 
@@ -411,23 +430,18 @@ void CEditorEngine::UpdateEditor()
 		auto wndSize = ImGui::GetContentRegionAvail();
 		auto cursorPos = ImGui::GetCursorScreenPos();
 
+		ImGui::PopStyleVar(2);
+
 		if (ImGui::BeginChild("sceneToolBar", ImVec2(wndSize.x, 32)))
 		{
 			ImGui::SetCursorScreenPos(cursorPos + ImVec2(wndSize.x / 2 - 100, 4));
 			if (ImGui::Button("Play/Stop"))
 			{
 				if (bIsPlaying)
-				{
-					gWorld->Stop();
-					bIsPlaying = false;
-					gWorld->SetPrimaryCamera(editorCamera);
-				}
+					StopPlay();
 				else
-				{
-					gWorld->Start();
-					bIsPlaying = true;
-					inputManager->EnableInput();
-				}
+					StartPlay();
+
 				bPaused = false;
 			}
 			ImGui::SameLine();
@@ -484,6 +498,7 @@ void CEditorEngine::UpdateEditor()
 		}
 
 		camController->Update(deltaTime);
+		DoEntRightClick();
 
 		if (ImGui::IsItemClicked() && inputManager && !inputManager->InputEnabled() && bIsPlaying && !bPaused)
 			ToggleGameInput();
@@ -540,10 +555,12 @@ void CEditorEngine::UpdateEditor()
 
 		viewportWidth = FMath::Max((int)wndSize.x, 32);
 		viewportHeight = FMath::Max((int)wndSize.y, 32);
-
 	}
-	ImGui::PopStyleVar(2);
+	else
+		ImGui::PopStyleVar(2);
 	ImGui::End();
+
+	DoEntityShortcuts();
 
 	// Scene outliner
 	if (bViewOutliner)
@@ -553,7 +570,7 @@ void CEditorEngine::UpdateEditor()
 			static FString searchText;
 			searchText.Reserve(64);
 			ImGui::InputText("Search", searchText.Data(), 63);
-			static ImGuiTableFlags flags = ImGuiTableFlags_BordersV | ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_Hideable;
+			constexpr ImGuiTableFlags flags = ImGuiTableFlags_BordersV | ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_Hideable;
 
 			ImGui::TextColored(ImVec4(1, 1, 0, 1), ("Count Selected: " + FString::ToString(selectedEntities.Size())).c_str());
 
@@ -779,6 +796,63 @@ void CEditorEngine::InitEditorData()
 	outlineMat->SetColor("vColorTint", FColor(1.f, 0.88f, 0.4f));
 }
 
+void CEditorEngine::NewScene()
+{
+	LoadWorld();
+}
+
+bool CEditorEngine::SaveScene()
+{
+	if (!gWorld->GetScene()->File())
+	{
+		return false;
+	}
+
+	CFStream sdkStream = gWorld->GetScene()->File()->GetSdkStream("wb");
+	if (sdkStream.IsOpen())
+	{
+		FVector camPos = editorCamera->position;
+		FQuaternion camRot = editorCamera->rotation;
+
+		sdkStream << &camPos << &camRot;
+		sdkStream.Close();
+	}
+
+	gWorld->Save();
+	return true;
+}
+
+void CEditorEngine::StartPlay()
+{
+	if (!SaveScene())
+		return;
+
+	gWorld->Start();
+	bIsPlaying = true;
+	inputManager->EnableInput();
+}
+
+void CEditorEngine::StopPlay()
+{
+	gWorld->Stop();
+	bIsPlaying = false;
+	gWorld->SetPrimaryCamera(editorCamera);
+
+	// Reload the scene
+	CScene* scene = gWorld->GetScene();
+	gWorld->Delete();
+
+	gWorld = CreateObject<CWorld>();
+	gWorld->MakeIndestructible();
+
+	Events::LevelChange.Invoke();
+
+	gWorld->LoadScene(scene);
+	gWorld->InitWorld(CWorld::InitializeInfo().RegisterForRendering(false));
+
+	Events::PostLevelChange.Invoke();
+}
+
 void CEditorEngine::DoMousePick()
 {
 	if (!gWorld)
@@ -822,6 +896,49 @@ void CEditorEngine::DoMousePick()
 	}
 	else
 		SetSelectedEntity(nullptr);
+}
+
+void CEditorEngine::DoEntRightClick()
+{
+	static FVector clickPos;
+	if (ImGui::BeginPopup("popupEntViewportContext"))
+	{
+		if (selectedEntities.Size() > 0)
+			EntityContextMenu(selectedEntities[0], clickPos);
+		ImGui::EndPopup();
+	}
+
+	static ImVec2 mousePos;
+	if (ImGui::IsItemHovered())
+	{
+		if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+			mousePos = ImGui::GetIO().MousePos;
+
+		if (ImGui::IsMouseReleased(ImGuiMouseButton_Right) && mousePos.x == ImGui::GetIO().MousePos.x && mousePos.y == ImGui::GetIO().MousePos.y)
+		{
+			FRay ray = FRay::MouseToRay(editorCamera, InputManager()->GetMousePos() - FVector2(viewportX, viewportY), { (float)viewportWidth, (float)viewportHeight });
+			ray.direction = ray.direction.Normalize();
+
+			auto* scene = gWorld->GetRenderScene();
+
+			FPrimitiveHitInfo hit;
+
+			if (scene->RayCast(ray.origin, ray.direction, &hit))
+			{
+				CEntity* ent = nullptr;
+
+				TObjectPtr<CObject> obj = hit.hitProxy->GetOwner();
+				if (auto comp = CastChecked<CSceneComponent>(obj); comp)
+				{
+					ent = comp->GetEntity();
+					SetSelectedEntity(ent);
+					ImGui::OpenPopup("popupEntViewportContext");
+
+					clickPos = hit.position;
+				}
+			}
+		}
+	}
 }
 
 void CEditorEngine::DoMaterialDrop(TObjectPtr<CMaterial> mat, bool bPeek)
@@ -902,7 +1019,7 @@ void CEditorEngine::DoModelAssetDrop(TObjectPtr<CModelAsset> mdl, bool bPeek)
 		if (!scene->RayCast(ray.origin, ray.direction, &hit))
 			hit.position = ray.origin + ray.direction;
 
-		CModelEntity* mdlEnt = gWorld->CreateEntity<CModelEntity>(mdl->Name() + " Entity");
+		CModelEntity* mdlEnt = gWorld->CreateEntity<CModelEntity>(ToFString(mdl->File()->Name()) + " Entity");
 		mdlEnt->SetModel(mdl);
 		mdlEnt->SetPosition(hit.position);
 	}
@@ -952,27 +1069,35 @@ void CEditorEngine::DrawSelectionDebug()
 	if (selectedEntities.Size() == 0)
 		return;
 
-	FBounds selectionBounds;
-
 	for (auto obj : selectedEntities)
 	{
-		//if (auto ent = CastChecked<CEntity>(obj); ent)
- 		//{
-			selectionBounds = selectionBounds.Combine(obj->GetBounds());
-		//}
-	}
+		FBounds b = obj->GetBounds();
 
-	if (selectionBounds.Size().Magnitude() == 0.f)
+		if (b.Size().Magnitude() == 0)
+			continue;
+
+		FDrawMeshCmd cmd;
+		cmd.material = outlineMat;
+		cmd.mesh = &boxOutlineMesh;
+		cmd.transform = FMatrix(1.f).Translate(b.position).Scale(b.extents);
+		cmd.drawType |= MESH_DRAW_PRIMITIVE_LINES;
+
+		FRenderCommand gridDraw(cmd, R_DEBUG_PASS);
+		gWorld->renderScene->PushCommand(gridDraw);
+	}
+}
+
+void CEditorEngine::FocusOnSelection()
+{
+	if (selectedEntities.Size() == 0)
 		return;
 
-	FDrawMeshCmd cmd;
-	cmd.material = outlineMat;
-	cmd.mesh = &boxOutlineMesh;
-	cmd.transform = FMatrix(1.f).Translate(selectionBounds.position).Scale(selectionBounds.extents);
-	cmd.drawType |= MESH_DRAW_PRIMITIVE_LINES;
+	FBounds b;
 
-	FRenderCommand gridDraw(cmd, R_DEBUG_PASS);
-	gWorld->renderScene->PushCommand(gridDraw);
+	for (auto obj : selectedEntities)
+		b = b.Combine(obj->GetBounds());
+
+	editorCamera->position = b.position - editorCamera->GetForwardVector() * FMath::Max(b.extents.Magnitude() * 1.5f, 1.f);
 }
 
 void CEditorEngine::KeyEventA(EKeyCode key, EInputAction action, EInputMod mod)
@@ -1088,6 +1213,13 @@ void CEditorEngine::OutlinerDrawEntity(CEntity* ent, bool bRoot)
 			SetSelectedEntity(ent);
 	}
 	ImGui::PopStyleColor();
+
+	if (ImGui::BeginPopupContextItem())
+	{
+		EntityContextMenu(ent, FVector());
+		ImGui::EndPopup();
+	}
+
 	ImGui::SameLine();
 
 	ImVec2 cursor = ImGui::GetCursorScreenPos();
@@ -1122,4 +1254,110 @@ void CEditorEngine::OutlinerDrawEntity(CEntity* ent, bool bRoot)
 		ImGui::TableNextColumn();
 		ImGui::Text(type.c_str());
 	}
+}
+
+void CEditorEngine::EntityContextMenu(CEntity* ent, const FVector& clickPos)
+{
+	if (ImGui::MenuItem("Copy", "Ctrl+C"))
+		CopyEntity();
+	if (ImGui::MenuItem("Paste", "Ctrl+V", nullptr, copyBuffer.dataType == CB_ENTITY))
+	{
+		if (clickPos.Magnitude() == 0)
+			PasteEntity(ent->GetWorldPosition() + FVector((float)FMath::Random(1, 100) / 100.f));
+		else
+			PasteEntity(clickPos);
+	}
+	if (ImGui::MenuItem("Duplicate", "Ctrl+D"))
+		DupeEntity();
+
+	if (ImGui::MenuItem("Delete", "Ctrl+X"))
+	{
+		ent->Delete();
+		if (IsEntitySelected(ent))
+			RemoveSelectedEntity(ent);
+	}
+
+	ImGui::Separator();
+
+	if (ImGui::MenuItem("Focus", "F"))
+		FocusOnSelection();
+
+	if (ImGui::MenuItem("Make Hidden", "H"))
+		ent->bIsVisible = false;
+
+	if (ImGui::MenuItem("Make Visible", "H"))
+		ent->bIsVisible = true;
+
+	if (ImGui::BeginMenu("Attach To"))
+	{
+		for (auto& e : gWorld->GetEntities())
+		{
+			if (e == ent)
+				continue;
+
+			if (ImGui::MenuItem((e->Name() + "##_attachToEnt_" + FString::ToString((SizeType)&*e)).c_str()))
+				ent->RootComponent()->AttachTo(e->RootComponent());
+		}
+
+		ImGui::EndMenu();
+	}
+}
+
+void CEditorEngine::DoEntityShortcuts()
+{
+	if (selectedEntities.Size() == 0)
+		return;
+
+	if (ImGui::IsKeyReleased(ImGuiKey_F))
+		FocusOnSelection();
+
+	if (ImGui::IsKeyReleased(ImGuiKey_H))
+	{
+		bool bVis = selectedEntities[0]->bIsVisible;
+		for (auto& obj : selectedEntities)
+		{
+			obj->bIsVisible = !bVis;
+		}
+	}
+
+	if (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyReleased(ImGuiKey_X))
+	{
+		for (auto& ent : selectedEntities)
+		{
+			ent->Delete();
+			if (IsEntitySelected(ent))
+				RemoveSelectedEntity(ent);
+		}
+	}
+}
+
+void CEditorEngine::CopyEntity()
+{
+	if (selectedEntities.Size() == 0)
+		return;
+
+	copyBuffer.dataType = CB_ENTITY;
+	copyBuffer.data = FMemStream();
+	copyBuffer.type = selectedEntities[0]->GetClass();
+
+	selectedEntities[0]->Serialize(copyBuffer.data);
+}
+
+void CEditorEngine::PasteEntity(const FVector& pos)
+{
+	if (copyBuffer.dataType == CB_NONE)
+		return;
+
+	CEntity* ent = gWorld->CreateEntity(copyBuffer.type, FString());
+
+	copyBuffer.data.Seek(SEEK_SET, 0);
+	ent->Load(copyBuffer.data);
+	ent->SetWorldPosition(pos);
+
+	SetSelectedEntity(ent);
+}
+
+void CEditorEngine::DupeEntity()
+{
+
 }

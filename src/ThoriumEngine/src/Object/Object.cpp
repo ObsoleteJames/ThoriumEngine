@@ -1,6 +1,7 @@
 
 #include "Object.h"
 #include "Module.h"
+#include "Console.h"
 #include "Resources/Asset.h"
 
 const SizeType zero = 0;
@@ -44,6 +45,14 @@ void CObject::Disconnect()
 
 void CObject::SetId(SizeType _id)
 {
+	/*if (CObjectManager::FindObject(_id) != nullptr)
+	{
+		CONSOLE_LogWarning("CObject", "Attempted to change object ID to used ID! Object: " + Name());
+		return;
+	}*/
+	auto* _obj = CObjectManager::FindObject(_id);
+	THORIUM_ASSERT(_obj == nullptr, "Attempted to change object ID to used ID!\nThis: " + Name() + "\nOther: " + _obj->Name());
+
 	SizeType old = id; 
 	id = _id; 
 	CObjectManager::IdChanged(this, old);
@@ -66,7 +75,8 @@ void CObject::Serialize(FMemStream& out)
 
 void CObject::Load(FMemStream& in)
 {
-	in >> &id;
+	SizeType temp;
+	in >> &temp; // used to read the id but this could cause issues
 	
 	FClass* t = GetClass();
 	while (t != nullptr)

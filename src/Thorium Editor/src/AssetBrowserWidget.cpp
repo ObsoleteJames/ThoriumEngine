@@ -117,12 +117,39 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 			{
 				ImGui::TableNextColumn();
 				//if (ImGui::Selectable(ToFString(d->GetName()).c_str(), false, ImGuiSelectableFlags_None, ImVec2(itemSize.x, itemSize.x)))
-				if (ImGui::ButtonEx(ToFString(d->GetName()).c_str(), ImVec2(itemSize.x, itemSize.x), ImGuiButtonFlags_PressedOnDoubleClick))
+				if (ImGui::ButtonEx(ToFString(L"##_" + d->GetPath()).c_str(), ImVec2(itemSize.x, itemSize.x), ImGuiButtonFlags_PressedOnDoubleClick))
 				{
 					SetDir(mod, d->GetPath());
 				}
+				
+				ImGui::Text(ToFString(d->GetName()).c_str());
+
 				if (ImGui::IsItemClicked())
 					SetSelectedFile(nullptr);
+			}
+
+			if (bCreatingFolder)
+			{
+				ImGui::TableNextColumn();
+
+				ImGui::ButtonEx("newFolder", ImVec2(itemSize.x, itemSize.x));
+
+				ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0);
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, 0 });
+				ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
+				if (ImGui::InputText("##newFolderEdit", &newFileStr, ImGuiInputTextFlags_EnterReturnsTrue))
+				{
+					if (!newFileStr.IsEmpty())
+						curMod->CreateDir(!dir.IsEmpty() ? (dir + L"\\" + ToWString(newFileStr)) : ToWString(newFileStr));
+					bCreatingFolder = false;
+				}
+				ImGui::PopStyleVar(2);
+				ImGui::PopStyleColor();
+
+				ImGui::SetKeyboardFocusHere(-1);
+
+				if (ImGui::IsKeyPressed(ImGuiKey_Escape) || !ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
+					bCreatingFolder = false;
 			}
 
 			for (auto& f : curDir->GetFiles())
@@ -163,7 +190,7 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 						{
 							ImGui::Separator();
 
-							FBADataBase data{ f };
+							FBADataBase data{ this, f };
 							action->Invoke(&data);
 						}
 					}
@@ -189,7 +216,7 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 					{
 						if (action->Type() == BA_OPENFILE && action->TargetClass() == type)
 						{
-							FBADataBase data{ f };
+							FBADataBase data{ this, f };
 							action->Invoke(&data);
 							break;
 						}
@@ -229,7 +256,67 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 
 			}
 
+			if (bCreatingFile)
+			{
+				ImGui::TableNextColumn();
+				ImVec2 cursor = ImGui::GetCursorScreenPos();
+
+				ImGui::ButtonEx("##newFileBtn", itemSize);
+
+				uint32 col = ImGui::ColorConvertFloat4ToU32(ImVec4(0.06f, 0.06f, 0.06f, 1.00f));
+				ImGui::RenderFrame(cursor, cursor + ImVec2(itemSize.x, itemSize.x), col, false, ImGui::GetStyle().FrameRounding);
+				ImGui::RenderFrame(cursor + ImVec2(0, ImGui::GetStyle().FrameRounding + 2.f), cursor + ImVec2(itemSize.x, itemSize.x), col, false);
+
+				//ImGui::RenderTextWrapped(cursor + ImVec2(5, itemSize.x + 5), name.c_str(), name.last()++, itemSize.x - 5);
+				ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0);
+				ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 0, 0 });
+				ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
+				ImGui::SetCursorScreenPos(cursor + ImVec2(5, itemSize.x + 5));
+				if (ImGui::InputText("##newFileEdit", &newFileStr, ImGuiInputTextFlags_EnterReturnsTrue))
+				{
+					if (!newFileStr.IsEmpty() && onCreatedFileFun)
+						onCreatedFileFun(!dir.IsEmpty() ? (dir + L"\\" + ToWString(newFileStr)) : ToWString(newFileStr), mod);
+					bCreatingFile = false;
+				}
+				ImGui::PopStyleVar(2);
+				ImGui::PopStyleColor();
+
+				ImGui::SetKeyboardFocusHere(-1);
+
+				if (ImGui::IsKeyPressed(ImGuiKey_Escape) || !ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows))
+					bCreatingFile = false;
+
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.f, 1.f, 1.f, 0.4f));
+				if (!newFileType || newFileType == (FAssetClass*)CAsset::StaticClass())
+				{
+					FString ext = "Generic";
+					ImGui::RenderTextClipped(cursor + ImVec2(5, itemSize.y - 18), cursor + ImVec2(itemSize.x - 5, itemSize.y), ext.c_str(), nullptr, nullptr);
+				}
+				else
+					ImGui::RenderTextClipped(cursor + ImVec2(5, itemSize.y - 18), cursor + ImVec2(itemSize.x - 5, itemSize.y), newFileType->GetName().c_str(), nullptr, nullptr);
+				ImGui::PopStyleColor();
+			}
+
 			ImGui::EndTable();
+		}
+
+		if (bAllowFileEdit && ImGui::BeginPopupContextWindow(0, ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+		{
+			if (ImGui::MenuItem("New Folder"))
+				bCreatingFolder = true;
+
+			ImGui::Separator();
+			for (auto* action : FAssetBrowserAction::GetActions())
+			{
+				if (action->Type() == BA_WINDOW_CONTEXTMENU)
+				{
+
+					FBAWindowContext data{ this, nullptr, mod, dir };
+					action->Invoke(&data);
+				}
+			}
+
+			ImGui::EndPopup();
 		}
 	}
 	ImGui::EndChild();
@@ -363,6 +450,26 @@ bool CAssetBrowserWidget::ExtractPath(const WString& combined, WString& outMod, 
 	return false;
 }
 
+void CAssetBrowserWidget::PrepareNewFile(void(*onFinishFun)(const WString& outPath, const WString& mod) /*= nullptr*/, FAssetClass* type /*= nullptr*/)
+{
+	if (!bAllowFileEdit || bCreatingFolder || bCreatingFile)
+		return;
+
+	newFileType = type;
+	newFileStr = type ? "New " + type->GetName() : "New File";
+	bCreatingFile = true;
+	onCreatedFileFun = onFinishFun;
+}
+
+void CAssetBrowserWidget::PrepareNewFolder()
+{
+	if (!bAllowFileEdit || bCreatingFolder || bCreatingFile)
+		return;
+
+	newFileStr = "New Folder";
+	bCreatingFolder = true;
+}
+
 void CAssetBrowserWidget::ImportAsset()
 {
 	FString filter;
@@ -430,7 +537,7 @@ foundClass:
 	{
 		if (a->Type() == BA_FILE_IMPORT && a->TargetClass() == targetClass)
 		{
-			FBAImportFile data{ nullptr, file, dir + L"\\" + ToWString(fileName) + ToWString(targetClass->GetExtension()), mod };
+			FBAImportFile data{ this, nullptr, file, dir + L"\\" + ToWString(fileName) + ToWString(targetClass->GetExtension()), mod };
 			a->Invoke(&data);
 			break;
 		}

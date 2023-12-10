@@ -345,6 +345,7 @@ XCOPY $(TargetDir)Engine.pdb $(SolutionDir)..\engine\bin\ /y</Command>
     <ClInclude Include="src\Physics\PhysicsWorld.h" />
     <ClInclude Include="src\Profiler\Profiler.h" />
     <ClInclude Include="src\Rendering\DebugRenderer.h" />
+    <ClInclude Include="src\Rendering\PostProcessing.h" />
     <ClInclude Include="src\Rendering\RenderProxies.h" />
     <ClInclude Include="src\Resources\DataAsset.h" />
     <ClInclude Include="src\Resources\Mesh.h" />

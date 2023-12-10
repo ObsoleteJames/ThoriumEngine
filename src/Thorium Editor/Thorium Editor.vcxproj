@@ -271,6 +271,7 @@
     <ClCompile Include="src\Layers\PropertyEditor.cpp" />
     <ClCompile Include="src\Layers\TextureViewer.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Misc\CreateShader.cpp" />
     <ClCompile Include="src\Misc\ShaderContextMenu.cpp" />
     <ClCompile Include="src\Misc\TextureImporter.cpp" />
   </ItemGroup>
