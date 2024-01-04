@@ -4,13 +4,13 @@
 #include <Util/String.h>
 #include <Util/Pointer.h>
 
-#ifndef _FILE_DEFINED
-#define _FILE_DEFINED
-typedef struct _iobuf
-{
-	void* _Placeholder;
-} FILE;
-#endif
+// #ifndef _FILE_DEFINED
+// #define _FILE_DEFINED
+// typedef struct _iobuf
+// {
+// 	void* _Placeholder;
+// } FILE;
+// #endif
 
 // These should only be used for binary data.
 class IBaseFStream
@@ -33,7 +33,7 @@ public:
 
 	inline IBaseFStream& operator<<(const char* str)
 	{
-		Write((void*)str, strlen(str) + 1);
+		Write((void*)str, StrLen(str) + 1);
 		return *this;
 	}
 

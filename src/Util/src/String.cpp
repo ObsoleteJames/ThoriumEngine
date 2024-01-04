@@ -1,5 +1,6 @@
 
 #include "Util/String.h"
+#include <cstring>
 
 SizeType StrLen(const char* str)
 {

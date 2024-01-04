@@ -10,7 +10,7 @@
 
 FString GetGameNameFromProject(const FString& projectCfg)
 {
-	FKeyValue kv(ToWString(projectCfg));
+	FKeyValue kv(projectCfg);
 	if (!kv.IsOpen())
 		return FString();
 

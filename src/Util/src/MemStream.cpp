@@ -1,5 +1,6 @@
 
 #include "Util/MemStream.h"
+#include <cstring>
 #include <algorithm>
 
 void FMemStream::Read(void* buffer, SizeType size)

@@ -15,6 +15,7 @@
 src/.vs
 intermediate/
 .vs/
+build/
 
 # Compiled Dynamic libraries
 *.so

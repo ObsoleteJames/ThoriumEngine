@@ -55,8 +55,8 @@ public:
 
 	void Resize(SizeType size);
 
-	void Erase(const typename TIterator<T>& index);
-	void Erase(const typename TIterator<T>& first, const typename TIterator<T>& last);
+	void Erase(const TIterator<T>& index);
+	void Erase(const TIterator<T>& first, const TIterator<T>& last);
 
 	void Insert(const T&, SizeType index);
 
@@ -171,7 +171,7 @@ TBaseString<T> TBaseString<T>::ToString(T2 i)
 #pragma region DEFINITION
 
 template<typename T>
-__declspec(selectany) SizeType TBaseString<T>::npos = -1;
+SizeType TBaseString<T>::npos = -1;
 
 template<typename T>
 TBaseString<T>::TBaseString() : TArray<T>()
@@ -308,7 +308,7 @@ bool TBaseString<T>::operator!=(const T* str) const
 }
 
 template<typename T>
-void TBaseString<T>::Erase(const typename TIterator<T>& index)
+void TBaseString<T>::Erase(const TIterator<T>& index)
 {
 	if (index == TArray<T>::end())
 		throw std::out_of_range("");

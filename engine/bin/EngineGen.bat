@@ -1,1 +1,0 @@
-HeaderTool.exe "X:\cpp_projects\ThroiumEngine\ThoriumEngine\" -config Debug -platform x64 -pt 0

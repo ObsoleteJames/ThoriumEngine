@@ -65,12 +65,12 @@ TArray<FString>* KVCategory::GetArray(const FString& name, bool CreateIfEmpty /*
 	return nullptr;
 }
 
-FKeyValue::FKeyValue(const WString& file, const EKeyValueType& type)
+FKeyValue::FKeyValue(const FString& file, const EKeyValueType& type)
 {
 	Open(file, type);
 }
 
-bool FKeyValue::Open(const WString& file, const EKeyValueType& type)
+bool FKeyValue::Open(const FString& file, const EKeyValueType& type)
 {
 	_file = file;
 
@@ -90,19 +90,23 @@ for (int i = 0; i < tabs; i++)\
 	__tabw += "	";\
 stream.write(__tabw.Data(), __tabw.Size()); }
 
-bool FKeyValue::Save(const WString& file, const EKeyValueType& type) const
+bool FKeyValue::Save(const FString& file, const EKeyValueType& type) const
 {
 	if (bReadOnly)
 		return false;
 
 	if (type == KV_BINARY)
 	{
-		CFStream stream(file.c_str(), L"wb");
+		CFStream stream(file.c_str(), "wb");
 
 		int sign = KEY_VALUE_SIGNITURE;
 		
 		stream.Write(&sign, sizeof(int));
+#if _WIN32
 		int len = (int)strnlen_s(KV_VERSION, 15);
+#else
+		int len = strnlen(KV_VERSION, 15);
+#endif
 		stream.Write((char*)KV_VERSION, len);
 
 		_saveBinary(stream);
@@ -141,7 +145,7 @@ void FKeyValue::DefineMacro(const FString& macro, int value)
 
 bool FKeyValue::_tryReadBinary()
 {
-	CFStream stream(_file.c_str(), L"rb");
+	CFStream stream(_file.c_str(), "rb");
 	if (!stream.IsOpen())
 		return false;
 
@@ -154,7 +158,11 @@ bool FKeyValue::_tryReadBinary()
 		return false;
 	}
 
+#if _WIN32
 	int len = (int)strnlen_s(KV_VERSION, 15);
+#else
+	int len = strnlen(KV_VERSION, 15);
+#endif
 	char* version = new char[len];
 	stream.Read(version, len);
 	if (strcmp(version, KV_VERSION) != 0)
@@ -297,7 +305,7 @@ bool FKeyValue::_tryReadAscii()
 
 		if (SizeType i = line.find('#'); i != -1)
 		{
-			TArray<FString> args = FString(line).Split(" \t");
+			TArray<FString> args = FString(line.c_str()).Split(" \t");
 
 			if (args[0] == "#ifdef")
 			{

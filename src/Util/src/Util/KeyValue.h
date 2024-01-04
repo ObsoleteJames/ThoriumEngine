@@ -68,10 +68,10 @@ class FKeyValue : public KVCategory
 {
 public:
 	FKeyValue() = default;
-	FKeyValue(const WString& file, const EKeyValueType& type = KV_UNKOWN);
+	FKeyValue(const FString& file, const EKeyValueType& type = KV_UNKOWN);
 	
-	bool Open(const WString& file, const EKeyValueType& type = KV_UNKOWN);
-	bool Save(const WString& file, const EKeyValueType& type = KV_STANDARD_ASCII) const;
+	bool Open(const FString& file, const EKeyValueType& type = KV_UNKOWN);
+	bool Save(const FString& file, const EKeyValueType& type = KV_STANDARD_ASCII) const;
 	bool Save(const EKeyValueType& type = KV_STANDARD_ASCII) const;
 
 	inline bool IsOpen() const { return bIsOpen; }
@@ -99,6 +99,6 @@ private:
 private:
 	TArray<TPair<FString, int>> macros; // Name, Value
 	FString error;
-	WString _file;
+	FString _file;
 
 };

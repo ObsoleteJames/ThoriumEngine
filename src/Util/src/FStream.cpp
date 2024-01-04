@@ -4,13 +4,19 @@
 
 CFStream::CFStream(const FString& file, const char* mode)
 {
+#if _WIN32
 	fopen_s(&f, file.c_str(), mode);
+#else
+	f = fopen(file.c_str(), mode);
+#endif
 	bIsOpen = (f != nullptr);
 }
 
 CFStream::CFStream(const WString& file, const wchar_t* mode)
 {
+#if _WIN32
 	_wfopen_s(&f, file.c_str(), mode);
+#endif
 	bIsOpen = (f != nullptr);
 }
 
@@ -23,7 +29,11 @@ CFStream::~CFStream()
 void CFStream::Open(const FString& file, const char* mode)
 {
 	Close();
+#if _WIN32
 	fopen_s(&f, file.c_str(), mode);
+#else
+	f = fopen(file.c_str(), mode);
+#endif
 	bIsOpen = (f != nullptr);
 }
 

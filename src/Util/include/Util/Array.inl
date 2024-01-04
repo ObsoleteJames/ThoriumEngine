@@ -6,6 +6,7 @@
 
 #include <stdexcept>
 #include <cstdarg>
+#include <cstring>
 
 template<typename T>
 TArray<T>::TArray() : _data(nullptr)
@@ -262,7 +263,7 @@ void TArray<T>::Insert(const T& obj, SizeType index)
 }
 
 template<typename T>
-typename TIterator<T> TArray<T>::Find(const T& obj, SizeType offset)
+TIterator<T> TArray<T>::Find(const T& obj, SizeType offset)
 {
 	for (SizeType i = offset; i < _size; i++)
 		if (_data[i] == obj)
@@ -272,7 +273,7 @@ typename TIterator<T> TArray<T>::Find(const T& obj, SizeType offset)
 }
 
 template<typename T>
-const typename TIterator<T> TArray<T>::Find(const T& obj, SizeType offset) const
+const TIterator<T> TArray<T>::Find(const T& obj, SizeType offset) const
 {
 	for (SizeType i = offset; i < _size; i++)
 		if (_data[i] == obj)
