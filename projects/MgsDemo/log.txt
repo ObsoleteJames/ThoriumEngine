@@ -1,35 +1,17 @@
-[Sat Dec  9 18:30:14 2023][CEngine] Initializing...
-[Sat Dec  9 18:30:14 2023][CResourceManager] Created resource threads (2)
-[Sat Dec  9 18:30:14 2023][CResourceManager] Initialized
-[Sat Dec  9 18:30:14 2023][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
-[Sat Dec  9 18:30:14 2023][CResourceManager] Found 35 assets in 'Engine'
-[Sat Dec  9 18:30:15 2023][CEngine] Loading scene 'empty'
-[Sat Dec  9 18:30:16 2023][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
+[Sat Dec 23 14:34:53 2023][CEngine] Initializing...
+[Sat Dec 23 14:34:53 2023][CResourceManager] Created resource threads (2)
+[Sat Dec 23 14:34:53 2023][CResourceManager] Initialized
+[Sat Dec 23 14:34:53 2023][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
+[Sat Dec 23 14:34:53 2023][CResourceManager] Found 34 assets in 'Engine'
+[Sat Dec 23 14:34:54 2023][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
 F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\bin\PhysXCommon_64.dll
-[Sat Dec  9 18:30:16 2023][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
+[Sat Dec 23 14:34:54 2023][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
 F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\bin\PhysXCooking_64.dll
-[Sat Dec  9 18:30:16 2023][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
+[Sat Dec 23 14:34:54 2023][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
 F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\bin\PhysXDevice64.dll
-[Sat Dec  9 18:30:16 2023][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
+[Sat Dec 23 14:34:54 2023][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
 F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\bin\PhysXFoundation_64.dll
-[Sat Dec  9 18:30:16 2023][CFileSystem] Mounting Mod: MGS
-[Sat Dec  9 18:30:16 2023][CResourceManager] Found 26 assets in 'MGS'
-[Sat Dec  9 18:30:16 2023][CEngine] Loading scene 'ImHalfMeFoxy.thscene'
-[Sat Dec  9 18:31:08 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:31:19 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:31:37 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:31:48 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:32:06 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:32:11 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:32:22 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:32:35 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:32:49 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:32:53 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:33:10 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:33:14 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:33:32 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:33:49 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:34:04 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:34:08 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:34:13 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
-[Sat Dec  9 18:34:21 2023][CShaderSource] Compiled shader 'SkyAtmoshere'!
+[Sat Dec 23 14:34:54 2023][CFileSystem] Mounting Mod: MGS
+[Sat Dec 23 14:34:54 2023][CResourceManager] Found 26 assets in 'MGS'
+[Sat Dec 23 14:34:54 2023][CEngine] Loading scene 'empty'
+[Sat Dec 23 14:34:58 2023][CEngine] Loading scene 'ImHalfMeFoxy.thscene'

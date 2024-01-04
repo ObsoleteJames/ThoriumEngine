@@ -72,6 +72,8 @@ public:
 
 	static ETextureFormat ToTextureFormat(ETextureAssetFormat format);
 
+	static CTexture* CreateFromImage(const FString& file);
+
 private:
 	uint16 version;
 

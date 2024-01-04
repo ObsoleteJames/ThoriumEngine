@@ -122,7 +122,8 @@ int main(int argc, char** argv)
 			cfg.path = sourcePath;
 
 			int i = CompileSource(cfg);
-			std::cin.get();
+			if (i != 0)
+				std::cin.get();
 			return i;
 		}
 	}

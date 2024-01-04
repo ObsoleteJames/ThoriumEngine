@@ -69,6 +69,11 @@ public:
 	inline const TArray<CPostProcessVolumeProxy*>& GetPostProcessVolumes() const { return ppVolumes; }
 	inline void SetPostProcessVolumes(const TArray<CPostProcessVolumeProxy*>& arr) { ppVolumes = arr; }
 
+	inline void RegisterCubeMap(CCubeMapProxy* proxy) { cubemaps.Add(proxy); }
+	inline void UnregisterCubeMap(CCubeMapProxy* proxy) { if (auto it = cubemaps.Find(proxy); it != cubemaps.end()) cubemaps.Erase(it); }
+	inline const TArray<CCubeMapProxy*>& GetCubeMaps() const { return cubemaps; }
+	inline void SetCubeMaps(const TArray<CCubeMapProxy*>& arr) { cubemaps = arr; }
+
 	bool RayCast(const FVector& pos, const FVector& dir, FPrimitiveHitInfo* outHit, float maxDistance = 0.f);
 	bool RayCastBounds(const FRay& ray, FPrimitiveHitInfo* outHit, float maxDistance = 0.f);
 
@@ -82,6 +87,7 @@ private:
 	TArray<CCameraProxy*> cameras;
 	TArray<CLightProxy*> lights;
 	TArray<CPostProcessVolumeProxy*> ppVolumes;
+	TArray<CCubeMapProxy*> cubemaps;
 
 	// the position of the primary camera that was used for rendering the sun light shadow map,
 	FVector sunLightCamPos;

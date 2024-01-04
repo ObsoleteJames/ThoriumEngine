@@ -102,13 +102,23 @@ void CObjectManager::Update()
 		}
 	}
 
-	for (auto it = Objects.rbegin(); it != Objects.rend(); it++)
+	//for (auto it = Objects.rbegin(); it != Objects.rend(); it++)
+	//{
+	//	if (it->second->users <= 0 && !it->second->bIndestructible)
+	//	{
+	//		DeleteObject(it->second, true);
+	//		Objects.erase(it->first);
+	//	}
+	//}
+	for (auto it = Objects.cbegin(); it != Objects.cend();)
 	{
 		if (it->second->users <= 0 && !it->second->bIndestructible)
 		{
 			DeleteObject(it->second, true);
-			Objects.erase(std::next(it).base());
+			Objects.erase(it++);
 		}
+		else
+			++it;
 	}
 }
 

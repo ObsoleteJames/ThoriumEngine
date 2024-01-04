@@ -5,7 +5,7 @@
 class FAssetClass;
 struct FFile;
 
-namespace ThFileDialog
+namespace ThoriumEditor
 {
 	// returns false if a popup is already open
 	// Once OpenFile/SaveFile are called, AcceptFile() has to be called in order to close the popup.

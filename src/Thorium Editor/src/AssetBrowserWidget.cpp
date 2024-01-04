@@ -6,12 +6,14 @@
 #include "Resources/ResourceManager.h"
 #include "Resources/Asset.h"
 #include "Rendering/Shader.h"
+#include "Platform/Windows/DirectX/DirectXTexture.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_internal.h"
 #include "ImGui/imgui_thorium.h"
 #include "EditorWidgets.h"
+#include "ThemeManager.h"
 
 FAssetBrowserAction::FAssetBrowserAction()
 {
@@ -113,14 +115,18 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 
 		if (ImGui::BeginTable("tableAssetBrowser", columns, ImGuiTableFlags_None))
 		{
+			ITexture2D* folderImg = ThoriumEditor::GetThemeIcon("folder");
+
 			for (auto& d : curDir->GetSubDirectories())
 			{
 				ImGui::TableNextColumn();
 				//if (ImGui::Selectable(ToFString(d->GetName()).c_str(), false, ImGuiSelectableFlags_None, ImVec2(itemSize.x, itemSize.x)))
-				if (ImGui::ButtonEx(ToFString(L"##_" + d->GetPath()).c_str(), ImVec2(itemSize.x, itemSize.x), ImGuiButtonFlags_PressedOnDoubleClick))
+				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+				if (ImGui::ImageButtonEx(GImGui->CurrentWindow->GetID(ToFString(L"##_" + d->GetPath()).c_str()), ((DirectXTexture2D*)folderImg)->view, ImVec2(itemSize.x, itemSize.x), ImVec2(0, 0), ImVec2(1, 1), ImVec4(0, 0, 0, 0), ImVec4(1, 1, 1, 1), ImGuiButtonFlags_PressedOnDoubleClick))
 				{
 					SetDir(mod, d->GetPath());
 				}
+				ImGui::PopStyleColor();
 				
 				ImGui::Text(ToFString(d->GetName()).c_str());
 

@@ -193,15 +193,16 @@ PS
 		float NDF = DistributionGGX(normal, H, roughness);
 		float G = GeometrySmith(normal, V, light.direction, roughness);
 
-		float3 numerator = NDF * G * F;
+		float3 numerator = mul(NDF * G, F);
 		float denominator = 4.0 * max(dot(normal, V), 0.0) * max(dot(normal, light.direction), 0.0)  + 0.0001;
 		float specular = numerator / denominator;
 
 		float3 kS = F;
 		float3 kD = float3(1, 1, 1) - kS;
-		kD = kD * (1.0 - metallic);
+		kD = mul((1.0 - metallic), kD);
 		float NdotL = max(dot(normal, light.direction), 0);
-		return float4((kD * diffuse / PI + specular) * radiance * NdotL, length(specular)) * (1 - shadow);
+		//return float4(kD, 0);
+		return float4((kD * diffuse / PI + specular) * radiance * NdotL, 0) * (1 - shadow);
 	}
 
 	float4 PointLight(float3 posWs, float3 normal, float roughness, float metallic, float3 diffuse, FPointLight light)
@@ -222,13 +223,13 @@ PS
 		float NDF = DistributionGGX(normal, H, roughness);
 		float G = GeometrySmith(normal, V, L, roughness);
 
-		float3 numerator = NDF * G * F;
+		float3 numerator = mul(NDF * G, F);
 		float denominator = 4.0 * max(dot(normal, V), 0.0) * max(dot(normal, L), 0.0)  + 0.0001;
 		float3 specular = numerator / denominator;
 
 		float3 kS = F;
 		float3 kD = float3(1, 1, 1) - kS;
-		kD = kD * 1.0 - metallic;
+		kD = mul((1.0 - metallic), kD);
 
 		float NdotL = max(dot(normal, L), 0);
 

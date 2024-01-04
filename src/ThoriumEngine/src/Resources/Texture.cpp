@@ -422,3 +422,22 @@ ETextureFormat CTexture::ToTextureFormat(ETextureAssetFormat format)
 	}
 	return TEXTURE_FORMAT_INVALID;
 }
+
+CTexture* CTexture::CreateFromImage(const FString& file)
+{
+	int width, height, comp;
+
+	uint8* data = stbi_load(file.c_str(), &width, &height, &comp, 0);
+
+	if (!data)
+	{
+		CONSOLE_LogError("CTexture", "Failed to create texture from image.");
+		return nullptr;
+	}
+
+	TObjectPtr<CTexture> tex = CreateObject<CTexture>();
+	tex->Init(data, width, height, (ETextureAssetFormat)(comp - 1), THTX_FILTER_LINEAR);
+
+	stbi_image_free(data);
+	return tex;
+}

@@ -20,7 +20,7 @@ private:
 private:
 	FAddon* editingAddon = nullptr;
 
-	float sizeL = 250;
-	float sizeR;
+	//float sizeL = 250;
+	//float sizeR;
 
 };

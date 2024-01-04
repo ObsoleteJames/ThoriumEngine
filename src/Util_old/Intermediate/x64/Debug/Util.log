@@ -1,9 +1,0 @@
-﻿  Assert.cpp
-  FStream.cpp
-f:\myprojects\vs_projects\throiumengine\util\src\fstream.cpp(31): warning C4267: 'argument': conversion from 'size_t' to 'long', possible loss of data
-  Guid.cpp
-  KeyValue.cpp
-  MemStream.cpp
-  String.cpp
-  Generating Code...
-  Util.vcxproj -> F:\MyProjects\VS_Projects\ThroiumEngine\dep\build\x64-Debug\Util.lib

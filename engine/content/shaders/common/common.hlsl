@@ -8,4 +8,6 @@
 #define SampleTexture2D(tex, uv) tex.Sample(tex##Sampler, uv)
 #define SampleTexture2DLOD(tex, uv, lod) tex.SampleLevel(tex##Sampler, uv, lod)
 
+#define SampleFrameBuffer(fb, uv) fb.Sample(fb##Sampler, uv * vFrameBufferScale)
+
 #endif

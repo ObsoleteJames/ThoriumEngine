@@ -11,8 +11,8 @@ class FEnum_EEntityType : public FEnum
 	public:
 	FEnum_EEntityType()
 	{
-		values.Add({ "ENTITY_STATIC", (int64)EEntityType::ENTITY_STATIC });
-		values.Add({ "ENTITY_DYNAMIC", (int64)EEntityType::ENTITY_DYNAMIC });
+		values.Add({ "Static", (int64)EEntityType::ENTITY_STATIC });
+		values.Add({ "Dynamic", (int64)EEntityType::ENTITY_DYNAMIC });
 		name = "EntityType";
 		cppName = "EEntityType";
 		size = sizeof(EEntityType);

@@ -51,6 +51,12 @@ struct ENGINE_API FShaderTexture
 	FString initValue;
 };
 
+enum EShaderFeatures
+{
+	ShaderFeature_Lighting = 1,
+	ShaderFeature_CubeMapLighting = 1 << 1
+};
+
 ASSET(Extension = ".thcs", Hidden, AutoLoad)
 class ENGINE_API CShaderSource : public CAsset
 {

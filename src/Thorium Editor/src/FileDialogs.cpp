@@ -131,7 +131,7 @@ void ThFileDialog_Init()
 	bInit = true;
 }
 
-bool ThFileDialog::OpenFile(const FString& id, FAssetClass* type, const WString& dir /*= WString()*/)
+bool ThoriumEditor::OpenFile(const FString& id, FAssetClass* type, const WString& dir /*= WString()*/)
 {
 	if (!bInit)
 		ThFileDialog_Init();
@@ -159,7 +159,7 @@ bool ThFileDialog::OpenFile(const FString& id, FAssetClass* type, const WString&
 	return true;
 }
 
-bool ThFileDialog::SaveFile(const FString& id, FAssetClass* type, const WString& dir /*= WString()*/)
+bool ThoriumEditor::SaveFile(const FString& id, FAssetClass* type, const WString& dir /*= WString()*/)
 {
 	if (!bInit)
 		ThFileDialog_Init();
@@ -188,7 +188,7 @@ bool ThFileDialog::SaveFile(const FString& id, FAssetClass* type, const WString&
 	return true;
 }
 
-bool ThFileDialog::AcceptFile(const FString& id, WString* outFile, WString* outMod)
+bool ThoriumEditor::AcceptFile(const FString& id, WString* outFile, WString* outMod)
 {
 	if (curId != id.Hash())
 		return false;
@@ -216,7 +216,7 @@ bool ThFileDialog::AcceptFile(const FString& id, WString* outFile, WString* outM
 	return true;
 }
 
-void ThFileDialog::Cancel(const FString& id)
+void ThoriumEditor::Cancel(const FString& id)
 {
 	if (curId == 0)
 		return;

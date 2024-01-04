@@ -114,13 +114,13 @@ void CMaterialEditor::OnUIRender()
 
 	WString f;
 	WString m;
-	if (ThFileDialog::AcceptFile(openMatId, &f) && !f.IsEmpty())
+	if (ThoriumEditor::AcceptFile(openMatId, &f) && !f.IsEmpty())
 	{
 		CMaterial* m = CResourceManager::GetResource<CMaterial>(f);
 		if (m)
 			SetMaterial(m);
 	}
-	if (ThFileDialog::AcceptFile(saveMatId, &f, &m) && !f.IsEmpty())
+	if (ThoriumEditor::AcceptFile(saveMatId, &f, &m) && !f.IsEmpty())
 	{
 		CResourceManager::RegisterNewResource(mat, f, m);
 		mat->Save();
@@ -215,7 +215,7 @@ void CMaterialEditor::OnUIRender()
 			ImGui::OpenPopup("Continue without saving?##_MATEDITCLOSE");
 		}
 		else
-			ThFileDialog::OpenFile(openMatId, (FAssetClass*)CMaterial::StaticClass());
+			ThoriumEditor::OpenFile(openMatId, (FAssetClass*)CMaterial::StaticClass());
 	}
 	else if (openPopup == 3)
 	{
@@ -290,7 +290,7 @@ void CMaterialEditor::SaveMat()
 
 	if (!mat->File())
 	{
-		ThFileDialog::SaveFile(saveMatId, (FAssetClass*)CMaterial::StaticClass());
+		ThoriumEditor::SaveFile(saveMatId, (FAssetClass*)CMaterial::StaticClass());
 		return;
 	}
 
@@ -537,7 +537,7 @@ void CMaterialEditor::Revert()
 void CMaterialEditor::OnSaveOpenMaterial(int result)
 {
 	if (result != 0)
-		ThFileDialog::OpenFile(openMatId, (FAssetClass*)CMaterial::StaticClass());
+		ThoriumEditor::OpenFile(openMatId, (FAssetClass*)CMaterial::StaticClass());
 }
 
 void CMaterialEditor::OnSaveExit(int result)

@@ -439,62 +439,62 @@ void CEngine::InitImGui()
 		io.Fonts->AddFontDefault();
 	}
 
-	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsDark();
 
-	ImVec4* colors = ImGui::GetStyle().Colors;
-	colors[ImGuiCol_WindowBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-	colors[ImGuiCol_ChildBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-	colors[ImGuiCol_Border] = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
-	colors[ImGuiCol_FrameBg] = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
-	colors[ImGuiCol_TitleBgActive] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-	colors[ImGuiCol_MenuBarBg] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-	colors[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26f, 0.46f, 0.98f, 0.40f);
-	colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.46f, 0.98f, 0.67f);
-	colors[ImGuiCol_CheckMark] = ImVec4(0.26f, 0.46f, 0.98f, 1.00f);
-	colors[ImGuiCol_SliderGrab] = ImVec4(0.24f, 0.42f, 0.88f, 1.00f);
-	colors[ImGuiCol_SliderGrabActive] = ImVec4(0.26f, 0.46f, 0.98f, 1.00f);
-	colors[ImGuiCol_Button] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
-	colors[ImGuiCol_ButtonHovered] = ImVec4(0.24f, 0.42f, 0.88f, 1.00f);
-	colors[ImGuiCol_ButtonActive] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-	colors[ImGuiCol_Header] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
-	colors[ImGuiCol_HeaderHovered] = ImVec4(0.28f, 0.28f, 0.28f, 1.00f);
-	colors[ImGuiCol_HeaderActive] = ImVec4(0.21f, 0.26f, 0.38f, 1.00f);
-	colors[ImGuiCol_Separator] = ImVec4(0.27f, 0.27f, 0.27f, 0.39f);
-	colors[ImGuiCol_SeparatorActive] = ImVec4(0.24f, 0.42f, 0.88f, 1.00f);
-	colors[ImGuiCol_ResizeGrip] = ImVec4(0.26f, 0.46f, 0.98f, 0.20f);
-	colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.26f, 0.46f, 0.98f, 0.67f);
-	colors[ImGuiCol_ResizeGripActive] = ImVec4(0.26f, 0.46f, 0.98f, 0.95f);
-	colors[ImGuiCol_Tab] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
-	colors[ImGuiCol_TabHovered] = ImVec4(0.28f, 0.28f, 0.28f, 1.00f);
-	colors[ImGuiCol_TabActive] = ImVec4(0.24f, 0.42f, 0.88f, 1.00f);
-	colors[ImGuiCol_TabUnfocused] = ImVec4(0.07f, 0.09f, 0.15f, 0.97f);
-	colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.14f, 0.22f, 0.42f, 1.00f);
-	colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-	colors[ImGuiCol_TableRowBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-	//colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
-	colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-	colors[ImGuiCol_TableHeaderBg] = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
-	colors[ImGuiCol_TableBorderStrong] = ImVec4(0.071f, 0.071f, 0.071f, 1.00f);
-	colors[ImGuiCol_TableBorderLight] = colors[ImGuiCol_TableBorderStrong];
-	colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+	//ImVec4* colors = ImGui::GetStyle().Colors;
+	//colors[ImGuiCol_WindowBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+	//colors[ImGuiCol_ChildBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+	//colors[ImGuiCol_Border] = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
+	//colors[ImGuiCol_FrameBg] = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
+	//colors[ImGuiCol_TitleBgActive] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+	//colors[ImGuiCol_MenuBarBg] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+	//colors[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+	//colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26f, 0.46f, 0.98f, 0.40f);
+	//colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.46f, 0.98f, 0.67f);
+	//colors[ImGuiCol_CheckMark] = ImVec4(0.26f, 0.46f, 0.98f, 1.00f);
+	//colors[ImGuiCol_SliderGrab] = ImVec4(0.24f, 0.42f, 0.88f, 1.00f);
+	//colors[ImGuiCol_SliderGrabActive] = ImVec4(0.26f, 0.46f, 0.98f, 1.00f);
+	//colors[ImGuiCol_Button] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
+	//colors[ImGuiCol_ButtonHovered] = ImVec4(0.24f, 0.42f, 0.88f, 1.00f);
+	//colors[ImGuiCol_ButtonActive] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+	//colors[ImGuiCol_Header] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
+	//colors[ImGuiCol_HeaderHovered] = ImVec4(0.28f, 0.28f, 0.28f, 1.00f);
+	//colors[ImGuiCol_HeaderActive] = ImVec4(0.21f, 0.26f, 0.38f, 1.00f);
+	//colors[ImGuiCol_Separator] = ImVec4(0.27f, 0.27f, 0.27f, 0.39f);
+	//colors[ImGuiCol_SeparatorActive] = ImVec4(0.24f, 0.42f, 0.88f, 1.00f);
+	//colors[ImGuiCol_ResizeGrip] = ImVec4(0.26f, 0.46f, 0.98f, 0.20f);
+	//colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.26f, 0.46f, 0.98f, 0.67f);
+	//colors[ImGuiCol_ResizeGripActive] = ImVec4(0.26f, 0.46f, 0.98f, 0.95f);
+	//colors[ImGuiCol_Tab] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
+	//colors[ImGuiCol_TabHovered] = ImVec4(0.28f, 0.28f, 0.28f, 1.00f);
+	//colors[ImGuiCol_TabActive] = ImVec4(0.24f, 0.42f, 0.88f, 1.00f);
+	//colors[ImGuiCol_TabUnfocused] = ImVec4(0.07f, 0.09f, 0.15f, 0.97f);
+	//colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.14f, 0.22f, 0.42f, 1.00f);
+	//colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+	//colors[ImGuiCol_TableRowBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+	////colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+	//colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+	//colors[ImGuiCol_TableHeaderBg] = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+	//colors[ImGuiCol_TableBorderStrong] = ImVec4(0.071f, 0.071f, 0.071f, 1.00f);
+	//colors[ImGuiCol_TableBorderLight] = colors[ImGuiCol_TableBorderStrong];
+	//colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
 
-	ImGuiStyle& style = ImGui::GetStyle();
-	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	{
-		style.WindowRounding = 0.0f;
-	}
+	//ImGuiStyle& style = ImGui::GetStyle();
+	//if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+	//{
+	//	style.WindowRounding = 0.0f;
+	//}
 
-	style.WindowPadding = { 8, 8 };
-	style.FramePadding = { 5, 5 };
-	style.CellPadding = { 5, 5 };
-	style.ItemSpacing = { 8, 8 };
-	style.ItemInnerSpacing = { 4, 4 };
-	style.WindowRounding = 4;
-	style.ChildRounding = 2;
-	style.FrameRounding = 3;
-	style.GrabRounding = 2;
-	style.TabRounding = 2;
+	//style.WindowPadding = { 8, 8 };
+	//style.FramePadding = { 5, 5 };
+	//style.CellPadding = { 5, 5 };
+	//style.ItemSpacing = { 8, 8 };
+	//style.ItemInnerSpacing = { 4, 4 };
+	//style.WindowRounding = 4;
+	//style.ChildRounding = 2;
+	//style.FrameRounding = 3;
+	//style.GrabRounding = 2;
+	//style.TabRounding = 2;
 
 	gRenderer->InitImGui(gameWindow);
 }

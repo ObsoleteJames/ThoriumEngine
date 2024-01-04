@@ -1,5 +1,5 @@
 
-#include "../include/Util/MemStream.h"
+#include "Util/MemStream.h"
 #include <algorithm>
 
 void FMemStream::Read(void* buffer, SizeType size)

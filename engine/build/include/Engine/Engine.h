@@ -118,6 +118,8 @@ public:
 	inline WString GetGameConfigPath() const { return ToWString(activeGame.name) + L"\\config"; }
 	inline WString EngineContentPath() const { return engineMod->Path(); }
 
+	inline const TArray<FAddon>& GetAddons() const { return coreAddons; }
+
 protected:
 	virtual void OnExit();
 

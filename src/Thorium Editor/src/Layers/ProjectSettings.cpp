@@ -40,9 +40,8 @@ void CProjectSettingsWidget::OnUIRender()
 				if (ImGui::Selectable(menus[i].name, curMenu == i))
 					curMenu = i;
 			}
-
-			ImGui::EndChild();
 		}
+		ImGui::EndChild();
 
 		ImGui::SameLine();
 
@@ -50,8 +49,8 @@ void CProjectSettingsWidget::OnUIRender()
 		if (ImGui::BeginChild("_psSettings"))
 		{
 			(this->*menus[curMenu].renderFunc)();
-			ImGui::EndChild();
 		}
+		ImGui::EndChild();
 		ImGui::PopStyleColor();
 
 		/*if (ImGui::BeginTable("_psSettingsTable", 2))

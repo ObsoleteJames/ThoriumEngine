@@ -14,6 +14,10 @@ cbuffer SceneInfo : register(b1)
     float padding_vCameraDir;
     
     float vCurTime;
+
+    // The GBuffers can be a larger size than the viewport,
+    // so when sampling a framebuffer we need to account for the size difference using this value.
+    float2 vFrameBufferScale; 
 }
 
 #endif

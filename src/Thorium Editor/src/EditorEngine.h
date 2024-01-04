@@ -19,6 +19,7 @@ class CConsoleWidget;
 class CInputOutputWidget;
 class CProjectSettingsWidget;
 class CAssetBrowserWidget;
+class CEditorSettingsWidget;
 class CAddonsWindow;
 class FClass;
 
@@ -59,6 +60,8 @@ public:
 
 	void KeyEventA(EKeyCode key, EInputAction action, EInputMod mod);
 
+	void SaveProjectConfig();
+
 private:
 	void InitEditorData();
 
@@ -88,6 +91,8 @@ private:
 
 	void CopyEntity();
 	void PasteEntity(const FVector& pos);
+
+	void SceneFileDialogs();
 
 	void DupeEntity();
 
@@ -152,6 +157,7 @@ private:
 	CProjectSettingsWidget* projSettingsWidget;
 	CAssetBrowserWidget* assetBrowser;
 	CAddonsWindow* addonsWindow;
+	CEditorSettingsWidget* editorSettings;
 
 	CObjectDebugger* objectDebuggerWidget;
 

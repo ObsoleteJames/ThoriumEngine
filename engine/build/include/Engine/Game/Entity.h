@@ -17,8 +17,8 @@ class CEntity;
 ENUM()
 enum EEntityType
 {
-	ENTITY_STATIC = 1,
-	ENTITY_DYNAMIC
+	ENTITY_STATIC = 1	META(Name = "Static"),
+	ENTITY_DYNAMIC		META(Name = "Dynamic")
 };
 
 STRUCT()

@@ -36,7 +36,7 @@ static const char* _MacroNames[] = {
 	"FUNCTION",
 	"GENERATED_BODY",
 	"ASSET",
-	"MACRO"
+	"META"
 };
 
 static const char* _FunctionKeywords[] = {
@@ -852,6 +852,9 @@ int CParser::ParseHeader(FHeaderData& data)
 
 				FString prevValue;
 				FString value;
+				static TArray<FString> valueStack;
+				valueStack.Clear();
+
 				bool bPrevWasSpace = false;
 				for (char ch : line)
 				{
@@ -859,25 +862,33 @@ int CParser::ParseHeader(FHeaderData& data)
 					{
 						bPrevWasSpace = true;
 						prevValue = value;
+						if (!value.IsEmpty())
+							valueStack.Add(value);
 						value.Clear();
 						continue;
 					}
 
-					if (ch == '=')
+					if (ch == '=' && _var.name.IsEmpty())
 					{
 						_var.name = bPrevWasSpace ? prevValue : value;
+						if (_var.name.Find("META(") != -1)
+							_var.name.Clear();
 						continue;
 					}
 
 					if (ch == ',' || ch == '\n')
 					{
-						if (!_var.name.IsEmpty())
+						valueStack.Add(value);
+						/*if (!_var.name.IsEmpty())
 						{
 							if (prevValue[0] == '=')
 								_var.value = value;
 						}
 						else
-							_var.name = bPrevWasSpace ? prevValue : value;
+							_var.name = bPrevWasSpace ? prevValue : value;*/
+
+						if (_var.name.IsEmpty())
+							_var.name = *valueStack.first();
 
 						bPrevWasSpace = false;
 						continue;

@@ -3,6 +3,7 @@
 #include "Object/Object.h"
 #include "RenderCommands.h"
 #include "Resources/ModelAsset.h"
+#include "RenderProxies.generated.h"
 
 class CRenderScene;
 class CCameraProxy;
@@ -179,4 +180,49 @@ public:
 protected:
 	bool bEnabled;
 	bool bCastShadows;
+};
+
+ENUM()
+enum ECubemapResolution
+{
+	CMR_128 = 128 META(Name = "128x128"),
+	CMR_256 = 256 META(Name = "256x256"),
+	CMR_512 = 512 META(Name = "512x512"),
+	CMR_1024 = 1024 META(Name = "1024x1024"),
+	CMR_2048 = 2048 META(Name = "2048x2048")
+};
+
+class ITextureCube;
+
+class ENGINE_API CCubeMapProxy
+{
+	friend class IRenderer;
+
+public:
+	CCubeMapProxy() = default;
+	virtual ~CCubeMapProxy() = default;
+
+	virtual void FetchData() = 0;
+
+public:
+	// Wether this cubemap affects everything.
+	bool bGlobal;
+
+	// Wether this cubemap should also be used as an IBL source.
+	bool bAffectDiffuse;
+
+	// Wether this cubemap re-renders at runtime.
+	bool bRealtime;
+
+	bool bEnabled;
+
+	float blendWidth;
+
+	FVector position;
+	FVector size;
+	FQuaternion rotation;
+
+	ECubemapResolution resolution;
+
+	ITextureCube* tex;
 };

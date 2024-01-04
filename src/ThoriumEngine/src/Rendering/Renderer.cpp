@@ -266,7 +266,7 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 	FSceneInfoBuffer sceneInfo{ camera->projection * camera->view,
 		camera->view, camera->projection,
-		camera->position, 0u, camera->GetForwardVector(), 0u, scene->GetTime() };
+		camera->position, 0u, camera->GetForwardVector(), 0u, scene->GetTime(), FVector2(viewWidth, viewHeight) / FVector2(scene->bufferWidth, scene->bufferHeight) };
 	gRenderer->sceneBuffer->Update(sizeof(FSceneInfoBuffer), &sceneInfo);
 
 	static TArray<TPair<CPrimitiveProxy*, FMeshBuilder>> dynamicMeshes;

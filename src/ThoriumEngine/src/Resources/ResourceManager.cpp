@@ -315,6 +315,12 @@ bool CResourceManager::RegisterNewResource(CAsset* resource, const WString& p, c
 {
 	WString path = p;
 	WString modPath = m;
+	if (path.IsEmpty())
+		return false;
+
+	if (path[0] == '\\' || path[0] == '/')
+		path.Erase(path.first());
+
 	if (modPath.IsEmpty())
 	{
 		SizeType i = p.FindFirstOf(L':');

@@ -63,6 +63,8 @@ struct FSceneInfoBuffer
 	int padding_cameraDir;
 
 	float time;
+
+	FVector2 framebufferScale;
 };
 
 struct FObjectInfoBuffer
@@ -151,6 +153,25 @@ struct FTextSDFBuffer
 	uint uvStride;
 	uint uvIndex;
 };
+
+// -- Buffer Registers --
+// 0 : Unused
+// 1 : Scene Buffer
+// 2 : Scene Lights
+// 3 : Object Buffer
+// 4 : Lights Shadow Data
+// 5 : CubeMap Data
+// 6 : Material Buffer
+
+// -- Texture Registers --
+// 0 : Spot Light Shadows
+// 1 : Point Light Shadows
+// 2 : Sun Shadow
+// 3 : Prev-Pass Frame Buffer
+// 4 : Unused
+// 5 : Base Color
+// 6 : Normal Map
+// 7-20 : Material Textures
 
 class ENGINE_API IRenderer
 {

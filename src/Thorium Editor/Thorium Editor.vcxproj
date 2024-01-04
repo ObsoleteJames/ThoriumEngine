@@ -247,6 +247,7 @@
     <ClInclude Include="src\Layer.h" />
     <ClInclude Include="src\Layers\AddonsWindow.h" />
     <ClInclude Include="src\Layers\ConsoleWidget.h" />
+    <ClInclude Include="src\Layers\EditorSettings.h" />
     <ClInclude Include="src\Layers\InputOutputWidget.h" />
     <ClInclude Include="src\Layers\MaterialEditor.h" />
     <ClInclude Include="src\Layers\ModelEditor.h" />
@@ -254,6 +255,7 @@
     <ClInclude Include="src\Layers\ProjectSettings.h" />
     <ClInclude Include="src\Layers\PropertyEditor.h" />
     <ClInclude Include="src\Layers\TextureViewer.h" />
+    <ClInclude Include="src\ThemeManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssetBrowserWidget.cpp" />
@@ -263,6 +265,7 @@
     <ClCompile Include="src\FileDialogs.cpp" />
     <ClCompile Include="src\Layers\AddonsWindow.cpp" />
     <ClCompile Include="src\Layers\ConsoleWidget.cpp" />
+    <ClCompile Include="src\Layers\EditorSettings.cpp" />
     <ClCompile Include="src\Layers\InputOutputWidget.cpp" />
     <ClCompile Include="src\Layers\MaterialEditor.cpp" />
     <ClCompile Include="src\Layers\ModelEditor.cpp" />
@@ -274,6 +277,7 @@
     <ClCompile Include="src\Misc\CreateShader.cpp" />
     <ClCompile Include="src\Misc\ShaderContextMenu.cpp" />
     <ClCompile Include="src\Misc\TextureImporter.cpp" />
+    <ClCompile Include="src\ThemeManager.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

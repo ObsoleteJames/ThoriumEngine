@@ -21,6 +21,7 @@
 #include "Game/Entities/ModelEntity.h"
 #include "Resources/Material.h"
 #include "Resources/Scene.h"
+#include "FileDialogs.h"
 #include "Misc/Timer.h"
 #include <Util/KeyValue.h>
 
@@ -33,15 +34,21 @@
 #include "Layers/MaterialEditor.h"
 #include "Layers/AddonsWindow.h"
 #include "Layers/ModelEditor.h"
+#include "Layers/EditorSettings.h"
 
 #include <map>
 
 #include "Platform/Windows/DirectX/DirectXRenderer.h"
 #include "Platform/Windows/DirectX/DirectXFrameBuffer.h"
+#include "Platform/Windows/DirectX/DirectXTexture.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "ImGui/ImGui.h"
 #include "ImGui/imgui_internal.h"
+
+#include "ThemeManager.h"
+
+#define TEX_VIEW(tex) ((DirectXTexture2D*)tex)->view
 
 void CEditorEngine::Init()
 {
@@ -57,6 +64,8 @@ void CEditorEngine::Init()
 	projSettingsWidget->bEnabled = false;
 	addonsWindow = AddLayer<CAddonsWindow>();
 	addonsWindow->bEnabled = false;
+	editorSettings = AddLayer<CEditorSettingsWidget>();
+	editorSettings->bEnabled = false;
 
 	objectDebuggerWidget = AddLayer<CObjectDebugger>();
 	objectDebuggerWidget->bEnabled = false;
@@ -98,6 +107,9 @@ void CEditorEngine::Init()
 	io.IniFilename = (const char*)malloc(dataPath.Size() + 1);
 	memcpy((char*)io.IniFilename, dataPath.Data(), dataPath.Size() + 1);
 	ImGui::LoadIniSettingsFromDisk(io.IniFilename);
+
+	ThoriumEditor::LoadThemes();
+	ThoriumEditor::SetTheme("Default");
 
 	if (!gameInstance)
 		SetGameInstance<CGameInstance>();
@@ -288,6 +300,8 @@ void CEditorEngine::UpdateEditor()
 	};
 	int menuAction = 0;
 
+	SceneFileDialogs();
+	
 	if (ImGui::BeginMenuBar())
 	{
 		if (ImGui::BeginMenu("File"))
@@ -331,7 +345,7 @@ void CEditorEngine::UpdateEditor()
 			ImGui::Separator();
 
 			ImGui::MenuItem("Project Settings", 0, &projSettingsWidget->bEnabled);
-			ImGui::MenuItem("Editor Settings");
+			ImGui::MenuItem("Editor Settings", 0, &editorSettings->bEnabled);
 			ImGui::MenuItem("Addons", 0, &addonsWindow->bEnabled);
 
 			ImGui::EndMenu();
@@ -376,6 +390,8 @@ void CEditorEngine::UpdateEditor()
 		SaveScene();
 	if (menuAction == MenuAction_NewScene || (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_N)))
 		NewScene();
+	if (menuAction == MenuAction_OpenScene)
+		ThoriumEditor::OpenFile("openEditorScene", (FAssetClass*)CScene::StaticClass());
 
 	if (!bProjectLoaded)
 		ImGui::OpenPopup("Open Project");
@@ -435,20 +451,30 @@ void CEditorEngine::UpdateEditor()
 		if (ImGui::BeginChild("sceneToolBar", ImVec2(wndSize.x, 32)))
 		{
 			ImGui::SetCursorScreenPos(cursorPos + ImVec2(wndSize.x / 2 - 100, 4));
-			if (ImGui::Button("Play/Stop"))
-			{
-				if (bIsPlaying)
-					StopPlay();
-				else
-					StartPlay();
+			ITexture2D* btnPlay = ThoriumEditor::GetThemeIcon("btn-play");
+			ITexture2D* btnPause = ThoriumEditor::GetThemeIcon("btn-pause");
+			ITexture2D* btnStop = ThoriumEditor::GetThemeIcon("btn-stop");
+			ITexture2D* btnStep = ThoriumEditor::GetThemeIcon("btn-stepframe");
 
-				bPaused = false;
+			if (ImGui::ImageButton("Play/Pause", (bIsPlaying && !bPaused) ? TEX_VIEW(btnPause) : TEX_VIEW(btnPlay), ImVec2(16, 16)))
+			{
+				if (!bIsPlaying)
+				{
+					StartPlay();
+					bPaused = false;
+				}
+				else
+					bPaused ^= 1;
 			}
 			ImGui::SameLine();
-			if (ImGui::Button("Pause") && bIsPlaying)
-				bPaused ^= 1;
+			if (ImGui::ImageButton("Stop", TEX_VIEW(btnStop), ImVec2(16, 16)) && bIsPlaying)
+			{
+				StopPlay();
+				bPaused = false;
+			}
+				//bPaused ^= 1;
 			ImGui::SameLine();
-			if (ImGui::Button("Step Frame"))
+			if (ImGui::ImageButton("Step Frame", TEX_VIEW(btnStep), ImVec2(16, 16)))
 				bStepFrame = true;
 		}
 		ImGui::EndChild();
@@ -736,8 +762,8 @@ void CEditorEngine::SaveEditorConfig()
 
 void CEditorEngine::GenerateBuildData()
 {
-	WString cmd = OSGetEnginePath(ENGINE_VERSION) + L"/bin/BuildTool.exe ";
-	cmd += CFileSystem::GetCurrentPath() + L"/config/project.cfg -build ";
+	WString cmd = OSGetEnginePath(ENGINE_VERSION) + L"/bin/BuildTool.exe \"";
+	cmd += CFileSystem::GetCurrentPath() + L"/config/project.cfg\" -build ";
 #if PLATFORM_WINDOWS
 	cmd += L"-x64 ";
 #endif
@@ -798,6 +824,8 @@ void CEditorEngine::InitEditorData()
 
 void CEditorEngine::NewScene()
 {
+	//if ()
+
 	LoadWorld();
 }
 
@@ -805,6 +833,7 @@ bool CEditorEngine::SaveScene()
 {
 	if (!gWorld->GetScene()->File())
 	{
+		ThoriumEditor::SaveFile("saveEditorScene", (FAssetClass*)CScene::StaticClass());
 		return false;
 	}
 
@@ -1108,6 +1137,11 @@ void CEditorEngine::KeyEventA(EKeyCode key, EInputAction action, EInputMod mod)
 	}
 }
 
+void CEditorEngine::SaveProjectConfig()
+{
+
+}
+
 void CEditorEngine::RegisterProject(const FProject& proj)
 {
 	for (auto& p : availableProjects)
@@ -1355,6 +1389,21 @@ void CEditorEngine::PasteEntity(const FVector& pos)
 	ent->SetWorldPosition(pos);
 
 	SetSelectedEntity(ent);
+}
+
+void CEditorEngine::SceneFileDialogs()
+{
+	WString f;
+	WString m;
+	if (ThoriumEditor::AcceptFile("saveEditorScene", &f, &m) && !f.IsEmpty())
+	{
+		CResourceManager::RegisterNewResource(gWorld->GetScene(), f, m);
+		gWorld->Save();
+	}
+	if (ThoriumEditor::AcceptFile("openEditorScene", &f, &m) && !f.IsEmpty())
+	{
+		LoadWorld(f);
+	}
 }
 
 void CEditorEngine::DupeEntity()

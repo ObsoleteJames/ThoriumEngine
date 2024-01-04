@@ -161,8 +161,6 @@ int CompileSource(const FCompileConfig& config)
 	strExp.SetExpressionValue("PATH", targetPath);
 
 #if _WIN32
-	SetCurrentDirectoryA(targetPath.c_str());
-
 	WString keyPath = ToWString("SOFTWARE\\ThoriumEngine\\" + config.engineVersion);
 
 	HKEY hKey;
@@ -274,6 +272,11 @@ int CompileSource(const FCompileConfig& config)
 		return 1;
 	}
 
+#if _WIN32
+	SetCurrentDirectoryA(targetPath.c_str());
+#endif
+
+
 	FString targetBuild = *buildCfg.GetValue("Target");
 	strExp.SetExpressionValue("TARGET", targetBuild);
 
@@ -283,16 +286,18 @@ int CompileSource(const FCompileConfig& config)
 	bool bIsGame = type == "game";
 	bool bIsLibrary = type == "library" || type == "game";
 	bool bIsStaticLib = type == "static_library";
+	bool bIsExe = type == "executable";
 
 	FString cmakeProj = targetBuild.ToUpperCase();
 	cmakeProj.ReplaceAll('.', '_');
-	FString cmakeLib = cmakeProj.ToLowerCase();
+	//FString cmakeLib = cmakeProj.ToLowerCase();
+	FString cmakeLib = targetBuild;
 
 	bool bRunHeaderTool = buildCfg.GetValue("ExecuteHeaderTool")->AsBool();
 
-	if (!bIsEngine && !bIsGame && !bIsLibrary && !bIsStaticLib)
+	if (!bIsEngine && !bIsGame && !bIsLibrary && !bIsStaticLib && !bIsExe)
 	{
-		std::cerr << "error: invalid build type '" << type.c_str() << "'\n0";
+		std::cerr << "error: invalid build type '" << type.c_str() << "'\n";
 		return 1;
 	}
 
@@ -328,7 +333,7 @@ int CompileSource(const FCompileConfig& config)
 	std::ofstream stream((targetPath + "/intermediate/CMakeLists.txt").c_str());
 	if (!stream.is_open())
 	{
-		std::cerr << "error: failed to create file stream!";
+		std::cerr << "error: failed to create file stream! '" << targetPath.c_str() << "/intermediate/CMakeLists.txt\n";
 		return 1;
 	}
 
@@ -365,26 +370,81 @@ int CompileSource(const FCompileConfig& config)
 	}
 	stream << ")\n\n";
 
+	auto* dep = buildCfg.GetArray("Dependencies");
+	if (dep && dep->Size() > 0)
+	{
+		for (auto depend : *dep)
+		{
+			depend = strExp.ParseString(depend);
+			FString libTarget;
+			if (depend.Find("Build.cfg") != -1)
+			{
+				FKeyValue depBuild;
+				depBuild.DefineMacro("PLATFORM_WINDOWS", config.platform == PLATFORM_WIN64);
+				depBuild.DefineMacro("PLATFORM_LINUX", config.platform == PLATFORM_LINUX);
+				depBuild.DefineMacro("PLATFORM_MAC", config.platform == PLATFORM_MAC);
+				depBuild.DefineMacro("_DEBUG", config.config == CONFIG_DEBUG);
+				depBuild.DefineMacro("_DEVELOPMENT", config.config == CONFIG_DEVELOPMENT);
+				depBuild.DefineMacro("_RELEASE", config.config == CONFIG_RELEASE);
+
+				depBuild.Open(ToWString(depend));
+				if (!depBuild.IsOpen())
+					continue;
+
+				libTarget = *depBuild.GetValue("Target");
+				//libOut = *depBuild.GetValue("LibOut");
+
+				FString libPath = depend;
+				if (auto i = libPath.FindLastOf("\\/"); i != -1)
+					libPath.Erase(libPath.begin() + i, libPath.end());
+
+				FStringExpression libExp;
+				libExp.SetExpressionValue("PLATFORM", PlatformStrings[config.platform]);
+				libExp.SetExpressionValue("CONFIG", ConfigStrings[config.config]);
+				libExp.SetExpressionValue("PATH", libPath);
+				libExp.SetExpressionValue("ENGINE_PATH", enginePath);
+
+				FCompileConfig _cfg;
+				_cfg.path = depend;
+				_cfg.compiler = config.compiler;
+				_cfg.platform = config.platform;
+				_cfg.config = config.config;
+				_cfg.engineVersion = config.engineVersion;
+
+				CompileSource(_cfg);
+
+				FString libFile = libPath + "/Intermediate";
+				depend = libFile;
+			}
+
+			stream << "add_subdirectory(\"" << depend.c_str() << "\" \"build/" << libTarget.c_str() << "\")\n";
+		}
+		stream << std::endl;
+	}
+
 	const char* platformStr = config.platform == PLATFORM_WIN64 ? "PLATFORM_WINDOWS" 
 		: (config.platform == PLATFORM_LINUX ? "PLATFORM_LINUX" : "PLATFORM_MACOS");
-	stream << "add_compile_definitions(" << platformStr << " CONFIG_" << FString(ConfigStrings[config.config]).ToUpperCase().c_str();
+	stream << "add_compile_definitions(" << platformStr << " CONFIG_" << FString(ConfigStrings[config.config]).c_str();
 	if (config.config != CONFIG_RELEASE)
 		stream << " IS_DEV";
 	stream << " " << cmakeProj.c_str() << "_DLL)\n";
 
-	stream << "add_library(" << cmakeLib.c_str() << (bIsStaticLib ? " STATIC " : " SHARED ") << " ${Files})\n\n";
+	if (!bIsExe)
+		stream << "add_library(" << cmakeLib.c_str() << (bIsStaticLib ? " STATIC " : " SHARED ") << " ${Files})\n\n";
+	else
+		stream << "add_executable(" << cmakeLib.c_str() << " ${Files})\n\n";
+
 	stream << "set_property(TARGET " << cmakeLib.c_str() << " PROPERTY CXX_STANDARD 17)\n";
 	if (config.platform != PLATFORM_WIN64)
 		stream << "set_target_properties(" << cmakeLib.c_str() << " PROPERTIES PREFIX \"\" OUTPUT_NAME \"" << targetBuild.c_str() 
 			<< "\" IMPORT_PREFIX \"\" IMPORT_SUFFIX \"" << (config.platform == PLATFORM_WIN64 ? ".dll" : ".a") << "\")\n\n";
 
-	auto* dep = buildCfg.GetArray("LinkTargets");
+	dep = buildCfg.GetArray("LinkTargets");
 	if (dep)
 	{
-		stream << "target_link_libraries(" << cmakeLib.c_str();
-
 		for (auto depend : *dep)
 		{
+			stream << "target_link_libraries(" << cmakeLib.c_str();
 			depend = strExp.ParseString(depend);
 			bool bIsAddon = false;
 			bool bIsBuildFile = false;
@@ -395,10 +455,11 @@ int CompileSource(const FCompileConfig& config)
 				bIsAddon = true;
 				depend.Erase(depend.begin(), depend.begin() + 6);
 			}
-			else if (depend.Find("CMakeLists.txt") != -1)
+			else if (auto ii = depend.Find("CMakeLists.txt"); ii != -1)
 			{
 				bIsCmakeLists = true;
-				continue;
+
+				depend.Erase(depend.begin() + ii - 1, depend.end());
 			}
 			else if (depend.Find("Build.cfg") != -1)
 			{
@@ -433,34 +494,31 @@ int CompileSource(const FCompileConfig& config)
 				depend = libFile;
 
 				// TODO: compile this project
+				FCompileConfig _cfg;
+				_cfg.path = depend;
+				_cfg.compiler = config.compiler;
+				_cfg.platform = config.platform;
+				_cfg.config = config.config;
+				_cfg.engineVersion = config.engineVersion;
+
+				CompileSource(_cfg);
 			}
 
 			// TODO: if addon, find the addons lib file
 			
-			stream << "\n\t\"" << depend.c_str() << "\"";
+			stream << " \"" << depend.c_str() << "\"";
+			stream << ")\n";
 		}
-
-		stream << ")\n\n";
-	}
-
-	dep = buildCfg.GetArray("Dependencies");
-	if (dep && dep->Size() > 0)
-	{
-		for (auto depend : *dep)
-		{
-			depend = strExp.ParseString(depend);
-			stream << "add_subdirectory(\"" << depend.c_str() << "\")\n";
-		}
-		stream << std::endl;
 	}
 
 	if (auto* libOut = buildCfg.GetValue("LibOut", false); libOut)
 	{
 		FString lo = strExp.ParseString(*libOut);
-		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
-			<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "/" << targetBuild.c_str() << ".dll\")\n";
+		if (!bIsStaticLib)
+			stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
+				<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "/" << targetBuild.c_str() << (bIsExe ? ".exe\")\n" : ".dll\")\n");
 		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_LINKER_FILE:"
-			<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "/" << targetBuild.c_str() << ".dll\")\n";
+			<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "/" << targetBuild.c_str() << ".lib\")\n";
 	}
 
 	if (includeOut)

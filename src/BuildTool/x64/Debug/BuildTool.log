@@ -11,8 +11,6 @@ F:\MyProjects\VS_Projects\ThoriumEngine\src\BuildTool\src\Build.cpp(156): messag
               T=char
           ]
 F:\MyProjects\VS_Projects\Util\include\Util\String.h(649): message : see reference to class template instantiation 'TBaseString<char>' being compiled
-  main.cpp
-  Generating Code...
   BuildTool.vcxproj -> F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\BuildTool.exe
   F:\MyProjects\VS_Projects\ThoriumEngine\src\build\x64-Debug\BuildTool.exe
   1 File(s) copied
