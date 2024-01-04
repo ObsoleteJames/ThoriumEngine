@@ -28,6 +28,10 @@
 #include "Platform/Windows/DirectX/DirectXRenderer.h"
 #include <windows.h>
 #include <shlobj.h>
+#else
+#include <unistd.h>
+#include <spawn.h>
+#include <sys/wait.h>
 #endif
 
 #include <filesystem>
@@ -57,21 +61,21 @@ void CEngine::InitMinimal()
 	CResourceManager::Init();
 	CModuleManager::RegisterModule(&GetModule_Engine());
 
-	if (gIsEditor || !FFileHelper::DirectoryExists(L".\\core"))
+	if (gIsEditor || !FFileHelper::DirectoryExists("./core"))
 	{
-		WString enginePath = OSGetEnginePath(ENGINE_VERSION);
+		FString enginePath = OSGetEnginePath(ENGINE_VERSION);
 		
 		if (!enginePath.IsEmpty())
-			engineMod = CFileSystem::MountMod(enginePath + L"\\content", L"Engine", enginePath + L"\\sdk_content");
+			engineMod = CFileSystem::MountMod(enginePath + "/content", "Engine", enginePath + "/sdk_content");
 	}
 	
-	if (!engineMod && FFileHelper::DirectoryExists(L".\\core"))
-		engineMod = CFileSystem::MountMod(L".\\core", L"Engine");
+	if (!engineMod && FFileHelper::DirectoryExists("./core"))
+		engineMod = CFileSystem::MountMod("./core", "Engine");
 
 	THORIUM_ASSERT(engineMod != nullptr, "Failed to find Engine content!");
 
 	// Fetch core addons
-	FetchAddons(engineMod->Path() + L"\\addons", coreAddons);
+	FetchAddons(engineMod->Path() + "/addons", coreAddons);
 	
 	bInitialized = true;
 }
@@ -88,6 +92,8 @@ void CEngine::Init()
 	gameWindow = new CWindow(userConfig.windowWidth, userConfig.windowHeight, userConfig.windowPosX, userConfig.windowPosY, activeGame.title);
 #ifdef _WIN32
 	Renderer::CreateRenderer<DirectXRenderer>();
+#else
+	Renderer::CreateRenderer<VulkanRenderer>();
 #endif
 
 	gameWindow->swapChain = gRenderer->CreateSwapChain(gameWindow);
@@ -106,25 +112,27 @@ void CEngine::Init()
 	//worldRenderScene->SetDepthBuffer(gameWindow->swapChain->GetDepthBuffer());
 	//worldRenderScene->SetCamera(CreateObject<CCameraComponent>());
 
-	LoadWorld(ToWString(activeGame.startupScene));
+	LoadWorld(activeGame.startupScene);
 }
 
 void CEngine::LoadGame()
 {
-	WString wGame = ToWString(projectConfig.game);
-	WString kvPath = wGame + L"\\config\\gameinfo.cfg";
+	FString wGame = projectConfig.game;
+	FString kvPath = wGame + "/config/gameinfo.cfg";
 	FKeyValue gameinfo(kvPath);
-	THORIUM_ASSERT(gameinfo.IsOpen(), FString("Failed to open '") + ToFString(kvPath) + "'");
+	THORIUM_ASSERT(gameinfo.IsOpen(), "Failed to open '" + kvPath + "'");
 
-#if CONFIG_Debug
-	WString libPath = wGame + L"\\bin\\Debug\\" + wGame + L".dll";
-#endif
-#if CONFIG_Development
-	WString libPath = wGame + L"\\bin\\Development\\" + wGame + L".dll";
-#endif
-#if CONFIG_Release
-	WString libPath = wGame + L"\\bin\\" + wGame + L".dll";
-#endif
+// #if CONFIG_Debug
+// 	FString libPath = wGame + L"\\bin\\Debug\\" + wGame + L".dll";
+// #endif
+// #if CONFIG_Development
+// 	FString libPath = wGame + L"\\bin\\Development\\" + wGame + L".dll";
+// #endif
+// #if CONFIG_Release
+// 	FString libPath = wGame + L"\\bin\\" + wGame + L".dll";
+// #endif
+	FString libPath = wGame + ("/bin/" PLATFORM_NAME "/" CONFIG_NAME) + wGame + ".dll";
+
 	int r = CModuleManager::LoadModule(libPath);
 	if (r == 1)
 		CONSOLE_LogWarning("CEngine", FString("Failed to locate module for mod '") + projectConfig.game + "'");
@@ -132,7 +140,7 @@ void CEngine::LoadGame()
 		CONSOLE_LogError("CEngine", FString("Failed to initialize module '") + projectConfig.game + "'");
 
 	FMod* fMod = CFileSystem::MountMod(wGame);
-	WString sdkPath = L".project\\" + wGame + L"\\sdk_content";
+	FString sdkPath = ".project/" + wGame + "/sdk_content";
 	if (FFileHelper::DirectoryExists(sdkPath))
 		fMod->SetSdkPath(sdkPath);
 
@@ -144,7 +152,7 @@ void CEngine::LoadGame()
 	activeGame.gameInstanceClass = gameinfo.GetValue("gameinstance")->Value;
 }
 
-void CEngine::LoadWorld(const WString& scene, bool bImmediate)
+void CEngine::LoadWorld(const FString& scene, bool bImmediate)
 {
 	if (!nextSceneName.IsEmpty())
 		return;
@@ -240,7 +248,7 @@ int CEngine::Run()
 	return 0;
 }
 
-bool CEngine::LoadProject(const WString& path /*= "."*/)
+bool CEngine::LoadProject(const FString& path /*= "."*/)
 {
 	if (!LoadProjectConfig(path, projectConfig))
 		return false;
@@ -248,7 +256,7 @@ bool CEngine::LoadProject(const WString& path /*= "."*/)
 	CFileSystem::SetCurrentPath(path);
 	CConsole::LoadConfig();
 
-	FetchAddons(ToWString(projectConfig.game) + L"\\addons", projectConfig.projectAddons);
+	FetchAddons(projectConfig.game + "/addons", projectConfig.projectAddons);
 
 	// Load libraries this project depends on.
 	for (auto l : projectConfig.addons)
@@ -324,9 +332,9 @@ void CEngine::LoadAddon(FAddon& addon)
 			if (auto i = libName.FindLastOf('.'); i != -1)
 				libName.Erase(libName.begin() + i, libName.end());
 
-			if (d.instance = (void*)CModuleManager::LoadFLibrary(libName, addon.path + L"\\" + ToWString(d.name)); d.instance == nullptr)
+			if (d.instance = (void*)CModuleManager::LoadFLibrary(libName, addon.path + "/" + d.name); d.instance == nullptr)
 			{
-				CONSOLE_LogError("CEngine", "Failed to load addon dependency (FDependency::LIBRARY)\n" + ToFString(addon.path) + "\\" + d.name);
+				CONSOLE_LogError("CEngine", "Failed to load addon dependency (FDependency::LIBRARY)\n" + addon.path + "/" + d.name);
 			}
 			break;
 		}
@@ -356,31 +364,29 @@ void CEngine::LoadAddon(FAddon& addon)
 	if (addon.bHasCode)
 	{
 		// We might need to change this for other platforms.
-#if _DEBUG
-		WString libPath = addon.path + L"\\bin\\x64\\Debug\\" + ToWString(addon.identity) + L".dll";
-#elif _DEVELOPMENT
-		WString libPath = addon.path + L"\\bin\\x64\\Development\\" + ToWString(addon.identity) + L".dll";
+#if CONFIG_Release
+		FString libPath = addon.path + "/bin/" PLATFORM_NAME "/" + addon.identity + ".dll";
 #else
-		WString libPath = addon.path + L"\\bin\\x64\\" + ToWString(addon.identity) + L".dll";
+		FString libPath = addon.path + "/bin/" PLATFORM_NAME "/" CONFIG_NAME "/" + addon.identity + ".dll";
 #endif
 
 		CModule* lib;
 		if (int err = CModuleManager::LoadModule(libPath, &lib); err != 0)
 		{
 			if (err == 1)
-				CONSOLE_LogError("CEngine", "Failed to load addon module, file does not exist\n" + ToFString(libPath));
+				CONSOLE_LogError("CEngine", "Failed to load addon module, file does not exist\n" + libPath);
 			else
-				CONSOLE_LogError("CEngine", "Failed to load addon module, is the library compiled properly?\n" + ToFString(libPath));
+				CONSOLE_LogError("CEngine", "Failed to load addon module, is the library compiled properly?\n" + libPath);
 		}
 		addon.module = lib;
 	}
 
 	if (addon.bHasContent)
 	{
-		addon.mod = CFileSystem::MountMod(addon.path + L"\\content");
+		addon.mod = CFileSystem::MountMod(addon.path + "/content");
 		if (!addon.mod)
 		{
-			CONSOLE_LogError("CEngine", "Failed to mount library content\n" + ToFString(addon.path) + "\\content");
+			CONSOLE_LogError("CEngine", "Failed to mount library content\n" + addon.path + "/content");
 		}
 	}
 }
@@ -425,7 +431,7 @@ void CEngine::InitImGui()
 	
 	io.IniFilename = "./config/imgui.ini";
 
-	FFile* fontFile = CFileSystem::FindFile(L"fonts\\Roboto-Regular.ttf");
+	FFile* fontFile = CFileSystem::FindFile("fonts/Roboto-Regular.ttf");
 
 	if (fontFile)
 	{
@@ -439,63 +445,6 @@ void CEngine::InitImGui()
 		io.Fonts->AddFontDefault();
 	}
 
-	//ImGui::StyleColorsDark();
-
-	//ImVec4* colors = ImGui::GetStyle().Colors;
-	//colors[ImGuiCol_WindowBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-	//colors[ImGuiCol_ChildBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-	//colors[ImGuiCol_Border] = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
-	//colors[ImGuiCol_FrameBg] = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
-	//colors[ImGuiCol_TitleBgActive] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-	//colors[ImGuiCol_MenuBarBg] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-	//colors[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-	//colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26f, 0.46f, 0.98f, 0.40f);
-	//colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.46f, 0.98f, 0.67f);
-	//colors[ImGuiCol_CheckMark] = ImVec4(0.26f, 0.46f, 0.98f, 1.00f);
-	//colors[ImGuiCol_SliderGrab] = ImVec4(0.24f, 0.42f, 0.88f, 1.00f);
-	//colors[ImGuiCol_SliderGrabActive] = ImVec4(0.26f, 0.46f, 0.98f, 1.00f);
-	//colors[ImGuiCol_Button] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
-	//colors[ImGuiCol_ButtonHovered] = ImVec4(0.24f, 0.42f, 0.88f, 1.00f);
-	//colors[ImGuiCol_ButtonActive] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-	//colors[ImGuiCol_Header] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
-	//colors[ImGuiCol_HeaderHovered] = ImVec4(0.28f, 0.28f, 0.28f, 1.00f);
-	//colors[ImGuiCol_HeaderActive] = ImVec4(0.21f, 0.26f, 0.38f, 1.00f);
-	//colors[ImGuiCol_Separator] = ImVec4(0.27f, 0.27f, 0.27f, 0.39f);
-	//colors[ImGuiCol_SeparatorActive] = ImVec4(0.24f, 0.42f, 0.88f, 1.00f);
-	//colors[ImGuiCol_ResizeGrip] = ImVec4(0.26f, 0.46f, 0.98f, 0.20f);
-	//colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.26f, 0.46f, 0.98f, 0.67f);
-	//colors[ImGuiCol_ResizeGripActive] = ImVec4(0.26f, 0.46f, 0.98f, 0.95f);
-	//colors[ImGuiCol_Tab] = ImVec4(0.22f, 0.22f, 0.22f, 1.00f);
-	//colors[ImGuiCol_TabHovered] = ImVec4(0.28f, 0.28f, 0.28f, 1.00f);
-	//colors[ImGuiCol_TabActive] = ImVec4(0.24f, 0.42f, 0.88f, 1.00f);
-	//colors[ImGuiCol_TabUnfocused] = ImVec4(0.07f, 0.09f, 0.15f, 0.97f);
-	//colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.14f, 0.22f, 0.42f, 1.00f);
-	//colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-	//colors[ImGuiCol_TableRowBg] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-	////colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
-	//colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-	//colors[ImGuiCol_TableHeaderBg] = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
-	//colors[ImGuiCol_TableBorderStrong] = ImVec4(0.071f, 0.071f, 0.071f, 1.00f);
-	//colors[ImGuiCol_TableBorderLight] = colors[ImGuiCol_TableBorderStrong];
-	//colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
-
-	//ImGuiStyle& style = ImGui::GetStyle();
-	//if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	//{
-	//	style.WindowRounding = 0.0f;
-	//}
-
-	//style.WindowPadding = { 8, 8 };
-	//style.FramePadding = { 5, 5 };
-	//style.CellPadding = { 5, 5 };
-	//style.ItemSpacing = { 8, 8 };
-	//style.ItemInnerSpacing = { 4, 4 };
-	//style.WindowRounding = 4;
-	//style.ChildRounding = 2;
-	//style.FrameRounding = 3;
-	//style.GrabRounding = 2;
-	//style.TabRounding = 2;
-
 	gRenderer->InitImGui(gameWindow);
 }
 
@@ -507,7 +456,7 @@ void CEngine::DoLoadWorld()
 		pScene = CResourceManager::GetResource<CScene>(nextSceneName);
 		if (!pScene)
 		{
-			CONSOLE_LogError("CEngine", FString("Failed to find scene file '") + ToFString(nextSceneName) + "'");
+			CONSOLE_LogError("CEngine", FString("Failed to find scene file '") + nextSceneName + "'");
 			return;
 		}
 	}
@@ -518,11 +467,11 @@ void CEngine::DoLoadWorld()
 	gWorld = CreateObject<CWorld>();
 	gWorld->MakeIndestructible();
 
-	CONSOLE_LogInfo("CEngine", "Loading scene '" + ToFString(nextSceneName) + "'");
+	CONSOLE_LogInfo("CEngine", "Loading scene '" + nextSceneName + "'");
 
 	Events::LevelChange.Invoke();
 
-	if (nextSceneName != L"empty")
+	if (nextSceneName != "empty")
 	{
 		gWorld->LoadScene(pScene);
 	}
@@ -537,9 +486,9 @@ void CEngine::DoLoadWorld()
 	nextSceneName = L"";
 }
 
-bool CEngine::LoadProjectConfig(const WString& path, FProject& project)
+bool CEngine::LoadProjectConfig(const FString& path, FProject& project)
 {
-	FKeyValue kv(path + L"\\config\\project.cfg");
+	FKeyValue kv(path + "/config/project.cfg");
 	if (!kv.IsOpen())
 		return false;
 
@@ -560,7 +509,7 @@ bool CEngine::LoadProjectConfig(const WString& path, FProject& project)
 
 bool CEngine::LoadUserConfig()
 {
-	FKeyValue kv(ToWString(activeGame.name) + L"\\config\\user.cfg");
+	FKeyValue kv(activeGame.name + "/config/user.cfg");
 	if (!kv.IsOpen())
 		return false;
 
@@ -589,7 +538,7 @@ bool CEngine::LoadUserConfig()
 	return true;
 }
 
-void CEngine::FetchAddons(const WString& addonFolder, TArray<FAddon>& out)
+void CEngine::FetchAddons(const FString& addonFolder, TArray<FAddon>& out)
 {
 	// the filesystem ignores the addons folder so this needs to be changed.
 	//FDirectory* cAddonsDir = engineMod->FindDirectory(L"addons");
@@ -606,16 +555,16 @@ void CEngine::FetchAddons(const WString& addonFolder, TArray<FAddon>& out)
 			continue;
 
 		FAddon addon;
-		WString p = addonFolder + L"\\" + entry.path().filename().c_str();
+		FString p = addonFolder + "/" + entry.path().filename().c_str();
 
 		if (LoadAddonConfig(p, addon))
 			out.Add(addon);
 	}
 }
 
-bool CEngine::LoadAddonConfig(const WString& path, FAddon& out)
+bool CEngine::LoadAddonConfig(const Ftring& path, FAddon& out)
 {
-	FKeyValue cfg(path + L"\\addon.cfg");
+	FKeyValue cfg(path + "/addon.cfg");
 	if (!cfg.IsOpen())
 		return false;
 
@@ -671,7 +620,7 @@ bool CEngine::LoadAddonConfig(const WString& path, FAddon& out)
 
 void CEngine::SaveUserConfig()
 {
-	FKeyValue kv(ToWString(activeGame.name) + L"\\config\\user.cfg");
+	FKeyValue kv(activeGame.name + "/config/user.cfg");
 	
 	if (gameWindow)
 	{
@@ -753,46 +702,60 @@ void CEngine::HotReloadModule(const FString& module)
 }
 #endif
 
-WString CEngine::OSGetEnginePath(const FString& version)
+FString CEngine::OSGetEnginePath(const FString& engineVersion)
 {
 #ifdef _WIN32
-	WString engineVersion = ToWString(version);
-	WString keyPath = WString(L"SOFTWARE\\ThoriumEngine\\") + engineVersion;
+	FString keyPath = "SOFTWARE\\ThoriumEngine\\" + engineVersion;
 
 	HKEY hKey;
-	LONG lRes = RegOpenKeyExW(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
+	LONG lRes = RegOpenKeyEx(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
 	if (lRes == ERROR_FILE_NOT_FOUND)
 		return L"";
 
-	WCHAR strBuff[MAX_PATH];
+	CHAR strBuff[MAX_PATH];
 	DWORD buffSize = sizeof(strBuff);
-	lRes = RegQueryValueExW(hKey, L"path", 0, NULL, (LPBYTE)strBuff, &buffSize);
+	lRes = RegQueryValueEx(hKey, "path", 0, NULL, (LPBYTE)strBuff, &buffSize);
 	if (lRes != ERROR_SUCCESS)
-		return L"";
+		return "";
 
-	return WString(strBuff);
+	return FString(strBuff);
+#else
+	std::ifstream stream(std::string(getenv("HOME")) + "/.thoriumengine/" + version.c_str() + "/path.txt", std::ios_base::in);
+	if (!stream.is_open())
+	{
+		return FString();
+	}
+
+	std::string str;
+	std::getline(stream, str);
+
+	return str.c_str();
 #endif
 }
 
-WString CEngine::OSGetDataPath()
+FString CEngine::OSGetDataPath()
 {
 #ifdef _WIN32
 	PWSTR appdata;
 	if (FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &appdata)))
-		return WString();
+		return FString();
 
-	return WString(appdata);
+	return FString(appdata);
+#else
+	return FString(getenv("HOME")) + "/.thoriumengine/" + version.c_str();
 #endif
 }
 
-WString CEngine::OSGetDocumentsPath()
+FString CEngine::OSGetDocumentsPath()
 {
 #ifdef _WIN32
 	PWSTR appdata;
 	if (FAILED(SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &appdata)))
-		return WString();
+		return FString();
 
-	return WString(appdata);
+	return FString(appdata);
+#else
+	return FString(getenv("HOME")) + "/Documents";
 #endif
 }
 
@@ -817,6 +780,8 @@ FString CEngine::OpenFileDialog(const FString& filter /*= FString()*/)
 	if (GetOpenFileNameA(&ofn) == TRUE)
 		return ofn.lpstrFile;
 
+	return FString();
+#else
 	return FString();
 #endif
 }
@@ -845,6 +810,8 @@ FString CEngine::SaveFileDialog(const FString& filter /*= FString()*/)
 		return ofn.lpstrFile;
 
 	return FString();
+#else
+	return FString();
 #endif
 }
 
@@ -869,10 +836,14 @@ FString CEngine::OpenFolderDialog()
 	}
 
 	return FString();
+#else
+	return FString();
 #endif
 }
 
-int CEngine::ExecuteProgram(const WString& cmd)
+extern char** environ;
+
+int CEngine::ExecuteProgram(const FString& cmd)
 {
 #if PLATFORM_WINDOWS
 	PROCESS_INFORMATION ht{};
@@ -880,6 +851,25 @@ int CEngine::ExecuteProgram(const WString& cmd)
 	si.cb = sizeof(si);
 	int r = CreateProcessW(NULL, (wchar_t*)cmd.c_str(), nullptr, nullptr, false, 0, nullptr, nullptr, &si, &ht);
 	return r;
+#else
+	TArray<FString> args = cmd.Split(" \t");
+	FString exec = args[0];
+	args.Erase(args.first()); 
+	
+	TArray<const char*> args_c(args.Size() + 1);
+	for (int i = 0; i < args.size(); i++)
+		args_c[i] = args[i].c_str();
+	
+	args_c.Add(0);
+
+	pid_t pid;
+	int status = posix_spawn(&pid, exec.c_str(), NULL, NULL, (char**)args_c.Data(), environ);
+
+	if (status != 0)
+		return status;
+
+	waitpid(pid, &status, 0);
+	return status;
 #endif
 }
 

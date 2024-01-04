@@ -73,7 +73,7 @@ class CFStream : public IBaseFStream
 public:
 	CFStream() = default;
 	CFStream(const FString& file, const char* mode);
-	CFStream(const WString& file, const wchar_t* mode);
+	//CFStream(const WString& file, const wchar_t* mode);
 	virtual ~CFStream();
 
 	void Open(const FString& file, const char* mode);

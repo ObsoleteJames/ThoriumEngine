@@ -7,6 +7,8 @@
 
 #ifdef _WIN32
 extern "C" __declspec(dllexport) int Launch(const char* cmdLine)
+#else
+extern "C" __attribute__((visibility("default"))) int Launch(const char* cmdLine)
 #endif
 {
 	FCommandLine::Parse(cmdLine);
@@ -34,7 +36,7 @@ extern "C" __declspec(dllexport) int Launch(const char* cmdLine)
 		//gEngine->LoadGame(loadGame);
 		return gEngine->Run();
 	}
-	catch (std::exception e)
+	catch (std::exception& e)
 	{
 		UTIL_ASSERT(0, FString("An exception has occurred!\n") + e.what());
 	}

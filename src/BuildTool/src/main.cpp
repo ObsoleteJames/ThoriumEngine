@@ -1,6 +1,8 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#else
+#include <unistd.h>
 #endif
 
 #include <Util/Core.h>
@@ -21,18 +23,71 @@ FString GetGameNameFromProject(const FString& projectCfg)
 	return FString();
 }
 
+#if _WIN32
+#define THIS_PLATFORM PLATFORM_WIN64
+#else
+#define THIS_PLATFORM PLATFORM_LINUX
+#endif
+
 int main(int argc, char** argv)
 {
-	int targetFunction = 1; // 1 == Build Project, 2 == Generate IDE Project, 3 == Generate IDE Project & Solution
+	int targetFunction = argc > 1; // 1 = generate cmake files, 2 = gen & compile cmake files
 	FString sourcePath;
-	EPlatform targetPlatform = PLATFORM_WIN64;
+	EPlatform targetPlatform = THIS_PLATFORM;
 	EConfig targetConfig = CONFIG_DEBUG;
-	ECompiler targetCompiler = COMPILER_MSVC15;
+	ECompiler targetCompiler = COMPILER_DEFAULT;
 
 	// by default the latest version
 	FString engineVersion = "1.0";
 
 	FString arg;
+
+	if (argc == 1)
+	{
+		std::cout << "Thorium Engine - Build Tool 1.0\n";
+		std::cout << "- commands:\n";
+
+		std::cout << "\tgenerate\t-\tgenerate [BUILD.CFG path] options... // generates CMake projects\n";
+		std::cout << "\tbuild\t\t-\tbuild [BUILD.CFG path] options... // generates and compiles CMake projects\n";
+
+	_get_input:
+		std::string cmd;
+		std::getline(std::cin, cmd);
+
+		TArray<FString> args = FString(cmd.c_str()).Split(" \t");
+		
+		if (args.Size() > 0)
+		{
+			if (args[0] == "tes")
+			{
+				targetFunction = 1;
+
+				arg = "../../ThoriumEngine/Build.cfg";
+			}
+
+			if (args[0] == "generate")
+			{
+				targetFunction = 1;
+				
+				if (args.Size() > 1)
+					arg = args[1];
+			}
+			if (args[0] == "build")
+			{
+				targetFunction = 2;
+
+				if (args.Size() > 1)
+					arg = args[1];
+			}
+
+			if (args[0] == "cd")
+			{
+				char dir[128];
+				std::cout << getcwd(dir, sizeof(dir)) << "\n";
+				goto _get_input;
+			}
+		}
+	}
 
 	if (argc > 1)
 		arg = argv[1];
@@ -54,9 +109,9 @@ int main(int argc, char** argv)
 	{
 		bool bLastArg = i == argc - 1;
 		FString arg = argv[i];
-		if (arg == "-build")
+		if (arg == "-gen")
 			targetFunction = 1;
-		else if (arg == "-genproj")
+		else if (arg == "-build")
 			targetFunction = 2;
 		//else if (arg == "-gensln")
 		//	targetFunction = 3;
@@ -78,19 +133,13 @@ int main(int argc, char** argv)
 		else if (arg == "-mac")
 			targetPlatform = PLATFORM_MAC;
 
-		else if (arg == "-msvc15")
-			targetCompiler = COMPILER_MSVC15; // VS 2017
-		else if (arg == "-msvc16")
-			targetCompiler = COMPILER_MSVC16; // VS 2019
-		else if (arg == "-msvc17")
-			targetCompiler = COMPILER_MSVC17; // VS 2020
+		else if (arg == "-msvc")
+			targetCompiler = COMPILER_MSVC;
 		else if (arg == "-gcc")
 			targetCompiler = COMPILER_GCC;
-		else if (arg == "-clang")
-			targetCompiler = COMPILER_CLANG;
 	}
 	
-	if (targetFunction == 1)
+	if (targetFunction == 1 || targetFunction == 2)
 	{
 		if (target == TARGET_PROJECT)
 		{
@@ -129,7 +178,7 @@ int main(int argc, char** argv)
 	}
 	if (targetFunction == 2)
 	{
-
+		
 	}
 
 

@@ -33,7 +33,7 @@ struct ENGINE_API FAddon
 
 	FString identity;
 	FString name;
-	WString path;
+	FString path;
 
 	FString description;
 	FString category;
@@ -68,7 +68,7 @@ struct ENGINE_API FProject
 public:
 	FString name;
 	FString displayName;
-	WString dir;
+	FString dir;
 	FString author;
 	FString game;
 

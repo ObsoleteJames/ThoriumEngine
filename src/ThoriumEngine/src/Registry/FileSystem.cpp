@@ -10,12 +10,12 @@
 TArray<FMod*> CFileSystem::Mods;
 namespace fs = std::filesystem;
 
-FDirectory* FMod::FindDirectory(const WString& path) const
+FDirectory* FMod::FindDirectory(const FString& path) const
 {
-	const wchar_t* pathPtr = path.c_str();
+	const char* pathPtr = path.c_str();
 
 	const FDirectory* dir = &root;
-	WString target;
+	FString target;
 	while (dir)
 	{
 		bool bIsEnd = false;
@@ -55,15 +55,15 @@ FDirectory* FMod::FindDirectory(const WString& path) const
 	return nullptr;
 }
 
-FDirectory* FMod::CreateDir(const WString& path)
+FDirectory* FMod::CreateDir(const FString& path)
 {
-	const wchar_t* pathPtr = path.c_str();
+	const char* pathPtr = path.c_str();
 
-	if (pathPtr[0] == L'\\' || pathPtr[0] == L'/')
+	if (pathPtr[0] == '\\' || pathPtr[0] == '/')
 		pathPtr++;
 
 	FDirectory* dir = &root;
-	WString target;
+	FString target;
 	while (dir)
 	{
 		bool bIsEnd = false;
@@ -110,13 +110,13 @@ FDirectory* FMod::CreateDir(const WString& path)
 			break;
 	}
 
-	fs::create_directories((this->path + L"\\" + path).c_str());
+	fs::create_directories((this->path + "/" + path).c_str());
 	if (gIsEditor && HasSdkContent())
-		fs::create_directories((sdkPath + L"\\" + path).c_str());
+		fs::create_directories((sdkPath + "/" + path).c_str());
 	return dir;
 }
 
-void FMod::DeleteFile(const WString& path)
+void FMod::DeleteFile(const FString& path)
 {
 	FFile* f = FindFile(path);
 	if (!f)
@@ -134,13 +134,13 @@ void FMod::DeleteFile(const WString& path)
 	delete f;
 }
 
-void FMod::DeleteDirectory(const WString& path)
+void FMod::DeleteDirectory(const FString& path)
 {
 	FDirectory* dir = FindDirectory(path);
 	if (!dir)
 		return;
 
-	std::filesystem::remove_all((Path() + L"\\" + dir->GetPath()).c_str());
+	std::filesystem::remove_all((Path() + "/" + dir->GetPath()).c_str());
 
 	FDirectory* parent = dir->parent;
 	auto it = parent->directories.Find(dir);
@@ -152,12 +152,12 @@ void FMod::DeleteDirectory(const WString& path)
 	delete dir;
 }
 
-FFile* FMod::FindFile(const WString& path) const
+FFile* FMod::FindFile(const FString& path) const
 {
-	const wchar_t* pathPtr = path.c_str();
+	const char* pathPtr = path.c_str();
 
 	const FDirectory* dir = &root;
-	WString target;
+	FString target;
 	while (dir)
 	{
 		bool bIsFile = false;
@@ -204,15 +204,15 @@ FFile* FMod::FindFile(const WString& path) const
 	return nullptr;
 }
 
-FFile* FMod::CreateFile(const WString& path)
+FFile* FMod::CreateFile(const FString& path)
 {
-	WString dirPath = path;
-	if (dirPath[0] == L'/' || dirPath[0] == L'\\')
+	FString dirPath = path;
+	if (dirPath[0] == '/' || dirPath[0] == '\\')
 		dirPath.Erase(dirPath.begin());
-	if (SizeType i = dirPath.FindLastOf(L"\\/"); i != -1)
+	if (SizeType i = dirPath.FindLastOf("\\/"); i != -1)
 		dirPath.Erase(dirPath.begin() + i, dirPath.end());
 	else
-		dirPath = L"";
+		dirPath = FString();
 
 	FDirectory* dir = nullptr;
 	if (!dirPath.IsEmpty())
@@ -224,18 +224,18 @@ FFile* FMod::CreateFile(const WString& path)
 	else
 		dir = &root;
 
-	WString fileName;
-	WString fileExt;
+	FString fileName;
+	FString fileExt;
 
 	fileName = path;
-	if (SizeType i = fileName.FindLastOf(L"\\/"); i != -1)
+	if (SizeType i = fileName.FindLastOf("\\/"); i != -1)
 		fileName.Erase(fileName.begin(), fileName.begin() + i + 1);
 	fileExt = fileName;
 
 	if (FFile* f = dir->GetFile(fileName); f)
 		return f;
 
-	SizeType dotIndex = fileName.FindLastOf(L'.');
+	SizeType dotIndex = fileName.FindLastOf('.');
 	if (dotIndex != -1)
 	{
 		fileName.Erase(fileName.begin() + dotIndex, fileName.end());
@@ -252,7 +252,7 @@ FFile* FMod::CreateFile(const WString& path)
 
 	//fs::create_directories((this->path + L"\\" + dirPath).c_str());
 
-	FString _p = ToFString(this->path + L"\\" + file->Path());
+	FString _p = ToFString(this->path + "/" + file->Path());
 	CFStream stream(_p, "wb");
 	if (!stream.IsOpen())
 		CONSOLE_LogWarning("CFileSystem", FString("Failed to create OS file '") + _p + "'");
@@ -261,7 +261,7 @@ FFile* FMod::CreateFile(const WString& path)
 	return file;
 }
 
-FFile* CFileSystem::FindFile(const WString& path)
+FFile* CFileSystem::FindFile(const FString& path)
 {
 	for (auto& m : Mods)
 		if (FFile* f = m->FindFile(path); f != nullptr)
@@ -270,7 +270,7 @@ FFile* CFileSystem::FindFile(const WString& path)
 	return nullptr;
 }
 
-FDirectory* CFileSystem::FindDirectory(const WString& path)
+FDirectory* CFileSystem::FindDirectory(const FString& path)
 {
 	for (auto& m : Mods)
 		if (FDirectory* f = m->FindDirectory(path); f != nullptr)
@@ -279,7 +279,7 @@ FDirectory* CFileSystem::FindDirectory(const WString& path)
 	return nullptr;
 }
 
-FMod* CFileSystem::FindMod(const WString& mod)
+FMod* CFileSystem::FindMod(const FString& mod)
 {
 	for (auto& m : Mods)
 		if (m->Name() == mod)
@@ -288,10 +288,10 @@ FMod* CFileSystem::FindMod(const WString& mod)
 	return nullptr;
 }
 
-void CFileSystem::MountDir(FMod* mod, const WString& path, FDirectory* dir)
+void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 {
-	WString _path = path;
-	if (*_path.last() == L'\\' || *_path.last() == L'/')
+	FString _path = path;
+	if (*_path.last() == '\\' || *_path.last() == '/')
 		_path.Erase(_path.last());
 
 	for (auto& entry : fs::directory_iterator(_path.c_str()))
@@ -299,18 +299,18 @@ void CFileSystem::MountDir(FMod* mod, const WString& path, FDirectory* dir)
 		if (entry.is_directory())
 		{
 			auto dirName = entry.path().stem();
-			if (dirName == L"bin")
+			if (dirName == "bin")
 				continue;
-			if (dirName == L"config")
+			if (dirName == "config")
 				continue;
-			if (dirName == L"addons")
+			if (dirName == "addons")
 				continue;
 
 			dir->directories.Add(new FDirectory());
 			FDirectory* newDir = dir->directories.last();
 			newDir->name = entry.path().stem().c_str();
 			newDir->parent = dir;
-			MountDir(mod, _path + L"\\" + newDir->GetName(), newDir);
+			MountDir(mod, _path + "/" + newDir->GetName(), newDir);
 			continue;
 		}
 
@@ -330,7 +330,7 @@ void CFileSystem::MountDir(FMod* mod, const WString& path, FDirectory* dir)
 	}
 }
 
-FMod* CFileSystem::MountMod(const WString& modPath, const WString& mn, const WString& sdkPath)
+FMod* CFileSystem::MountMod(const FString& modPath, const FString& mn, const FString& sdkPath)
 {
 	// First check if the directory exists and then get its name.
 	if (!FFileHelper::DirectoryExists(modPath))
@@ -338,11 +338,11 @@ FMod* CFileSystem::MountMod(const WString& modPath, const WString& mn, const WSt
 
 	CONSOLE_LogInfo("CFileSystem", FString("Mounting Mod: ") + ToFString(modPath));
 
-	WString modName;
+	FString modName;
 	if (mn.IsEmpty())
 	{
 		modName = modPath;
-		SizeType slashI = modPath.FindLastOf(L"/\\");
+		SizeType slashI = modPath.FindLastOf("/\\");
 		if (slashI != -1)
 			modName.Erase(modName.begin(), modName.At(slashI + 1));
 	}
@@ -362,9 +362,9 @@ FMod* CFileSystem::MountMod(const WString& modPath, const WString& mn, const WSt
 		if (FFileHelper::DirectoryExists(sdkPath))
 			mod->sdkPath = sdkPath;
 	}
-	else if (modName != L"Engine")
+	else if (modName != "Engine")
 	{
-		WString sdkPath = WString(L".project\\") + modName + L"\\sdk_content";
+		WString sdkPath = WString(".project/") + modName + "/sdk_content";
 		if (FFileHelper::DirectoryExists(sdkPath))
 		{
 			//for (auto& entry : fs::recursive_directory_iterator(sdkPath.c_str()))
@@ -436,7 +436,7 @@ FDirectory::~FDirectory()
 		delete d;
 }
 
-FFile* FDirectory::GetFile(const WString& name)
+FFile* FDirectory::GetFile(const FString& name)
 {
 	for (auto* f : files)
 	{
@@ -446,23 +446,28 @@ FFile* FDirectory::GetFile(const WString& name)
 	return nullptr;
 }
 
+#if _WIN326
 #include "windows.h"
+#endif
 
-void CFileSystem::SetCurrentPath(const WString& path)
+void CFileSystem::SetCurrentPath(const FString& path)
 {
 #if _WIN32
 	SetCurrentDirectoryW(path.c_str());
+#else
+	chdir(path.c_str());
 #endif
 }
 
-WString CFileSystem::GetCurrentPath()
+FString CFileSystem::GetCurrentPath()
 {
-#if _WIN32
 	wchar_t buff[128];
+#if _WIN32
 	GetCurrentDirectoryW(128, buff);
-
-	return WString(buff);
+#else
+	getcwd(buff, 128);
 #endif
+	return buff;
 }
 
 FFile::~FFile()
@@ -472,7 +477,7 @@ FFile::~FFile()
 
 CFStream FFile::GetSdkStream(const char* mode)
 {
-	WString sdkPath = GetSdkPath();
+	FString sdkPath = GetSdkPath();
 	if (sdkPath.IsEmpty())
 		return CFStream();
 	return CFStream(ToFString(sdkPath), mode);

@@ -5,11 +5,11 @@
 
 #include <vulkan/vulkan.h>
 
-class CVulkanRenderer : public IRenderer
+class VulkanRenderer : public IRenderer
 {
 public:
-	CVulkanRenderer();
-	virtual ~CVulkanRenderer();
+	VulkanRenderer();
+	virtual ~VulkanRenderer();
 
 	virtual void CompileShader(const FString& file) {}
 	virtual IShader* CreateShader(const FString& type) { return nullptr; }

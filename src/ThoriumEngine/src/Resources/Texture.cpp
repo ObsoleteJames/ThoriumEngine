@@ -220,16 +220,16 @@ void CTexture::Unload(uint8 lodLevel)
 
 }
 
-bool CTexture::Import(const WString& file, const FTextureImportSettings& settings)
+bool CTexture::Import(const FString& file, const FTextureImportSettings& settings)
 {
 	if (!this->file || bLoading)
 		return false;
 
-	FILE* f;
-	_wfopen_s(&f ,file.c_str(), L"rb");
+	//FILE* f;
+	//_wfopen_s(&f ,file.c_str(), L"rb");
 	
-	if (!f)
-		return false;
+	//if (!f)
+	//	return false;
 
 	int numChannels[] = {
 		1,
@@ -245,8 +245,8 @@ bool CTexture::Import(const WString& file, const FTextureImportSettings& setting
 	};
 
 	int comp;
-	uint8* data = stbi_load_from_file(f, &width, &height, &comp, numChannels[settings.format]);
-	fclose(f);
+	uint8* data = stbi_load(file.c_str(), &width, &height, &comp, numChannels[settings.format]);
+	//fclose(f);
 
 	if (!data)
 	{

@@ -1,4 +1,4 @@
-#pragma once
+WString#pragma once
 
 #include <Util/MemStream.h>
 #include <Util/Event.h>

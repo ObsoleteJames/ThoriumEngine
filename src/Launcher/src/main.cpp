@@ -6,6 +6,10 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#else
+#include <unistd.h>
+#include <dlfcn.h>
+#include <fstream>
 #endif
 
 FString GetEnginePath(const FString& version)
@@ -26,34 +30,68 @@ FString GetEnginePath(const FString& version)
 		return "";
 
 	return ToFString(WString(strBuff));
+#else
+	std::ifstream stream(std::string(getenv("HOME")) + "/.thoriumengine/" + version.c_str() + "/path.txt", std::ios_base::in);
+	if (!stream.is_open())
+	{
+		return FString();
+	}
+
+	std::string str;
+	std::getline(stream, str);
+
+	return str.c_str();
 #endif
 }
 
+#if _WIN32
+#define THOpenLib(file) LoadLibrary(file)
+#else
+#define THOpenLib(file) dlopen(file, RTLD_NOW)
+#endif
+
 #ifdef _WIN32
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
+#else
+int main(int argc, char** argv)
+#endif
 {
 	bool bForceLocalEngine = false;
+#if _WIN32
 	TArray<FString> args = FString(lpCmdLine).Split(' ');
-
 	for (auto& arg : args)
 	{
+#else
+	for (int i = 0; i < argc; i++)
+	{
+		FString arg = argv[i];
+#endif
+
 		if (arg == "-forceLocalEngine")
 			bForceLocalEngine = true;
 	}
 
 	// Preload EngineDll
-	HMODULE EngineLib = LoadLibrary(".\\bin\\Engine.dll");
+#if _WIN32
+	HMODULE EngineLib = LoadLibrary(".\\bin\\win64\\Engine.dll");
+#else
+	void* EngineLib = dlopen("./bin/linux/Engine.dll", RTLD_NOW);
+#endif
 	FString enginePath = ".";
 	if (!EngineLib && !bForceLocalEngine)
 	{
 		FString engineVersion;
-		FKeyValue kv(L"config\\project.cfg");
+		FKeyValue kv("config/project.cfg");
 		if (kv.IsOpen())
 		{
 			engineVersion = kv.GetValue("engine_version")->Value;
 
 			enginePath = GetEnginePath(engineVersion);
-			EngineLib = LoadLibrary((enginePath + "\\bin\\Engine.dll").c_str());
+#if _WIN32
+			EngineLib = LoadLibrary((enginePath + "\\bin\\win64\\Engine.dll").c_str());
+#else
+			EngineLib = dlopen((enginePath + "/bin/linux/Engine.dll").c_str(), RTLD_NOW);
+#endif
 		}
 	}
 
@@ -63,22 +101,44 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 	
 
 	// Load LauncherDll
-	HMODULE launcher = LoadLibrary((enginePath + "\\bin\\Launcher.dll").c_str());
+#if _WIN32
+	HMODULE launcher = LoadLibrary((enginePath + "\\bin\\win64\\Launcher.dll").c_str());
+#else
+	void* launcher = dlopen((enginePath + "/bin/linux/Launcher.dll").c_str(), RTLD_NOW);
+#endif
 	if (!launcher)
 	{
 		std::string err = "Unable to load 'launcher.dll' -";
+#if _WIN32
 		err += std::to_string(GetLastError());
 		MessageBox(NULL, err.c_str(), "Error", MB_OK);
+#endif
 		return -1;
 	}
 
 	typedef int(*LaunchFunc)(const char*);
+#if _WIN32
 	LaunchFunc _launch = (LaunchFunc)GetProcAddress(launcher, "Launch");
+#else
+	LaunchFunc _launch = (LaunchFunc)dlsym(launcher, "Launch");
+
+	FString cmdLine;
+	for (int i = 0; i < argc; i++)
+	{
+		cmdLine += argv[i];
+		if (i != argc - 1)
+			cmdLine += ' ';
+	}
+	const char* lpCmdLine = cmdLine.c_str();
+#endif
+
 	if (!_launch)
 	{
 		std::string err = "Couldn't find function 'int Launch(const char*)' in Launcher.dll -";
+#if _WIN32
 		err += std::to_string(GetLastError());
 		MessageBox(NULL, err.c_str(), "Error", MB_OK);
+#endif
 		return -1;
 	}
 
@@ -88,4 +148,3 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 
 	return _launch(lpCmdLine);
 }
-#endif

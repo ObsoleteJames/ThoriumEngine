@@ -1,7 +1,7 @@
 
 #include "Asset.h"
 
-void CAsset::SaveAs(const WString& newPath)
+void CAsset::SaveAs(const FString& newPath)
 {
 	FMod* mod = file->Mod();
 	file = mod->CreateFile(newPath);

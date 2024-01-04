@@ -18,18 +18,18 @@ struct ENGINE_API FDirectory
 public:
 	~FDirectory();
 
-	inline const WString& GetName() const { return name; }
-	WString GetPath() const { if (!parent || parent->name.IsEmpty()) return name; return parent->GetPath() + L"\\" + name; }
+	inline const FString& GetName() const { return name; }
+	FString GetPath() const { if (!parent || parent->name.IsEmpty()) return name; return parent->GetPath() + "/" + name; }
 
 	inline const TArray<FDirectory*>& GetSubDirectories() const { return directories; }
-	FFile* GetFile(const WString& file);
+	FFile* GetFile(const FString& file);
 
 	inline const TArray<FFile*>& GetFiles() const { return files; }
 
 	inline FDirectory* Parent() const { return parent; }
 
 private:
-	WString name;
+	FString name;
 	FDirectory* parent = nullptr;
 	TArray<FFile*> files;
 	TArray<FDirectory*> directories;
@@ -41,28 +41,28 @@ struct ENGINE_API FMod
 	friend class CResourceManager;
 
 public:
-	inline const WString& Name() const { return name; }
-	inline const WString& Path() const { return path; }
+	inline const FString& Name() const { return name; }
+	inline const FString& Path() const { return path; }
 
-	FDirectory* FindDirectory(const WString& path) const;
-	FDirectory* CreateDir(const WString& path);
+	FDirectory* FindDirectory(const FString& path) const;
+	FDirectory* CreateDir(const FString& path);
 
-	void DeleteFile(const WString& path);
-	void DeleteDirectory(const WString& path);
+	void DeleteFile(const FString& path);
+	void DeleteDirectory(const FString& path);
 
-	FFile* FindFile(const WString& path) const;
-	FFile* CreateFile(const WString& path);
+	FFile* FindFile(const FString& path) const;
+	FFile* CreateFile(const FString& path);
 
 	inline FDirectory* GetRootDir() { return &root; }
 
-	inline const WString& GetSdkPath() const { return sdkPath; }
-	inline void SetSdkPath(const WString& path) { sdkPath = path; }
+	inline const FString& GetSdkPath() const { return sdkPath; }
+	inline void SetSdkPath(const FString& path) { sdkPath = path; }
 	inline bool HasSdkContent() const { return !sdkPath.IsEmpty(); }
 
 private:
-	WString name;
-	WString path; // Path to the mods content
-	WString sdkPath; // Path to the sdk_content folder
+	FString name;
+	FString path; // Path to the mods content
+	FString sdkPath; // Path to the sdk_content folder
 
 	SizeType numFiles;
 
@@ -78,10 +78,10 @@ struct ENGINE_API FFile
 public:
 	~FFile();
 
-	inline WString Path() const { return (!dir->name.IsEmpty()) ? (dir->GetPath() + L"\\" + name + extension) : (name + extension); }
-	inline WString FullPath() const { return mod->Path() + L"\\" + Path(); }
-	inline const WString& Name() const { return name; }
-	inline const WString& Extension() const { return extension; }
+	inline FString Path() const { return (!dir->name.IsEmpty()) ? (dir->GetPath() + "/" + name + extension) : (name + extension); }
+	inline FString FullPath() const { return mod->Path() + "/" + Path(); }
+	inline const FString& Name() const { return name; }
+	inline const FString& Extension() const { return extension; }
 	inline SizeType Size() const { return size; }
 	inline FMod* Mod() const { return mod; }
 	inline FDirectory* Dir() const { return dir; }
@@ -96,11 +96,11 @@ public:
 
 	CFStream GetSdkStream(const char* mode);
 
-	inline WString GetSdkPath() const { if (mod->HasSdkContent()) { return mod->GetSdkPath() + L"\\" + Path() + L".meta"; } return WString(); }
+	inline FString GetSdkPath() const { if (mod->HasSdkContent()) { return mod->GetSdkPath() + "/" + Path() + ".meta"; } return FString(); }
 
 private:
-	WString name;
-	WString extension;
+	FString name;
+	FString extension;
 	SizeType size;
 
 	FDirectory* dir;
@@ -112,25 +112,25 @@ private:
 class ENGINE_API CFileSystem
 {
 public:
-	static FFile* FindFile(const WString& path);
-	static FDirectory* FindDirectory(const WString& path);
+	static FFile* FindFile(const FString& path);
+	static FDirectory* FindDirectory(const FString& path);
 
-	static FMod* FindMod(const WString& mod);
+	static FMod* FindMod(const FString& mod);
 
-	static FMod* MountMod(const WString& modPath, const WString& modName = WString(), const WString& sdkPath = WString());
+	static FMod* MountMod(const FString& modPath, const FString& modName = FString(), const FString& sdkPath = FString());
 	static bool UnmountMod(FMod* mod);
 
 	static inline const TArray<FMod*>& GetMods() { return Mods; }
 
-	static void SetCurrentPath(const WString& path);
-	static WString GetCurrentPath();
+	static void SetCurrentPath(const FString& path);
+	static FString GetCurrentPath();
 
 #if IS_DEV
 	static bool ReloadMod(FMod* mod);
 #endif
 
 private:
-	static void MountDir(FMod* mod, const WString& path, FDirectory* dir);
+	static void MountDir(FMod* mod, const FString& path, FDirectory* dir);
 
 private:
 	//TArray<FFile> Files;

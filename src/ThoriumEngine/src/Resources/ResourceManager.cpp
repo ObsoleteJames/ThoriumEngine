@@ -207,7 +207,7 @@ void CResourceManager::RegisterNewFile(FFile* file)
 	availableResources[file->Path()] = { file, type };
 }
 
-TObjectPtr<CAsset> CResourceManager::GetResource(FAssetClass* type, const WString& path)
+TObjectPtr<CAsset> CResourceManager::GetResource(FAssetClass* type, const FString& path)
 {
 	if (path.IsEmpty())
 		return nullptr;
@@ -247,13 +247,13 @@ TObjectPtr<CAsset> CResourceManager::GetResource(FAssetClass* type, const WStrin
 	return asset;
 }
 
-TObjectPtr<CAsset> CResourceManager::CreateResource(FAssetClass* type, const WString& p, const WString& m /*= L""*/)
+TObjectPtr<CAsset> CResourceManager::CreateResource(FAssetClass* type, const FString& p, const FString& m /*= L""*/)
 {
-	WString path = p;
-	WString modPath = m;
+	FString path = p;
+	FString modPath = m;
 	if (modPath.IsEmpty())
 	{
-		SizeType i = p.FindFirstOf(L':');
+		SizeType i = p.FindFirstOf(':');
 		if (i != -1)
 		{
 			modPath = p;
@@ -271,14 +271,14 @@ TObjectPtr<CAsset> CResourceManager::CreateResource(FAssetClass* type, const WSt
 	if (SizeType i = path.FindLastOf('.'); i != -1)
 		path.Erase(path.begin() + i, path.end());
 
-	WString fileNoExt = path;
-	WString ext = ToWString(type->GetExtension());
+	FString fileNoExt = path;
+	FString ext = ToWString(type->GetExtension());
 	path = path + ext;
 
 	int numCopies = 0;
 	while (FFile* f = mod->FindFile(path))
 	{
-		path = fileNoExt + L"_" + WString::ToString(numCopies) + ext;
+		path = fileNoExt + "_" + FString::ToString(numCopies) + ext;
 		numCopies++;
 	}
 
@@ -311,10 +311,10 @@ void CResourceManager::LoadResources(FAssetClass* type)
 	}
 }
 
-bool CResourceManager::RegisterNewResource(CAsset* resource, const WString& p, const WString& m /*= L""*/)
+bool CResourceManager::RegisterNewResource(CAsset* resource, const FString& p, const FString& m /*= L""*/)
 {
-	WString path = p;
-	WString modPath = m;
+	FString path = p;
+	FString modPath = m;
 	if (path.IsEmpty())
 		return false;
 
@@ -323,7 +323,7 @@ bool CResourceManager::RegisterNewResource(CAsset* resource, const WString& p, c
 
 	if (modPath.IsEmpty())
 	{
-		SizeType i = p.FindFirstOf(L':');
+		SizeType i = p.FindFirstOf(':');
 		if (i != -1)
 		{
 			modPath = p;
@@ -358,7 +358,7 @@ void CResourceManager::StreamResource(IResourceStreamingProxy* proxy)
 	resourceMutex.unlock();
 }
 
-CAsset* CResourceManager::AllocateResource(FAssetClass* type, const WString& path)
+CAsset* CResourceManager::AllocateResource(FAssetClass* type, const FString& path)
 {
 	CAsset* r = (CAsset*)type->Instantiate();
 	allocatedResources[path] = r;

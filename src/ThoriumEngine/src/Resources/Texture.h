@@ -57,7 +57,7 @@ public:
 	virtual void Load(uint8 lodLevel);
 	virtual void Unload(uint8 lodLevel);
 
-	bool Import(const WString& file, const FTextureImportSettings& settings = FTextureImportSettings());
+	bool Import(const FString& file, const FTextureImportSettings& settings = FTextureImportSettings());
 
 	inline int GetWidth() const { return width; }
 	inline int GetHeight() const { return height; }

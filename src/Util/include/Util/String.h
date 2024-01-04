@@ -73,8 +73,11 @@ public:
 
 	int ToInt();
 
-	void EraseAll(char ch, SizeType offset = 0);
-	void ReplaceAll(char from, char to, SizeType offset = 0);
+	void EraseAll(T ch, SizeType offset = 0);
+	void ReplaceAll(T from, T to, SizeType offset = 0);
+
+	TBaseString<T> ToLowerCase() const;
+	TBaseString<T> ToUpperCase() const;
 
 	TArray<TBaseString<T>> Split(T ch, SizeType offset = 0) const;
 	TArray<TBaseString<T>> Split(const TBaseString<T>& str, SizeType offset = 0) const;
@@ -91,6 +94,28 @@ public:
 	static SizeType npos;
 
 };
+
+template<typename T>
+TBaseString<T> TBaseString<T>::ToUpperCase() const
+{
+	TBaseString<T> r = *this;
+	for (auto& ch : r)
+		if (ch >= 'a' && ch <= 'z')
+			ch = ch - ('a' - 'A');
+
+	return r;
+}
+
+template<typename T>
+TBaseString<T> TBaseString<T>::ToLowerCase() const
+{
+	TBaseString<T> r = *this;
+	for (auto& ch : r)
+		if (ch >= 'A' && ch <= 'Z')
+			ch = ch + ('a' - 'A');
+
+	return r;
+}
 
 template<typename T>
 void TBaseString<T>::Resize(SizeType size)
@@ -443,7 +468,7 @@ int TBaseString<T>::ToInt()
 }
 
 template<typename T>
-void TBaseString<T>::ReplaceAll(char from, char to, SizeType offset /*= 0*/)
+void TBaseString<T>::ReplaceAll(T from, T to, SizeType offset /*= 0*/)
 {
 	for (TIterator<T> it = TArray<T>::begin() + offset; it != TArray<T>::end(); it++)
 	{
@@ -453,7 +478,7 @@ void TBaseString<T>::ReplaceAll(char from, char to, SizeType offset /*= 0*/)
 }
 
 template<typename T>
-void TBaseString<T>::EraseAll(char ch, SizeType offset /*= 0*/)
+void TBaseString<T>::EraseAll(T ch, SizeType offset /*= 0*/)
 {
 	for (TReverseIterator<T> it = TArray<T>::rbegin() + offset; it != TArray<T>::rend(); it++)
 	{
@@ -632,12 +657,20 @@ namespace std
 }
 
 using FString = TBaseString<char>;
-using WString = TBaseString<wchar_t>;
 
-WString ToWString(const FString&);
-FString ToFString(const WString&);
+// FUCK THIS! just use utf8, it's only usefull on windows so it's really not usefull at all.
+//using WString = TBaseString<wchar_t>;
+
+//WString ToWString(const FString&);
+//FString ToFString(const WString&);
+
+[[deprecated]]
+inline FString ToWString(const FString& str) { return str; }
+
+[[deprecated]]
+inline FString ToFString(const FString& str) { return str; }
 
 FString operator+(const char* a, const FString& b);
-WString operator+(const wchar_t* a, const WString& b);
+//WString operator+(const wchar_t* a, const WString& b);
 
 #endif

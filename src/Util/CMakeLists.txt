@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.4.0)
 project(TH_UTIL)
 
-include_directories(src)
+include_directories(src include)
 
 add_library(Util STATIC 
     src/Assert.cpp 

@@ -198,11 +198,11 @@ void CObject::SerializeProperty(FMemStream& data, uint type, const FProperty* p,
 			FString& str = *(FString*)((SizeType)object + offset);
 			data << str;
 		}
-		else if (p->typeName == "WString")
-		{
-			WString& str = *(WString*)((SizeType)object + offset);
-			data << str;
-		}
+		// else if (p->typeName == "WString")
+		// {
+		// 	WString& str = *(WString*)((SizeType)object + offset);
+		// 	data << str;
+		// }
 	}
 	break;
 	case EVT_ENUM:
@@ -326,12 +326,12 @@ bool CObject::LoadProperty(FMemStream& in, uint type, const FProperty* p, SizeTy
 			str.Clear();
 			in >> str;
 		}
-		else if (p->typeName == "WString")
-		{
-			WString& str = *(WString*)((SizeType)object + offset);
-			str.Clear();
-			in >> str;
-		}
+		// else if (p->typeName == "WString")
+		// {
+		// 	WString& str = *(WString*)((SizeType)object + offset);
+		// 	str.Clear();
+		// 	in >> str;
+		// }
 		else
 			return false;
 	}
@@ -369,7 +369,7 @@ bool CObject::LoadProperty(FMemStream& in, uint type, const FProperty* p, SizeTy
 
 		if (bIsAsset)
 		{
-			WString path;
+			FString path;
 			in >> path;
 
 			if (!path.IsEmpty())

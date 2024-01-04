@@ -18,7 +18,7 @@ class ENGINE_API FLibrary
 
 public:
 	inline const FString& Name() const { return name; }
-	inline const WString& Path() const { return path; }
+	inline const FString& Path() const { return path; }
 
 	inline void* GetHandle() const { return handle; }
 
@@ -26,7 +26,7 @@ public:
 
 protected:
 	FString name;
-	WString path;
+	FString path;
 
 	void* handle;
 };
@@ -72,12 +72,12 @@ public:
 	static void FindChildClasses(FClass* target, TArray<FClass*>& out);
 	static void GetClassesOfType(FClass* type, TArray<FClass*>& out);
 
-	static int LoadModule(const WString& path, CModule** outPtr = nullptr);
+	static int LoadModule(const FString& path, CModule** outPtr = nullptr);
 	static inline bool IsModuleLoaded(const FString& name) { return FindModule(name) != nullptr; }
 	static bool UnloadModule(const FString& name);
 
 	// Thanks to the lovely windows API, I can't name this LoadLibrary.
-	static FLibrary* LoadFLibrary(const FString& name, const WString& path);
+	static FLibrary* LoadFLibrary(const FString& name, const FString& path);
 	static bool UnloadLibrary(FLibrary* lib);
 	static bool UnloadLibrary(const FString& name);
 

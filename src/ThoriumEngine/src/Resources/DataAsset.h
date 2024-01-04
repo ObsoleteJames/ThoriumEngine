@@ -20,6 +20,6 @@ public:
 	void Load(uint8) final;
 	void Unload(uint8) final;
 
-	bool Import(const WString&) final;
+	bool Import(const FString&) final;
 
 };

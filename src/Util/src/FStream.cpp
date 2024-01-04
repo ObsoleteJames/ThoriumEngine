@@ -12,13 +12,13 @@ CFStream::CFStream(const FString& file, const char* mode)
 	bIsOpen = (f != nullptr);
 }
 
-CFStream::CFStream(const WString& file, const wchar_t* mode)
-{
-#if _WIN32
-	_wfopen_s(&f, file.c_str(), mode);
-#endif
-	bIsOpen = (f != nullptr);
-}
+// CFStream::CFStream(const WString& file, const wchar_t* mode)
+// {
+// #if _WIN32
+// 	_wfopen_s(&f, file.c_str(), mode);
+// #endif
+// 	bIsOpen = (f != nullptr);
+// }
 
 CFStream::~CFStream()
 {

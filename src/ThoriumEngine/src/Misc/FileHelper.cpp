@@ -31,18 +31,18 @@ bool FFileHelper::FileExists(const FString& path)
 	return true;
 }
 
-bool FFileHelper::DirectoryExists(const WString& path)
-{
-	if (fs::exists(path.c_str()))
-		return true;
+// bool FFileHelper::DirectoryExists(const WString& path)
+// {
+// 	if (fs::exists(path.c_str()))
+// 		return true;
 
-	return false;
-}
+// 	return false;
+// }
 
-bool FFileHelper::FileExists(const WString& path)
-{
-	if (fs::exists(path.c_str()))
-		return true;
+// bool FFileHelper::FileExists(const WString& path)
+// {
+// 	if (fs::exists(path.c_str()))
+// 		return true;
 
-	return false;
-}
+// 	return false;
+// }

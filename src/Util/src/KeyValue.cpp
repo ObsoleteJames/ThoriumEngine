@@ -305,6 +305,7 @@ bool FKeyValue::_tryReadAscii()
 
 		if (SizeType i = line.find('#'); i != -1)
 		{
+			line.erase(line.begin() + line.size() - 1); // erase the new line character
 			TArray<FString> args = FString(line.c_str()).Split(" \t");
 
 			if (args[0] == "#ifdef")
@@ -382,6 +383,7 @@ bool FKeyValue::_tryReadAscii()
 				}
 				macroValues.PopBack();
 			}
+			continue;
 		}
 
 		if (macroValues.Size() > 0 && *macroValues.last() == false)
@@ -516,9 +518,8 @@ bool FKeyValue::_tryReadAscii()
 	if (indents > 0)
 	{
 		error = "invalid format: expected '}' at line " + FString::ToString(lineCount);
-		return false;
 	}
-	if (macros.Size() > 0)
+	if (macroValues.Size() > 0)
 	{
 		error = "invalid format: expected #endif at line " + FString::ToString(lineCount);
 		return false;

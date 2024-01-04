@@ -10,6 +10,12 @@
 
 #if _WIN32
 #include <Windows.h>
+#else
+#include "unistd.h"
+#include <spawn.h>
+#include <sys/wait.h>
+
+extern char** environ;
 #endif
 
 const char* PlatformStrings[] = {
@@ -130,7 +136,7 @@ void GetCppFilesInDir(FKeyValue& buildCfg, const FString& source, TArray<FString
 		if (entry.path().extension() != ".cpp" && entry.path().extension() != ".c")
 			continue;
 
-		FString path = entry.path().generic_string();
+		FString path = entry.path().generic_string().c_str();
 		//if (auto i = path.Find("src"); i != -1)
 		//	path.Erase(path.begin(), path.begin() + i + 4);
 
@@ -139,7 +145,7 @@ void GetCppFilesInDir(FKeyValue& buildCfg, const FString& source, TArray<FString
 		if (IsFileExcluded(buildCfg, path))
 			continue;
 
-		out.Add(entry.path().generic_string());
+		out.Add(entry.path().generic_string().c_str());
 	}
 }
 
@@ -175,6 +181,20 @@ int CompileSource(const FCompileConfig& config)
 		return 1;
 
 	enginePath = ToFString(strBuff);
+#else
+	{
+		std::ifstream stream(std::string(getenv("HOME")) + "/.thoriumengine/" + config.engineVersion.c_str() + "/path.txt", std::ios_base::in);
+		if (!stream.is_open())
+		{
+			std::cerr << "error: failed to obtain engine path!\n";
+			return 1;
+		}
+
+		std::string str;
+		std::getline(stream, str);
+
+		enginePath = str.c_str();
+	}
 #endif
 	enginePath.ReplaceAll('\\', '/');
 
@@ -263,7 +283,7 @@ int CompileSource(const FCompileConfig& config)
 	buildCfg.DefineMacro("_DEVELOPMENT", config.config == CONFIG_DEVELOPMENT);
 	buildCfg.DefineMacro("_RELEASE", config.config == CONFIG_RELEASE);
 
-	buildCfg.Open(ToWString(config.path));
+	buildCfg.Open(config.path);
 	if (!buildCfg.IsOpen())
 	{
 		std::cerr << "error: failed to open build config!\n";
@@ -274,6 +294,8 @@ int CompileSource(const FCompileConfig& config)
 
 #if _WIN32
 	SetCurrentDirectoryA(targetPath.c_str());
+#else
+	chdir(targetPath.c_str());
 #endif
 
 
@@ -314,6 +336,27 @@ int CompileSource(const FCompileConfig& config)
 			std::cerr << "error: failed to run HeaderTool!\n";
 			return 1;
 		}
+#else
+		FString p = enginePath + "/bin/linux/HeaderTool";
+
+		pid_t pid;
+		
+		const char* pt = (bIsEngine ? "0" : (bIsGame ? "1" : "3"));
+		TArray<const char*> argv = {
+			targetPath.c_str(),
+			"-pt",
+			pt
+		};
+
+		int status = posix_spawn(&pid, p.c_str(), NULL, NULL, (char**)argv.Data(), environ);
+
+		if (status != 0)
+		{
+			std::cerr << "error: failed to run HeaderTool! if this is the first time compiling ignore this.\n";
+			//return 1;
+		}
+		else
+			waitpid(pid, &status, 0);
 #endif
 	}
 
@@ -330,10 +373,17 @@ int CompileSource(const FCompileConfig& config)
 	}
 
 	// Generate CMakeLists.txt
-	std::ofstream stream((targetPath + "/intermediate/CMakeLists.txt").c_str());
+	std::ofstream stream;
+	stream.exceptions(std::ios::badbit | std::ios::failbit);
+	try {
+		stream.open((targetPath + "/Intermediate/CMakeLists.txt").c_str(), std::ios_base::trunc);
+	} catch(std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
 	if (!stream.is_open())
 	{
-		std::cerr << "error: failed to create file stream! '" << targetPath.c_str() << "/intermediate/CMakeLists.txt\n";
+		std::cerr << "error: failed to create file stream! '" << targetPath.c_str() << "/Intermediate/CMakeLists.txt'\n";
 		return 1;
 	}
 
@@ -387,7 +437,7 @@ int CompileSource(const FCompileConfig& config)
 				depBuild.DefineMacro("_DEVELOPMENT", config.config == CONFIG_DEVELOPMENT);
 				depBuild.DefineMacro("_RELEASE", config.config == CONFIG_RELEASE);
 
-				depBuild.Open(ToWString(depend));
+				depBuild.Open(depend);
 				if (!depBuild.IsOpen())
 					continue;
 
@@ -473,7 +523,7 @@ int CompileSource(const FCompileConfig& config)
 				depBuild.DefineMacro("_DEVELOPMENT", config.config == CONFIG_DEVELOPMENT);
 				depBuild.DefineMacro("_RELEASE", config.config == CONFIG_RELEASE);
 
-				depBuild.Open(ToWString(depend));
+				depBuild.Open(depend);
 				if (!depBuild.IsOpen())
 					continue;
 				
@@ -555,11 +605,11 @@ void CopyHeaders(FKeyValue& buildCfg, const FString& source, const FString& out)
 		if (entry.path().extension() != ".h" && entry.path().extension() != ".hpp")
 			continue;
 
-		FString path = entry.path().generic_string();
+		FString path = entry.path().generic_string().c_str();
 		if (IsFileExcluded(buildCfg, path))
 			continue;
 
-		headers.Add(entry.path().generic_string());
+		headers.Add(entry.path().generic_string().c_str());
 	}
 
 	for (auto& h : headers)
@@ -593,7 +643,7 @@ bool GenerateBuildFromProject(const FString& projectCfg)
 {
 	std::cout << "Generating Build.cfg from project.\n";
 
-	FKeyValue proj(ToWString(projectCfg));
+	FKeyValue proj(projectCfg);
 	if (!proj.IsOpen())
 		return false;
 
@@ -609,7 +659,7 @@ bool GenerateBuildFromProject(const FString& projectCfg)
 
 	buildFile += "/.project/" + game + "/Build.cfg";
 
-	FKeyValue buildCfg(ToWString(buildFile));
+	FKeyValue buildCfg(buildFile);
 
 	game.ReplaceAll('.', '_');
 	game.ReplaceAll(' ', '_');

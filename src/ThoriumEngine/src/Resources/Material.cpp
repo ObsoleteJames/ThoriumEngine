@@ -20,7 +20,7 @@ void CMaterial::Init()
 	TUniquePtr<IBaseFStream> stream = file->GetStream("rb");
 	if (!stream || !stream->IsOpen())
 	{
-		CONSOLE_LogError("CMaterial", FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CMaterial", FString("Failed to create file stream for '") + file->Path() + "'");
 		if (stream)
 			delete stream;
 
@@ -32,7 +32,7 @@ void CMaterial::Init()
 
 	if (memcmp(thmatMagicStr, magicStr, THMAT_MAGIC_SIZE) != 0)
 	{
-		CONSOLE_LogError("CMaterial", FString("Invalid Material file '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CMaterial", FString("Invalid Material file '") + file->Path() + "'");
 		delete stream;
 		return;
 	}
@@ -108,14 +108,14 @@ void CMaterial::Init()
 
 		if (!t.bIsCustom)
 		{
-			WString texPath;
+			FString texPath;
 			*stream >> texPath;
 
 			if (shaderTex)
 			{
 				t.tex = CResourceManager::GetResource<CTexture>(texPath);
 				if (!t.tex)
-					t.tex = CResourceManager::GetResource<CTexture>(L"misc\\missing.thtex");
+					t.tex = CResourceManager::GetResource<CTexture>("misc/missing.thtex");
 			}
 		}
 		else
@@ -153,7 +153,7 @@ void CMaterial::Save()
 	TUniquePtr<IBaseFStream> stream = file->GetStream("wb");
 	if (!stream || !stream->IsOpen())
 	{
-		CONSOLE_LogError("CMaterial", FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
+		CONSOLE_LogError("CMaterial", FString("Failed to create file stream for '") + file->Path() + "'");
 		if (stream)
 			delete stream;
 
@@ -557,7 +557,7 @@ void CMaterial::Validate()
 				else if (!st.initValue.IsEmpty())// else this must be an asset path.
 				{
 					t.bIsCustom = false;
-					t.tex = CResourceManager::GetResource<CTexture>(ToWString(st.initValue));
+					t.tex = CResourceManager::GetResource<CTexture>(st.initValue);
 				}
 			}
 

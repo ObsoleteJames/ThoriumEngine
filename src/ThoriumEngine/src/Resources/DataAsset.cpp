@@ -68,7 +68,7 @@ void CDataAsset::Unload(uint8)
 {
 }
 
-bool CDataAsset::Import(const WString&)
+bool CDataAsset::Import(const FString&)
 {
 	return false;
 }

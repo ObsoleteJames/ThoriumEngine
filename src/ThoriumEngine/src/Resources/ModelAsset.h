@@ -14,7 +14,7 @@ class CMaterial;
 struct FMaterial
 {
 	FString name;
-	WString path;
+	FString path;
 	TObjectPtr<CMaterial> obj;
 };
 
