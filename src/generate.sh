@@ -1,6 +1,5 @@
-DIR="$( cd "$( dirname "$0" )" && pwd )"
-cmake -B "BuildTool/Intermediate/Build" "BuildTool"
-cmake --build "BuildTool/Intermediate/Build"
+./build_buildtool.sh
 
+DIR="$( cd "$( dirname "$0" )" && pwd )"
 "../engine/bin/linux/BuildTool" "${DIR}/ThoriumEngine/Build.cfg"
-cmake -B "ThoriumEngine/Intermediate/build/" "ThoriumEngine/Intermediate"
+cmake -B "ThoriumEngine/Intermediate/build" "ThoriumEngine/Intermediate"

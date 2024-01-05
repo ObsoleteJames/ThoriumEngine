@@ -1,59 +1,74 @@
 
+#define UTIL_STD_STRING
 #include <iostream>
 #include <string>
 #include <Util/KeyValue.h>
 #include "CppParser.h"
-#include "EngineCore.h"
 
+#if _WIN32
 #include <windows.h>
+#else
+#include <unistd.h>
+#endif
+#include <fstream>
 #include <filesystem>
 #include <sys/types.h>
 #include <sys/stat.h>
 
-int main()
+#define ENGINE_VERSION "1.0"
+
+int main(int argc, char** argv)
 {
 	// Parse arguments
-	FString cmd = GetCommandLine();
-	TArray<FString> Args;
-	Args.Resize(1);
+	// FString cmd = GetCommandLine();
+	// TArray<FString> Args;
+	// Args.Resize(1);
 	
+	// {
+	// 	bool bInQuotes = false;
+	// 	bool bPrevWasSpace = false;
+	// 	for (SizeType i = 0; i < cmd.Size(); i++)
+	// 	{
+	// 		if (cmd[i] == '"')
+	// 		{
+	// 			bInQuotes ^= 1;
+	// 			continue;
+	// 		}
+
+	// 		if (cmd[i] == ' ' && !bInQuotes && !bPrevWasSpace)
+	// 		{
+	// 			Args.Add(FString());
+	// 			bPrevWasSpace = true;
+	// 			continue;
+	// 		}
+
+	// 		bPrevWasSpace = false;
+	// 		(*Args.last()) += cmd[i];
+	// 	}
+	// }
+
+	// Args.Erase(Args.begin());
+
+	if (argc > 1)
 	{
-		bool bInQuotes = false;
-		bool bPrevWasSpace = false;
-		for (SizeType i = 0; i < cmd.Size(); i++)
-		{
-			if (cmd[i] == '"')
-			{
-				bInQuotes ^= 1;
-				continue;
-			}
-
-			if (cmd[i] == ' ' && !bInQuotes && !bPrevWasSpace)
-			{
-				Args.Add(FString());
-				bPrevWasSpace = true;
-				continue;
-			}
-
-			bPrevWasSpace = false;
-			(*Args.last()) += cmd[i];
-		}
+		targetPath = argv[1];
+		if (targetPath[0] == ' ')
+			targetPath.Erase(targetPath.begin());
+		if (targetPath[targetPath.Size() - 1] == '\\' || targetPath[targetPath.Size() - 1] == '/')
+			targetPath.Erase(targetPath.last());
 	}
-
-	Args.Erase(Args.begin());
-
-	targetPath = Args[0];
-	if (targetPath[0] == ' ')
-		targetPath.Erase(targetPath.begin());
-	if (targetPath[targetPath.Size() - 1] == '\\' || targetPath[targetPath.Size() - 1] == '/')
-		targetPath.Erase(targetPath.last());
+	else
+	{
+		std::cout << "Thorium Engine - Header Tool 1.0\n";
+		return 0;
+	}
 
 	std::cout << "Path: " << targetPath.c_str() << std::endl;
 
 	bool bIgnoreTime = false;
-	for (SizeType i = 1; i < Args.Size(); i++)
+	for (SizeType i = 2; i < argc; i++)
 	{
-		FString arg = Args[i];
+		FString arg = argv[i];
 		/*if (arg == "-config" && i + 1 < argc)
 		{
 			config = argv[i + 1];
@@ -64,9 +79,9 @@ int main()
 			platform = argv[i + 1];
 			continue;
 		}*/
-		if (arg == "-pt" && i + 1 < Args.Size())
+		if (arg == "-pt" && i + 1 < argc)
 		{
-			ProjectType = (EProjectType)std::stoi(Args[i + 1].c_str());
+			ProjectType = (EProjectType)std::stoi(argv[i + 1]);
 			continue;
 		}
 		if (arg == "-NoTimestamp")
@@ -74,9 +89,9 @@ int main()
 			bIgnoreTime = true;
 			continue;
 		}
-		if (arg == "-target" && i + 1 < Args.Size())
+		if (arg == "-target" && i + 1 < argc)
 		{
-			projectName = Args[i + 1];
+			projectName = argv[i + 1];
 			continue;
 		}
 	}
@@ -85,7 +100,7 @@ int main()
 
 	if (ProjectType == GAME_PROJECT)
 	{
-		FKeyValue projCfg(ToWString(targetPath + "/../../config/project.cfg"));
+		FKeyValue projCfg(targetPath + "/../../config/project.cfg");
 		if (!projCfg.IsOpen())
 		{
 			std::cerr << "error: failed to open project file!";
@@ -107,6 +122,17 @@ int main()
 			return 1;
 
 		enginePath = ToFString(strBuff);
+#else
+		{
+			std::ifstream stream(std::string(getenv("HOME")) + "/.thoriumengine/" + projCfg.GetValue("engine_version")->Value.c_str() + "/path.txt", std::ios_base::in);
+			if (stream.is_open())
+			{
+				std::string str;
+				std::getline(stream, str);
+
+				enginePath = str;
+			}
+		}
 #endif
 
 		CParser::LoadModuleData(enginePath + "/build/include/engine");
@@ -171,9 +197,20 @@ int main()
 			return 1;
 
 		enginePath = ToFString(strBuff);
+#else
+		{
+			std::ifstream stream(std::string(getenv("HOME")) + "/.thoriumengine/" + ENGINE_VERSION + "/path.txt", std::ios_base::in);
+			if (stream.is_open())
+			{
+				std::string str;
+				std::getline(stream, str);
+
+				enginePath = str;
+			}
+		}
 #endif
 
-		FKeyValue kv(ToWString(targetPath + "/addon.cfg"));
+		FKeyValue kv(targetPath + "/addon.cfg");
 		if (!kv.IsOpen())
 		{
 			std::cerr << "error: failed to open addon config!";
@@ -191,7 +228,8 @@ int main()
 
 	std::cout << "Running HeaderTool for project: " << projectName.c_str() << std::endl;
 
-	CreateDirectory(GeneratedOutput.c_str(), NULL);
+	//CreateDirectory(GeneratedOutput.c_str(), NULL);
+	std::filesystem::create_directories(GeneratedOutput.c_str());
 
 	try
 	{
@@ -230,11 +268,13 @@ int main()
 
 	CParser::WriteTimestamp();
 
+#if _WIN32
 	if (IsDebuggerPresent())
 	{
 		std::cout << "Press enter to continue...";
 		std::cin.get();
 	}
+#endif
 
 	return 0;
 }

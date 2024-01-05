@@ -5,6 +5,11 @@
 SizeType StrLen(const char*);
 SizeType StrLen(const wchar_t*);
 
+// backwards compatabilty for old code.
+#ifdef _STRING_
+#define UTIL_STD_STRING
+#endif
+
 // use std::string or custom string.
 #if 0
 #include <string>
@@ -27,7 +32,7 @@ public:
 	template<typename T2>
 	static TBaseString<T> ToString(T2);
 
-#ifdef _STRING_ // std::string support
+#ifdef UTIL_STD_STRING // std::string support
 	inline TBaseString<T>& operator=(const std::basic_string<T>& str) { return (*this = str.c_str()); }
 	inline TBaseString(const std::basic_string<T>& str) { *this = str.c_str(); }
 

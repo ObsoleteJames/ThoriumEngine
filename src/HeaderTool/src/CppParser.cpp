@@ -1,4 +1,5 @@
 
+#define UTIL_STD_STRING
 #include <iostream>
 #include <fstream>
 #include <string>

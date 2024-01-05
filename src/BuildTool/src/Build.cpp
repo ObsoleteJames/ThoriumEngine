@@ -427,6 +427,14 @@ int CompileSource(const FCompileConfig& config)
 		{
 			depend = strExp.ParseString(depend);
 			FString libTarget;
+			if (depend.Find("package:") == 0)
+			{
+				FString package = depend;
+				package.Erase(package.begin(), package.begin() + 8);
+				stream << "find_package(" << package.c_str() << " REQUIRED FATAL_ERROR)\n";
+				continue;
+			}
+
 			if (depend.Find("Build.cfg") != -1)
 			{
 				FKeyValue depBuild;
@@ -571,7 +579,7 @@ int CompileSource(const FCompileConfig& config)
 			<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "/" << targetBuild.c_str() << ".lib\")\n";
 	}
 
-	if (includeOut)
+	if (includeOut && bRunHeaderTool)
 	{
 		FString lo = strExp.ParseString(*includeOut);
 		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"module.bin\" \""
@@ -583,7 +591,7 @@ int CompileSource(const FCompileConfig& config)
 		FString bo = strExp.ParseString(*binOut);
 		bo.ReplaceAll('\\', '/');
 		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
-			<< cmakeLib.c_str() << ">\" \"" << bo.c_str() << "/" << targetBuild.c_str() << ".dll\")\n";
+			<< cmakeLib.c_str() << ">\" \"" << bo.c_str() << "/" << targetBuild.c_str() << (config.platform == PLATFORM_WIN64 ? (bIsExe ? ".exe\")\n" : ".dll\")\n") : "\")\n");
 	}
 
 	stream.close();

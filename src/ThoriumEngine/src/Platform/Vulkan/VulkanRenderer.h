@@ -5,7 +5,7 @@
 
 #include <vulkan/vulkan.h>
 
-class VulkanRenderer : public IRenderer
+class ENGINE_API VulkanRenderer : public IRenderer
 {
 public:
 	VulkanRenderer();
