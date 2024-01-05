@@ -64,8 +64,8 @@ public:
 public:
 	CConVar(const FString& name, float value = 0.f, float min = 0.f, float max = 0.f, EConvarAuthority auth = CLIENT);
 	CConVar(const FString& name, float value, EConvarAuthority auth, float min = 0.f, float max = 0.f);
-	explicit CConVar(const FString& name, const WString& configPath, float value = 0.f, float min = 0.f, float max = 0.f, EConvarAuthority auth = CLIENT);
-	explicit CConVar(const FString& name, const WString& configPath, float value, EConvarAuthority auth, float min = 0.f, float max = 0.f);
+	explicit CConVar(const FString& name, const FString& configPath, float value = 0.f, float min = 0.f, float max = 0.f, EConvarAuthority auth = CLIENT);
+	explicit CConVar(const FString& name, const FString& configPath, float value, EConvarAuthority auth, float min = 0.f, float max = 0.f);
 	~CConVar();
 
 	float AsFloat() const { return value; }
@@ -82,7 +82,7 @@ public:
 
 	// Returns the config path. 
 	// If set, during project initialization this variable will be loaded from the specified file.
-	inline const WString& ConfigPath() const { return configPath; }
+	inline const FString& ConfigPath() const { return configPath; }
 
 public:
 	TEvent<float> onValueChanged;
@@ -92,7 +92,7 @@ protected:
 
 private:
 	// Config path relative to project dir.
-	WString configPath;
+	FString configPath;
 
 	FString name;
 	

@@ -1,4 +1,5 @@
 
+#define UTIL_STD_STRING
 #include <string>
 #include "Console.h"
 #include "Math/Math.h"
@@ -218,12 +219,12 @@ CConVar::CConVar(const FString& n, float v, float _min, float _max, EConvarAutho
 	Register();
 }
 
-CConVar::CConVar(const FString& n, const WString& c /*= FString()*/, float v /*= 0.f*/, float _min, float _max, EConvarAuthority auth) : value(v), name(n), configPath(c), min(_min), max(_max), authority(auth)
+CConVar::CConVar(const FString& n, const FString& c /*= FString()*/, float v /*= 0.f*/, float _min, float _max, EConvarAuthority auth) : value(v), name(n), configPath(c), min(_min), max(_max), authority(auth)
 {
 	Register();
 }
 
-CConVar::CConVar(const FString& n, const WString& c, float v, EConvarAuthority auth, float _min /*= 0.f*/, float _max /*= 0.f*/) : value(v), name(n), configPath(c), min(_min), max(_max), authority(auth)
+CConVar::CConVar(const FString& n, const FString& c, float v, EConvarAuthority auth, float _min /*= 0.f*/, float _max /*= 0.f*/) : value(v), name(n), configPath(c), min(_min), max(_max), authority(auth)
 {
 	Register();
 }
