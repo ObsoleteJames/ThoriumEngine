@@ -1,5 +1,9 @@
 
+#if _WIN32
 #define GLFW_EXPOSE_NATIVE_WIN32
+#else
+#define GLFW_EXPOSE_NATIVE_X11
+#endif
 #include "Window.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Framebuffer.h"
@@ -85,6 +89,8 @@ void* CWindow::GetNativeHandle()
 {
 #ifdef _WIN32
 	return glfwGetWin32Window(nativeHandle);
+#else
+	return nullptr;
 #endif
 }
 
