@@ -9,6 +9,7 @@
 #include <Util/KeyValue.h>
 #include "Build.h"
 #include <iostream>
+#include <string>
 
 FString GetGameNameFromProject(const FString& projectCfg)
 {
@@ -80,12 +81,15 @@ int main(int argc, char** argv)
 					arg = args[1];
 			}
 
+#if _WIN32
+#else
 			if (args[0] == "cd")
 			{
 				char dir[128];
 				std::cout << getcwd(dir, sizeof(dir)) << "\n";
 				goto _get_input;
 			}
+#endif
 		}
 	}
 

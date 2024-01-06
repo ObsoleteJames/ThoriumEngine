@@ -91,7 +91,7 @@ public:
 		if (pak)
 			return nullptr; // TODO: return pak stream.
 
-		return new CFStream(mod->Path() + L"\\" + Path(), ToWString(mode).c_str());
+		return new CFStream(mod->Path() + "/" + Path(), mode);
 	}
 
 	CFStream GetSdkStream(const char* mode);

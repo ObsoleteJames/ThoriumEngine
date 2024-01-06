@@ -14,6 +14,24 @@
 #define THORIUM_ASSERT(...)
 #endif
 
+#if CONFIG_Debug
+#define CONFIG_NAME "Debug"
+#elif CONFIG_Development
+#define CONFIG_NAME "Development"
+#elif CONFIG_Release
+#define CONFIG_NAME "Release"
+#else
+#define CONFIG_NAME "INVALID"
+#endif
+
+#if PLATFORM_WINDOWS
+#define PLATFORM_NAME "win64"
+#elif PLATFORM_LINUX
+#define PLATOFMR_NAME "linux"
+#else
+#define PLATOFRM_NAME "INVALID"
+#endif
+
 #ifdef _WIN32
 	#ifdef ENGINE_DLL
 		#define ENGINE_API __declspec(dllexport)
@@ -32,6 +50,4 @@
 
 #ifdef IS_DEV
 #define INCLUDE_EDITOR_DATA 1
-#else
-#define INCLUDE_EDITOR_DATA 0
 #endif

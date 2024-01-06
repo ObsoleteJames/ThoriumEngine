@@ -19,7 +19,7 @@ extern char** environ;
 #endif
 
 const char* PlatformStrings[] = {
-	"x64",
+	"win64",
 	"linux",
 	"macos"
 };
@@ -140,7 +140,7 @@ void GetCppFilesInDir(FKeyValue& buildCfg, const FString& source, TArray<FString
 		//if (auto i = path.Find("src"); i != -1)
 		//	path.Erase(path.begin(), path.begin() + i + 4);
 
-		path.Erase(path.begin(), path.begin() + source.Size());
+		path.Erase(path.begin(), path.begin() + source.Size() + 1);
 
 		if (IsFileExcluded(buildCfg, path))
 			continue;
@@ -167,16 +167,16 @@ int CompileSource(const FCompileConfig& config)
 	strExp.SetExpressionValue("PATH", targetPath);
 
 #if _WIN32
-	WString keyPath = ToWString("SOFTWARE\\ThoriumEngine\\" + config.engineVersion);
+	FString keyPath = "SOFTWARE\\ThoriumEngine\\" + config.engineVersion;
 
 	HKEY hKey;
-	LONG lRes = RegOpenKeyExW(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
+	LONG lRes = RegOpenKeyEx(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
 	if (lRes == ERROR_FILE_NOT_FOUND)
 		return 1;
 
-	WCHAR strBuff[MAX_PATH];
+	CHAR strBuff[MAX_PATH];
 	DWORD buffSize = sizeof(strBuff);
-	lRes = RegQueryValueExW(hKey, L"path", 0, NULL, (LPBYTE)strBuff, &buffSize);
+	lRes = RegQueryValueEx(hKey, "path", 0, NULL, (LPBYTE)strBuff, &buffSize);
 	if (lRes != ERROR_SUCCESS)
 		return 1;
 
@@ -199,8 +199,8 @@ int CompileSource(const FCompileConfig& config)
 	enginePath.ReplaceAll('\\', '/');
 
 	strExp.SetExpressionValue("ENGINE_PATH", enginePath);
-	strExp.SetExpressionValue("ENGINE_LIB", enginePath + "/build/" + PlatformStrings[config.platform] + "/Engine-" + ConfigStrings[config.config] + "/lib/Engine.lib");
-	strExp.SetExpressionValue("UTIL_LIB", enginePath + "/build/" + PlatformStrings[config.platform] + "/Util-" + ConfigStrings[config.config] + "/lib/Util.lib");
+	strExp.SetExpressionValue("ENGINE_LIB", enginePath + "/build/" + PlatformStrings[config.platform] + "/Engine-" + ConfigStrings[config.config] + "/Engine.lib");
+	strExp.SetExpressionValue("UTIL_LIB", enginePath + "/build/" + PlatformStrings[config.platform] + "/Util-" + ConfigStrings[config.config] + "/Util.lib");
 
 	// Get the compiler path
 //	if (config.compiler < COMPILER_CLANG)
@@ -330,8 +330,8 @@ int CompileSource(const FCompileConfig& config)
 		PROCESS_INFORMATION ht{};
 		STARTUPINFO si{};
 		si.cb = sizeof(si);
-		WString htCmd = ToWString(enginePath) + L"\\bin\\HeaderTool.exe \"" + ToWString(targetPath) + L"\" -pt " + (bIsEngine ? L"0" : (bIsGame ? L"1" : L"3"));
-		if (!CreateProcess(NULL, (wchar_t*)htCmd.c_str(), nullptr, nullptr, false, 0, nullptr, nullptr, &si, &ht))
+		FString htCmd = enginePath + "/bin/win64/HeaderTool.exe \"" + targetPath + "\" -pt " + (bIsEngine ? "0" : (bIsGame ? "1" : "3"));
+		if (!CreateProcessA(NULL, (char*)htCmd.c_str(), nullptr, nullptr, false, 0, nullptr, nullptr, &si, &ht))
 		{
 			std::cerr << "error: failed to run HeaderTool!\n";
 			return 1;
@@ -368,8 +368,8 @@ int CompileSource(const FCompileConfig& config)
 	{
 		FString io = strExp.ParseString(*includeOut);
 		std::filesystem::create_directories(io.c_str());
-		CopyHeaders(buildCfg, targetPath + "\\src", io);
-		CopyHeaders(buildCfg, targetPath + "\\intermediate\\generated", io);
+		CopyHeaders(buildCfg, targetPath + "/src", io);
+		CopyHeaders(buildCfg, targetPath + "/intermediate/generated", io);
 	}
 
 	// Generate CMakeLists.txt
@@ -387,7 +387,8 @@ int CompileSource(const FCompileConfig& config)
 		return 1;
 	}
 
-	stream << "cmake_minimum_required(VERSION 3.1.0)\n";
+	stream << "cmake_minimum_required(VERSION 3.10.0)\n";
+	stream << "include_guard(GLOBAL)\n";
 	stream << "project(" << cmakeProj.c_str() << ")\n";
 
 	if (config.config == CONFIG_DEBUG)
@@ -431,7 +432,7 @@ int CompileSource(const FCompileConfig& config)
 			{
 				FString package = depend;
 				package.Erase(package.begin(), package.begin() + 8);
-				stream << "find_package(" << package.c_str() << " REQUIRED FATAL_ERROR)\n";
+				stream << "find_package(" << package.c_str() << " REQUIRED)\n";
 				continue;
 			}
 
@@ -490,7 +491,7 @@ int CompileSource(const FCompileConfig& config)
 	if (!bIsExe)
 		stream << "add_library(" << cmakeLib.c_str() << (bIsStaticLib ? " STATIC " : " SHARED ") << " ${Files})\n\n";
 	else
-		stream << "add_executable(" << cmakeLib.c_str() << " ${Files})\n\n";
+		stream << "add_executable(" << cmakeLib.c_str() << " WIN32 ${Files})\n\n";
 
 	stream << "set_property(TARGET " << cmakeLib.c_str() << " PROPERTY CXX_STANDARD 17)\n";
 	if (config.platform != PLATFORM_WIN64)
@@ -572,11 +573,12 @@ int CompileSource(const FCompileConfig& config)
 	if (auto* libOut = buildCfg.GetValue("LibOut", false); libOut)
 	{
 		FString lo = strExp.ParseString(*libOut);
+		lo.ReplaceAll('\\', '/');
 		if (!bIsStaticLib)
 			stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
-				<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "/" << targetBuild.c_str() << (bIsExe ? ".exe\")\n" : ".dll\")\n");
+				<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "\")\n";
 		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_LINKER_FILE:"
-			<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "/" << targetBuild.c_str() << ".lib\")\n";
+			<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "\")\n";
 	}
 
 	if (includeOut && bRunHeaderTool)
@@ -591,7 +593,7 @@ int CompileSource(const FCompileConfig& config)
 		FString bo = strExp.ParseString(*binOut);
 		bo.ReplaceAll('\\', '/');
 		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
-			<< cmakeLib.c_str() << ">\" \"" << bo.c_str() << "/" << targetBuild.c_str() << (config.platform == PLATFORM_WIN64 ? (bIsExe ? ".exe\")\n" : ".dll\")\n") : "\")\n");
+			<< cmakeLib.c_str() << ">\" \"" << bo.c_str() << "\")\n";
 	}
 
 	stream.close();
@@ -614,6 +616,8 @@ void CopyHeaders(FKeyValue& buildCfg, const FString& source, const FString& out)
 			continue;
 
 		FString path = entry.path().generic_string().c_str();
+		if (path.Find(source) == 0)
+			path.Erase(path.begin(), path.begin() + source.Size() + 1);
 		if (IsFileExcluded(buildCfg, path))
 			continue;
 
@@ -635,7 +639,7 @@ void CopyHeaders(FKeyValue& buildCfg, const FString& source, const FString& out)
 			std::filesystem::create_directories(outDir.c_str());
 			std::filesystem::copy(h.c_str(), outFile.c_str(), std::filesystem::copy_options::overwrite_existing);
 		}
-		catch (std::exception e)
+		catch (std::exception& e)
 		{
 			std::cerr << "error: " << e.what() << " in: " << h.c_str() << " - out: " << (out + file).c_str() << std::endl;
 		}

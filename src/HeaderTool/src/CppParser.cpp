@@ -871,10 +871,10 @@ int CParser::ParseHeader(FHeaderData& data)
 
 					if (ch == '=' && _var.name.IsEmpty())
 					{
-						_var.name = bPrevWasSpace ? prevValue : value;
+						_var.name = *valueStack.first();
 						if (_var.name.Find("META(") != -1)
 							_var.name.Clear();
-						continue;
+						break;
 					}
 
 					if (ch == ',' || ch == '\n')

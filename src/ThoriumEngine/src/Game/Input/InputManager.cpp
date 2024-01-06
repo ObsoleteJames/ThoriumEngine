@@ -40,7 +40,7 @@ void CInputManager::SetInputWindow(IBaseWindow* window)
 
 void CInputManager::LoadConfig()
 {
-	WString cfgPath = gEngine->GetGameConfigPath() + L"\\input.cfg";
+	FString cfgPath = gEngine->GetGameConfigPath() + "/input.cfg";
 	FKeyValue kv(cfgPath);
 	if (!kv.IsOpen())
 		return;

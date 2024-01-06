@@ -56,7 +56,7 @@ public:
 	* 
 	* @param scene - the target scene file name, if the string is equal to "empty" (the default value), it will create an empty world instead.
 	*/
-	void LoadWorld(const FString& scene = L"empty", bool bImmediate = false);
+	void LoadWorld(const FString& scene = "empty", bool bImmediate = false);
 
 	/**
 	* Stream in a world from the specified scene.
@@ -70,7 +70,7 @@ public:
 	 */
 	virtual int Run();
 
-	virtual bool LoadProject(const FString& path = L".");
+	virtual bool LoadProject(const FString& path = ".");
 
 	// Load the addon's content and or module.
 	void LoadAddon(FAddon& addon);
@@ -92,7 +92,7 @@ public:
 	static FString SaveFileDialog(const FString& filter = FString());
 	static FString OpenFolderDialog();
 
-	static int ExecuteProgram(const WString& cmd);
+	static int ExecuteProgram(const FString& cmd);
 
 public:
 	inline CWindow* GetGameWindow() const { return gameWindow; }

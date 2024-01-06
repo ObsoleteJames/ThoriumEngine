@@ -451,7 +451,7 @@ void CEngine::InitImGui()
 void CEngine::DoLoadWorld()
 {
 	CScene* pScene = nullptr;
-	if (nextSceneName != L"empty")
+	if (nextSceneName != "empty")
 	{
 		pScene = CResourceManager::GetResource<CScene>(nextSceneName);
 		if (!pScene)
@@ -483,7 +483,7 @@ void CEngine::DoLoadWorld()
 
 	Events::PostLevelChange.Invoke();
 
-	nextSceneName = L"";
+	nextSceneName = "";
 }
 
 bool CEngine::LoadProjectConfig(const FString& path, FProject& project)
@@ -555,14 +555,14 @@ void CEngine::FetchAddons(const FString& addonFolder, TArray<FAddon>& out)
 			continue;
 
 		FAddon addon;
-		FString p = addonFolder + "/" + entry.path().filename().c_str();
+		FString p = addonFolder + "/" + entry.path().filename().generic_string().c_str();
 
 		if (LoadAddonConfig(p, addon))
 			out.Add(addon);
 	}
 }
 
-bool CEngine::LoadAddonConfig(const Ftring& path, FAddon& out)
+bool CEngine::LoadAddonConfig(const FString& path, FAddon& out)
 {
 	FKeyValue cfg(path + "/addon.cfg");
 	if (!cfg.IsOpen())
@@ -710,7 +710,7 @@ FString CEngine::OSGetEnginePath(const FString& engineVersion)
 	HKEY hKey;
 	LONG lRes = RegOpenKeyEx(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
 	if (lRes == ERROR_FILE_NOT_FOUND)
-		return L"";
+		return "";
 
 	CHAR strBuff[MAX_PATH];
 	DWORD buffSize = sizeof(strBuff);
@@ -740,7 +740,10 @@ FString CEngine::OSGetDataPath()
 	if (FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &appdata)))
 		return FString();
 
-	return FString(appdata);
+	char r[MAX_PATH];
+	wcstombs(r, appdata, MAX_PATH);
+
+	return FString(r);
 #else
 	return FString(getenv("HOME")) + "/.thoriumengine/" + version.c_str();
 #endif
@@ -753,7 +756,10 @@ FString CEngine::OSGetDocumentsPath()
 	if (FAILED(SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &appdata)))
 		return FString();
 
-	return FString(appdata);
+	char r[MAX_PATH];
+	wcstombs(r, appdata, MAX_PATH);
+
+	return FString(r);
 #else
 	return FString(getenv("HOME")) + "/Documents";
 #endif
@@ -841,15 +847,18 @@ FString CEngine::OpenFolderDialog()
 #endif
 }
 
+#if _WIN32
+#else
 extern char** environ;
+#endif
 
 int CEngine::ExecuteProgram(const FString& cmd)
 {
 #if PLATFORM_WINDOWS
 	PROCESS_INFORMATION ht{};
-	STARTUPINFOW si{};
+	STARTUPINFO si{};
 	si.cb = sizeof(si);
-	int r = CreateProcessW(NULL, (wchar_t*)cmd.c_str(), nullptr, nullptr, false, 0, nullptr, nullptr, &si, &ht);
+	int r = CreateProcessA(NULL, (char*)cmd.c_str(), nullptr, nullptr, false, 0, nullptr, nullptr, &si, &ht);
 	return r;
 #else
 	TArray<FString> args = cmd.Split(" \t");

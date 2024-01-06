@@ -14,7 +14,7 @@ enum EShaderBlock
 	EShaderBlock_GEO
 };
 
-bool ParseShaderSourceFile(const WString& file, FShaderSourceFile& out)
+bool ParseShaderSourceFile(const FString& file, FShaderSourceFile& out)
 {
 	std::ifstream stream(file.c_str());
 	if (!stream.is_open())

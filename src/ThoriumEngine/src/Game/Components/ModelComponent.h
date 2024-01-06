@@ -19,7 +19,7 @@ class ENGINE_API CModelComponent : public CSceneComponent
 public:
 	CModelComponent();
 
-	void SetModel(const WString& file);
+	void SetModel(const FString& file);
 	void SetModel(TObjectPtr<CModelAsset> model);
 	void SetAnimationGraph(CAnimationGraph* animGraph);
 

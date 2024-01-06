@@ -14,8 +14,8 @@ CDebugRenderer::CDebugRenderer()
 	lineMesh.vertexBuffer = gRenderer->CreateVertexBuffer({ { FVector::zero }, { -FVector::forward } });
 	lineMesh.topologyType = FMesh::TOPOLOGY_LINES;
 
-	cube = CResourceManager::GetResource<CModelAsset>(L"models\\Cube.thmdl");
-	sphere = CResourceManager::GetResource<CModelAsset>(L"models\\Sphere.thmdl");
+	cube = CResourceManager::GetResource<CModelAsset>("models/Cube.thmdl");
+	sphere = CResourceManager::GetResource<CModelAsset>("models/Sphere.thmdl");
 }
 
 void CDebugRenderer::DrawLine(const FVector& begin, const FVector& end, const FColor& color, float time /*= 0.f*/, bool bOverlay /*= false*/)

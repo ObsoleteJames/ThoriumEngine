@@ -51,7 +51,7 @@ void CBillboardComponent::Init()
 	mat->SetShader("Billboard");
 	mat->SetFloat("vAlpha", 1.f);
 
-	sprite = CResourceManager::GetResource<CTexture>(L"misc\\Obsolete.thtex");
+	sprite = CResourceManager::GetResource<CTexture>("misc/Obsolete.thtex");
 
 	if (GetWorld())
 	{

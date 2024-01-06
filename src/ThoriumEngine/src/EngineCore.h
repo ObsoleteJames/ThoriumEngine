@@ -25,7 +25,7 @@
 #endif
 
 #if PLATFORM_WINDOWS
-#define PLATOFRM_NAME "win64"
+#define PLATFORM_NAME "win64"
 #elif PLATFORM_LINUX
 #define PLATOFMR_NAME "linux"
 #else

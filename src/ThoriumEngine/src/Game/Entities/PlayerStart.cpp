@@ -8,6 +8,6 @@ void CPlayerStart::Init()
 
 	mdl = AddComponent<CModelComponent>("model");
 	mdl->AttachTo(RootComponent());
-	mdl->SetModel(L"models\\PlayerStart.thmdl");
+	mdl->SetModel("models/PlayerStart.thmdl");
 	mdl->bEditorOnly = true;
 }

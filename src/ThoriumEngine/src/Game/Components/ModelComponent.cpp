@@ -47,7 +47,7 @@ public:
 	{
 		for (auto& m : meshes)
 		{
-			TObjectPtr<CMaterial> mat = (m.materialIndex < materials.Size() && materials[m.materialIndex]) ? materials[m.materialIndex] : CResourceManager::GetResource<CMaterial>(L"materials\\error.thmat");
+			TObjectPtr<CMaterial> mat = (m.materialIndex < materials.Size() && materials[m.materialIndex]) ? materials[m.materialIndex] : CResourceManager::GetResource<CMaterial>("materials/error.thmat");
 			out.DrawMesh(m, mat, matrix, skeletonMatrices);
 		}
 	}
@@ -66,11 +66,11 @@ CModelComponent::CModelComponent()
 {
 }
 
-void CModelComponent::SetModel(const WString& file)
+void CModelComponent::SetModel(const FString& file)
 {
 	TObjectPtr<CModelAsset> mdl = CResourceManager::GetResource<CModelAsset>(file);
 	if (!mdl)
-		mdl = CResourceManager::GetResource<CModelAsset>(L"models\\error.thmdl");
+		mdl = CResourceManager::GetResource<CModelAsset>("models/error.thmdl");
 
 	SetModel(mdl);
 }

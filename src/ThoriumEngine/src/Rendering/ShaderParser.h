@@ -20,7 +20,7 @@ struct ENGINE_API FShaderSourceFile
 public:
 	FString name;
 	FString description;
-	WString file;
+	FString file;
 	int8 type;
 
 	TArray<FProperty> properties;
@@ -33,4 +33,4 @@ public:
 	FString geoShader;
 };
 
-extern bool ENGINE_API ParseShaderSourceFile(const WString& file, FShaderSourceFile& out);
+extern bool ENGINE_API ParseShaderSourceFile(const FString& file, FShaderSourceFile& out);

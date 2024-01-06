@@ -207,7 +207,7 @@ void CMaterial::Save()
 			if (t.tex)
 				*stream << t.tex->GetPath();
 			else
-				*stream << WString();
+				*stream << FString();
 		}
 		else
 		{

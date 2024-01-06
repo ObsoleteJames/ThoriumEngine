@@ -15,21 +15,20 @@
 FString GetEnginePath(const FString& version)
 {
 #ifdef _WIN32
-	WString engineVersion = ToWString(version);
-	WString keyPath = WString(L"SOFTWARE\\ThoriumEngine\\") + engineVersion;
+	FString keyPath = "SOFTWARE\\ThoriumEngine\\" + version;
 
 	HKEY hKey;
-	LONG lRes = RegOpenKeyExW(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
+	LONG lRes = RegOpenKeyExA(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
 	if (lRes == ERROR_FILE_NOT_FOUND)
 		return "";
 
-	WCHAR strBuff[MAX_PATH];
+	CHAR strBuff[MAX_PATH];
 	DWORD buffSize = sizeof(strBuff);
-	lRes = RegQueryValueExW(hKey, L"path", 0, NULL, (LPBYTE)strBuff, &buffSize);
+	lRes = RegQueryValueExA(hKey, "path", 0, NULL, (LPBYTE)strBuff, &buffSize);
 	if (lRes != ERROR_SUCCESS)
 		return "";
 
-	return ToFString(WString(strBuff));
+	return strBuff;
 #else
 	std::ifstream stream(std::string(getenv("HOME")) + "/.thoriumengine/" + version.c_str() + "/path.txt", std::ios_base::in);
 	if (!stream.is_open())

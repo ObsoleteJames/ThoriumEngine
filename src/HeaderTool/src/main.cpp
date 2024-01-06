@@ -108,20 +108,20 @@ int main(int argc, char** argv)
 		}
 
 #if _WIN32
-		WString keyPath = ToWString("SOFTWARE\\ThoriumEngine\\" + *projCfg.GetValue("engine_version"));
+		FString keyPath = "SOFTWARE\\ThoriumEngine\\" + *projCfg.GetValue("engine_version");
 
 		HKEY hKey;
-		LONG lRes = RegOpenKeyExW(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
+		LONG lRes = RegOpenKeyEx(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
 		if (lRes == ERROR_FILE_NOT_FOUND)
 			return 1;
 
-		WCHAR strBuff[MAX_PATH];
+		CHAR strBuff[MAX_PATH];
 		DWORD buffSize = sizeof(strBuff);
-		lRes = RegQueryValueExW(hKey, L"path", 0, NULL, (LPBYTE)strBuff, &buffSize);
+		lRes = RegQueryValueEx(hKey, "path", 0, NULL, (LPBYTE)strBuff, &buffSize);
 		if (lRes != ERROR_SUCCESS)
 			return 1;
 
-		enginePath = ToFString(strBuff);
+		enginePath = strBuff;
 #else
 		{
 			std::ifstream stream(std::string(getenv("HOME")) + "/.thoriumengine/" + projCfg.GetValue("engine_version")->Value.c_str() + "/path.txt", std::ios_base::in);
@@ -183,20 +183,20 @@ int main(int argc, char** argv)
 	else if (ProjectType == LIBRARY_PROJECT)
 	{
 #if _WIN32
-		WString keyPath = ToWString(FString("SOFTWARE\\ThoriumEngine\\") + ENGINE_VERSION);
+		FString keyPath = FString("SOFTWARE\\ThoriumEngine\\") + ENGINE_VERSION;
 
 		HKEY hKey;
-		LONG lRes = RegOpenKeyExW(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
+		LONG lRes = RegOpenKeyEx(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
 		if (lRes == ERROR_FILE_NOT_FOUND)
 			return 1;
 
-		WCHAR strBuff[MAX_PATH];
+		CHAR strBuff[MAX_PATH];
 		DWORD buffSize = sizeof(strBuff);
-		lRes = RegQueryValueExW(hKey, L"path", 0, NULL, (LPBYTE)strBuff, &buffSize);
+		lRes = RegQueryValueEx(hKey, "path", 0, NULL, (LPBYTE)strBuff, &buffSize);
 		if (lRes != ERROR_SUCCESS)
 			return 1;
 
-		enginePath = ToFString(strBuff);
+		enginePath = strBuff;
 #else
 		{
 			std::ifstream stream(std::string(getenv("HOME")) + "/.thoriumengine/" + ENGINE_VERSION + "/path.txt", std::ios_base::in);

@@ -11,16 +11,16 @@ class CTexture;
 ENUM()
 enum EExposureType
 {
-	ExposureType_Constant META(Name = "Constant"),
-	ExposureType_Dynamic META(Name = "Dynamic"),
+	ExposureType_Constant	META(Name = "Constant"),
+	ExposureType_Dynamic	META(Name = "Dynamic"),
 };
 
 ENUM()
 enum EPostProcessFeature
 {
-	PPF_Exposure META(Name = "Exposure"),
-	PPF_ColorGrading META(Name = "Color Grading"),
-	PPF_Bloom META(Name = "Bloom"),
+	PPF_Exposure		META(Name = "Exposure"),
+	PPF_ColorGrading	META(Name = "Color Grading"),
+	PPF_Bloom			META(Name = "Bloom"),
 };
 
 STRUCT()

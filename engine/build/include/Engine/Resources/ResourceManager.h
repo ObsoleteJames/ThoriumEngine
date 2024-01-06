@@ -56,19 +56,19 @@ public:
 	//static inline TObjectPtr<T> GetResource(const FString& path, uint8 lod = 0) { return (TObjectPtr<T>)GetResource((FAssetClass*)T::StaticClass(), path, lod); }
 
 	template<class T>
-	inline static TObjectPtr<T> GetResource(const WString& path) { return (TObjectPtr<T>)CResourceManager::GetResource((FAssetClass*)T::StaticClass(), path); }
+	inline static TObjectPtr<T> GetResource(const FString& path) { return (TObjectPtr<T>)CResourceManager::GetResource((FAssetClass*)T::StaticClass(), path); }
 
-	static TObjectPtr<CAsset> GetResource(FAssetClass* type, const WString& path);
+	static TObjectPtr<CAsset> GetResource(FAssetClass* type, const FString& path);
 	
 	template<class T>
 	static void GetResources(TArray<TObjectPtr<T>>& out);
 
-	static const TUnorderedMap<WString, FResourceData>& GetAvailableResources() { return availableResources; }
+	static const TUnorderedMap<FString, FResourceData>& GetAvailableResources() { return availableResources; }
 
 	template<class T>
-	inline static TObjectPtr<T> CreateResource(const WString& path, const WString& mod = WString()) { return (TObjectPtr<T>)CreateResource((FAssetClass*)T::StaticClass(), path, mod); }
+	inline static TObjectPtr<T> CreateResource(const FString& path, const FString& mod = FString()) { return (TObjectPtr<T>)CreateResource((FAssetClass*)T::StaticClass(), path, mod); }
 
-	static TObjectPtr<CAsset> CreateResource(FAssetClass* type, const WString& path, const WString& mod = WString());
+	static TObjectPtr<CAsset> CreateResource(FAssetClass* type, const FString& path, const FString& mod = FString());
 
 	template<class T>
 	inline static void LoadResources() { LoadResources((FAssetClass*)T::StaticClass()); }
@@ -83,7 +83,7 @@ public:
 	/**
 	 *	Register a user created asset to the resource system.
 	 */
-	static bool RegisterNewResource(CAsset* resource, const WString& path, const WString& mod = L"");
+	static bool RegisterNewResource(CAsset* resource, const FString& path, const FString& mod = FString());
 
 	static void StreamResource(IResourceStreamingProxy* proxy);
 
@@ -91,7 +91,7 @@ public:
 	inline static SizeType StreamingResourcesCount() { return streamingResources.Size(); }
 
 private:
-	static CAsset* AllocateResource(FAssetClass* type, const WString& path);
+	static CAsset* AllocateResource(FAssetClass* type, const FString& path);
 	static int ScanDir(FDirectory* dir);
 	static void OnResourceDeleted(CAsset* asset);
 
@@ -100,8 +100,8 @@ private:
 	static void StreamResources();
 
 private:
-	static TUnorderedMap<WString, CAsset*> allocatedResources;
-	static TUnorderedMap<WString, FResourceData> availableResources;
+	static TUnorderedMap<FString, CAsset*> allocatedResources;
+	static TUnorderedMap<FString, FResourceData> availableResources;
 	static TArray<IResourceStreamingProxy*> streamingResources;
 };
 

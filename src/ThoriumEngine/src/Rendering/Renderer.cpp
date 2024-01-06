@@ -18,19 +18,19 @@ std::thread renderThread;
 // 0 = None, 1 = Unlit, 2 = Normal, 3 = Material
 static CConVar cvRenderMaterialMode("r.materialmode", 0, CConVar::SERVER_CHEAT);
 
-static CConVar cvRenderShadowEnabled("r.shadow.enabled", L"config\\graphics.cfg", 1, 0, 1);
-static CConVar cvRenderShadowQuality("r.shadow.quality", L"config\\graphics.cfg", 4, 0, 4);
-static CConVar cvRenderTextureQuality("r.texture.quality", L"config\\graphics.cfg", 4, 0, 4);
+static CConVar cvRenderShadowEnabled("r.shadow.enabled", "config/graphics.cfg", 1, 0, 1);
+static CConVar cvRenderShadowQuality("r.shadow.quality", "config/graphics.cfg", 4, 0, 4);
+static CConVar cvRenderTextureQuality("r.texture.quality", "config/graphics.cfg", 4, 0, 4);
 
-static CConVar cvRenderScreenPercentage("r.screen_percentage", L"config\\graphics.cfg", 100.f, 50.f, 200.f);
+static CConVar cvRenderScreenPercentage("r.screen_percentage", "config/graphics.cfg", 100.f, 50.f, 200.f);
 
 // Screen space Ambient Occlusion.
-static CConVar cvRenderSsaoEnabled("r.ssao.enabled", L"config\\graphics.cfg", 1);
-static CConVar cvRenderSsaoQuality("r.ssao.quality", L"config\\graphics.cfg", 4, 0, 4);
+static CConVar cvRenderSsaoEnabled("r.ssao.enabled", "config/graphics.cfg", 1);
+static CConVar cvRenderSsaoQuality("r.ssao.quality", "config/graphics.cfg", 4, 0, 4);
 
 // Screen space shadows.
-static CConVar cvRenderSsShadows("r.ssshadows.enabled", L"config\\graphics.cfg", 1);
-static CConVar cvRenderSsShadowsQuality("r.ssshadows.quality", L"config\\graphics.cfg", 4, 0, 4);
+static CConVar cvRenderSsShadows("r.ssshadows.enabled", "config/graphics.cfg", 1);
+static CConVar cvRenderSsShadowsQuality("r.ssshadows.quality", "config/graphics.cfg", 4, 0, 4);
 
 static FPostProcessSettings defaultPostProcess;
 

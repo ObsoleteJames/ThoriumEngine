@@ -56,7 +56,7 @@ public:
 	* 
 	* @param scene - the target scene file name, if the string is equal to "empty" (the default value), it will create an empty world instead.
 	*/
-	void LoadWorld(const WString& scene = L"empty", bool bImmediate = false);
+	void LoadWorld(const FString& scene = "empty", bool bImmediate = false);
 
 	/**
 	* Stream in a world from the specified scene.
@@ -70,7 +70,7 @@ public:
 	 */
 	virtual int Run();
 
-	virtual bool LoadProject(const WString& path = L".");
+	virtual bool LoadProject(const FString& path = ".");
 
 	// Load the addon's content and or module.
 	void LoadAddon(FAddon& addon);
@@ -84,15 +84,15 @@ public:
 	void HotReloadModule(const FString& module);
 #endif
 
-	static WString OSGetEnginePath(const FString& version);
-	static WString OSGetDataPath();
-	static WString OSGetDocumentsPath();
+	static FString OSGetEnginePath(const FString& version);
+	static FString OSGetDataPath();
+	static FString OSGetDocumentsPath();
 
 	static FString OpenFileDialog(const FString& filter = FString());
 	static FString SaveFileDialog(const FString& filter = FString());
 	static FString OpenFolderDialog();
 
-	static int ExecuteProgram(const WString& cmd);
+	static int ExecuteProgram(const FString& cmd);
 
 public:
 	inline CWindow* GetGameWindow() const { return gameWindow; }
@@ -115,8 +115,8 @@ public:
 
 	inline double DeltaTime() const { return deltaTime; }
 
-	inline WString GetGameConfigPath() const { return ToWString(activeGame.name) + L"\\config"; }
-	inline WString EngineContentPath() const { return engineMod->Path(); }
+	inline FString GetGameConfigPath() const { return activeGame.name + "/config"; }
+	inline FString EngineContentPath() const { return engineMod->Path(); }
 
 	inline const TArray<FAddon>& GetAddons() const { return coreAddons; }
 
@@ -127,12 +127,12 @@ protected:
 
 	void DoLoadWorld();
 
-	bool LoadProjectConfig(const WString& path, FProject& outProject);
+	bool LoadProjectConfig(const FString& path, FProject& outProject);
 	bool LoadUserConfig();
 
-	void FetchAddons(const WString& addonFolder, TArray<FAddon>& out);
+	void FetchAddons(const FString& addonFolder, TArray<FAddon>& out);
 
-	bool LoadAddonConfig(const WString& path, FAddon& out);
+	bool LoadAddonConfig(const FString& path, FAddon& out);
 
 public:
 	FUserConfig userConfig;
@@ -140,7 +140,7 @@ public:
 protected:
 	TEvent<> eventOnHotReload;
 
-	WString nextSceneName;
+	FString nextSceneName;
 
 	bool bWantsToExit = false;
 	bool bInitialized = false;

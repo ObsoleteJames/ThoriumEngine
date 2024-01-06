@@ -8,6 +8,6 @@ public:
 	static bool DirectoryExists(const FString& path);
 	static bool FileExists(const FString& path);
 
-	static bool DirectoryExists(const WString& path);
-	static bool FileExists(const WString& path);
+	// static bool DirectoryExists(const WString& path);
+	// static bool FileExists(const WString& path);
 };

@@ -14,8 +14,8 @@
 
 #define RESOURCE_THREAD_COUNT 2
 
-TUnorderedMap<WString, CAsset*> CResourceManager::allocatedResources;
-TUnorderedMap<WString, FResourceData> CResourceManager::availableResources;
+TUnorderedMap<FString, CAsset*> CResourceManager::allocatedResources;
+TUnorderedMap<FString, FResourceData> CResourceManager::availableResources;
 TArray<IResourceStreamingProxy*> CResourceManager::streamingResources;
 
 static std::mutex resourceMutex;
@@ -44,7 +44,7 @@ int CResourceManager::ScanDir(FDirectory* dir)
 	int numFiles = 0;
 	for (auto f : dir->files)
 	{
-		const WString& ext = f->Extension();
+		const FString& ext = f->Extension();
 		FAssetClass* type = GetClassFromExt(ToFString(ext));
 		if (type == nullptr)
 			continue;
@@ -199,7 +199,7 @@ void CResourceManager::ScanMod(FMod* mod)
 
 void CResourceManager::RegisterNewFile(FFile* file)
 {
-	const WString& ext = file->Extension();
+	const FString& ext = file->Extension();
 	FAssetClass* type = GetClassFromExt(ToFString(ext));
 	if (type == nullptr)
 		return;

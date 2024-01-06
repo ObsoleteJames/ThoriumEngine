@@ -59,15 +59,15 @@ void CTransformGizmoEntity::Init()
 	translateArrowY->AttachTo(translateGizmo);
 	translateArrowZ->AttachTo(translateGizmo);
 
-	translateArrowX->SetModel(L"editor\\models\\arrow.thmdl");
+	translateArrowX->SetModel("editor/models/arrow.thmdl");
 	translateArrowX->SetPosition(FVector(0.5f, 0, 0));
 	translateArrowX->SetRotation(FQuaternion::EulerAngles(FVector(0, -90.f, 0).Radians()));
 
-	translateArrowY->SetModel(L"editor\\models\\arrow.thmdl");
+	translateArrowY->SetModel("editor/models/arrow.thmdl");
 	translateArrowY->SetPosition(FVector(0, 0.5f, 0));
 	translateArrowY->SetRotation(FQuaternion::EulerAngles(FVector(90.f, 0, 0).Radians()));
 
-	translateArrowZ->SetModel(L"editor\\models\\arrow.thmdl");
+	translateArrowZ->SetModel("editor/models/arrow.thmdl");
 	translateArrowZ->SetPosition(FVector(0, 0, 0.5f));
 	translateArrowZ->SetRotation(FQuaternion::EulerAngles(FVector(-180.f, 0, 0).Radians()));
 

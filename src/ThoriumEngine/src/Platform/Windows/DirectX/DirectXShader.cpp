@@ -9,8 +9,8 @@ DirectXShader::DirectXShader(CShaderSource* in, int type)
 	shaderSource = in;
 	this->type = (int8)type;
 
-	WString typeStr = (type == 0) ? L".vs.thcs" : (type == 1) ? L".thcs.ps" : L".thcs.gs";
-	WString shaderPath = in->File()->Mod()->Path() + L"\\" + in->File()->Dir()->GetPath() + L"\\vfx\\" + in->File()->Name() + typeStr;
+	FString typeStr = (type == 0) ? ".vs.thcs" : (type == 1) ? ".thcs.ps" : ".thcs.gs";
+	FString shaderPath = in->File()->Mod()->Path() + "/" + in->File()->Dir()->GetPath() + "/vfx/" + in->File()->Name() + typeStr;
 	CFStream stream(ToFString(shaderPath), "rb");
 	if (!stream.IsOpen())
 	{
@@ -53,7 +53,7 @@ DirectXVertexShader::DirectXVertexShader(CShaderSource* in)
 	shaderSource = in;
 	type = 0;
 
-	//WString shaderPath = in->File()->Mod()->Path() + in->File()->Dir()->GetPath() + L"\\vfx\\" + in->File()->Name() + L".vs.thcs";
+	//WString shaderPath = in->File()->Mod()->Path() + in->File()->Dir()->GetPath() + L"/vfx/" + in->File()->Name() + L".vs.thcs";
 	//CFStream stream(ToFString(shaderPath), "rb");
 	//if (!stream.IsOpen())
 	//{
@@ -69,7 +69,12 @@ DirectXVertexShader::DirectXVertexShader(CShaderSource* in)
 	//stream.Read(buff, shaderSize);
 
 	ID3D10Blob* buff;
-	D3DReadFileToBlob((in->File()->Mod()->Path() + L"\\" + in->File()->Dir()->GetPath() + L"\\vfx\\" + in->File()->Name() + L".thcs.vs").c_str(), &buff);
+
+	FString path = in->File()->Mod()->Path() + "/" + in->File()->Dir()->GetPath() + "/vfx/" + in->File()->Name() + ".thcs.vs";
+	wchar_t p[MAX_PATH];
+	mbstowcs(p, path.c_str(), path.Size() + 1);
+
+	D3DReadFileToBlob(p, &buff);
 
 	D3D11_INPUT_ELEMENT_DESC vertexLayout[] = {
 		{ "POSITION",		0, DXGI_FORMAT_R32G32B32_FLOAT,		0, offsetof(FVertex, position),			D3D11_INPUT_PER_VERTEX_DATA, 0  },

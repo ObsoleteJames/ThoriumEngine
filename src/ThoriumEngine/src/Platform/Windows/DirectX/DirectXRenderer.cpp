@@ -184,7 +184,7 @@ void DirectXRenderer::CompileShader(const FString& source, IShader::EType shader
 	public:
 		virtual HRESULT Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes)
 		{
-			FFile* file = CFileSystem::FindFile(WString(L"shaders\\") + ToWString(pFileName));
+			FFile* file = CFileSystem::FindFile(FString("shaders/") + pFileName);
 			if (!file)
 				return S_FALSE;
 

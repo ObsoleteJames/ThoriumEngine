@@ -200,7 +200,7 @@ protected:
 	CRenderScene* renderScene;
 
 	// Entity IO Data
-	CEntityIOManager* entityIOManager;
+	CEntityIOManager* entityIOManager = nullptr;
 
 	ENetMode netMode;
 

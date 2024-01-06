@@ -308,7 +308,7 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 
 			dir->directories.Add(new FDirectory());
 			FDirectory* newDir = dir->directories.last();
-			newDir->name = entry.path().stem().c_str();
+			newDir->name = entry.path().stem().generic_string().c_str();
 			newDir->parent = dir;
 			MountDir(mod, _path + "/" + newDir->GetName(), newDir);
 			continue;
@@ -323,8 +323,8 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 		FFile* file = new FFile();
 		file->mod = mod;
 
-		file->name = entry.path().stem().c_str();
-		file->extension = entry.path().extension().c_str();
+		file->name = entry.path().stem().generic_string().c_str();
+		file->extension = entry.path().extension().generic_string().c_str();
 		file->dir = dir;
 		dir->files.Add(file);
 	}
@@ -364,7 +364,7 @@ FMod* CFileSystem::MountMod(const FString& modPath, const FString& mn, const FSt
 	}
 	else if (modName != "Engine")
 	{
-		WString sdkPath = WString(".project/") + modName + "/sdk_content";
+		FString sdkPath = FString(".project/") + modName + "/sdk_content";
 		if (FFileHelper::DirectoryExists(sdkPath))
 		{
 			//for (auto& entry : fs::recursive_directory_iterator(sdkPath.c_str()))
@@ -446,14 +446,14 @@ FFile* FDirectory::GetFile(const FString& name)
 	return nullptr;
 }
 
-#if _WIN326
+#if _WIN32
 #include "windows.h"
 #endif
 
 void CFileSystem::SetCurrentPath(const FString& path)
 {
 #if _WIN32
-	SetCurrentDirectoryW(path.c_str());
+	SetCurrentDirectoryA(path.c_str());
 #else
 	chdir(path.c_str());
 #endif
@@ -461,9 +461,9 @@ void CFileSystem::SetCurrentPath(const FString& path)
 
 FString CFileSystem::GetCurrentPath()
 {
-	wchar_t buff[128];
+	char buff[128];
 #if _WIN32
-	GetCurrentDirectoryW(128, buff);
+	GetCurrentDirectoryA(128, buff);
 #else
 	getcwd(buff, 128);
 #endif

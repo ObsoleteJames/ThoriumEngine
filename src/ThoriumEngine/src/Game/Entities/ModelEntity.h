@@ -16,7 +16,7 @@ public:
 	virtual void Init();
 
 	inline void SetModel(CModelAsset* mdl) { modelComp->SetModel(mdl); }
-	inline void SetModel(const WString& file) { modelComp->SetModel(file); }
+	inline void SetModel(const FString& file) { modelComp->SetModel(file); }
 
 public:
 	CModelComponent* modelComp;

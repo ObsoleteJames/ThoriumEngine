@@ -4,8 +4,8 @@
 void CSkyboxComponent::Init()
 {
 	BaseClass::Init();
-	SetModel(L"models\\Skybox.thmdl");
-	mat = CResourceManager::GetResource<CMaterial>(L"materials\\sky_default.thmat");
+	SetModel("models/Skybox.thmdl");
+	mat = CResourceManager::GetResource<CMaterial>("materials/sky_default.thmat");
 	SetMaterial(mat);
 }
 

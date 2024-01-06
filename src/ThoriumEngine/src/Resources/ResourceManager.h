@@ -83,7 +83,7 @@ public:
 	/**
 	 *	Register a user created asset to the resource system.
 	 */
-	static bool RegisterNewResource(CAsset* resource, const FString& path, const FString& mod = L"");
+	static bool RegisterNewResource(CAsset* resource, const FString& path, const FString& mod = FString());
 
 	static void StreamResource(IResourceStreamingProxy* proxy);
 

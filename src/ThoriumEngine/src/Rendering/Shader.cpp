@@ -244,9 +244,9 @@ bool CShaderSource::Compile()
 
 		bHasVS = 1;
 
-		WString p = file->Dir()->GetPath() + L"\\vfx\\" + file->Name() + L".thcs.vs";
+		FString p = file->Dir()->GetPath() + "/vfx/" + file->Name() + ".thcs.vs";
 		file->Mod()->CreateFile(p);
-		stream.Open(ToFString(file->Mod()->Path() + L"\\" + p), "wb");
+		stream.Open(ToFString(file->Mod()->Path() + "/" + p), "wb");
 		if (stream.IsOpen())
 			stream.Write(vsData, size);
 		stream.Close();
@@ -262,9 +262,9 @@ bool CShaderSource::Compile()
 
 		bHasPS = 1;
 
-		WString p = file->Dir()->GetPath() + L"\\vfx\\" + file->Name() + L".thcs.ps";
+		FString p = file->Dir()->GetPath() + "/vfx/" + file->Name() + ".thcs.ps";
 		file->Mod()->CreateFile(p);
-		stream.Open(ToFString(file->Mod()->Path() + L"\\" + p), "wb");
+		stream.Open(ToFString(file->Mod()->Path() + "/" + p), "wb");
 		if (stream.IsOpen())
 			stream.Write(vsData, size);
 		stream.Close();
@@ -280,9 +280,9 @@ bool CShaderSource::Compile()
 
 		bHasGEO = 1;
 
-		WString p = file->Dir()->GetPath() + L"\\vfx\\" + file->Name() + L".thcs.gs";
+		FString p = file->Dir()->GetPath() + "/vfx/" + file->Name() + ".thcs.gs";
 		file->Mod()->CreateFile(p);
-		stream.Open(ToFString(file->Mod()->Path() + L"\\" + p), "wb");
+		stream.Open(ToFString(file->Mod()->Path() + "/" + p), "wb");
 		if (stream.IsOpen())
 			stream.Write(vsData, size);
 		stream.Close();
@@ -301,7 +301,7 @@ bool CShaderSource::Compile()
 	properties.Add({ "vAlpha", "Alpha", "", "Color", "1.0", FShaderProperty::FLOAT, FShaderProperty::SLIDER, 20 });
 
 	textures.Add({ "vBaseColor", "Base Color", 5, "Color", "Color(1, 1, 1, 1)"});
-	textures.Add({ "vNormalMap", "Normal Map", 6, "Normal", "misc\\normal_flat.thtex" });
+	textures.Add({ "vNormalMap", "Normal Map", 6, "Normal", "misc/normal_flat.thtex" });
 
 	for (auto& p : shader.properties)
 	{
