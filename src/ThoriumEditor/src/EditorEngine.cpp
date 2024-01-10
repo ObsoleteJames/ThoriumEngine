@@ -86,6 +86,10 @@ void CEditorEngine::Init()
 		gameWindow->mouseY = y - viewportY;
 	});
 
+	inputManager = CreateObject<CInputManager>();
+	inputManager->SetInputWindow(gameWindow);
+	inputManager->SetShowCursor(true);
+
 	//if (!inputManager)
 	//{
 	//	inputManager = CreateObject<CInputManager>();
@@ -123,13 +127,13 @@ void CEditorEngine::Init()
 
 	Events::PostLevelChange.Bind(this, &CEditorEngine::OnLevelChange);
 
-	if (bProjectLoaded)
-	{
-		assetBrowser->SetDir(activeGame.mod->Name(), FString());
-		LoadWorld(ToFString(activeGame.startupScene));
-	}
-	else
-		LoadWorld();
+	//if (bProjectLoaded)
+	//{
+	//	assetBrowser->SetDir(activeGame.mod->Name(), FString());
+	//	LoadWorld(ToFString(activeGame.startupScene));
+	//}
+
+	LoadWorld();
 }
 
 int CEditorEngine::Run()
@@ -165,7 +169,7 @@ int CEditorEngine::Run()
 		Events::OnUpdate.Invoke();
 		if (!bPaused || bStepFrame)
 		{
-			gWorld->Update(deltaTime);
+			gWorld->Update(FMath::Min(deltaTime, 0.25));
 			bStepFrame = false;
 		}
 
@@ -315,6 +319,14 @@ void CEditorEngine::UpdateEditor()
 			if (ImGui::MenuItem("Save As"))
 				menuAction = MenuAction_SaveSceneAs;
 
+			if (!bProjectLoaded)
+			{
+				ImGui::Separator();
+
+				if (ImGui::MenuItem("Open Project"))
+					bOpenProj = true;
+			}
+
 			ImGui::Separator();
 
 			ImGui::MenuItem("Build All");
@@ -393,11 +405,11 @@ void CEditorEngine::UpdateEditor()
 	if (menuAction == MenuAction_OpenScene)
 		ThoriumEditor::OpenFile("openEditorScene", (FAssetClass*)CScene::StaticClass());
 
-	if (!bProjectLoaded)
+	if (bOpenProj)
 		ImGui::OpenPopup("Open Project");
 
 	// Project Selection
-	if (ImGui::BeginPopupModal("Open Project"))
+	if (ImGui::BeginPopupModal("Open Project", &bOpenProj))
 	{
 		ImGui::Text("Projects");
 
@@ -416,8 +428,8 @@ void CEditorEngine::UpdateEditor()
 				{
 					LoadProject(p.dir);
 					// Since the input manager gets reinstantiated, we have to make sure we set it up correctly.
-					inputManager->SetInputWindow(gameWindow);
-					inputManager->SetShowCursor(true);
+					//inputManager->SetInputWindow(gameWindow);
+					//inputManager->SetShowCursor(true);
 
 					assetBrowser->SetDir(activeGame.mod->Name(), FString());
 
@@ -711,6 +723,14 @@ void CEditorEngine::UpdateEditor()
 		}
 		ImGui::End();
 	}
+}
+
+bool CEditorEngine::LoadProject(const FString& path)
+{
+	bool r = CEngine::LoadProject(path);
+
+	bOpenProj = !r;
+	return r;
 }
 
 void CEditorEngine::LoadEditorConfig()

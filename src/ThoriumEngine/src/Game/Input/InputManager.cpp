@@ -250,6 +250,21 @@ FInputAxis* CInputManager::GetAxis(const FString& name)
 	return nullptr;
 }
 
+void CInputManager::CopyState(CInputManager* other)
+{
+	SetInputWindow(other->inputWindow);
+
+	bEnableInput = other->bEnableInput;
+	bShowCursor = other->bShowCursor;
+	inputMode = other->inputMode;
+
+	keyBindings = other->keyBindings;
+	actions = other->actions;
+	axis = other->axis;
+
+	CONSOLE_LogInfo("CInputManager", "Input manager copied state");
+}
+
 void CInputManager::KeyEvent(EKeyCode key, EInputAction action, EInputMod mod)
 {
 	if (!bEnableInput)

@@ -42,7 +42,7 @@ int ParseArgs(FString& targetProj)
 
 	if (targetProj.IsEmpty())
 	{
-		targetProj = "..\\.project";
+		targetProj = "../.project";
 	}
 	return r;
 }

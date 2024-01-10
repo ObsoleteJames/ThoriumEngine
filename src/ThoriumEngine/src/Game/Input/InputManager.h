@@ -119,6 +119,8 @@ public:
 	FInputAction* GetAction(const FString& name);
 	FInputAxis* GetAxis(const FString& name);
 
+	void CopyState(CInputManager* other);
+
 	template<typename T>
 	void BindAction(FString name, EInputAction action, T* target, void(T::* func)(), EInputMode layer = EInputMode::GAME_ONLY);
 
@@ -139,7 +141,7 @@ protected:
 
 protected:
 	bool bEnableInput = true;
-	bool bShowCursor;
+	bool bShowCursor = true;
 	EInputMode inputMode;
 	IBaseWindow* inputWindow = nullptr;
 

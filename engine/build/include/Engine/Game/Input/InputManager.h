@@ -119,6 +119,8 @@ public:
 	FInputAction* GetAction(const FString& name);
 	FInputAxis* GetAxis(const FString& name);
 
+	void CopyState(CInputManager* other);
+
 	template<typename T>
 	void BindAction(FString name, EInputAction action, T* target, void(T::* func)(), EInputMode layer = EInputMode::GAME_ONLY);
 

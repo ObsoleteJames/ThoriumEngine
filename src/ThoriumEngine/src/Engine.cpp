@@ -103,6 +103,7 @@ void CEngine::Init()
 	gameWindow->swapChain->GetFrameBuffer()->Clear();
 	gameWindow->Present(0, 0);
 
+	inputManager = CreateObject<CInputManager>();
 	inputManager->SetInputWindow(gameWindow);
 
 	InitImGui();
@@ -150,6 +151,9 @@ void CEngine::LoadGame()
 	activeGame.version = *gameinfo.GetValue("version");
 	activeGame.startupScene = *gameinfo.GetValue("scene");
 	activeGame.gameInstanceClass = gameinfo.GetValue("gameinstance")->Value;
+	activeGame.inputManagerClass = gameinfo.GetValue("inputmanager")->Value;
+	if (activeGame.inputManagerClass.Get() == nullptr)
+		activeGame.inputManagerClass = CInputManager::StaticClass();
 }
 
 void CEngine::LoadWorld(const FString& scene, bool bImmediate)
@@ -198,7 +202,7 @@ int CEngine::Run()
 		FTimer updateTimer;
 
 		Events::OnUpdate.Invoke();
-		gWorld->Update(deltaTime);
+		gWorld->Update(FMath::Min(deltaTime, 0.25));
 
 		Events::PostUpdate.Invoke();
 
@@ -308,8 +312,18 @@ bool CEngine::LoadProject(const FString& path /*= "."*/)
 		SetGameInstance(activeGame.gameInstanceClass.Get());
 
 	// TODO: Make input manager class a config variable.
-	inputManager = CreateObject<CInputManager>();
-	inputManager->LoadConfig();
+	if (inputManager->GetClass() != activeGame.inputManagerClass.Get())
+	{
+		TObjectPtr<CInputManager> oldIM = inputManager;
+		inputManager = (CInputManager*)CreateObject(activeGame.inputManagerClass.Get());
+		if (oldIM)
+		{
+			inputManager->CopyState(oldIM);
+			oldIM->Delete();
+		}
+		else
+			inputManager->LoadConfig();
+	}
 
 	bProjectLoaded = true;
 	return true;

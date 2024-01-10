@@ -36,6 +36,8 @@ public:
 
 	void UpdateEditor();
 
+	bool LoadProject(const FString& path) override;
+
 public:
 	void LoadEditorConfig();
 	void SaveEditorConfig();
@@ -123,6 +125,8 @@ public:
 	bool bViewStats = false;
 
 	bool bImGuiDemo = false;
+
+	bool bOpenProj = true;
 
 	double imguiRenderTime;
 	double editorUpdateTime;

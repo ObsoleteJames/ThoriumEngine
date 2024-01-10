@@ -1,6 +1,6 @@
 
 #include <Util/Core.h>
-#include "F:/MyProjects/VS_Projects/ThoriumEngine/src/ThoriumEngine/src/Game/Input/InputManager.h"
+#include "F:/MyProjects/VS_Projects/ThoriumEngine/src/ThoriumEditor/../ThoriumEngine/src/Game/Input/InputManager.h"
 #include "Object/Class.h"
 #include "Module.h"
 

@@ -4,6 +4,7 @@
 #include "Object/Class.h"
 
 class CGameInstance;
+class CInputManager;
 class FLibrary;
 struct FMod;
 
@@ -61,6 +62,7 @@ struct ENGINE_API FGame
 
 	FString startupScene;
 	TClassPtr<CGameInstance> gameInstanceClass;
+	TClassPtr<CInputManager> inputManagerClass;
 };
 
 struct ENGINE_API FProject

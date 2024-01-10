@@ -61,6 +61,7 @@ struct ENGINE_API FGame
 
 	FString startupScene;
 	TClassPtr<CGameInstance> gameInstanceClass;
+	TClassPtr<CInputManager> inputManagerClass;
 };
 
 struct ENGINE_API FProject
