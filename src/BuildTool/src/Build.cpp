@@ -372,6 +372,8 @@ int CompileSource(const FCompileConfig& config)
 		CopyHeaders(buildCfg, targetPath + "/intermediate/generated", io);
 	}
 
+	std::filesystem::create_directories((targetPath + "/Intermediate").c_str());
+
 	// Generate CMakeLists.txt
 	std::ofstream stream;
 	stream.exceptions(std::ios::badbit | std::ios::failbit);

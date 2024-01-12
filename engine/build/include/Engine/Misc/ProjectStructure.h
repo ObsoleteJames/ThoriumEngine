@@ -4,6 +4,7 @@
 #include "Object/Class.h"
 
 class CGameInstance;
+class CInputManager;
 class FLibrary;
 struct FMod;
 

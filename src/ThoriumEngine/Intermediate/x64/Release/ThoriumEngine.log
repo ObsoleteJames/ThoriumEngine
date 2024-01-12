@@ -1,8 +1,0 @@
-﻿  Path: F:\MyProjects\VS_Projects\ThoriumEngine\src\ThoriumEngine\
-  Running HeaderTool for project: Engine
-  Engine.init.cpp
-  Engine.cpp
-C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\shared\minwindef.h(130,1): warning C4005: 'APIENTRY': macro redefinition
-F:\MyProjects\VS_Projects\ThoriumEngine\src\dep\glfw\GLFW\glfw3.h(123): message : see previous definition of 'APIENTRY'
-  ObjectManager.cpp
-LINK : fatal error LNK1181: cannot open input file 'glfw3x64.lib'

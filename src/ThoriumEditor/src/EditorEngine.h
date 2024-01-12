@@ -25,6 +25,10 @@ class FClass;
 
 class CObjectDebugger;
 
+struct FEditorLog;
+
+extern FEditorLog gBuildLog;
+
 class SDK_API CEditorEngine : public CEngine
 {
 public:

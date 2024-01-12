@@ -1,8 +1,8 @@
-[Sun Jan  7 17:42:00 2024][CEngine] Initializing...
-[Sun Jan  7 17:42:00 2024][CResourceManager] Created resource threads (2)
-[Sun Jan  7 17:42:00 2024][CResourceManager] Initialized
-[Sun Jan  7 17:42:00 2024][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine/content
-[Sun Jan  7 17:42:00 2024][CResourceManager] Found 23 assets in 'Engine'
-[Sun Jan  7 17:42:00 2024][CResourceManager] ERROR: Failed to get resource 'models/Cube.thmdl', resource doesn't exist!
-[Sun Jan  7 17:42:00 2024][CResourceManager] ERROR: Failed to get resource 'models/Sphere.thmdl', resource doesn't exist!
-[Sun Jan  7 17:42:00 2024][CEngine] Loading scene 'empty'
+[Fri Jan 12 14:26:22 2024][CEngine] Initializing...
+[Fri Jan 12 14:26:22 2024][CResourceManager] Created resource threads (2)
+[Fri Jan 12 14:26:22 2024][CResourceManager] Initialized
+[Fri Jan 12 14:26:22 2024][CFileSystem] Mounting Mod: C:\Users\theon\Documents\VS_Projects\ThoriumEngine\engine/content
+[Fri Jan 12 14:26:22 2024][CResourceManager] Found 23 assets in 'Engine'
+[Fri Jan 12 14:26:25 2024][CResourceManager] ERROR: Failed to get resource 'models/Cube.thmdl', resource doesn't exist!
+[Fri Jan 12 14:26:25 2024][CResourceManager] ERROR: Failed to get resource 'models/Sphere.thmdl', resource doesn't exist!
+[Fri Jan 12 14:26:27 2024][CEngine] Loading scene 'empty'

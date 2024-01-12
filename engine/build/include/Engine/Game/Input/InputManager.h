@@ -141,7 +141,7 @@ protected:
 
 protected:
 	bool bEnableInput = true;
-	bool bShowCursor;
+	bool bShowCursor = true;
 	EInputMode inputMode;
 	IBaseWindow* inputWindow = nullptr;
 

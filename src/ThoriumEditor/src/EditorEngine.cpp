@@ -35,6 +35,7 @@
 #include "Layers/AddonsWindow.h"
 #include "Layers/ModelEditor.h"
 #include "Layers/EditorSettings.h"
+#include "Layers/EditorLog.h"
 
 #include <map>
 
@@ -49,6 +50,8 @@
 #include "ThemeManager.h"
 
 #define TEX_VIEW(tex) ((DirectXTexture2D*)tex)->view
+
+FEditorLog gBuildLog("Build");
 
 void CEditorEngine::Init()
 {

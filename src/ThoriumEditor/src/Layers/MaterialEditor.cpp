@@ -53,10 +53,12 @@ CMaterialEditor::CMaterialEditor()
 	modelEnt->SetModel(previewModel);
 
 	fbView = gRenderer->CreateFrameBuffer(1280, 720, TEXTURE_FORMAT_RGBA8_UNORM);
+	scene->GetRenderScene()->SetFrameBuffer(fbView);
 	//dbView = gRenderer->CreateDepthBuffer({ 1280, 720, TH_DBF_D24_S8, 1, false });
 
 	camera = new CCameraProxy();
 	camera->position = { 0, 0, -2 };
+	scene->SetPrimaryCamera(camera);
 
 	light1 = modelEnt->AddComponent<CPointLightComponent>("Light1");
 	light1->AttachTo(modelEnt->RootComponent());
