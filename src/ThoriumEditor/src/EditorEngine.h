@@ -21,6 +21,7 @@ class CProjectSettingsWidget;
 class CAssetBrowserWidget;
 class CEditorSettingsWidget;
 class CAddonsWindow;
+class CEditorLogWnd;
 class FClass;
 
 class CObjectDebugger;
@@ -71,6 +72,8 @@ public:
 private:
 	void InitEditorData();
 
+	void GenerateGrid(float gridSize, float quadSize, FMesh* out);
+
 	void NewScene();
 	bool SaveScene();
 
@@ -117,8 +120,6 @@ public:
 	TObjectPtr<CObject> selectedObject;
 
 	CCameraProxy* editorCamera;
-	FMesh* gridMesh;
-	TObjectPtr<CMaterial> gridMat;
 
 	bool bIsPlaying = false;
 	bool bPaused = false;
@@ -166,12 +167,15 @@ private:
 	CAssetBrowserWidget* assetBrowser;
 	CAddonsWindow* addonsWindow;
 	CEditorSettingsWidget* editorSettings;
+	CEditorLogWnd* logWnd;
 
 	CObjectDebugger* objectDebuggerWidget;
 
 	TObjectPtr<CMaterial> outlineMat;
+	TObjectPtr<CMaterial> gridMat;
 
 	FMesh boxOutlineMesh;
+	FMesh gridMesh;
 };
 
 inline CEditorEngine* gEditorEngine() { return (CEditorEngine*)gEngine; }

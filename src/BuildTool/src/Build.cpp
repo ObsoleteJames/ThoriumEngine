@@ -149,6 +149,38 @@ void GetCppFilesInDir(FKeyValue& buildCfg, const FString& source, TArray<FString
 	}
 }
 
+FString GetEnginePath(const FString& version)
+{
+#if _WIN32
+	FString keyPath = "SOFTWARE\\ThoriumEngine\\" + version;
+
+	HKEY hKey;
+	LONG lRes = RegOpenKeyEx(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
+	if (lRes == ERROR_FILE_NOT_FOUND)
+		return FString();
+
+	CHAR strBuff[MAX_PATH];
+	DWORD buffSize = sizeof(strBuff);
+	lRes = RegQueryValueEx(hKey, "path", 0, NULL, (LPBYTE)strBuff, &buffSize);
+	if (lRes != ERROR_SUCCESS)
+		return FString();
+
+	return strBuff;
+#else
+	std::ifstream stream(std::string(getenv("HOME")) + "/.thoriumengine/" + version.c_str() + "/path.txt", std::ios_base::in);
+	if (!stream.is_open())
+	{
+		std::cerr << "error: failed to obtain engine path!\n";
+		return FString();
+	}
+
+	std::string str;
+	std::getline(stream, str);
+
+	return str.c_str();
+#endif
+}
+
 int CompileSource(const FCompileConfig& config)
 {
 	std::cout << "Generating build file for '" << config.path.c_str() << "'\n";
@@ -166,114 +198,14 @@ int CompileSource(const FCompileConfig& config)
 	strExp.SetExpressionValue("CONFIG", ConfigStrings[config.config]);
 	strExp.SetExpressionValue("PATH", targetPath);
 
-#if _WIN32
-	FString keyPath = "SOFTWARE\\ThoriumEngine\\" + config.engineVersion;
-
-	HKEY hKey;
-	LONG lRes = RegOpenKeyEx(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
-	if (lRes == ERROR_FILE_NOT_FOUND)
+	enginePath = GetEnginePath(config.engineVersion);
+	if (enginePath.IsEmpty())
 		return 1;
-
-	CHAR strBuff[MAX_PATH];
-	DWORD buffSize = sizeof(strBuff);
-	lRes = RegQueryValueEx(hKey, "path", 0, NULL, (LPBYTE)strBuff, &buffSize);
-	if (lRes != ERROR_SUCCESS)
-		return 1;
-
-	enginePath = ToFString(strBuff);
-#else
-	{
-		std::ifstream stream(std::string(getenv("HOME")) + "/.thoriumengine/" + config.engineVersion.c_str() + "/path.txt", std::ios_base::in);
-		if (!stream.is_open())
-		{
-			std::cerr << "error: failed to obtain engine path!\n";
-			return 1;
-		}
-
-		std::string str;
-		std::getline(stream, str);
-
-		enginePath = str.c_str();
-	}
-#endif
 	enginePath.ReplaceAll('\\', '/');
 
 	strExp.SetExpressionValue("ENGINE_PATH", enginePath);
 	strExp.SetExpressionValue("ENGINE_LIB", enginePath + "/build/" + PlatformStrings[config.platform] + "/Engine-" + ConfigStrings[config.config] + "/Engine.lib");
 	strExp.SetExpressionValue("UTIL_LIB", enginePath + "/build/" + PlatformStrings[config.platform] + "/Util-" + ConfigStrings[config.config] + "/Util.lib");
-
-	// Get the compiler path
-//	if (config.compiler < COMPILER_CLANG)
-//	{
-//#if _WIN32
-//		HANDLE pRead;
-//		HANDLE pWrite;
-//		if (!CreatePipe(&pRead, &pWrite, nullptr, 0))
-//		{
-//			std::cerr << "error: failed to locate visual studio installation.\n";
-//			return 1;
-//		}
-//
-//		PROCESS_INFORMATION vswhereInfo{};
-//		STARTUPINFO info{};
-//		info.cb = sizeof(info);
-//		info.hStdOutput = pWrite;
-//
-//		WString compilerVersion;
-//		if (config.compiler == COMPILER_MSVC15)
-//			compilerVersion = L"15";
-//		else if (config.compiler == COMPILER_MSVC16)
-//			compilerVersion = L"16";
-//		else if (config.compiler == COMPILER_MSVC17)
-//			compilerVersion = L"17";
-//
-//		if (!CreateProcessW((ToWString(enginePath) + L"\\bin\\vswhere.exe").c_str(), (LPWSTR)(L"-version " + compilerVersion + L" -property installationPath").c_str(), nullptr, nullptr, false, 0, nullptr, nullptr, &info, &vswhereInfo))
-//		{
-//			std::cerr << "error: failed to locate visual studio installation.\n";
-//			return 2;
-//		}
-//
-//		WaitForSingleObject(vswhereInfo.hProcess, INFINITE);
-//
-//		CloseHandle(vswhereInfo.hProcess);
-//		CloseHandle(vswhereInfo.hThread);
-//
-//		char outBuff[260];
-//		if (!ReadFile(pRead, outBuff, 260, 0, nullptr))
-//		{
-//			std::cerr << "error: failed to locate visual studio installation.\n";
-//			return 3;
-//		}
-//		CloseHandle(pRead);
-//		CloseHandle(pWrite);
-//
-//		compilerPath = FString((const char*)outBuff).Split('\n')[0];
-//		if (compilerPath.IsEmpty())
-//		{
-//			std::cerr << "error: failed to locate visual studio installation.\n";
-//			return 4;
-//		}
-//
-//		std::ifstream vStream((compilerPath + "\\VC\\Auxiliary\\Build\\Microsoft.VCToolsVersion.default.txt").c_str());
-//		if (!vStream.is_open())
-//		{
-//			std::cerr << "error: failed to get msvc version.\n";
-//			return 1;
-//		}
-//
-//		std::string msvcVersion;
-//		std::getline(vStream, msvcVersion);
-//		vStream.close();
-//
-//		if (msvcVersion.empty())
-//		{
-//			std::cerr << "error: failed to get msvc version.\n";
-//			return 2;
-//		}
-//
-//		compilerPath += FString("\\VC\\Tools\\MSVC\\") + msvcVersion + "\\bin\\Hostx64\\x64";
-//#endif
-//	}
 
 	FKeyValue buildCfg;
 	buildCfg.DefineMacro("PLATFORM_WINDOWS", config.platform == PLATFORM_WIN64);
@@ -297,7 +229,6 @@ int CompileSource(const FCompileConfig& config)
 #else
 	chdir(targetPath.c_str());
 #endif
-
 
 	FString targetBuild = *buildCfg.GetValue("Target");
 	strExp.SetExpressionValue("TARGET", targetBuild);
@@ -379,10 +310,11 @@ int CompileSource(const FCompileConfig& config)
 	stream.exceptions(std::ios::badbit | std::ios::failbit);
 	try {
 		stream.open((targetPath + "/Intermediate/CMakeLists.txt").c_str(), std::ios_base::trunc);
-	} catch(std::exception& e)
-	{
+	} 
+	catch(std::exception& e) {
 		std::cerr << e.what() << std::endl;
 	}
+
 	if (!stream.is_open())
 	{
 		std::cerr << "error: failed to create file stream! '" << targetPath.c_str() << "/Intermediate/CMakeLists.txt'\n";
@@ -572,30 +504,44 @@ int CompileSource(const FCompileConfig& config)
 		}
 	}
 
+	FString cmds;
+
 	if (auto* libOut = buildCfg.GetValue("LibOut", false); libOut)
 	{
 		FString lo = strExp.ParseString(*libOut);
 		lo.ReplaceAll('\\', '/');
 		if (!bIsStaticLib)
-			stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
-				<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "\")\n";
-		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_LINKER_FILE:"
-			<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "\")\n";
+			cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:" + cmakeLib + ">\" \"" + lo + "/\"\n";
+			// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
+			// 	<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "\")\n";
+
+		cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_LINKER_FILE:" + cmakeLib + ">\" \"" + lo + "/\"\n";
+		// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_LINKER_FILE:"
+		// 	<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "\")\n";
 	}
 
 	if (includeOut && bRunHeaderTool)
 	{
 		FString lo = strExp.ParseString(*includeOut);
-		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"module.bin\" \""
-			<< lo.c_str() << "/module.bin\")\n";
+
+		cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"" + targetPath + "/Intermediate/module.bin\" \"" + lo + "/module.bin\"\n";
+		// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"module.bin\" \""
+		// 	<< lo.c_str() << "/module.bin\")\n";
 	}
 
 	if (auto* binOut = buildCfg.GetValue("BuildOut", false); binOut)
 	{
 		FString bo = strExp.ParseString(*binOut);
 		bo.ReplaceAll('\\', '/');
-		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
-			<< cmakeLib.c_str() << ">\" \"" << bo.c_str() << "\")\n";
+
+		cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:" + cmakeLib + ">\" \"" + bo + "/\"\n";
+		// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
+		// 	<< cmakeLib.c_str() << ">\" \"" << bo.c_str() << "\")\n";
+	}
+
+	if (cmds.Size() > 0)
+	{
+		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD\n" << cmds.c_str() << ")\n";
 	}
 
 	stream.close();
@@ -646,11 +592,6 @@ void CopyHeaders(FKeyValue& buildCfg, const FString& source, const FString& out)
 			std::cerr << "error: " << e.what() << " in: " << h.c_str() << " - out: " << (out + file).c_str() << std::endl;
 		}
 	}
-}
-
-void CopyBinaries(const FCompileConfig& config, const FString& out)
-{
-
 }
 
 bool GenerateBuildFromProject(const FString& projectCfg)

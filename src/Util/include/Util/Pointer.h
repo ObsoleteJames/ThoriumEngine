@@ -27,5 +27,5 @@ public:
 	}
 
 private:
-	T* ptr;
+	T* ptr = nullptr;
 };

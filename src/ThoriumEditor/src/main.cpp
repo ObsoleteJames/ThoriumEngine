@@ -2,6 +2,7 @@
 #include <Util/KeyValue.h>
 #include "EditorEngine.h"
 #include "Misc/CommandLine.h"
+#include "Console.h"
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -48,6 +49,38 @@ int ParseArgs(FString& targetProj)
 }
 
 #ifdef _WIN32
+#include "iomanip"
+#include <sstream>
+#include "minidumpapiset.h"
+
+LONG WINAPI Win32ExceptionHandler(_EXCEPTION_POINTERS* exceptionInfo)
+{
+	typedef BOOL(WINAPI* MINIDUMPWRITEDUMP)(HANDLE hProcess, DWORD dwPid, HANDLE hFile, MINIDUMP_TYPE DumpType, CONST PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam, CONST PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
+
+	HMODULE mhlib = LoadLibrary("dbghelp.dll");
+	MINIDUMPWRITEDUMP pDump = (MINIDUMPWRITEDUMP)GetProcAddress(mhlib, "MiniDumpWriteDump");
+
+	auto t = std::time(nullptr);
+	auto tm = *std::localtime(&t);
+	
+	std::ostringstream oss;
+	oss << std::put_time(&tm, "%d-%m-%y %H-%M-%S");
+	std::string timeTxt = oss.str();
+
+	_MINIDUMP_EXCEPTION_INFORMATION ExInfo;
+	ExInfo.ThreadId = ::GetCurrentThreadId();
+	ExInfo.ExceptionPointers = exceptionInfo;
+	ExInfo.ClientPointers = FALSE;
+
+	HANDLE hFile = CreateFile(("crash " + timeTxt + ".dmp").c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	pDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpNormal, &ExInfo, NULL, NULL);
+	CloseHandle(hFile);
+	return EXCEPTION_CONTINUE_SEARCH;
+}
+#endif
+
+#ifdef _WIN32
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 #else
 int main(int argc, char** argv)
@@ -56,7 +89,11 @@ int main(int argc, char** argv)
 #ifdef _WIN32
 #ifdef _DEBUG
 	if (!IsDebuggerPresent())
-		MessageBoxA(nullptr, "", "No debugger attached", MB_OK);
+	{
+		//MessageBoxA(nullptr, "", "No debugger attached", MB_OK);
+
+		SetUnhandledExceptionFilter(Win32ExceptionHandler);
+	}
 #endif
 #endif
 
@@ -75,8 +112,22 @@ int main(int argc, char** argv)
 	gEngine = new CEditorEngine();
 	gEngine->Init();
 
-	gEngine->LoadProject(project + "/..");
+	try {
+		gIsMainGaurded = true;
+		gEngine->LoadProject(project + "/..");
 
-	exitCode = gEngine->Run();
+		exitCode = gEngine->Run();
+	}
+	catch (std::exception& e) {
+		CONSOLE_LogError("CORE", e.what());
+		gEngine->SaveConsoleLog();
+		return 1;
+	}
+	catch (...) {
+		CONSOLE_LogError("CORE", "Unexpected exception has occured!");
+		gEngine->SaveConsoleLog();
+		return 1;
+	}
+
 	return exitCode;
 }

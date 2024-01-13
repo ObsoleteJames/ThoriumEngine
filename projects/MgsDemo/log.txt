@@ -1,17 +1,23 @@
-[Sat Jan  6 14:33:03 2024][CEngine] Initializing...
-[Sat Jan  6 14:33:03 2024][CResourceManager] Created resource threads (2)
-[Sat Jan  6 14:33:03 2024][CResourceManager] Initialized
-[Sat Jan  6 14:33:03 2024][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine\content
-[Sat Jan  6 14:33:03 2024][CResourceManager] Found 34 assets in 'Engine'
-[Sat Jan  6 14:33:07 2024][CEngine] Loading scene 'empty'
-[Sat Jan  6 14:33:10 2024][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
-F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\bin\PhysXCommon_64.dll
-[Sat Jan  6 14:33:10 2024][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
-F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\bin\PhysXCooking_64.dll
-[Sat Jan  6 14:33:10 2024][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
-F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\bin\PhysXDevice64.dll
-[Sat Jan  6 14:33:10 2024][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
-F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\physx_4.1\bin\PhysXFoundation_64.dll
-[Sat Jan  6 14:33:10 2024][CFileSystem] Mounting Mod: MGS
-[Sat Jan  6 14:33:10 2024][CResourceManager] Found 26 assets in 'MGS'
-[Sat Jan  6 14:33:10 2024][CEngine] Loading scene 'ImHalfMeFoxy.thscene'
+[Sat Jan 13 18:36:36 2024][CEngine] Initializing...
+[Sat Jan 13 18:36:36 2024][CResourceManager] Created resource threads (2)
+[Sat Jan 13 18:36:36 2024][CResourceManager] Initialized
+[Sat Jan 13 18:36:36 2024][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine/content
+[Sat Jan 13 18:36:36 2024][CResourceManager] Found 23 assets in 'Engine'
+[Sat Jan 13 18:36:36 2024][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
+F:\MyProjects\VS_Projects\ThoriumEngine\engine/content/addons/physx_4.1/bin\PhysXCommon_64.dll
+[Sat Jan 13 18:36:36 2024][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
+F:\MyProjects\VS_Projects\ThoriumEngine\engine/content/addons/physx_4.1/bin\PhysXCooking_64.dll
+[Sat Jan 13 18:36:36 2024][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
+F:\MyProjects\VS_Projects\ThoriumEngine\engine/content/addons/physx_4.1/bin\PhysXDevice64.dll
+[Sat Jan 13 18:36:36 2024][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
+F:\MyProjects\VS_Projects\ThoriumEngine\engine/content/addons/physx_4.1/bin\PhysXFoundation_64.dll
+[Sat Jan 13 18:36:36 2024][CEngine] ERROR: Failed to load addon module, file does not exist
+F:\MyProjects\VS_Projects\ThoriumEngine\engine/content/addons/physx_4.1/bin/win64/Debug/physx_4_1.dll
+[Sat Jan 13 18:36:36 2024][CEngine] WARNING: Failed to locate module for mod 'MGS'
+[Sat Jan 13 18:36:36 2024][CFileSystem] Mounting Mod: MGS
+[Sat Jan 13 18:36:36 2024][CResourceManager] Found 26 assets in 'MGS'
+[Sat Jan 13 18:36:36 2024][CResourceManager] ERROR: Failed to get resource 'models/Cube.thmdl', resource doesn't exist!
+[Sat Jan 13 18:36:36 2024][CResourceManager] ERROR: Failed to get resource 'models/Sphere.thmdl', resource doesn't exist!
+[Sat Jan 13 18:36:36 2024][CResourceManager] ERROR: Failed to get resource 'ImHalfMeFoxy.thscene', resource doesn't exist!
+[Sat Jan 13 18:36:36 2024][CEngine] ERROR: Failed to find scene file 'ImHalfMeFoxy.thscene'
+[Sat Jan 13 18:36:36 2024][CEngine] Loading scene 'empty'

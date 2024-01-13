@@ -103,7 +103,8 @@ void CEngine::Init()
 	gameWindow->swapChain->GetFrameBuffer()->Clear();
 	gameWindow->Present(0, 0);
 
-	inputManager = CreateObject<CInputManager>();
+	if (!inputManager)
+		inputManager = CreateObject<CInputManager>();
 	inputManager->SetInputWindow(gameWindow);
 
 	InitImGui();
@@ -312,7 +313,7 @@ bool CEngine::LoadProject(const FString& path /*= "."*/)
 		SetGameInstance(activeGame.gameInstanceClass.Get());
 
 	// TODO: Make input manager class a config variable.
-	if (inputManager->GetClass() != activeGame.inputManagerClass.Get())
+	if (!inputManager || inputManager->GetClass() != activeGame.inputManagerClass.Get())
 	{
 		TObjectPtr<CInputManager> oldIM = inputManager;
 		inputManager = (CInputManager*)CreateObject(activeGame.inputManagerClass.Get());
@@ -471,7 +472,7 @@ void CEngine::DoLoadWorld()
 		if (!pScene)
 		{
 			CONSOLE_LogError("CEngine", FString("Failed to find scene file '") + nextSceneName + "'");
-			return;
+			nextSceneName = "empty";
 		}
 	}
 
@@ -497,7 +498,7 @@ void CEngine::DoLoadWorld()
 
 	Events::PostLevelChange.Invoke();
 
-	nextSceneName = "";
+	nextSceneName.Clear();
 }
 
 bool CEngine::LoadProjectConfig(const FString& path, FProject& project)

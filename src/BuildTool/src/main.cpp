@@ -32,7 +32,7 @@ FString GetGameNameFromProject(const FString& projectCfg)
 
 int main(int argc, char** argv)
 {
-	int targetFunction = argc > 1; // 1 = generate cmake files, 2 = gen & compile cmake files
+	int targetFunction = argc > 1; // 1 = generate cmake files, 2 = gen & compile cmake files, 3 = Post build step (copy binaries and such)
 	FString sourcePath;
 	EPlatform targetPlatform = THIS_PLATFORM;
 	EConfig targetConfig = CONFIG_DEBUG;
@@ -117,6 +117,8 @@ int main(int argc, char** argv)
 			targetFunction = 1;
 		else if (arg == "-build")
 			targetFunction = 2;
+		// else if (arg == "-pb")
+		// 	targetFunction = 3;
 		//else if (arg == "-gensln")
 		//	targetFunction = 3;
 
@@ -184,7 +186,10 @@ int main(int argc, char** argv)
 	{
 		
 	}
+	// if (targetFunction == 3)
+	// {
 
+	// }
 
 	return 1;
 }

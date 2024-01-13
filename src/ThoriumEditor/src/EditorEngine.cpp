@@ -70,6 +70,9 @@ void CEditorEngine::Init()
 	editorSettings = AddLayer<CEditorSettingsWidget>();
 	editorSettings->bEnabled = false;
 
+	logWnd = AddLayer<CEditorLogWnd>();
+	logWnd->bEnabled = false;
+
 	objectDebuggerWidget = AddLayer<CObjectDebugger>();
 	objectDebuggerWidget->bEnabled = false;
 
@@ -222,6 +225,15 @@ int CEditorEngine::Run()
 		if (!bIsPlaying)
 		{
 			DrawSelectionDebug();
+
+			FDrawMeshCmd cmd;
+			cmd.material = gridMat;
+			cmd.mesh = &gridMesh;
+			cmd.transform = FMatrix(1.f);
+			cmd.drawType |= MESH_DRAW_PRIMITIVE_LINES;
+
+			FRenderCommand gridDraw(cmd, R_DEBUG_PASS);
+			gWorld->renderScene->PushCommand(gridDraw);
 		}
 
 		gWorld->Render();
@@ -383,6 +395,8 @@ void CEditorEngine::UpdateEditor()
 			ImGui::MenuItem("Asset Browser", nullptr, &bViewAssetBrowser);
 			ImGui::MenuItem("Properties", nullptr, &propertyEditor->bEnabled);
 			ImGui::MenuItem("Console", nullptr, &consoleWidget->bEnabled);
+
+			ImGui::MenuItem("Log", nullptr, &logWnd->bEnabled);
 
 			ImGui::EndMenu();
 		}
@@ -843,6 +857,74 @@ void CEditorEngine::InitEditorData()
 	outlineMat->SetShader("Tools");
 	outlineMat->SetInt("vType", 4);
 	outlineMat->SetColor("vColorTint", FColor(1.f, 0.88f, 0.4f));
+
+	GenerateGrid(100, 1, &gridMesh);
+	gridMat = CreateObject<CMaterial>();
+	gridMat->SetShader("Tools");
+	gridMat->SetInt("vType", 1);
+}
+
+void CEditorEngine::GenerateGrid(float gridSize, float quadSize, FMesh* outMesh)
+{
+	int numGrids = int(gridSize / quadSize);
+
+	TArray<FVertex> verts;
+	//TArray<uint> indices;
+
+	for (int i = 0; i < numGrids + 1; i++)
+	{
+		float halfGrid = numGrids / 2;
+
+		FVertex a{};
+		FVertex b{};
+
+		a.color = { 0.2f, 0.2f, 0.2f };
+		b.color = { 0.2f, 0.2f, 0.2f };
+
+		a.position.x = float(i) - halfGrid;
+		a.position.z = -halfGrid;
+		b.position.x = a.position.x;
+		b.position.z = halfGrid;
+
+		if (i == (int)halfGrid)
+		{
+			a.color = { 0.2f, 0.2f, 0.7f };
+			b.color = { 0.2f, 0.2f, 0.7f };
+		}
+
+		verts.Add(a);
+		verts.Add(b);
+	}
+	for (int i = 0; i < numGrids + 1; i++)
+	{
+		float halfGrid = numGrids / 2;
+
+		FVertex a{};
+		FVertex b{};
+
+		a.color = { 0.2f, 0.2f, 0.2f };
+		b.color = { 0.2f, 0.2f, 0.2f };
+
+		a.position.z = float(i) - halfGrid;
+		a.position.x = -halfGrid;
+		b.position.z = a.position.z;
+		b.position.x = halfGrid;
+
+		if (i == (int)halfGrid)
+		{
+			a.color = { 0.7f, 0.2f, 0.2f };
+			b.color = { 0.7f, 0.2f, 0.2f };
+		}
+
+		verts.Add(a);
+		verts.Add(b);
+	}
+
+	//outMesh->numIndices = indices.Size();
+	outMesh->numVertices = verts.Size();
+
+	//outMesh->indexBuffer = gRenderer->CreateIndexBuffer(indices);
+	outMesh->vertexBuffer = gRenderer->CreateVertexBuffer(verts);
 }
 
 void CEditorEngine::NewScene()

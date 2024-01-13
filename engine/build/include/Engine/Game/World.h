@@ -185,7 +185,7 @@ protected:
 	TArray<TObjectPtr<CEntity>> entities;
 
 	// The window that this scene gets rendered to.
-	IBaseWindow* renderWindow;
+	IBaseWindow* renderWindow = nullptr;
 
 	TObjectPtr<CGameMode> gamemode;
 
@@ -194,10 +194,10 @@ protected:
 	TArray<CCameraProxy*> cameras;
 	TArray<CPostProcessVolumeProxy*> ppVolumes;
 
-	CCameraProxy* primaryCamera;
+	CCameraProxy* primaryCamera = nullptr;
 
 	TObjectPtr<CScene> scene;
-	CRenderScene* renderScene;
+	CRenderScene* renderScene = nullptr;
 
 	// Entity IO Data
 	CEntityIOManager* entityIOManager = nullptr;

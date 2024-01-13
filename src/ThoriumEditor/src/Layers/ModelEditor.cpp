@@ -27,9 +27,12 @@ CModelEditor::CModelEditor()
 	modelEnt = scene->CreateEntity<CModelEntity>();
 
 	framebuffer = gRenderer->CreateFrameBuffer(1280, 720, TEXTURE_FORMAT_RGBA8_UNORM);
+	scene->GetRenderScene()->SetFrameBuffer(framebuffer);
 
 	camera = new CCameraProxy();
 	camera->position = { 0, 0, -2 };
+
+	//scene->SetPrimaryCamera(camera);
 
 	light1 = modelEnt->AddComponent<CPointLightComponent>("Light1");
 	light1->AttachTo(modelEnt->RootComponent());

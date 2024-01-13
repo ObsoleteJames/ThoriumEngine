@@ -12,6 +12,38 @@
 #include <fstream>
 #endif
 
+#ifdef _WIN32
+#include "iomanip"
+#include <sstream>
+#include "minidumpapiset.h"
+
+LONG WINAPI Win32ExceptionHandler(_EXCEPTION_POINTERS* exceptionInfo)
+{
+	typedef BOOL(WINAPI* MINIDUMPWRITEDUMP)(HANDLE hProcess, DWORD dwPid, HANDLE hFile, MINIDUMP_TYPE DumpType, CONST PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam, PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam, CONST PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
+
+	HMODULE mhlib = LoadLibrary("dbghelp.dll");
+	MINIDUMPWRITEDUMP pDump = (MINIDUMPWRITEDUMP)GetProcAddress(mhlib, "MiniDumpWriteDump");
+
+	auto t = std::time(nullptr);
+	auto tm = *std::localtime(&t);
+
+	std::ostringstream oss;
+	oss << std::put_time(&tm, "%d-%m-%y %H-%M-%S");
+	std::string timeTxt = oss.str();
+
+	_MINIDUMP_EXCEPTION_INFORMATION ExInfo;
+	ExInfo.ThreadId = ::GetCurrentThreadId();
+	ExInfo.ExceptionPointers = exceptionInfo;
+	ExInfo.ClientPointers = FALSE;
+
+	HANDLE hFile = CreateFile(("crash " + timeTxt + ".dmp").c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+
+	pDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpWithFullMemory, &ExInfo, NULL, NULL);
+	CloseHandle(hFile);
+	return EXCEPTION_CONTINUE_SEARCH;
+}
+#endif
+
 FString GetEnginePath(const FString& version)
 {
 #ifdef _WIN32
@@ -55,6 +87,10 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 int main(int argc, char** argv)
 #endif
 {
+#if _WIN32
+	SetUnhandledExceptionFilter(Win32ExceptionHandler);
+#endif
+
 	bool bForceLocalEngine = false;
 #if _WIN32
 	TArray<FString> args = FString(lpCmdLine).Split(' ');

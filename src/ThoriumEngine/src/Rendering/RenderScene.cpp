@@ -6,6 +6,8 @@
 
 CRenderScene::CRenderScene(int fbWidth /*= 1280*/, int fbHeight /*= 720*/)
 {
+	primaryCamera = nullptr;
+
 	bufferWidth = fbWidth;
 	bufferHeight = fbHeight;
 

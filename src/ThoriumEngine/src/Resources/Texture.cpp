@@ -95,7 +95,7 @@ public:
 	
 	std::atomic<int8> currentMipMap;
 
-	uint8* data;
+	uint8* data = nullptr;
 
 };
 

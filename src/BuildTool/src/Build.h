@@ -53,6 +53,6 @@ struct FCompileConfig
 int CompileSource(const FCompileConfig& config);
 
 void CopyHeaders(FKeyValue& buildCfg, const FString& source, const FString& out);
-void CopyBinaries(const FCompileConfig& config, const FString& out);
+//void CopyBinaries(const FCompileConfig& config);
 
 bool GenerateBuildFromProject(const FString& projectCfg);
