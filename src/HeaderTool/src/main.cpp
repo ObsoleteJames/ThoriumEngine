@@ -17,8 +17,55 @@
 
 #define ENGINE_VERSION "1.0"
 
-int main(int argc, char** argv)
+#if _WIN32
+void ParseCmdLine(LPSTR cmd, TArray<FString>& out)
 {
+	bool bInQoute = false;
+
+	LPSTR ptr = cmd;
+	FString curArg;
+
+	while (true)
+	{
+		if (*ptr == '\0')
+		{
+			if (!curArg.IsEmpty())
+				out.Add(curArg);
+			break;
+		}
+
+		if (*ptr == '"')
+		{
+			bInQoute ^= 1;
+		}
+		else if (!bInQoute && (*ptr == ' ' || *ptr == '\t'))
+		{
+			out.Add(curArg);
+			curArg.Clear();
+		}
+		else
+			curArg += *ptr;
+
+		ptr++;
+	}
+}
+
+int WINAPI WinMain(HINSTANCE instance, HINSTANCE prevInstance, LPSTR cmdLine, int showCmd)
+#else
+int main(int argc, char** argv)
+#endif
+{
+#if _WIN32
+	TArray<FString> _args;
+	_args.Add("Hello!!"); // this is required since 'cmdLine' doesn't include the exe path
+	ParseCmdLine(cmdLine, _args);
+
+	char* argv[128];
+	int argc = (int)_args.Size();
+	for (int i = 0; i < argc; i++)
+		argv[i] = (char*)_args[i].c_str();
+#endif
+
 	// Parse arguments
 	// FString cmd = GetCommandLine();
 	// TArray<FString> Args;

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4.0)
+cmake_minimum_required(VERSION 3.20.0)
 project(TH_BUILDTOOL)
 
 include_directories(src ../Util/include)

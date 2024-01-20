@@ -22,11 +22,11 @@ private:
 
 public:
 	ETextureFormat format;
-	ID3D11RenderTargetView* targetView;
-	ID3D11Texture2D* buffer;
+	ID3D11RenderTargetView* targetView = nullptr;
+	ID3D11Texture2D* buffer = nullptr;
 
-	ID3D11ShaderResourceView* view;
-	ID3D11SamplerState* sampler;
+	ID3D11ShaderResourceView* view = nullptr;
+	ID3D11SamplerState* sampler = nullptr;
 
 };
 
@@ -45,8 +45,8 @@ private:
 	void Generate();
 
 public:
-	ID3D11DepthStencilView* depthView;
-	ID3D11Texture2D* depthBuffer;
+	ID3D11DepthStencilView* depthView = nullptr;
+	ID3D11Texture2D* depthBuffer = nullptr;
 
 	ID3D11ShaderResourceView* view = nullptr;
 	ID3D11SamplerState* sampler = nullptr;
@@ -67,8 +67,8 @@ public:
 	void CreateViewBuffers(int w, int h);
 
 private:
-	IDXGISwapChain1* swapchain;
-	DirectXDepthBuffer* depth;
-	DirectXFrameBuffer* framebuffer;
+	IDXGISwapChain1* swapchain = nullptr;
+	DirectXDepthBuffer* depth = nullptr;
+	DirectXFrameBuffer* framebuffer = nullptr;
 
 };

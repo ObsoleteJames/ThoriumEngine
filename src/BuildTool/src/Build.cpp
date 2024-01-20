@@ -120,7 +120,7 @@ bool IsFileExcluded(FKeyValue& buildCfg, const FString& file)
 	return false;
 }
 
-void GetCppFilesInDir(FKeyValue& buildCfg, const FString& source, TArray<FString>& out)
+void GetCppFilesInDir(FKeyValue& buildCfg, const FString& source, TArray<FString>& out, bool bIncludeHeaders = false)
 {
 	if (!std::filesystem::exists(source.c_str()))
 		return;
@@ -133,7 +133,13 @@ void GetCppFilesInDir(FKeyValue& buildCfg, const FString& source, TArray<FString
 			continue;
 		}
 
-		if (entry.path().extension() != ".cpp" && entry.path().extension() != ".c")
+		bool bIsSource = entry.path().extension() == ".cpp" || entry.path().extension() == ".c";
+		bool bIsHeader = entry.path().extension() == ".hpp" || entry.path().extension() == ".h";
+
+		if (bIsHeader && !bIncludeHeaders)
+			continue;
+		
+		if (!bIsSource && !bIsHeader)
 			continue;
 
 		FString path = entry.path().generic_string().c_str();
@@ -146,6 +152,23 @@ void GetCppFilesInDir(FKeyValue& buildCfg, const FString& source, TArray<FString
 			continue;
 
 		out.Add(entry.path().generic_string().c_str());
+	}
+}
+
+void GetSourceGroups(TMap<std::string, TArray<FString>>& out, const TArray<FString>& files, FString dirRef)
+{
+	for (auto& f : files)
+	{
+		if (f.Find(dirRef) == 0)
+		{
+			FString dir = f;
+			dir.Erase(dir.begin(), dir.begin() + dirRef.Size() + 1);
+			if (auto it = dir.FindLastOf("/\\"); it != -1)
+			{
+				dir.Erase(dir.begin() + it, dir.end());
+				out[dir.c_str()].Add(f);
+			}
+		}
 	}
 }
 
@@ -191,6 +214,8 @@ int CompileSource(const FCompileConfig& config)
 	FString targetPath = config.path;
 	if (auto i = targetPath.FindLastOf("\\/"); i != -1)
 		targetPath.Erase(targetPath.begin() + i, targetPath.end());
+
+	targetPath = std::filesystem::absolute(targetPath.c_str()).string().c_str();
 	targetPath.ReplaceAll('\\', '/');
 
 	FStringExpression strExp;
@@ -321,7 +346,7 @@ int CompileSource(const FCompileConfig& config)
 		return 1;
 	}
 
-	stream << "cmake_minimum_required(VERSION 3.10.0)\n";
+	stream << "cmake_minimum_required(VERSION 3.20.0)\n";
 	stream << "include_guard(GLOBAL)\n";
 	stream << "project(" << cmakeProj.c_str() << ")\n";
 
@@ -333,16 +358,36 @@ int CompileSource(const FCompileConfig& config)
 		stream << "set(CMAKE_BUILD_TYPE Release)\n";
 
 	TArray<FString> files;
-	GetCppFilesInDir(buildCfg, targetPath + "/src", files);
-	GetCppFilesInDir(buildCfg, targetPath + "/intermediate/generated", files);
+	TArray<FString> generatedFiles;
+	GetCppFilesInDir(buildCfg, targetPath + "/src", files, true);
+	GetCppFilesInDir(buildCfg, targetPath + "/intermediate/generated", generatedFiles);
 
 	stream << "\nset(Files ";
 
 	for (auto& f : files)
 		stream << "\n\t" << f.c_str();
+	for (auto& f : generatedFiles)
+		stream << "\n\t" << f.c_str();
 
 	stream << ")\n\n";
-	stream << "include_directories(../src ../intermediate/generated ";
+
+	TMap<std::string, TArray<FString>> fileGroups;
+	if (generatedFiles.Size() > 0)
+		fileGroups["Generated"] = generatedFiles;
+	GetSourceGroups(fileGroups, files, targetPath);
+
+	if (fileGroups.size() > 0)
+	{
+		for (auto& it : fileGroups)
+		{
+			stream << "source_group(" << it.first << " FILES ";
+			for (auto& f : it.second)
+				stream << " \"" << f.c_str() << '"';
+			stream << ")\n";
+		}
+	}
+
+	stream << "\ninclude_directories(../src ../intermediate/generated ";
 
 	auto* includes = buildCfg.GetArray("Include");
 	if (includes)
@@ -537,6 +582,8 @@ int CompileSource(const FCompileConfig& config)
 		cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:" + cmakeLib + ">\" \"" + bo + "/\"\n";
 		// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
 		// 	<< cmakeLib.c_str() << ">\" \"" << bo.c_str() << "\")\n";
+		
+		std::filesystem::create_directories(bo.c_str());
 	}
 
 	if (cmds.Size() > 0)
