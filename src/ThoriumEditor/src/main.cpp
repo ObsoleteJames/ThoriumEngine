@@ -16,7 +16,7 @@ int ParseArgs(FString& targetProj)
 	{
 		if (SizeType i = args[0].Find(".thproj"); i != -1)
 		{
-			FKeyValue kv(ToFString(args[0]), EKeyValueType::KV_STANDARD_ASCII);
+			FKeyValue kv(args[0], EKeyValueType::KV_STANDARD_ASCII);
 			if (auto* v = kv.GetValue("engine_version", false); v != nullptr)
 			{
 				if (v->Value != ENGINE_VERSION)

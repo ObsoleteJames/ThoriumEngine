@@ -32,20 +32,20 @@ void CCameraController::Update(double dt)
 		camera->rotation = FQuaternion::EulerAngles(FVector(camPitch, camYaw, 0.f).Radians());
 
 		FVector move = GetMoveVector();
-		float verticalMove = moveDown + -moveUp;
+		float verticalMove = (float)(moveDown + -moveUp);
 
 		if (move.Magnitude() != 0.f)
 		{
 			float targetSpeed = GetCameraSpeed(cameraSpeed);
 			if (curSpeed < targetSpeed)
-				curSpeed += (5.f * (float)cameraSpeed * dt);
+				curSpeed += (5.f * (float)cameraSpeed * (float)dt);
 			else
 				curSpeed = targetSpeed;
 
 			FVector pos = camera->position;
-			pos += camera->GetForwardVector() * move.z * curSpeed * dt;
-			pos += camera->GetRightVector() * move.x * curSpeed * dt;
-			pos += FVector(0, move.y, 0) * curSpeed * dt;
+			pos += camera->GetForwardVector() * move.z * curSpeed * (float)dt;
+			pos += camera->GetRightVector() * move.x * curSpeed * (float)dt;
+			pos += FVector(0, move.y, 0) * curSpeed * (float)dt;
 			camera->position = pos;
 		}
 		else

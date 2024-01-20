@@ -72,7 +72,7 @@ void CTextureViewer::SetTexture(CTexture* t)
 	{
 		FString file;
 		sdkStream >> file;
-		texSourceFile = ToFString(file);
+		texSourceFile = file;
 	}
 }
 
@@ -100,7 +100,7 @@ void CTextureViewer::OnUIRender()
 {
 	FString title = "Texture Viewer";
 	if (tex && tex->File())
-		title += " - " + ToFString(tex->File()->Name());
+		title += " - " + tex->File()->Name();
 	else if (tex)
 		title += " - ERROR: Texture has no file!";
 
@@ -224,7 +224,7 @@ void CTextureViewer::OnUIRender()
 
 			if (tex && tex->GetTextureObject())
 			{
-				aspectRatio = tex->GetWidth() / tex->GetHeight();
+				aspectRatio = (float)tex->GetWidth() / (float)tex->GetHeight();
 
 				//float size = wndSize.x > wndSize.y ? wndSize.y : wndSize.x;
 
@@ -262,5 +262,5 @@ void CTextureViewer::OnDetach()
 
 void CTextureViewer::UpdateTex()
 {
-	tex->Import(ToFString(texSourceFile), reimportSettings);
+	tex->Import(texSourceFile, reimportSettings);
 }

@@ -1,8 +1,0 @@
-[Sat Jan 13 18:31:07 2024][CEngine] Initializing...
-[Sat Jan 13 18:31:07 2024][CResourceManager] Created resource threads (2)
-[Sat Jan 13 18:31:07 2024][CResourceManager] Initialized
-[Sat Jan 13 18:31:07 2024][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine/content
-[Sat Jan 13 18:31:07 2024][CResourceManager] Found 23 assets in 'Engine'
-[Sat Jan 13 18:31:08 2024][CResourceManager] ERROR: Failed to get resource 'models/Cube.thmdl', resource doesn't exist!
-[Sat Jan 13 18:31:08 2024][CResourceManager] ERROR: Failed to get resource 'models/Sphere.thmdl', resource doesn't exist!
-[Sat Jan 13 18:31:08 2024][CEngine] Loading scene 'empty'

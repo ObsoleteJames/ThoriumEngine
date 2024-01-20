@@ -258,6 +258,8 @@ bool CEngine::LoadProject(const FString& path /*= "."*/)
 	if (!LoadProjectConfig(path, projectConfig))
 		return false;
 
+	CONSOLE_LogInfo("CEngine", "Loading project '" + projectConfig.name + "'");
+
 	CFileSystem::SetCurrentPath(path);
 	CConsole::LoadConfig();
 

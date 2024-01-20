@@ -180,7 +180,7 @@ public: // Events
 protected:
 	InitializeInfo initInfo;
 
-	CWorld* parent;
+	CWorld* parent = nullptr;
 	TArray<CWorld*> subWorlds;
 	TArray<TObjectPtr<CEntity>> entities;
 

@@ -19,7 +19,7 @@ struct KVValue
 
 	float AsFloat(float fallback = 0.f) const;
 	int AsInt(int fallback = 0) const;
-	bool AsBool() const;
+	bool AsBool(bool fallback = false) const;
 };
 
 struct KVCategory

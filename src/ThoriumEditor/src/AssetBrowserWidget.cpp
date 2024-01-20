@@ -15,6 +15,8 @@
 #include "EditorWidgets.h"
 #include "ThemeManager.h"
 
+#define TEX_VIEW(tex) ((DirectXTexture2D*)tex)->view
+
 FAssetBrowserAction::FAssetBrowserAction()
 {
 	actions.Add(this);
@@ -72,7 +74,7 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 
 		ImGui::SameLine();
 
-		if (ImGui::Button("-##_browserRoot"))
+		if (ImGui::Button("^##_browserRoot"))
 			Root();
 
 		ImGui::SameLine();
@@ -172,6 +174,7 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 
 				if (bSelected)
 					ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyle().Colors[ImGuiCol_ButtonHovered]);
+
 				if (ImGui::ButtonEx((ToFString(f->Name()) + "##_" + FString::ToString((SizeType)f)).c_str(), itemSize))
 				{
 					if (ImGui::IsKeyDown(ImGuiKey_ModCtrl))
@@ -183,8 +186,6 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 					}
 					else
 						SetSelectedFile(f);
-
-					// TODO: open file editor
 				}
 				if (bAllowFileEdit && ImGui::BeginPopupContextItem())
 				{
@@ -245,6 +246,18 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 				uint32 col = ImGui::ColorConvertFloat4ToU32(ImVec4(0.06f, 0.06f, 0.06f, 1.00f));
 				ImGui::RenderFrame(cursor, cursor + ImVec2(itemSize.x, itemSize.x), col, false, ImGui::GetStyle().FrameRounding);
 				ImGui::RenderFrame(cursor + ImVec2(0, ImGui::GetStyle().FrameRounding + 2.f), cursor + ImVec2(itemSize.x, itemSize.x), col, false);
+
+				TObjectPtr<CAsset> rsc = nullptr;
+				if (type == CTexture::StaticClass())
+					rsc = CResourceManager::GetResource(type, f->Path());
+
+				auto* img = rsc.IsValid() ? ThoriumEditor::GetResourceIcon(rsc) : (type ? ThoriumEditor::GetResourceIcon(type) : nullptr);
+
+				if (img)
+				{
+					ImGui::SetCursorScreenPos(cursor + ImVec2(5, 5));
+					ImGui::Image(TEX_VIEW(img), ImVec2(itemSize.x, itemSize.x) - ImVec2(10, 10));
+				}
 
 				FString name = ToFString(f->Name());
 
@@ -392,12 +405,14 @@ void CAssetBrowserWidget::DrawDirTree(FDirectory* _dir, FDirectory* parent, FMod
 	bool bHasChildren = _dir->GetSubDirectories().Size() > 0;
 	bool bSelected = _mod->Name() == mod && _dir->GetPath() == dir;
 
-	ImGuiTreeNodeFlags flags = (!bHasChildren ? ImGuiTreeNodeFlags_Leaf : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
+	if (!bHasChildren)
+		flags |= ImGuiTreeNodeFlags_Leaf;
 	if (bSelected)
 		flags |= ImGuiTreeNodeFlags_Selected;
 
-	if (_mod->Name() == mod && !dir.IsEmpty() && _dir->GetPath().Find(dir) == 0)
-		flags |= ImGuiTreeNodeFlags_DefaultOpen;
+	//if (_mod->Name() == mod && !dir.IsEmpty() && _dir->GetPath().Find(dir) == 0)
+	//	flags |= ImGuiTreeNodeFlags_DefaultOpen;
 
 	bool bOpen = ImGui::TreeNodeEx(ToFString(_dir->GetName() + "##_" + _mod->Name() + _dir->GetPath()).c_str(), flags);
 

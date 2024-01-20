@@ -611,12 +611,12 @@ int KVValue::AsInt(int fallback) const
 	return std::stoi(Value.c_str());
 }
 
-bool KVValue::AsBool() const
+bool KVValue::AsBool(bool fallback) const
 {
 	if (Value == "false")
 		return false;
 	else if (Value == "true")
 		return true;
 
-	return AsInt();
+	return AsInt((int)fallback);
 }

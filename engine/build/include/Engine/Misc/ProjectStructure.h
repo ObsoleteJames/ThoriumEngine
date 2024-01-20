@@ -74,6 +74,8 @@ public:
 	FString author;
 	FString game;
 
+	FString iconPath;
+
 	TArray<FString> addons;	/* A list of Addons used in this project. */
 	TArray<FAddon> projectAddons;
 

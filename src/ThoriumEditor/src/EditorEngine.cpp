@@ -112,7 +112,7 @@ void CEditorEngine::Init()
 
 	InitImGui();
 	ImGuiIO& io = ImGui::GetIO();
-	FString dataPath = ToFString(OSGetDataPath()) + "/ThoriumEngine/EditorConfig/imgui.ini";
+	FString dataPath = OSGetDataPath() + "/ThoriumEngine/EditorConfig/imgui.ini";
 	dataPath.ReplaceAll('\\', '/');
 	io.IniFilename = (const char*)malloc(dataPath.Size() + 1);
 	memcpy((char*)io.IniFilename, dataPath.Data(), dataPath.Size() + 1);
@@ -394,9 +394,10 @@ void CEditorEngine::UpdateEditor()
 			ImGui::MenuItem("Scene Outliner", nullptr, &bViewOutliner);
 			ImGui::MenuItem("Asset Browser", nullptr, &bViewAssetBrowser);
 			ImGui::MenuItem("Properties", nullptr, &propertyEditor->bEnabled);
+			ImGui::MenuItem("Entity IO", nullptr, &ioWidget->bEnabled);
 			ImGui::MenuItem("Console", nullptr, &consoleWidget->bEnabled);
-
 			ImGui::MenuItem("Log", nullptr, &logWnd->bEnabled);
+
 
 			ImGui::EndMenu();
 		}
@@ -450,7 +451,7 @@ void CEditorEngine::UpdateEditor()
 
 					assetBrowser->SetDir(activeGame.mod->Name(), FString());
 
-					LoadWorld(ToFString(activeGame.startupScene));
+					LoadWorld(activeGame.startupScene);
 					ImGui::CloseCurrentPopup();
 				}
 				ImGui::Text(p.displayName.c_str());
@@ -683,7 +684,7 @@ void CEditorEngine::UpdateEditor()
 
 				if (!bPause)
 				{
-					values[values_offset] = deltaTime * 1000.f;
+					values[values_offset] = (float)(deltaTime * 1000.0);
 					values_offset = (values_offset + 1) % IM_ARRAYSIZE(values);
 				}
 
@@ -702,7 +703,7 @@ void CEditorEngine::UpdateEditor()
 
 				if (!bPause)
 				{
-					values2[values2_offset] = !bV2RenderTime ? updateTime : renderTime;
+					values2[values2_offset] = (float)(!bV2RenderTime ? updateTime : renderTime);
 					values2_offset = (values2_offset + 1) % IM_ARRAYSIZE(values2);
 				}
 				
@@ -765,12 +766,23 @@ void CEditorEngine::LoadEditorConfig()
 	editorCfg.wndHeight = kv.GetValue("wndHeight")->AsInt(1080);
 	editorCfg.wndMode = kv.GetValue("wndMode")->AsInt(1);
 
+	bViewOutliner = kv.GetValue("view_outliner")->AsBool(true);
+	bViewAssetBrowser = kv.GetValue("view_assetbrowser")->AsBool(true);
+	bViewStats = kv.GetValue("view_statistics")->AsBool();
+	propertyEditor->bEnabled = kv.GetValue("view_properties")->AsBool(true);
+	consoleWidget->bEnabled = kv.GetValue("view_console")->AsBool(true);
+	ioWidget->bEnabled = kv.GetValue("view_entityio")->AsBool(true);
+	projSettingsWidget->bEnabled = kv.GetValue("view_projectsettings")->AsBool();
+	editorSettings->bEnabled = kv.GetValue("view_editorsettings")->AsBool();
+	addonsWindow->bEnabled = kv.GetValue("view_addons")->AsBool();
+	logWnd->bEnabled = kv.GetValue("view_log")->AsBool();
+
 	KVCategory* projs = kv.GetCategory("projects", true);
 	for (auto& v : projs->GetValues())
 	{
 		FProject proj;
 		proj.name = v.Key;
-		proj.dir = ToFString(v.Value.Value);
+		proj.dir = v.Value.Value;
 
 		if (LoadProjectConfig(proj.dir, proj))
 			RegisterProject(proj);
@@ -790,9 +802,20 @@ void CEditorEngine::SaveEditorConfig()
 	kv.SetValue("wndHeight", FString::ToString(editorCfg.wndHeight));
 	kv.SetValue("wndMode", FString::ToString((int)gameWindow->GetWindowMode()));
 
+	kv.SetValue("view_outliner", FString::ToString((int)bViewOutliner));
+	kv.SetValue("view_assetbrowser", FString::ToString((int)bViewAssetBrowser));
+	kv.SetValue("view_statistics", FString::ToString((int)bViewStats));
+	kv.SetValue("view_properties", FString::ToString((int)propertyEditor->bEnabled));
+	kv.SetValue("view_console", FString::ToString((int)consoleWidget->bEnabled));
+	kv.SetValue("view_entityio", FString::ToString((int)ioWidget->bEnabled));
+	kv.SetValue("view_projectsettings", FString::ToString((int)projSettingsWidget->bEnabled));
+	kv.SetValue("view_editorsettings", FString::ToString((int)editorSettings->bEnabled));
+	kv.SetValue("view_addons", FString::ToString((int)addonsWindow->bEnabled));
+	kv.SetValue("view_log", FString::ToString((int)logWnd->bEnabled));
+
 	KVCategory* projs = kv.GetCategory("projects", true);
 	for (auto& p : availableProjects)
-		projs->SetValue(p.name, ToFString(p.dir));
+		projs->SetValue(p.name, p.dir);
 
 	kv.Save();
 }
@@ -848,8 +871,8 @@ void CEditorEngine::InitEditorData()
 
 	boxOutlineMesh.vertexBuffer = gRenderer->CreateVertexBuffer(boxVerts);
 	boxOutlineMesh.indexBuffer = gRenderer->CreateIndexBuffer(boxInds);
-	boxOutlineMesh.numVertices = boxVerts.Size();
-	boxOutlineMesh.numIndices = boxInds.Size();
+	boxOutlineMesh.numVertices = (uint32)boxVerts.Size();
+	boxOutlineMesh.numIndices = (uint32)boxInds.Size();
 
 	boxOutlineMesh.topologyType = FMesh::TOPOLOGY_LINES;
 
@@ -873,7 +896,7 @@ void CEditorEngine::GenerateGrid(float gridSize, float quadSize, FMesh* outMesh)
 
 	for (int i = 0; i < numGrids + 1; i++)
 	{
-		float halfGrid = numGrids / 2;
+		float halfGrid = (float)(numGrids / 2);
 
 		FVertex a{};
 		FVertex b{};
@@ -897,7 +920,7 @@ void CEditorEngine::GenerateGrid(float gridSize, float quadSize, FMesh* outMesh)
 	}
 	for (int i = 0; i < numGrids + 1; i++)
 	{
-		float halfGrid = numGrids / 2;
+		float halfGrid = (float)(numGrids / 2);
 
 		FVertex a{};
 		FVertex b{};
@@ -921,7 +944,7 @@ void CEditorEngine::GenerateGrid(float gridSize, float quadSize, FMesh* outMesh)
 	}
 
 	//outMesh->numIndices = indices.Size();
-	outMesh->numVertices = verts.Size();
+	outMesh->numVertices = (uint32)verts.Size();
 
 	//outMesh->indexBuffer = gRenderer->CreateIndexBuffer(indices);
 	outMesh->vertexBuffer = gRenderer->CreateVertexBuffer(verts);
@@ -1153,7 +1176,7 @@ void CEditorEngine::DoModelAssetDrop(TObjectPtr<CModelAsset> mdl, bool bPeek)
 		if (!scene->RayCast(ray.origin, ray.direction, &hit))
 			hit.position = ray.origin + ray.direction;
 
-		CModelEntity* mdlEnt = gWorld->CreateEntity<CModelEntity>(ToFString(mdl->File()->Name()) + " Entity");
+		CModelEntity* mdlEnt = gWorld->CreateEntity<CModelEntity>(mdl->File()->Name() + " Entity");
 		mdlEnt->SetModel(mdl);
 		mdlEnt->SetPosition(hit.position);
 	}
@@ -1330,7 +1353,7 @@ void CEditorEngine::OutlinerDrawEntity(CEntity* ent, bool bRoot)
 		if (auto cEnt = CastChecked<CEntity>(c); cEnt)
 			childEnts.Add(cEnt);
 
-	int numChildren = childEnts.Size();
+	int numChildren = (int)childEnts.Size();
 
 	bool bSelected = IsEntitySelected(ent);
 

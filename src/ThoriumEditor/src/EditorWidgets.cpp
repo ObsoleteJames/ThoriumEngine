@@ -3,8 +3,12 @@
 #include "EditorWidgets.h"
 #include "Resources/Asset.h"
 #include "Resources/ResourceManager.h"
+#include "ThemeManager.h"
+#include "Platform/Windows/DirectX/DirectXTexture.h"
 
 #include "Math/Math.h"
+
+#define TEX_VIEW(tex) ((DirectXTexture2D*)tex)->view
 
 bool ImGui::ObjectPtrWidget(const char* label, TObjectPtr<CObject>** values, int numValues, FClass* filterClass /*= nullptr*/)
 {
@@ -78,8 +82,16 @@ bool ImGui::AssetPtrWidget(const char* label, TObjectPtr<CAsset>** values, int n
 	bool bNull = !values[0]->IsValid();
 	bool r = false;
 
-	ImGui::Button("Preview", ImVec2(48, 48));
-	ImGui::SameLine();
+	if (bEqual) {
+		auto* img = values[0]->IsValid() ? ThoriumEditor::GetResourceIcon(*values[0]) : nullptr;
+
+		if (!img)
+			ImGui::Button("##Preview", ImVec2(48, 48));
+		else
+			ImGui::ImageButton(TEX_VIEW(img), ImVec2(38, 38));
+
+		ImGui::SameLine();
+	}
 
 	ImVec2 p = ImGui::GetCursorScreenPos();
 
@@ -105,7 +117,7 @@ bool ImGui::AssetPtrWidget(const char* label, TObjectPtr<CAsset>** values, int n
 				continue;
 
 			bool bSelected = bEqual ? (bNull ? false : (*values[0])->File() == obj.second.file) : false;
-			if (ImGui::Selectable(ToFString(obj.second.file->Name()).c_str(), bSelected))
+			if (ImGui::Selectable(obj.second.file->Name().c_str(), bSelected))
 			{
 				TObjectPtr<CAsset> resource = CResourceManager::GetResource(filterClass, obj.first);
 				for (int i = 0; i < numValues; i++)

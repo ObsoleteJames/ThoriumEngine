@@ -10,6 +10,7 @@
 #include "Build.h"
 #include <iostream>
 #include <string>
+#include <filesystem>
 
 FString GetGameNameFromProject(const FString& projectCfg)
 {
@@ -174,7 +175,7 @@ int main(int argc, char** argv)
 			cfg.config = targetConfig;
 			cfg.platform = targetPlatform;
 			cfg.engineVersion = engineVersion;
-			cfg.path = sourcePath;
+			cfg.path = std::filesystem::absolute(sourcePath.c_str()).generic_string().c_str();
 
 			int i = CompileSource(cfg);
 			if (i != 0)

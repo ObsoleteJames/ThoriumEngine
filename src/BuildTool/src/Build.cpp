@@ -550,7 +550,7 @@ int CompileSource(const FCompileConfig& config)
 	return 0;
 }
 
-void CopyHeaders(FKeyValue& buildCfg, const FString& source, const FString& out)
+void CopyHeaders(FKeyValue& buildCfg, const FString& source, const FString& oi)
 {
 	TArray<FString> headers;
 	if (!std::filesystem::exists(source.c_str()))
@@ -570,6 +570,15 @@ void CopyHeaders(FKeyValue& buildCfg, const FString& source, const FString& out)
 			continue;
 
 		headers.Add(entry.path().generic_string().c_str());
+	}
+
+	FString out = oi;
+	if (*out.last() != '/' || *out.last() != '\\')
+		out += '/';
+
+	if (headers.Size() == 0)
+	{
+		std::cout << "warning: found 0 header files in '" << source.c_str() << "'!\n";
 	}
 
 	for (auto& h : headers)

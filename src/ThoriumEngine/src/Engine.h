@@ -99,8 +99,9 @@ public:
 
 	inline TEvent<>& OnHotReloadEvent() { return eventOnHotReload; }
 
-	inline const FProject& GetProjectConfig() const { return projectConfig; }
+	inline FProject& GetProjectConfig() { return projectConfig; }
 	inline FGame& ActiveGame() { return activeGame; }
+	inline bool IsProjectLoaded() const { return bProjectLoaded; }
 
 	inline CGameInstance* GameInstance() const { return gameInstance; }
 

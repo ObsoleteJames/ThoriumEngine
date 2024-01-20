@@ -5,7 +5,7 @@
 #include "Math/Vectors.h"
 
 class FStruct;
-class FProperty;
+struct FProperty;
 class CEntity;
 class CEntityComponent;
 

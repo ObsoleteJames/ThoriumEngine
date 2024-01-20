@@ -102,7 +102,7 @@ void CMaterialEditor::OnUIRender()
 {
 	FString title = "Material Editor";
 	if (mat && mat->File())
-		title += " - " + ToFString(mat->File()->Name());
+		title += " - " + mat->File()->Name();
 	else if (mat)
 		title += " - New Material";
 
@@ -175,7 +175,7 @@ void CMaterialEditor::OnUIRender()
 		{
 			if (!mat)
 			{
-				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 0.4));
+				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 0.4f));
 				ImGui::Text("No material loaded");
 				ImGui::PopStyleColor();
 			}

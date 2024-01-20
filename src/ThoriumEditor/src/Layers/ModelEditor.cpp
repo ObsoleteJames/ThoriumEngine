@@ -67,7 +67,7 @@ void CModelEditor::OnUIRender()
 {
 	FString title = "Model Editor";
 	if (mdl && mdl->File())
-		title += " - " + ToFString(mdl->File()->Name());
+		title += " - " + mdl->File()->Name();
 	else if (mdl)
 		title += " - New Model";
 

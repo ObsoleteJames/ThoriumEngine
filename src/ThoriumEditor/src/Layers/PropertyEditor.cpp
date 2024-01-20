@@ -420,7 +420,7 @@ void CPropertyEditor::RenderClassProperties(FStruct* type, SizeType offset)
 		}
 		objects.Add(obj);
 
-		RenderProperty(prop->type, prop, objects.Data(), objects.Size(), prop->offset + offset);
+		RenderProperty(prop->type, prop, objects.Data(), (int)objects.Size(), prop->offset + offset);
 	}
 	if (bOpen)
 		ImGui::TreePop();
@@ -502,16 +502,16 @@ void CPropertyEditor::RenderProperty(uint type, const FProperty* prop, void** ob
 							switch (_enum->Size())
 							{
 							case 1:
-								*(int8*)_v = v;
+								*(int8*)_v = (int8)v;
 								break;
 							case 2:
-								*(int16*)_v = v;
+								*(int16*)_v = (int16)v;
 								break;
 							case 4:
-								*(int32*)_v = v;
+								*(int32*)_v = (int32)v;
 								break;
 							case 8:
-								*(int64*)_v = v;
+								*(int64*)_v = (int64)v;
 								break;
 							}
 						}
@@ -536,16 +536,16 @@ void CPropertyEditor::RenderProperty(uint type, const FProperty* prop, void** ob
 						switch (_enum->Size())
 						{
 						case 1:
-							*(int8*)value = v;
+							*(int8*)value = (int8)v;
 							break;
 						case 2:
-							*(int16*)value = v;
+							*(int16*)value = (int16)v;
 							break;
 						case 4:
-							*(int32*)value = v;
+							*(int32*)value = (int32)v;
 							break;
 						case 8:
-							*(int64*)value = v;
+							*(int64*)value = (int64)v;
 							break;
 						}
 					}
@@ -599,9 +599,9 @@ void CPropertyEditor::RenderProperty(uint type, const FProperty* prop, void** ob
 		FClass* type = CModuleManager::FindClass(prop->typeName);
 
 		if (!type->CanCast(CAsset::StaticClass()))
-			ImGui::ObjectPtrWidget(("##_objectPtr" + propId).c_str(), objects.Data(), objects.Size(), type);
+			ImGui::ObjectPtrWidget(("##_objectPtr" + propId).c_str(), objects.Data(), (int)objects.Size(), type);
 		else
-			ImGui::AssetPtrWidget(("##_assetPtr" + propId).c_str(), (TObjectPtr<CAsset>**)objects.Data(), objects.Size(), (FAssetClass*)type);
+			ImGui::AssetPtrWidget(("##_assetPtr" + propId).c_str(), (TObjectPtr<CAsset>**)objects.Data(), (int)objects.Size(), (FAssetClass*)type);
 	}
 	break;
 	case EVT_STRING:
@@ -694,7 +694,7 @@ void CPropertyEditor::RenderProperty(uint type, const FProperty* prop, void** ob
 			case 8:
 			{
 				int64* v = (int64*)(((SizeType)objects[0]) + offset);
-				int _v = *v;
+				int _v = (int)*v;
 
 				if (ImGui::DragInt(("##_dragInt" + propId).c_str(), &_v, 1, 0, 0, "%d", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0))
 					*v = _v;

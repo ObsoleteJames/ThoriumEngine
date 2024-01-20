@@ -48,7 +48,11 @@ void CProjectSettingsWidget::OnUIRender()
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0, 0, 0, 0));
 		if (ImGui::BeginChild("_psSettings"))
 		{
+			ImGui::BeginDisabled(!gEngine->IsProjectLoaded());
+
 			(this->*menus[curMenu].renderFunc)();
+
+			ImGui::EndDisabled();
 		}
 		ImGui::EndChild();
 		ImGui::PopStyleColor();
@@ -88,6 +92,26 @@ void CProjectSettingsWidget::RenderGameSettings()
 
 		ImGui::TableNextRow();
 		ImGui::TableNextColumn();
+		ImGui::Text("Icon");
+		ImGui::TableNextColumn();
+		TObjectPtr<CTexture> icon;
+		if (!gEditorEngine()->GetProjectConfig().iconPath.IsEmpty())
+		{
+			icon = CResourceManager::GetResource<CTexture>(gEditorEngine()->GetProjectConfig().iconPath);
+			if (!icon)
+				gEditorEngine()->GetProjectConfig().iconPath.Clear();
+		}
+		TObjectPtr<CTexture>* iconPtr = &icon;
+		if (ImGui::AssetPtrWidget("##_projectIcon", (TObjectPtr<CAsset>**) & iconPtr, 1, (FAssetClass*)CTexture::StaticClass()))
+		{
+			if (icon)
+				gEditorEngine()->GetProjectConfig().iconPath = icon->GetPath();
+			else
+				gEditorEngine()->GetProjectConfig().iconPath.Clear();
+		}
+
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
 		ImGui::Text("Author");
 		ImGui::TableNextColumn();
 		ImGui::InputText("##_projectAuthorEdit", (FString*)&gEditorEngine()->GetProjectConfig().author);
@@ -111,7 +135,11 @@ void CProjectSettingsWidget::RenderGameSettings()
 		ImGui::TableNextColumn();
 		TObjectPtr<CScene> scene;
 		if (!gEditorEngine()->ActiveGame().startupScene.IsEmpty())
+		{
 			scene = CResourceManager::GetResource<CScene>(ToFString(gEditorEngine()->ActiveGame().startupScene));
+			if (!scene)
+				gEditorEngine()->ActiveGame().startupScene = FString();
+		}
 		TObjectPtr<CScene>* scenePtr = &scene;
 		if (ImGui::AssetPtrWidget("##_gameStartupScene", (TObjectPtr<CAsset>**) & scenePtr, 1, (FAssetClass*)CScene::StaticClass()))
 		{

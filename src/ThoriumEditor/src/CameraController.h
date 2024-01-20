@@ -15,7 +15,7 @@ public:
 	
 	void SetCamera(CCameraProxy* cam);
 
-	inline FVector GetMoveVector() const { return FVector(moveLeft + -moveRight, moveDown + -moveUp, -moveForward + moveBack); }
+	inline FVector GetMoveVector() const { return FVector((float)(moveLeft + -moveRight), (float)(moveDown + -moveUp), (float)(-moveForward + moveBack)); }
 
 public:
 	ECameraControlMode mode = CCM_FreeCam;

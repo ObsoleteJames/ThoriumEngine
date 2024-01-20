@@ -118,7 +118,7 @@ void CInputOutputWidget::OnUIRender()
 						const FFunction* func = c->GetFunctionList();
 						for (; func != nullptr; func = func->next)
 						{
-							if (func->type != FFunction::GENERAL || func->flags & FunctionFlags_ALLOW_AS_INPUT == 0)
+							if (func->type != FFunction::GENERAL || ((int)func->flags & FunctionFlags_ALLOW_AS_INPUT) == 0)
 								continue;
 
 							if (ImGui::Selectable(func->name.c_str(), output.targetInput == func->name))
