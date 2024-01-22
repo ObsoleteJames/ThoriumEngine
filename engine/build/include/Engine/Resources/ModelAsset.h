@@ -41,7 +41,7 @@ class ENGINE_API CModelAsset : public CAsset
 {
 	GENERATED_BODY()
 
-	friend class CModelCreator;
+	friend class CModelEditor;
 
 public:
 	CModelAsset() = default;

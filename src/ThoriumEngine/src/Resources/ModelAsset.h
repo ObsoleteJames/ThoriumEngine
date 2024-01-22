@@ -21,7 +21,7 @@ struct FMaterial
 struct FLODGroup
 {
 	TArray<uint32> meshIndices; // Indices of meshes used by this LOD Group.
-	float distanceBias;
+	float distanceBias = 1.f;
 };
 
 struct FBodyGroupOption
@@ -41,7 +41,7 @@ class ENGINE_API CModelAsset : public CAsset
 {
 	GENERATED_BODY()
 
-	friend class CModelCreator;
+	friend class CModelEditor;
 
 public:
 	CModelAsset() = default;

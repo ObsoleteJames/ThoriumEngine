@@ -11,8 +11,18 @@ enum EItemTypes
 	EItemTypes_SceneComponent
 };
 
-#ifdef THORIUMEDITOR_DLL
-#define SDK_API __declspec(dllexport)
+#if _WIN32
+	#ifdef THORIUMEDITOR_DLL
+		#define SDK_API __declspec(dllexport)
+	#else
+		#define SDK_API __declspec(dllimport)
+	#endif
+#elif __GNUC__
+	#ifdef THORIUMEDITOR_DLL
+		#define SDK_API __atribute__((visibility("default")))
+	#else
+		#define SDK_API
+	#endif
 #else
-#define SDK_API __declspec(dllimport)
+	#define SDK_API
 #endif

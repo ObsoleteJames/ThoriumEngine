@@ -5,6 +5,8 @@
 #include "Object/Object.h"
 #include "Resources/ModelAsset.h"
 
+#include "assimp/Importer.hpp"
+
 class CWorld;
 class CModelEntity;
 class CRenderScene;
@@ -13,6 +15,19 @@ class CPointLightComponent;
 
 class IFrameBuffer;
 class IDepthBuffer;
+
+struct aiNode;
+struct aiScene;
+
+struct FMeshFile
+{
+	FString file;
+	FString name;
+	FTransform transform;
+
+	Assimp::Importer importer;
+	const aiScene* scene = nullptr;
+};
 
 class CModelEditor : public CLayer
 {
@@ -28,13 +43,24 @@ protected:
 
 	void OnDetach() override;
 
+	void LoadMeshFile(FMeshFile& m);
+
+	void Compile();
+
+	void DrawMeshResources(FMeshFile& m);
+	void DrawAiNode(const aiScene* scene, aiNode* node);
+
 private:
 	bool bSaved = true;
+	bool bCompiled = true;
 	bool bExit = false;
 
 	TObjectPtr<CModelAsset> mdl;
 	TObjectPtr<CModelEntity> modelEnt;
 	TObjectPtr<CWorld> scene;
+
+	// List of imported meshes
+	TArray<FMeshFile> meshFiles;
 
 	CCameraProxy* camera;
 
