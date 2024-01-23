@@ -46,6 +46,7 @@ protected:
 	void LoadMeshFile(FMeshFile& m);
 
 	void Compile();
+	void CompileNode(const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, SizeType& boneOffset);
 
 	void DrawMeshResources(FMeshFile& m);
 	void DrawAiNode(const aiScene* scene, aiNode* node);

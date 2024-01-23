@@ -125,6 +125,8 @@ public:
 	static void SetCurrentPath(const FString& path);
 	static FString GetCurrentPath();
 
+	static void OSCreateDirectory(const FString& path);
+
 #if IS_DEV
 	static bool ReloadMod(FMod* mod);
 #endif

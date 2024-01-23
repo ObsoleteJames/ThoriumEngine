@@ -318,7 +318,6 @@ void CModelEditor::OnUIRender()
 					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.180f, 0.180f, 0.180f, 1.000f));
 					if (ImGui::Button("Add##lodAdd", ImVec2(0, 24)))
 					{
-						bCompiled = false;
 						bSaved = false;
 						mdl->numLODs++;
 						if (mdl->numLODs > 6)
@@ -329,7 +328,6 @@ void CModelEditor::OnUIRender()
 					ImGui::SameLine();
 					if (ImGui::Button("Clear##lodClear", ImVec2(0, 24)))
 					{
-						bCompiled = false;
 						bSaved = false;
 						mdl->numLODs = 0;
 					}
@@ -452,7 +450,163 @@ void CModelEditor::LoadMeshFile(FMeshFile& m)
 
 void CModelEditor::Compile()
 {
+	mdl->ClearMeshData();
+	mdl->meshes.Clear();
+	mdl->materials.Clear();
+	mdl->skeleton.bones.Clear();
 
+	SizeType meshesOffset = 0;
+	SizeType materialsOffset = 0;
+	SizeType boneOffset = 0;
+
+	for (auto& file : meshFiles)
+	{
+		if (file.scene)
+		{
+			auto* scene = file.scene;
+			auto* root = scene->mRootNode;
+
+			for (int i = 0; i < scene->mNumMaterials; i++)
+			{
+				aiMaterial* sMat = scene->mMaterials[i];
+
+				FMaterial mat;
+				mat.name = sMat->GetName().C_Str();
+
+				mdl->materials.Add(mat);
+			}
+
+			for (int i = 0; i < scene->mNumSkeletons; i++)
+			{
+				aiSkeleton* skeleton = scene->mSkeletons[i];
+				
+				for (int ii = 0; ii < skeleton->mNumBones; ii++)
+				{
+					aiSkeletonBone* bone = skeleton->mBones[ii];
+					aiMatrix4x4& mat = bone->mLocalMatrix;
+
+					aiVector3D scale;
+					aiVector3D pos;
+					aiVector3D rot;
+					float roll;
+
+					mat.Decompose(scale, rot, roll, pos);
+
+					FBone b;
+					b.name = bone->mNode ? bone->mNode->mName.C_Str() : "BONE";
+					b.position = { pos.x, pos.y, pos.z };
+					b.direction = { rot.x, rot.y, rot.z };
+					b.roll = roll;
+					b.parent = bone->mParent == -1 ? -1 : bone->mParent + (int)boneOffset;
+				}
+			}
+
+			CompileNode(scene, root, meshesOffset, materialsOffset, boneOffset);
+
+			materialsOffset = mdl->materials.Size();
+			meshesOffset = mdl->meshes.Size();
+			boneOffset = mdl->skeleton.bones.Size();
+		}
+	}
+
+	bCompiled = true;
+	modelEnt->SetModel(mdl);
+}
+
+aiMatrix4x4 GetNodeWorldTransform(aiNode* node)
+{
+	if (node->mParent)
+		return node->mTransformation * GetNodeWorldTransform(node->mParent);
+
+	return node->mTransformation;
+}
+
+void CModelEditor::CompileNode(const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, SizeType& boneOffset)
+{
+	for (int i = 0; i < node->mNumMeshes; i++)
+	{
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		aiMatrix4x4 transform = GetNodeWorldTransform(node);
+
+		FMesh fmesh;
+		fmesh.meshName = mesh->mName.C_Str();
+		fmesh.materialIndex = mesh->mMaterialIndex + (int)matOffset;
+		
+		if (mesh->mPrimitiveTypes == aiPrimitiveType_TRIANGLE)
+			fmesh.topologyType = FMesh::TOPOLOGY_TRIANGLES;
+		else if (mesh->mPrimitiveTypes == aiPrimitiveType_LINE)
+			fmesh.topologyType = FMesh::TOPOLOGY_LINES;
+		else if (mesh->mPrimitiveTypes == aiPrimitiveType_POINT)
+			fmesh.topologyType = FMesh::TOPOLOGY_POINTS;
+
+		TArray<FVertex> vertices;
+		TArray<uint> indices;
+
+		for (int i = 0; i < mesh->mNumVertices; i++)
+		{
+			FVertex v;
+
+			auto vPos = mesh->mVertices[i];
+			auto vNormal = mesh->mNormals ? mesh->mNormals[i] : aiVector3D(0, 1, 0);
+			auto vTangent = mesh->mTangents ? mesh->mTangents[i] : aiVector3D(1, 0, 0);
+
+			vPos *= transform;
+			vNormal *= transform;
+			vTangent *= transform;
+
+			v.position = *(FVector*)&vPos;
+			if (mesh->mNormals)
+				v.normal = *(FVector*)&vNormal;
+			if (mesh->mTangents)
+				v.tangent = *(FVector*)&vTangent;
+			if (mesh->GetNumColorChannels() > 0)
+				v.color = *(FVector*)&mesh->mColors[0][i];
+
+			if (mesh->GetNumUVChannels() > 0)
+			{
+				v.uv1[0] = mesh->mTextureCoords[0][i].x;
+				v.uv1[1] = mesh->mTextureCoords[0][i].y;
+			}
+			if (mesh->GetNumUVChannels() > 1)
+			{
+				v.uv2[0] = mesh->mTextureCoords[1][i].x;
+				v.uv2[1] = mesh->mTextureCoords[1][i].y;
+			}
+
+			vertices.Add(v);
+		}
+
+		for (int i = 0; i < mesh->mNumFaces; i++)
+		{
+			aiFace& face = mesh->mFaces[i];
+
+			for (int ii = 0; ii < face.mNumIndices; ii++)
+			{
+				indices.Add(face.mIndices[ii]);
+			}
+		}
+
+		fmesh.vertexData = (FVertex*)malloc(vertices.Size() * sizeof(FVertex));
+		fmesh.numVertexData = vertices.Size();
+
+		memcpy(fmesh.vertexData, vertices.Data(), vertices.Size() * sizeof(FVertex));
+
+		fmesh.indexData = (uint*)malloc(indices.Size() * sizeof(uint));
+		fmesh.numIndexData = indices.Size();
+
+		memcpy(fmesh.indexData, indices.Data(), indices.Size() * sizeof(FVertex));
+
+		fmesh.numVertices = vertices.Size();
+		fmesh.numIndices = indices.Size();
+
+		fmesh.vertexBuffer = gRenderer->CreateVertexBuffer(vertices);
+		fmesh.indexBuffer = gRenderer->CreateIndexBuffer(indices);
+
+		mdl->meshes.Add(fmesh);
+	}
+
+	for (int i = 0; i < node->mNumChildren; i++)
+		CompileNode(scene, node->mChildren[i], meshOffset, matOffset, boneOffset);
 }
 
 void CModelEditor::DrawMeshResources(FMeshFile& m)

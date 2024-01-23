@@ -21,7 +21,7 @@ struct FMaterial
 struct FLODGroup
 {
 	TArray<uint32> meshIndices; // Indices of meshes used by this LOD Group.
-	float distanceBias;
+	float distanceBias = 1.f;
 };
 
 struct FBodyGroupOption

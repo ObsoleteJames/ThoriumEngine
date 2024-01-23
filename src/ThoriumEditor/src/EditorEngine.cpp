@@ -110,6 +110,8 @@ void CEditorEngine::Init()
 	sceneFrameBuffer = gRenderer->CreateFrameBuffer(1280, 720, TEXTURE_FORMAT_RGBA8_UNORM);
 	//sceneDepthBuffer = gRenderer->CreateDepthBuffer({ 1280, 720, TH_DBF_D24_S8, 1, false });
 
+	CFileSystem::OSCreateDirectory(OSGetDataPath() + "/ThoriumEngine/EditorConfig");
+
 	InitImGui();
 	ImGuiIO& io = ImGui::GetIO();
 	FString dataPath = OSGetDataPath() + "/ThoriumEngine/EditorConfig/imgui.ini";

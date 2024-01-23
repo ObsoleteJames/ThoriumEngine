@@ -1,0 +1,3 @@
+[submodule "src/dep/assimp"]
+	path = src/dep/assimp
+	url = https://github.com/assimp/assimp

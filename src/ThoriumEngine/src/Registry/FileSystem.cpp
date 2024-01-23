@@ -482,3 +482,8 @@ CFStream FFile::GetSdkStream(const char* mode)
 		return CFStream();
 	return CFStream(ToFString(sdkPath), mode);
 }
+
+void CFileSystem::OSCreateDirectory(const FString& path)
+{
+	std::filesystem::create_directories(path.c_str());
+}
