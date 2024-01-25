@@ -33,8 +33,8 @@ public:
 	inline bool IsLodLoaded(uint8 lod);
 
 public:
-	void Serialize(FMemStream& out) final {}
-	void Load(FMemStream& in) final {}
+	void Serialize(FMemStream& out) final;
+	void Load(FMemStream& in) final;
 
 protected:
 	virtual void OnDelete() override;

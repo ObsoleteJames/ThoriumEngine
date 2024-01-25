@@ -97,7 +97,7 @@ bool ImGui::AssetPtrWidget(const char* label, TObjectPtr<CAsset>** values, int n
 
 	ImGui::SetNextItemWidth(FMath::Max(ImGui::GetContentRegionAvail().x - 61.f, 60.f));
 
-	if (ImGui::BeginCombo((FString("##_") + label).c_str(), bEqual ? (bNull ? "None" : (*values[0])->Name().c_str()) : "Multiple Values"))
+	if (ImGui::BeginCombo((FString("##_") + label).c_str(), bEqual ? (bNull ? "None" : ((*values[0])->File() ? (*values[0])->File()->Name().c_str() : (*values[0])->Name().c_str())) : "Multiple Values"))
 	{
 		if (ImGui::Selectable("None", bNull))
 		{

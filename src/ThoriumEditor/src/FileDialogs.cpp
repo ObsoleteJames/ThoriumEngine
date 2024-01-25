@@ -147,7 +147,7 @@ bool ThoriumEditor::OpenFile(const FString& id, FAssetClass* type, const FString
 		browser->SetDir(m, d);
 	}
 	else
-		browser->SetDir(gEditorEngine()->ActiveGame().mod->Name(), FString());
+		browser->SetDir(gEditorEngine()->ActiveGame().mod ? gEditorEngine()->ActiveGame().mod->Name() : "Engine", FString());
 
 	browser->viewFilter = type;
 	browser->bDoubleClickedFile = false;
@@ -175,7 +175,7 @@ bool ThoriumEditor::SaveFile(const FString& id, FAssetClass* type, const FString
 		browser->SetDir(m, d);
 	}
 	else
-		browser->SetDir(gEditorEngine()->ActiveGame().mod->Name(), FString());
+		browser->SetDir(gEditorEngine()->ActiveGame().mod ? gEditorEngine()->ActiveGame().mod->Name() : "Engine", FString());
 
 	browser->viewFilter = type;
 	browser->bDoubleClickedFile = false;

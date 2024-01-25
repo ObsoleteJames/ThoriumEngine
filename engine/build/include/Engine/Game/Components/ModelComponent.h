@@ -15,6 +15,7 @@ class ENGINE_API CModelComponent : public CSceneComponent
 	GENERATED_BODY()
 
 	friend class CWorld;
+	friend class CModelComponentProxy;
 
 public:
 	CModelComponent();
@@ -25,6 +26,12 @@ public:
 
 	inline TObjectPtr<CModelAsset> GetModel() const { return model; }
 	inline const TArray<TObjectPtr<CMaterial>>& GetMaterials() const { return materials; }
+
+	// call this whenever the skeleton transform has updated.
+	inline void UpdateSkeletonMatrix() { bUpdateSkeleton = true; }
+
+	// calculates the skeleton matrices.
+	void CalculateSkeletonMatrix();
 
 	inline bool CastShadows() const { return bCastShadows; }
 
@@ -59,6 +66,8 @@ private:
 	PROPERTY()
 	TArray<int> activeBodyGroups;
 
-	FSkeleton skeleton;
+	bool bUpdateSkeleton;
 
+	FSkeletonInstance skeleton;
+	TArray<FMatrix> boneMatrices; // cache for skeletal animation
 };

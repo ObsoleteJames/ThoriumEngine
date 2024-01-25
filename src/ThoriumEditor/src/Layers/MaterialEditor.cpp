@@ -532,7 +532,8 @@ void CMaterialEditor::UpdateCache()
 
 void CMaterialEditor::Revert()
 {
-	mat->Init();
+	if (mat->File())
+		mat->Init();
 	bSaved = true;
 }
 

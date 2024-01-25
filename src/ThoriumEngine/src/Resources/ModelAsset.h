@@ -36,7 +36,7 @@ struct FBodyGroup
 	TArray<FBodyGroupOption> options;
 };
 
-ASSET(Extension = ".thmdl", ImportableAs = ".fbx;.obj;.gltf")
+ASSET(Extension = ".thmdl", ImportableAs = ".fbx;.obj;.gltf;.glb")
 class ENGINE_API CModelAsset : public CAsset
 {
 	GENERATED_BODY()
@@ -65,6 +65,9 @@ public:
 	inline FBounds GetBounds() const { return bounds; }
 	FBounds CalculateBounds();
 
+	FBone* GetBone(const FString& name);
+	SizeType GetBoneIndex(const FString& name);
+
 public:
 	int GetLodFromDistance(float distance);
 
@@ -82,6 +85,8 @@ public:
 
 private:
 	void ClearMeshes();
+
+	void UpdateBoneMatrices();
 
 protected:
 	bool bAllowInstancing;

@@ -24,6 +24,7 @@ struct FMeshFile
 	FString file;
 	FString name;
 	FTransform transform;
+	FVector rotation; // fuck quaterions man.
 
 	Assimp::Importer importer;
 	const aiScene* scene = nullptr;
@@ -31,6 +32,8 @@ struct FMeshFile
 
 class CModelEditor : public CLayer
 {
+	typedef void(CModelEditor::* funcSaveCallback)(int result);
+
 public:
 	CModelEditor();
 
@@ -46,11 +49,19 @@ protected:
 	void LoadMeshFile(FMeshFile& m);
 
 	void Compile();
-	void CompileNode(const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, SizeType& boneOffset);
+	void CompileNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, SizeType& boneOffset);
+	void CompileArmatureNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, SizeType& boneOffset);
 
 	void DrawMeshResources(FMeshFile& m);
 	void DrawAiNode(const aiScene* scene, aiNode* node);
 
+	void OnSaveNewModel(int r);
+	void OnSaveExit(int r);
+	void OnSaveOpenModel(int r);
+
+	void SaveMdl();
+	void Revert();
+	
 private:
 	bool bSaved = true;
 	bool bCompiled = true;
@@ -72,7 +83,9 @@ private:
 	FString openMdlId;
 	FString saveMdlId;
 
-	float sizeL = 360;
+	funcSaveCallback saveCallback = nullptr;
+
+	float sizeL = 420;
 	float sizeR;
 
 	int viewportWidth = 32, viewportHeight = 32;

@@ -35,6 +35,14 @@ public:
 		materials.Resize(model->GetMaterials().Size());
 		bounds = model->Bounds();
 		
+		if (model->bUpdateSkeleton)
+		{
+			model->CalculateSkeletonMatrix();
+			model->bUpdateSkeleton = false;
+		}
+
+		skeletonMatrices = model->boneMatrices;
+
 		for (SizeType i = 0; i < materials.Size(); i++)
 		{
 			materials[i] = model->GetMaterial(i);
@@ -99,6 +107,9 @@ void CModelComponent::SetModel(TObjectPtr<CModelAsset> m)
 
 	bounds = model->CalculateBounds();
 
+	skeleton.bones.Clear();
+	skeleton.bones.Resize(model->GetSkeleton().bones.Size());
+
 	//for (auto& matPath : mats)
 	//{
 	//	TObjectPtr<CMaterial> material = CResourceManager::GetResource<CMaterial>(matPath.path);
@@ -115,6 +126,25 @@ void CModelComponent::SetModel(TObjectPtr<CModelAsset> m)
 void CModelComponent::SetAnimationGraph(CAnimationGraph* animGraph)
 {
 
+}
+
+void CModelComponent::CalculateSkeletonMatrix()
+{
+	if (!model)
+		return;
+
+	const FSkeleton& sk = model->GetSkeleton();
+	boneMatrices.Resize(sk.bones.Size());
+
+	for (SizeType i = 0; i < sk.bones.Size(); i++)
+	{
+		FMatrix& mat = boneMatrices[i];
+
+		FMatrix local = (FMatrix(1.f).Translate(sk.bones[i].position) * sk.bones[i].rotation) * skeleton.bones[i].ToMatrix();
+		FMatrix model = sk.bones[i].parent != -1 ? boneMatrices[sk.bones[i].parent] * local : local;
+
+		mat = model * sk.invModel[i];
+	}
 }
 
 CMaterial* CModelComponent::GetMaterial(SizeType slot)

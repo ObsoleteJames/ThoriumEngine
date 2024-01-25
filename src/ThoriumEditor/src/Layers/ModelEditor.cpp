@@ -1,10 +1,15 @@
 
 #include "ModelEditor.h"
+#include "EditorEngine.h"
 #include "Game/World.h"
 #include "Game/Entities/ModelEntity.h"
 #include "Game/Components/SkyboxComponent.h"
 #include "Game/Components/PointLightComponent.h"
 #include "Rendering/RenderScene.h"
+#include "AssetBrowserWidget.h"
+#include <Util/KeyValue.h>
+
+#include "FileDialogs.h"
 
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -18,6 +23,22 @@
 #include "ImGui/imgui_internal.h"
 #include "ImGui/imgui_thorium.h"
 #include "EditorWidgets.h"
+
+class FModelOpenAction : public FAssetBrowserAction
+{
+public:
+	FModelOpenAction()
+	{
+		type = BA_OPENFILE;
+		targetClass = (FAssetClass*)CModelAsset::StaticClass();
+	}
+
+	void Invoke(FBrowserActionData* data) override
+	{
+		auto* editor = gEditorEngine()->AddLayer<CModelEditor>();
+		editor->SetModel(CResourceManager::GetResource<CModelAsset>(data->file->Path()));
+	}
+} static FModelOpenAction_instance;
 
 CModelEditor::CModelEditor()
 {
@@ -33,7 +54,7 @@ CModelEditor::CModelEditor()
 	scene->GetRenderScene()->SetFrameBuffer(framebuffer);
 
 	camera = new CCameraProxy();
-	camera->position = { 0, 0, -2 };
+	camera->position = { 0, 0, -1.5f };
 
 	//scene->SetPrimaryCamera(camera);
 
@@ -47,8 +68,58 @@ CModelEditor::CModelEditor()
 
 void CModelEditor::SetModel(CModelAsset* mdl)
 {
+	meshFiles.Clear();
 	this->mdl = mdl;
 	modelEnt->SetModel(mdl);
+
+	if (mdl->File())
+	{
+		FKeyValue kv(mdl->File()->GetSdkPath());
+		if (kv.IsOpen())
+		{
+			for (auto* c : kv.GetCategories())
+			{
+				FString name = c->GetName();
+				if (auto i = name.FindLastOf('_'); i != -1)
+					name.Erase(name.begin() + i, name.end());
+
+				meshFiles.Add();
+
+				FMeshFile& mesh = *meshFiles.last();
+				mesh.name = name;
+				mesh.file = *c->GetValue("file");
+
+				FString pos = *c->GetValue("position");
+				FString rot = *c->GetValue("rotation");
+				FString scl = *c->GetValue("scale");
+
+				TArray<FString> split = pos.Split(',');
+				if (split.Size() > 0)
+					mesh.transform.position.x = std::stof(split[0].c_str());
+				if (split.Size() > 1)
+					mesh.transform.position.y = std::stof(split[1].c_str());
+				if (split.Size() > 2)
+					mesh.transform.position.z = std::stof(split[2].c_str());
+
+				split = rot.Split(',');
+				if (split.Size() > 0)
+					mesh.rotation.x = std::stof(split[0].c_str());
+				if (split.Size() > 1)
+					mesh.rotation.y = std::stof(split[1].c_str());
+				if (split.Size() > 2)
+					mesh.rotation.z = std::stof(split[2].c_str());
+				mesh.transform.rotation = FQuaternion::EulerAngles(mesh.rotation);
+
+				split = scl.Split(',');
+				if (split.Size() > 0)
+					mesh.transform.scale.x = std::stof(split[0].c_str());
+				if (split.Size() > 1)
+					mesh.transform.scale.y = std::stof(split[1].c_str());
+				if (split.Size() > 2)
+					mesh.transform.scale.z = std::stof(split[2].c_str());
+			}
+		}
+	}
 }
 
 void CModelEditor::OnUpdate(double dt)
@@ -76,6 +147,21 @@ void CModelEditor::OnUIRender()
 
 	title += "###modelEditor_" + FString::ToString((SizeType)this);
 
+	FString f;
+	FString m;
+
+	if (ThoriumEditor::AcceptFile(openMdlId, &f) && !f.IsEmpty())
+	{
+		CModelAsset* m = CResourceManager::GetResource<CModelAsset>(f);
+		if (m)
+			SetModel(m);
+	}
+	if (ThoriumEditor::AcceptFile(saveMdlId, &f, &m) && !f.IsEmpty())
+	{
+		CResourceManager::RegisterNewResource(mdl, f, m);
+		SaveMdl();
+	}
+
 	bool bOpen = true;
 	ImGui::SetNextWindowSize(ImVec2(1280, 720), ImGuiCond_FirstUseEver);
 
@@ -83,6 +169,7 @@ void CModelEditor::OnUIRender()
 	if (!bSaved)
 		flags |= ImGuiWindowFlags_UnsavedDocument;
 
+	int openPopup = 0;
 	if (ImGui::Begin(title.c_str(), &bOpen, flags))
 	{
 		if (ImGui::BeginMenuBar())
@@ -91,35 +178,15 @@ void CModelEditor::OnUIRender()
 			{
 				if (ImGui::MenuItem("New", "Ctrl+N"))
 				{
-					if (mdl && !bSaved)
-					{
-						// Save first
-					}
-					else
-					{
-						SetModel(CreateObject<CModelAsset>());
-						bSaved = false;
-					}
+					openPopup = 1;
 				}
 				if (ImGui::MenuItem("Open", "Ctrl+O"))
 				{
-
+					openPopup = 2;
 				}
 				if (ImGui::MenuItem("Save", "Ctrl+S"))
 				{
-					if (mdl)
-					{
-						if (!mdl->File())
-						{
-							
-						}
-
-						if (mdl->File())
-						{
-							mdl->Save();
-							bSaved = true;
-						}
-					}
+					openPopup = 3;
 				}
 				if (ImGui::MenuItem("Save As", "Ctrl+Shift+S"));
 
@@ -199,6 +266,9 @@ void CModelEditor::OnUIRender()
 						ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 						if (ImGui::Button("Remove"))
 							remove = i;
+						ImGui::SameLine();
+						if (ImGui::Button("Reload"))
+							LoadMeshFile(mesh);
 						ImGui::PopStyleColor();
 
 						if (bOpen)
@@ -217,10 +287,10 @@ void CModelEditor::OnUIRender()
 
 							if (ImGui::Button(("Browse##browseMesh" + FString::ToString(i)).c_str()))
 							{
-								const char* f = "FBX (.fbx)\0*.fbx\0Wavefront (.obj)\0*.obj\0glTF (.gltf)\0*.gltf\0\0";
+								const char* f = "FBX (.fbx)\0*.fbx\0Wavefront (.obj)\0*.obj\0glTF (.gltf .glb)\0*.gltf;*.glb\0All Files (*)\0*.*\0\0";
 								FString filter;
-								filter.Resize(61);
-								memcpy(filter.Data(), f, 61);
+								filter.Resize(90);
+								memcpy(filter.Data(), f, 90);
 
 								FString file = CEngine::OpenFileDialog(filter);
 								if (!file.IsEmpty())
@@ -228,6 +298,64 @@ void CModelEditor::OnUIRender()
 									mesh.file = file;
 									LoadMeshFile(mesh);
 								}
+							}
+
+							{
+								ImGui::TableNextRow();
+								ImGui::TableNextColumn();
+								ImGui::Text("Position");
+								ImGui::TableNextColumn();
+
+								auto areaSize = ImGui::GetContentRegionAvail();
+								float tWidth = areaSize.x / 3 - 5.f;
+
+								ImGui::SetNextItemWidth(tWidth);
+								ImGui::DragFloat(("##_posInputX" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.position.x, 0.1f);
+								ImGui::SameLine();
+								ImGui::SetNextItemWidth(tWidth);
+								ImGui::DragFloat(("##_posInputY" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.position.y, 0.1f);
+								ImGui::SameLine();
+								ImGui::SetNextItemWidth(tWidth);
+								ImGui::DragFloat(("##_posInputZ" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.position.z, 0.1f);
+							}
+							{
+								ImGui::TableNextRow();
+								ImGui::TableNextColumn();
+								ImGui::Text("Rotation");
+								ImGui::TableNextColumn();
+
+								auto areaSize = ImGui::GetContentRegionAvail();
+								float tWidth = areaSize.x / 3 - 5.f;
+
+								ImGui::SetNextItemWidth(tWidth);
+								if (ImGui::DragFloat(("##_rotInputX" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.rotation.x, 0.1f))
+									mesh.transform.rotation = FQuaternion::EulerAngles(mesh.rotation);
+								ImGui::SameLine();
+								ImGui::SetNextItemWidth(tWidth);
+								if (ImGui::DragFloat(("##_rotInputY" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.rotation.y, 0.1f))
+									mesh.transform.rotation = FQuaternion::EulerAngles(mesh.rotation);
+								ImGui::SameLine();
+								ImGui::SetNextItemWidth(tWidth);
+								if (ImGui::DragFloat(("##_rotInputZ" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.rotation.z, 0.1f))
+									mesh.transform.rotation = FQuaternion::EulerAngles(mesh.rotation);
+							}
+							{
+								ImGui::TableNextRow();
+								ImGui::TableNextColumn();
+								ImGui::Text("Scale");
+								ImGui::TableNextColumn();
+
+								auto areaSize = ImGui::GetContentRegionAvail();
+								float tWidth = areaSize.x / 3 - 5.f;
+
+								ImGui::SetNextItemWidth(tWidth);
+								ImGui::DragFloat(("##_sclInputX" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.scale.x, 0.1f);
+								ImGui::SameLine();
+								ImGui::SetNextItemWidth(tWidth);
+								ImGui::DragFloat(("##_sclInputY" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.scale.y, 0.1f);
+								ImGui::SameLine();
+								ImGui::SetNextItemWidth(tWidth);
+								ImGui::DragFloat(("##_sclInputZ" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.scale.z, 0.1f);
 							}
 
 							/*if (ImGui::TableTreeHeader(("Import##" + FString::ToString((SizeType)&mesh)).c_str(), 0, true))
@@ -287,9 +415,10 @@ void CModelEditor::OnUIRender()
 							ImGui::Text(mat.name.c_str());
 							ImGui::TableNextColumn();
 
-							auto* matObj = (TObjectPtr<CObject>*)&mat.obj;
-							if (ImGui::ObjectPtrWidget(("##_matObjPtr" + mat.name).c_str(), &matObj, 1, CMaterial::StaticClass()))
-								mat.path = mat.obj->File() ? mat.obj->File()->Path() : FString();
+							auto* matObj = (TObjectPtr<CAsset>*)&mat.obj;
+							if (ImGui::AssetPtrWidget(("##_matObjPtr" + mat.name).c_str(), &matObj, 1, (FAssetClass*)CMaterial::StaticClass()))
+								if (mat.obj)
+									mat.path = mat.obj->File() ? mat.obj->File()->Path() : FString();
 						}
 					}
 
@@ -378,6 +507,31 @@ void CModelEditor::OnUIRender()
 					ImGui::TreePop();
 				}
 
+				if (ImGui::TableTreeHeader("Bones"))
+				{
+					ImGui::TableNextRow();
+					ImGui::TableNextColumn();
+					ImGui::Text("Count");
+					ImGui::TableNextColumn();
+					ImGui::Text("%d", (int)mdl->skeleton.bones.Size());
+
+					for (SizeType i = 0; i < mdl->skeleton.bones.Size(); i++)
+					{
+						auto& b = mdl->skeleton.bones[i];
+
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn();
+
+						ImGui::Text(b.name.c_str());
+
+						ImGui::TableNextColumn();
+
+						ImGui::Text("parent: %s", b.parent != -1 ? mdl->skeleton.bones[b.parent].name.c_str() : "none");
+					}
+
+					ImGui::TreePop();
+				}
+
 				ImGui::EndTable();
 			}
 
@@ -414,11 +568,88 @@ void CModelEditor::OnUIRender()
 	}
 	ImGui::End();
 
+	if (openPopup == 1)
+	{
+		if (mdl && !bSaved)
+		{
+			// Save first
+			saveCallback = &CModelEditor::OnSaveNewModel;
+			ImGui::OpenPopup("Continue without saving?##_MDLEDITCLOSE");
+		}
+		else
+		{
+			/*SetModel(CreateObject<CModelAsset>());
+			bSaved = false;*/
+			OnSaveNewModel(1);
+		}
+	}
+	else if (openPopup == 2)
+	{
+		if (!bSaved && mdl)
+		{
+			saveCallback = &CModelEditor::OnSaveOpenModel;
+			ImGui::OpenPopup("Continue without saving?##_MDLEDITCLOSE");
+		}
+		else
+			ThoriumEditor::OpenFile(openMdlId, (FAssetClass*)CModelAsset::StaticClass());
+	}
+	else if (openPopup == 3)
+	{
+		SaveMdl();
+	}
+
 	if (!bOpen)
 	{
 		bExit = true;
 
-		gEditorEngine()->PollRemoveLayer(this);
+		if (!bSaved && mdl)
+		{
+			saveCallback = &CModelEditor::OnSaveExit;
+			ImGui::OpenPopup("Continue without saving?##_MDLEDITCLOSE");
+		}
+		else
+			gEditorEngine()->PollRemoveLayer(this);
+	}
+
+	int savePopupResult = -1;
+
+	if (ImGui::BeginPopupModal("Continue without saving?##_MDLEDITCLOSE"))
+	{
+		ImGui::Text("are you sure you want to continue without saving?");
+
+		if (ImGui::Button("Save"))
+		{
+			ImGui::CloseCurrentPopup();
+			SaveMdl();
+			savePopupResult = 1;
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Don't Save"))
+		{
+			//gEditorEngine()->PollRemoveLayer(this);
+			Revert();
+			ImGui::CloseCurrentPopup();
+			savePopupResult = 2;
+		}
+
+		ImGui::SameLine();
+
+		if (ImGui::Button("Cancel"))
+		{
+			//bWantsToClose = false;
+			ImGui::CloseCurrentPopup();
+			savePopupResult = 0;
+		}
+
+		ImGui::EndPopup();
+	}
+
+	if (savePopupResult != -1 && saveCallback)
+	{
+		(this->*saveCallback)(savePopupResult);
+		saveCallback = nullptr;
 	}
 }
 
@@ -450,6 +681,8 @@ void CModelEditor::LoadMeshFile(FMeshFile& m)
 
 void CModelEditor::Compile()
 {
+	TArray<FMaterial> oldMats = mdl->materials;
+
 	mdl->ClearMeshData();
 	mdl->meshes.Clear();
 	mdl->materials.Clear();
@@ -461,12 +694,15 @@ void CModelEditor::Compile()
 
 	for (auto& file : meshFiles)
 	{
+		if (!file.scene)
+			LoadMeshFile(file);
+
 		if (file.scene)
 		{
 			auto* scene = file.scene;
 			auto* root = scene->mRootNode;
 
-			for (int i = 0; i < scene->mNumMaterials; i++)
+			for (uint i = 0; i < scene->mNumMaterials; i++)
 			{
 				aiMaterial* sMat = scene->mMaterials[i];
 
@@ -476,7 +712,7 @@ void CModelEditor::Compile()
 				mdl->materials.Add(mat);
 			}
 
-			for (int i = 0; i < scene->mNumSkeletons; i++)
+			for (uint i = 0; i < scene->mNumSkeletons; i++)
 			{
 				aiSkeleton* skeleton = scene->mSkeletons[i];
 				
@@ -487,27 +723,44 @@ void CModelEditor::Compile()
 
 					aiVector3D scale;
 					aiVector3D pos;
-					aiVector3D rot;
-					float roll;
-
-					mat.Decompose(scale, rot, roll, pos);
+					aiQuaternion rot;
+					
+					mat.Decompose(scale, rot, pos);
 
 					FBone b;
 					b.name = bone->mNode ? bone->mNode->mName.C_Str() : "BONE";
 					b.position = { pos.x, pos.y, pos.z };
-					b.direction = { rot.x, rot.y, rot.z };
-					b.roll = roll;
+					b.rotation = { rot.x, rot.y, rot.z, rot.w };
+
 					b.parent = bone->mParent == -1 ? -1 : bone->mParent + (int)boneOffset;
+
+					mdl->skeleton.bones.Add(b);
 				}
 			}
 
-			CompileNode(scene, root, meshesOffset, materialsOffset, boneOffset);
+			CompileNode(file, scene, root, meshesOffset, materialsOffset, boneOffset);
 
 			materialsOffset = mdl->materials.Size();
 			meshesOffset = mdl->meshes.Size();
 			boneOffset = mdl->skeleton.bones.Size();
 		}
 	}
+
+	for (auto& mat : mdl->materials)
+	{
+		for (auto& m : oldMats)
+		{
+			if (mat.name == m.name)
+			{
+				mat.obj = m.obj;
+				mat.path = m.path;
+				break;
+			}
+		}
+	}
+
+	mdl->CalculateBounds();
+	mdl->UpdateBoneMatrices();
 
 	bCompiled = true;
 	modelEnt->SetModel(mdl);
@@ -521,12 +774,27 @@ aiMatrix4x4 GetNodeWorldTransform(aiNode* node)
 	return node->mTransformation;
 }
 
-void CModelEditor::CompileNode(const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, SizeType& boneOffset)
+void CModelEditor::CompileNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, SizeType& boneOffset)
 {
-	for (int i = 0; i < node->mNumMeshes; i++)
+	for (uint i = 0; i < node->mNumMeshes; i++)
+	{
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+
+		for (uint ii = 0; ii < mesh->mNumBones; ii++)
+		{
+			aiBone* bone = mesh->mBones[ii];
+
+
+		}
+	}
+
+	for (uint i = 0; i < node->mNumMeshes; i++)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 		aiMatrix4x4 transform = GetNodeWorldTransform(node);
+
+		FMatrix mat = file.transform.ToMatrix();
+		transform = (*(aiMatrix4x4*)&mat) * transform;
 
 		FMesh fmesh;
 		fmesh.meshName = mesh->mName.C_Str();
@@ -542,9 +810,13 @@ void CModelEditor::CompileNode(const aiScene* scene, aiNode* node, SizeType& mes
 		TArray<FVertex> vertices;
 		TArray<uint> indices;
 
-		for (int i = 0; i < mesh->mNumVertices; i++)
+		for (uint i = 0; i < mesh->mNumVertices; i++)
 		{
 			FVertex v;
+			v.bones[0] = -1;
+			v.bones[1] = -1;
+			v.bones[2] = -1;
+			v.bones[3] = -1;
 
 			auto vPos = mesh->mVertices[i];
 			auto vNormal = mesh->mNormals ? mesh->mNormals[i] : aiVector3D(0, 1, 0);
@@ -576,13 +848,48 @@ void CModelEditor::CompileNode(const aiScene* scene, aiNode* node, SizeType& mes
 			vertices.Add(v);
 		}
 
-		for (int i = 0; i < mesh->mNumFaces; i++)
+		for (uint i = 0; i < mesh->mNumFaces; i++)
 		{
 			aiFace& face = mesh->mFaces[i];
 
-			for (int ii = 0; ii < face.mNumIndices; ii++)
+			if (face.mNumIndices == 3)
 			{
-				indices.Add(face.mIndices[ii]);
+				indices.Add(face.mIndices[0]);
+				indices.Add(face.mIndices[2]);
+				indices.Add(face.mIndices[1]);
+			}
+			else if (face.mNumIndices == 2)
+			{
+				indices.Add(face.mIndices[0]);
+				indices.Add(face.mIndices[1]);
+			}
+			else
+				indices.Add(face.mIndices[0]);
+		}
+
+		for (uint i = 0; i < mesh->mNumBones; i++)
+		{
+			auto* b = mesh->mBones[i];
+			
+			SizeType bIndex = mdl->GetBoneIndex(b->mName.C_Str());
+			if (bIndex == -1)
+			{
+				
+				continue;
+			}
+
+			for (uint ii = 0; ii < b->mNumWeights; ii++)
+			{
+				auto& weight = b->mWeights[ii];
+				for (int x = 0; x < 4; x++)
+				{
+					if (vertices[weight.mVertexId].bones[x] == -1)
+					{
+						vertices[weight.mVertexId].bones[x] = (int)bIndex;
+						vertices[weight.mVertexId].boneInfluence[x] = weight.mWeight;
+						break;
+					}
+				}
 			}
 		}
 
@@ -594,7 +901,7 @@ void CModelEditor::CompileNode(const aiScene* scene, aiNode* node, SizeType& mes
 		fmesh.indexData = (uint*)malloc(indices.Size() * sizeof(uint));
 		fmesh.numIndexData = indices.Size();
 
-		memcpy(fmesh.indexData, indices.Data(), indices.Size() * sizeof(FVertex));
+		memcpy(fmesh.indexData, indices.Data(), indices.Size() * sizeof(uint));
 
 		fmesh.numVertices = vertices.Size();
 		fmesh.numIndices = indices.Size();
@@ -602,11 +909,13 @@ void CModelEditor::CompileNode(const aiScene* scene, aiNode* node, SizeType& mes
 		fmesh.vertexBuffer = gRenderer->CreateVertexBuffer(vertices);
 		fmesh.indexBuffer = gRenderer->CreateIndexBuffer(indices);
 
+		fmesh.CalculateBounds();
+
 		mdl->meshes.Add(fmesh);
 	}
 
 	for (int i = 0; i < node->mNumChildren; i++)
-		CompileNode(scene, node->mChildren[i], meshOffset, matOffset, boneOffset);
+		CompileNode(file, scene, node->mChildren[i], meshOffset, matOffset, boneOffset);
 }
 
 void CModelEditor::DrawMeshResources(FMeshFile& m)
@@ -646,7 +955,7 @@ void CModelEditor::DrawAiNode(const aiScene* scene, aiNode* node)
 		{
 			if (ImGui::TableTreeHeader("Meshes", 0, true))
 			{
-				for (int i = 0; i < node->mNumMeshes; i++)
+				for (uint i = 0; i < node->mNumMeshes; i++)
 				{
 					aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 					if (ImGui::TableTreeHeader(mesh->mName.C_Str(), 0, true))
@@ -687,7 +996,7 @@ void CModelEditor::DrawAiNode(const aiScene* scene, aiNode* node)
 		{
 			if (ImGui::TableTreeHeader("Children", 0, true))
 			{
-				for (int i = 0; i < node->mNumChildren; i++)
+				for (uint i = 0; i < node->mNumChildren; i++)
 					DrawAiNode(scene, node->mChildren[i]);
 
 				ImGui::TreePop();
@@ -695,4 +1004,64 @@ void CModelEditor::DrawAiNode(const aiScene* scene, aiNode* node)
 		}
 		ImGui::TreePop();
 	}
+}
+
+void CModelEditor::OnSaveNewModel(int r)
+{
+	if (r != 0)
+	{
+		SetModel(CreateObject<CModelAsset>());
+	}
+}
+
+void CModelEditor::OnSaveExit(int r)
+{
+	if (r == 0)
+		bExit = false;
+	else
+		gEditorEngine()->PollRemoveLayer(this);
+}
+
+void CModelEditor::OnSaveOpenModel(int r)
+{
+	if (r != 0)
+		ThoriumEditor::OpenFile(openMdlId, (FAssetClass*)CModelAsset::StaticClass());
+}
+
+void CModelEditor::SaveMdl()
+{
+	if (!mdl)
+		return;
+
+	if (!mdl->File())
+	{
+		ThoriumEditor::SaveFile(saveMdlId, (FAssetClass*)CMaterial::StaticClass());
+		return;
+	}
+
+	FKeyValue kv(mdl->File()->GetSdkPath());
+	for (int i = 0; i < meshFiles.Size(); i++)
+	{
+		auto* cat = kv.GetCategory(meshFiles[i].name + "_" + FString::ToString(i), true);
+
+		cat->SetValue("file", meshFiles[i].file);
+
+		FVector& pos = meshFiles[i].transform.position;
+		FVector& rot = meshFiles[i].rotation;
+		FVector& scl = meshFiles[i].transform.scale;
+
+		cat->SetValue("position", (std::to_string(pos.x) + "," + std::to_string(pos.y) + "," + std::to_string(pos.z)).c_str());
+		cat->SetValue("rotation", (std::to_string(rot.x) + "," + std::to_string(rot.y) + "," + std::to_string(rot.z)).c_str());
+		cat->SetValue("scale", (std::to_string(scl.x) + "," + std::to_string(scl.y) + "," + std::to_string(scl.z)).c_str());
+	}
+	kv.Save();
+
+	mdl->Save();
+	bSaved = true;
+}
+
+void CModelEditor::Revert()
+{
+	// ??
+	bSaved = true;
 }

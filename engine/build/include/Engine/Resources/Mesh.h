@@ -47,10 +47,10 @@ public:
 public:
 	// This is only used for saving new mesh data.
 	SizeType numVertexData;
-	FVertex* vertexData;
+	FVertex* vertexData = nullptr;
 
 	SizeType numIndexData;
-	uint* indexData;
+	uint* indexData = nullptr;
 
 	SizeType meshDataOffset;
 };

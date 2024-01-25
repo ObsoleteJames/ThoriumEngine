@@ -85,5 +85,4 @@ private:
 	};
 
 	std::multimap<std::string, PropertyCache> cache;
-
 };

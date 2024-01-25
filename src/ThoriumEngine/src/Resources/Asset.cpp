@@ -9,6 +9,16 @@ void CAsset::SaveAs(const FString& newPath)
 	Save();
 }
 
+void CAsset::Serialize(FMemStream& out)
+{
+	BaseClass::Serialize(out);
+}
+
+void CAsset::Load(FMemStream& in)
+{
+	BaseClass::Load(in);
+}
+
 void CAsset::OnDelete()
 {
 	if (bRegistered)

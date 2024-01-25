@@ -128,10 +128,7 @@ void CModelAsset::Init()
 
 		*stream >> bone.name;
 		*stream >> &bone.parent;
-		*stream >> &bone.position >> &bone.direction;
-
-		if (fileVersion > THMDL_VERSION_4)
-			*stream >> &bone.roll;
+		*stream >> &bone.position >> &bone.rotation;
 	}
 
 	bInitialized = true;
@@ -258,9 +255,10 @@ void CModelAsset::Save()
 
 		*stream << bone.name;
 		*stream << &bone.parent;
-		*stream << &bone.position << &bone.direction;
-		*stream << &bone.roll;
+		*stream << &bone.position << &bone.rotation;
 	}
+
+	UpdateBoneMatrices();
 	
 	if (bLoadedMeshData)
 		ClearMeshData();
@@ -426,6 +424,26 @@ FBounds CModelAsset::CalculateBounds()
 	return bounds;
 }
 
+FBone* CModelAsset::GetBone(const FString& name)
+{
+	for (auto& b : skeleton.bones)
+	{
+		if (b.name == name)
+			return &b;
+	}
+	return nullptr;
+}
+
+SizeType CModelAsset::GetBoneIndex(const FString& name)
+{
+	for (SizeType i = 0; i < skeleton.bones.Size(); i++)
+	{
+		if (skeleton.bones[i].name == name)
+			return i;
+	}
+	return -1;
+}
+
 int CModelAsset::GetLodFromDistance(float distance)
 {
 	for (int8 i = numLODs; i > 0; i--)
@@ -454,6 +472,20 @@ void CModelAsset::ClearMeshes()
 			delete[] mesh.indexData;
 	}
 	meshes.Clear();
+}
+
+void CModelAsset::UpdateBoneMatrices()
+{
+	for (SizeType i = 0; i < skeleton.bones.Size(); i++)
+	{
+		FMatrix local = (FMatrix(1.f).Translate(skeleton.bones[i].position) * skeleton.bones[i].rotation);
+		skeleton.invModel[i] = skeleton.bones[i].parent != -1 ? skeleton.invModel[skeleton.bones[i].parent] * local : local;
+	}
+
+	for (SizeType i = 0; i < skeleton.bones.Size(); i++)
+	{
+		skeleton.invModel[i] = skeleton.invModel[i].Inverse();
+	}
 }
 
 void FMesh::CalculateBounds()
