@@ -169,11 +169,11 @@ void CPropertyEditor::OnUIRender()
 
 				for (auto& comp : selectedEntities[0]->GetAllComponents())
 				{
-					if (auto scene = CastChecked<CSceneComponent>(comp); scene != nullptr)
+					if (auto scene = CastChecked<CSceneComponent>(comp.second); scene != nullptr)
 					{
 						if (scene->GetParent() == nullptr && scene != selectedEntities[0]->RootComponent())
 						{
-							nonSceneComps.Add(comp);
+							nonSceneComps.Add(comp.second);
 						}
 						if (scene->GetParent())
 						{
@@ -187,12 +187,12 @@ void CPropertyEditor::OnUIRender()
 								}
 							}
 							if (bInvalid)
-								nonSceneComps.Add(comp);
+								nonSceneComps.Add(comp.second);
 						}
 					}
 					else
 					{
-						nonSceneComps.Add(comp);
+						nonSceneComps.Add(comp.second);
 					}
 				}
 

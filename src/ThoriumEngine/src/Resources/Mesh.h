@@ -36,7 +36,7 @@ public:
 	uint32 numVertices;
 	uint32 materialIndex;
 
-	ETopologyType topologyType = TOPOLOGY_TRIANGLES;
+	uint8 topologyType = TOPOLOGY_TRIANGLES;
 	FString meshName;
 
 	FBounds bounds;

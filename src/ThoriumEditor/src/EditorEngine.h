@@ -71,6 +71,7 @@ public:
 
 private:
 	void InitEditorData();
+	void SetupEditorDocking();
 
 	void GenerateGrid(float gridSize, float quadSize, FMesh* out);
 
@@ -104,6 +105,8 @@ private:
 	void SceneFileDialogs();
 
 	void DupeEntity();
+
+	void DrawObjectCreateMenu();
 
 public:
 	IFrameBuffer* sceneFrameBuffer;

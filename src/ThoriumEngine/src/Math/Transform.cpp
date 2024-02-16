@@ -21,5 +21,5 @@ FTransform FTransform::operator*(const FTransform& t) const
 
 FMatrix FTransform::ToMatrix() const
 {
-	return FMatrix(1.f).Translate(position).Scale(scale) * rotation;
+	return (FMatrix(1.f).Translate(position) * rotation).Scale(scale);
 }

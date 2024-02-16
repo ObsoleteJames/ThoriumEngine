@@ -100,9 +100,42 @@ void FMeshBuilder::DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& tr
 	meshes.Add({ mesh, mat, transform, skeletonMatrix, rp });
 }
 
-bool CPrimitiveProxy::DoFrustumCull(CCameraProxy* cam)
+// https://bruop.github.io/frustum_culling/
+bool CPrimitiveProxy::DoFrustumCull(const FMatrix& projection)
 {
-	return true;
+	FVector min = bounds.Min();
+	FVector max = bounds.Max();
+
+	glm::vec4 corners[8] = {
+		{min.x, min.y, min.z, 1.0}, // x y z
+		{max.x, min.y, min.z, 1.0}, // X y z
+		{min.x, max.y, min.z, 1.0}, // x Y z
+		{max.x, max.y, min.z, 1.0}, // X Y z
+
+		{min.x, min.y, max.z, 1.0}, // x y Z
+		{max.x, min.y, max.z, 1.0}, // X y Z
+		{min.x, max.y, max.z, 1.0}, // x Y Z
+		{max.x, max.y, max.z, 1.0}, // X Y Z
+	};
+
+	bool bInside = false;
+
+	glm::mat4& t = *(glm::mat4*)&projection;
+
+	for (int i = 0; i < 8; i++)
+	{
+		glm::vec4 corner = t * corners[i];
+
+		bInside = bInside || 
+			(corner.x > -corner.w && corner.x < corner.w) &&
+			(corner.y > -corner.w && corner.y < corner.w) &&
+			(corner.z > 0 && corner.z < corner.w);
+
+		if (bInside)
+			return true;
+	}
+
+	return false;
 }
 
 bool CPostProcessVolumeProxy::IsCameraInsideVolume(CCameraProxy* proxy) const

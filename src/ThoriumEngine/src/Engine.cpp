@@ -76,7 +76,8 @@ void CEngine::InitMinimal()
 
 	// Fetch core addons
 	FetchAddons(engineMod->Path() + "/addons", coreAddons);
-	
+
+	CONSOLE_LogInfo("CEngine", "Initialization complete");
 	bInitialized = true;
 }
 
@@ -415,22 +416,21 @@ void CEngine::Exit()
 
 void CEngine::OnExit()
 {
-	SaveUserConfig();
-	SaveConsoleLog();
+	CONSOLE_LogInfo("CEngine", "Shutting down...");
 
-	//delete gWorld;
+	SaveUserConfig();
+
 	gWorld->Delete();
 	delete gRenderer;
 	delete gameWindow;
 
 	CWindow::Shutdown();
 
-	//for (auto obj : CObjectManager::GetAllObjects())
-	//	delete obj.second;
-	
-	CConsole::Shutdown();
 	CResourceManager::Shutdown();
 	CModuleManager::Cleanup();
+
+	SaveConsoleLog();
+	CConsole::Shutdown();
 }
 
 void CEngine::InitImGui()

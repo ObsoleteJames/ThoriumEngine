@@ -16,7 +16,44 @@ CEntityComponent* CEntity::AddComponent(FClass* type, const FString& name)
 	comp->SetOwner(this);
 	comp->Init();
 
-	components.Add(comp);
+	auto findC = components.find(comp->ComponentId());
+	while (findC != components.end())
+	{
+		// re-generate the id
+		comp->compId = FGuid();
+
+		findC = components.find(comp->ComponentId());
+	}
+
+	components[comp->ComponentId()] = comp;
+	if (world->IsActive())
+		comp->OnStart();
+
+	return comp;
+}
+
+CEntityComponent* CEntity::AddComponent(FClass* type, SizeType id)
+{
+	CEntityComponent* comp = (CEntityComponent*)CreateObject(type, name);
+	if (!comp)
+		return nullptr;
+
+	comp->ent = this;
+	comp->SetOwner(this);
+	comp->Init();
+
+	comp->compId = id;
+
+	auto findC = components.find(comp->ComponentId());
+	while (findC != components.end())
+	{
+		// re-generate the id
+		comp->compId = FGuid();
+
+		findC = components.find(comp->ComponentId());
+	}
+
+	components[comp->ComponentId()] = comp;
 	if (world->IsActive())
 		comp->OnStart();
 
@@ -29,19 +66,29 @@ CEntityComponent* CEntity::GetComponent(FClass* type, const FString& name)
 	{
 		for (auto& comp : components)
 		{
-			if (comp->GetClass() == type && comp->Name() == name)
-				return comp;
+			if (comp.second->GetClass() == type && comp.second->Name() == name)
+				return comp.second;
 		}
 	}
 	else
 	{
 		for (auto& comp : components)
 		{
-			if (comp->GetClass() == type)
-				return comp;
+			if (comp.second->GetClass() == type)
+				return comp.second;
 		}
 	}
 
+	return nullptr;
+}
+
+CEntityComponent* CEntity::GetComponent(SizeType id)
+{
+	for (auto& comp : components)
+	{
+		if (comp.first == id)
+			return comp.second;
+	}
 	return nullptr;
 }
 
@@ -49,9 +96,9 @@ void CEntity::RemoveComponent(CEntityComponent* comp)
 {
 	for (auto it = components.begin(); it != components.end(); it++)
 	{
-		if (*it == comp)
+		if (it->second == comp)
 		{
-			components.Erase(it);
+			components.erase(it);
 			comp->Delete();
 			break;
 		}
@@ -69,7 +116,7 @@ FBounds CEntity::GetBounds()
 	FBounds r;
 	for (auto comp : components)
 	{
-		if (auto scene = Cast<CSceneComponent>(comp); scene)
+		if (auto scene = Cast<CSceneComponent>(comp.second); scene)
 			r = r.Combine(scene->Bounds());
 	}
 	return r;
@@ -83,7 +130,7 @@ void CEntity::Init()
 void CEntity::OnStart()
 {
 	for (auto& comp : components)
-		comp->OnStart();
+		comp.second->OnStart();
 
 	outputOnStart();
 }
@@ -95,32 +142,32 @@ void CEntity::OnStop()
 void CEntity::Update(double dt)
 {
 	for (auto& comp : components)
-		comp->Update(dt);
+		comp.second->Update(dt);
 }
 
 void CEntity::Serialize(FMemStream& out)
 {
 	BaseClass::Serialize(out);
 
-	SizeType numComponents = components.Size();
+	SizeType numComponents = components.size();
 	out << &numComponents;
 
 	for (auto& comp : components)
 	{
 		// Write component class typename
-		out << comp->GetClass()->GetInternalName();
+		out << comp.second->GetClass()->GetInternalName();
 
 		// Write the components name. this already gets written by the default serializer
 		// but we need it earlier in order to write to the correct component when loading.
-		out << comp->Name();
+		out << comp.second->Name();
 
 		FMemStream compOut;
-		comp->Serialize(compOut);
+		comp.second->Serialize(compOut);
 
-		SizeType id = comp->Id();
+		SizeType id = comp.first;
 		out << &id;
 
-		bool bUserCreated = comp->IsUserCreated();
+		bool bUserCreated = comp.second->IsUserCreated();
 		out << &bUserCreated;
 
 		SizeType compDataSize = compOut.Size();
@@ -167,11 +214,19 @@ void CEntity::Load(FMemStream& in)
 
 		CEntityComponent* comp = nullptr;
 		if (!bUserCreated)
+		{
 			comp = GetComponent(compClass, compName);
-		if (!comp)
-			comp = AddComponent(compClass, compName);
 
-		comp->SetId(compId);
+			if (comp)
+			{
+				components.erase(comp->compId);
+				components[compId] = comp;
+			}
+		}
+		if (!comp)
+			comp = AddComponent(compClass, compId);
+
+		comp->compId = compId;
 		comps[i].Key = comp;
 		comps[i].Value.Resize(compDataSize);
 		in.Read(comps[i].Value.Data(), compDataSize);
@@ -180,6 +235,7 @@ void CEntity::Load(FMemStream& in)
 	for (SizeType i = 0; i < numComponents; i++)
 	{
 		comps[i].Key->Load(comps[i].Value);
+		comps[i].Key->SetOwner(this);
 		if (comps[i].Key->bEditorOnly && !gIsEditor)
 			RemoveComponent(comps[i].Key);
 	}
@@ -187,9 +243,10 @@ void CEntity::Load(FMemStream& in)
 
 void CEntity::OnDelete()
 {
-	for (auto it = components.rbegin(); it != components.rend(); it++)
-		(*it)->Delete();
-	components.Clear();
+	auto comps = components;
+	for (auto it = comps.rbegin(); it != comps.rend(); it++)
+		it->second->Delete();
+	components.clear();
 
 	FWorldRegisterer::UnregisterEntity(world, this);
 }

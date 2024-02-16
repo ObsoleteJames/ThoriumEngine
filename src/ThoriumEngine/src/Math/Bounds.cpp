@@ -47,40 +47,44 @@ FBounds FBounds::Combine(const FBounds& b) const
 
 FBounds FBounds::Rotate(const FQuaternion& r, const FVector& pivot) const
 {
-	//FVector maxX = FVector(extents.x * 2, extents.y, 0) - pivot;
-	//FVector maxY = FVector(0, extents.y * 2, 0) - pivot;
-	//FVector maxZ = FVector(0, extents.y, extents.z * 2) - pivot;
-
-	//maxX = r.Rotate(maxX) + pivot;
-	//maxY = r.Rotate(maxY) + pivot;
-	//maxZ = r.Rotate(maxZ) + pivot;
-
-	//FBounds b;
-	//b.extents.x = maxX.x > maxY.x ? (maxX.x > maxZ.x ? maxX.x : maxZ.x) : maxY.x;
-	//b.extents.y = maxX.y > maxY.y ? (maxX.y > maxZ.y ? maxX.y : maxZ.y) : maxY.y;
-	//b.extents.z = maxX.z > maxY.z ? (maxX.z > maxZ.z ? maxX.z : maxZ.z) : maxY.z;
-	//b.extents /= 2;
-
-	FVector min = Min();
-	FVector max = Max();
-	min -= pivot;
-	max -= pivot;
-
-	min = r.Rotate(min) + pivot;
-	max = r.Rotate(max) + pivot;
-	
 	FVector nMin;
 	FVector nMax;
 
-	nMin.x = min.x < max.x ? min.x : max.x;
-	nMin.y = min.y < max.y ? min.y : max.y;
-	nMin.z = min.z < max.z ? min.z : max.z;
+	FVector min = Min();
+	FVector max = Max();
 
-	nMax.x = min.x > max.x ? min.x : max.x;
-	nMax.y = min.y > max.y ? min.y : max.y;
-	nMax.z = min.z > max.z ? min.z : max.z;
+	FVector verts[8] = {
+		min,
+		FVector(min.x, min.y, max.z),
+		FVector(max.x, min.y, max.z),
+		FVector(max.x, min.y, min.z),
+		max,
+		FVector(max.x, max.y, min.z),
+		FVector(min.x, max.y, min.z),
+		FVector(min.x, max.y, max.z)
+	};
 
-	//b.position = position;
+	for (int i = 0; i < 8; i++)
+		verts[i] = r.Rotate(verts[i] - pivot) + pivot;
+
+	for (int i = 0; i < 8; i++)
+	{
+		FVector& v = verts[i];
+
+		if (v.x < nMin.x)
+			nMin.x = v.x;
+		if (v.y < nMin.y)
+			nMin.y = v.y;
+		if (v.z < nMin.z)
+			nMin.z = v.z;
+
+		if (v.x > nMax.x)
+			nMax.x = v.x;
+		if (v.y > nMax.y)
+			nMax.y = v.y;
+		if (v.z > nMax.z)
+			nMax.z = v.z;
+	}
 
 	return FromMinMax(nMin, nMax);
 }

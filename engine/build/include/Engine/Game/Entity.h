@@ -86,20 +86,25 @@ public:
 	{
 		arr.Clear();
 		for (auto& comp : components)
-			if (comp->GetClass() == T::StaticClass())
+			if (comp.second->GetClass() == T::StaticClass())
 				arr.Add(comp);
 	}
 
-	inline const TArray<TObjectPtr<CEntityComponent>>& GetAllComponents() const { return components; }
+	inline const TMap<SizeType, TObjectPtr<CEntityComponent>>& GetAllComponents() const { return components; }
 
 	CEntityComponent* AddComponent(FClass* type, const FString& name);
 	CEntityComponent* GetComponent(FClass* type, const FString& name = "");
+
+	CEntityComponent* AddComponent(FClass* type, SizeType id);
+	CEntityComponent* GetComponent(SizeType id);
 
 	void RemoveComponent(CEntityComponent* comp);
 
 	inline CWorld* GetWorld() const { return world; }
 
 	inline CSceneComponent* RootComponent() const { return rootComponent; }
+
+	inline SizeType EntityId() const { return entityId; }
 
 	FUNCTION()
 	inline void SetWorldPosition(const FVector& p) { rootComponent->SetWorldPosition(p); }
@@ -193,11 +198,13 @@ protected:
 	CWorld* world;
 	TObjectPtr<CSceneComponent> rootComponent;
 
+	FGuid entityId;
+
 private:
 	PROPERTY()
 	TArray<FOutputBinding> boundOutputs;
 
-	TArray<TObjectPtr<CEntityComponent>> components;
+	TMap<SizeType, TObjectPtr<CEntityComponent>> components;
 
 	bool bIsInitialized;
 

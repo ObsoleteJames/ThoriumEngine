@@ -6,6 +6,16 @@
 
 const SizeType zero = 0;
 
+enum EObjectPtrType
+{
+	OBJPTR_GENERIC,
+	//OBJPTR_OWNER_REF, // reference to the object that owns this object
+	OBJPTR_ASSET_REF,
+	OBJPTR_WORLD_ENTITY_REF,
+	OBJPTR_WORLD_ENTITY_COMP_REF, // reference to a component on another entity
+	OBJPTR_ENTITY_COMP_REF, // reference to a component on this entity (or the owning entity if this is a component)
+};
+
 CObject::CObject()
 {
 	CObjectManager::RegisterObject(this);
@@ -172,6 +182,9 @@ void CObject::OnNetDelete_Implementation()
 
 }
 
+#include "Game/Entity.h"
+#include "Game/EntityComponent.h"
+
 void CObject::SerializeProperty(FMemStream& data, uint type, const FProperty* p, SizeType offset, void* object)
 {
 	switch (type)
@@ -228,22 +241,56 @@ void CObject::SerializeProperty(FMemStream& data, uint type, const FProperty* p,
 	case EVT_OBJECT_PTR:
 	{
 		TObjectPtr<CObject>& ptr = *(TObjectPtr<CObject>*)((SizeType)object + offset);
-		bool bIsAsset = CModuleManager::FindClass(p->typeName)->CanCast(CAsset::StaticClass());
-		//out << &bIsAsset;
 
-		// This should be updated to use asset ids
+		EObjectPtrType type = OBJPTR_GENERIC;
+		SizeType objId = 0;
+		FClass* ptrClass = ptr.IsValid() ? ptr->GetClass() : CModuleManager::FindClass(p->typeName);
+		if (ptrClass->CanCast(CAsset::StaticClass()))
+			type = OBJPTR_ASSET_REF;
+		else if (ptrClass->CanCast(CEntity::StaticClass()))
+		{
+			type = OBJPTR_WORLD_ENTITY_REF;
+			if (auto ent = CastChecked<CEntity>(ptr); ent)
+				objId = ent->EntityId();
+		}
+		else if (ptrClass->CanCast(CEntityComponent::StaticClass()))
+		{
+			if (auto comp = CastChecked<CEntityComponent>(ptr); comp)
+			{
+				if (auto thisEnt = Cast<CEntity>(this); thisEnt && comp->GetEntity() == thisEnt)
+					type = OBJPTR_ENTITY_COMP_REF;
+				else if (auto thisComp = Cast<CEntityComponent>(this); thisComp && comp->GetEntity() == thisComp->GetEntity())
+					type = OBJPTR_ENTITY_COMP_REF;
+				else
+					type = OBJPTR_WORLD_ENTITY_COMP_REF;
+
+				objId = comp->ComponentId();
+			}
+		}
+
+		data << &type;
+
 		if (ptr.IsValid())
 		{
-			if (!bIsAsset)
+			if (type == OBJPTR_GENERIC)
 				data << &ptr->id;
-			else
+			else if (type == OBJPTR_ASSET_REF)
 				data << ((TObjectPtr<CAsset>)ptr)->GetPath();
+			else if (type != OBJPTR_WORLD_ENTITY_COMP_REF)
+				data << &objId;
+			else
+			{
+				auto comp = Cast<CEntityComponent>(ptr);
+				SizeType entId = comp->GetEntity()->EntityId();
+				data << &entId;
+				data << &objId;
+			}
 		}
 		else
 		{
-			if (bIsAsset)
+			if (type == OBJPTR_ASSET_REF)
 			{
-				wchar_t nul = L'\0';
+				char nul = '\0';
 				data << &nul;
 			}
 			else
@@ -365,9 +412,18 @@ bool CObject::LoadProperty(FMemStream& in, uint type, const FProperty* p, SizeTy
 	{
 		TObjectPtr<CObject>& ptr = *(TObjectPtr<CObject>*)((SizeType)object + offset);
 		FClass* cType = CModuleManager::FindClass(p->typeName);
-		bool bIsAsset = cType->CanCast(CAsset::StaticClass());
+		
+		EObjectPtrType type;
+		in >> &type;
 
-		if (bIsAsset)
+		if (type == OBJPTR_GENERIC)
+		{
+			SizeType id;
+			in >> &id;
+
+			ptr = CObjectManager::FindObject(id);
+		}
+		else if (type == OBJPTR_ASSET_REF)
 		{
 			FString path;
 			in >> path;
@@ -375,12 +431,46 @@ bool CObject::LoadProperty(FMemStream& in, uint type, const FProperty* p, SizeTy
 			if (!path.IsEmpty())
 				ptr = (TObjectPtr<CObject>)CResourceManager::GetResource((FAssetClass*)cType, path);
 		}
-		else
+		else if (type == OBJPTR_WORLD_ENTITY_REF)
+		{
+			CWorld* world = gWorld;
+			if (auto thisEnt = Cast<CEntity>(this); thisEnt)
+				world = thisEnt->GetWorld();
+
+			SizeType id;
+			in >> &id;
+
+			if (world)
+				ptr = world->GetEntity(id);
+		}
+		else if (type == OBJPTR_WORLD_ENTITY_COMP_REF)
+		{
+			CWorld* world = gWorld;
+			if (auto thisEnt = Cast<CEntity>(this); thisEnt)
+				world = thisEnt->GetWorld();
+
+			SizeType entId;
+			SizeType id;
+
+			in >> &entId;
+			in >> &id;
+
+			if (world)
+			{
+				auto* ent = world->GetEntity(entId);
+				if (ent)
+					ptr = ent->GetComponent(id);
+			}
+		}
+		else if (type == OBJPTR_ENTITY_COMP_REF)
 		{
 			SizeType id;
 			in >> &id;
 
-			ptr = CObjectManager::FindObject(id);
+			if (auto thisEnt = Cast<CEntity>(this); thisEnt)
+				ptr = thisEnt->GetComponent(id);
+			else if (auto thisComp = Cast<CEntityComponent>(this); thisComp)
+				ptr = thisComp->GetEntity()->GetComponent(id);
 		}
 	}
 		break;
@@ -434,7 +524,11 @@ void CObject::SetOwner(CObject* obj)
 		return;
 
 	if (Owner)
-		Owner->Children.Erase(Owner->Children.Find(this));
+	{
+		auto it = Owner->Children.Find(this);
+		if (it != Owner->Children.end())
+			Owner->Children.Erase(Owner->Children.Find(this));
+	}
 
 	Owner = obj;
 	if (Owner)

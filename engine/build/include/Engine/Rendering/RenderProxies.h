@@ -91,7 +91,7 @@ public:
 	virtual void GetDynamicMeshes(FMeshBuilder& out) {}
 	virtual void GetStaticMeshes(FMeshBuilder& out) {}
 
-	virtual bool DoFrustumCull(CCameraProxy* cam);
+	virtual bool DoFrustumCull(const FMatrix& projection);
 
 	virtual void UpdateLOD(CCameraProxy* cam) {}
 

@@ -84,5 +84,5 @@ public:
 	void Seek(size_t pos, int8 from) override;
 	
 private:
-	FILE* f;
+	FILE* f = nullptr;
 };

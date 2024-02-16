@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Math/Vectors.h"
+#include "Math/Transform.h"
 
 struct FBone
 {

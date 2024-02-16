@@ -9,7 +9,8 @@
 
 #define THMDL_VERSION_3 0x0003
 #define THMDL_VERSION_4 0x0004
-#define THMDL_VERSION 0x0005
+#define THMDL_VERSION_5 0x0005
+#define THMDL_VERSION 0x0006
 
 #define THMDL_MAGIC_SIZE 27
 static const char* thmdlMagicStr = "\0\0ThoriumEngine Model File\0";
@@ -62,10 +63,16 @@ void CModelAsset::Init()
 		SizeType nextMesh;
 		*stream >> &nextMesh;
 
+		if (fileVersion > THMDL_VERSION_5)
+			*stream >> meshes[i].meshName;
+
 		SizeType numVertices;
 		SizeType numIndices;
 
 		*stream >> &numVertices >> &numIndices;
+
+		if (fileVersion > THMDL_VERSION_5)
+			*stream >> &meshes[i].topologyType;
 
 		if (fileVersion > THMDL_VERSION_3)
 			*stream >> &meshes[i].bounds;
@@ -83,6 +90,10 @@ void CModelAsset::Init()
 	{
 		uint32 numIndices;
 		*stream >> &numIndices;
+
+		// fucking idiot forgot to save the distance bias.
+		if (fileVersion > THMDL_VERSION_5)
+			*stream >> &LODs[i].distanceBias;
 
 		LODs[i].meshIndices.Resize(numIndices);
 
@@ -191,7 +202,10 @@ void CModelAsset::Save()
 
 		mesh.meshDataOffset = prevOffset;
 
+		*stream << mesh.meshName;
+
 		*stream << &mesh.numVertexData << & mesh.numIndexData;
+		*stream << &mesh.topologyType;
 		*stream << &mesh.bounds;
 
 		for (SizeType i = 0; i < mesh.numVertexData; i++)
@@ -216,8 +230,10 @@ void CModelAsset::Save()
 
 	for (uint i = 0; i < numLODs; i++)
 	{
-		uint32 numIndices = (uint)LODs[i].meshIndices.Size();
+		uint32 numIndices = (uint32)LODs[i].meshIndices.Size();
 		*stream << &numIndices;
+
+		*stream << &LODs[i].distanceBias;
 
 		for (uint32 x = 0; x < numIndices; x++)
 			*stream << &LODs[i].meshIndices[x];
@@ -314,7 +330,17 @@ void CModelAsset::Load(uint8 lodLevel)
 		TArray<FVertex> vertices;
 		TArray<uint> indices;
 
-		*stream >> &nextOffset >> &numVertices >> &numIndices;
+		*stream >> &nextOffset;
+
+		FString tempName;
+		
+		if (fileVersion > THMDL_VERSION_5)
+			*stream >> tempName;
+
+		*stream >> &numVertices >> &numIndices;
+
+		if (fileVersion > THMDL_VERSION_5)
+			*stream >> &meshes[it].topologyType;
 
 		if (fileVersion > THMDL_VERSION_3)
 			*stream >> &meshes[it].bounds;
@@ -364,6 +390,8 @@ void CModelAsset::Unload(uint8 lodLevel)
 		meshes[it].vertexBuffer->Delete();
 		meshes[it].indexBuffer->Delete();
 	}
+
+	SetLodLevel(lodLevel, false);
 }
 
 void CModelAsset::LoadMeshData()
@@ -386,8 +414,21 @@ void CModelAsset::LoadMeshData()
 
 		SizeType numVertices;
 		SizeType numIndices;
+
+		*stream >> &nextOffset;
 		
-		*stream >> &nextOffset >> &numVertices >> &numIndices;
+		FString tempName;
+
+		if (fileVersion > THMDL_VERSION_5)
+			*stream >> tempName;
+		
+		*stream >> &numVertices >> &numIndices;
+
+		if (fileVersion > THMDL_VERSION_5)
+			*stream >> &mesh.topologyType;
+
+		if (fileVersion > THMDL_VERSION_3)
+			*stream >> &mesh.bounds;
 
 		FVertex* vertices = new FVertex[numVertices];
 		uint* indices = new uint[numIndices];
@@ -413,6 +454,9 @@ void CModelAsset::ClearMeshData()
 			delete[] mesh.vertexData;
 		if (mesh.indexData)
 			delete[] mesh.indexData;
+
+		mesh.vertexData = nullptr;
+		mesh.indexData = nullptr;
 	}
 }
 
@@ -448,9 +492,9 @@ int CModelAsset::GetLodFromDistance(float distance)
 {
 	for (int8 i = numLODs; i > 0; i--)
 	{
-		if (LODs[i - 1].distanceBias <= distance)
+		if (distance > LODs[i - 1].distanceBias)
 		{
-			if (IsLodLoaded(i - 1))
+			//if (IsLodLoaded(i - 1))
 				return i - 1;
 		}
 	}

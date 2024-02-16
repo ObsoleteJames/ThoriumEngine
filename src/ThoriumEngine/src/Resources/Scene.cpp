@@ -26,26 +26,26 @@ void CScene::Save(CWorld* world)
 	else
 		*stream << FString("");
 
-	TArray<TObjectPtr<CEntity>>& ents = world->entities;
+	TMap<SizeType, TObjectPtr<CEntity>>& ents = world->entities;
 	SizeType numEntsOffset = stream->Tell();
 	SizeType numEnts = 0;
 	*stream << &numEnts;
 
 	for (auto& ent : ents)
 	{
-		SizeType entId = ent->Id();
+		SizeType entId = ent.second->EntityId();
 		SizeType dataSize;
 
 #if INCLUDE_EDITOR_DATA
-		if (ent->bEditorEntity)
+		if (ent.second->bEditorEntity)
 			continue;
 #endif
 
 		FMemStream data;
-		ent->Serialize(data);
+		ent.second->Serialize(data);
 
 		dataSize = data.Size();
-		*stream << ent->GetClass()->GetInternalName() << &entId << &dataSize;
+		*stream << ent.second->GetClass()->GetInternalName() << &entId << &dataSize;
 
 		stream->Write(data.Data(), data.Size());
 		numEnts++;

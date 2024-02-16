@@ -370,9 +370,14 @@ void DirectXRenderer::DrawMesh(FMesh* mesh)
 	deviceContext->OMSetDepthStencilState(nullptr, 0);
 	
 	if (mesh->indexBuffer)
+	{
 		deviceContext->DrawIndexed(mesh->numIndices, 0, 0);
+		gRenderStats.numTris += mesh->numIndices / 3;
+	}
 	else
 		deviceContext->Draw(mesh->numVertices, 0);
+
+	gRenderStats.numDrawCalls++;
 }
 
 void DirectXRenderer::DrawMesh(FDrawMeshCmd* info)
@@ -430,9 +435,14 @@ void DirectXRenderer::DrawMesh(FDrawMeshCmd* info)
 	//	deviceContext->OMSetDepthStencilState(nullptr, 0);
 
 	if (mesh->indexBuffer)
+	{
 		deviceContext->DrawIndexed(mesh->numIndices, 0, 0);
+		gRenderStats.numTris += mesh->numIndices / 3;
+	}
 	else
 		deviceContext->Draw(mesh->numVertices, 0);
+
+	gRenderStats.numDrawCalls++;
 }
 
 void DirectXRenderer::DrawMesh(FMeshBuilder::FRenderMesh* data)
@@ -479,9 +489,14 @@ void DirectXRenderer::DrawMesh(FMeshBuilder::FRenderMesh* data)
 	//	deviceContext->OMSetDepthStencilState(nullptr, 0);
 
 	if (topologyType == D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST && mesh->indexBuffer)
+	{
 		deviceContext->DrawIndexed(mesh->numIndices, 0, 0);
+		gRenderStats.numTris += mesh->numIndices / 3;
+	}
 	else
 		deviceContext->Draw(mesh->numVertices, 0);
+
+	gRenderStats.numDrawCalls++;
 }
 
 void DirectXRenderer::SetVsShader(IShader* shader)

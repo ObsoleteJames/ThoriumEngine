@@ -64,6 +64,11 @@ CModelEditor::CModelEditor()
 
 	openMdlId = "MdlEditorOpenMdl" + FString::ToString((SizeType)this);
 	saveMdlId = "MdlEditorSaveMdl" + FString::ToString((SizeType)this);
+
+	FString id = "modelEditor_" + FString::ToString((SizeType)this);
+	propertiesId = "Properties###mdlProps" + id;
+	dockspaceId = "dockspace" + id;
+	sceneId = "Scene##mdlScene" + id;
 }
 
 void CModelEditor::SetModel(CModelAsset* mdl)
@@ -139,16 +144,20 @@ void CModelEditor::OnUpdate(double dt)
 
 void CModelEditor::OnUIRender()
 {
-	FString title = "Model Editor";
+	FString id = "modelEditor_" + FString::ToString((SizeType)this);
+	static FString title;
+	title = "Model Editor";
 	if (mdl && mdl->File())
 		title += " - " + mdl->File()->Name();
 	else if (mdl)
 		title += " - New Model";
 
-	title += "###modelEditor_" + FString::ToString((SizeType)this);
-
-	FString f;
-	FString m;
+	title += "###" + id;
+	
+	static FString f;
+	static FString m;
+	f.Clear();
+	m.Clear();
 
 	if (ThoriumEditor::AcceptFile(openMdlId, &f) && !f.IsEmpty())
 	{
@@ -163,7 +172,7 @@ void CModelEditor::OnUIRender()
 	}
 
 	bool bOpen = true;
-	ImGui::SetNextWindowSize(ImVec2(1280, 720), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(1280, 840), ImGuiCond_FirstUseEver);
 
 	auto flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoSavedSettings;
 	if (!bSaved)
@@ -208,12 +217,52 @@ void CModelEditor::OnUIRender()
 			ImGui::EndMenuBar();
 		}
 
-		ImVec2 size = ImGui::GetContentRegionAvail();
-		sizeR = size.x - sizeL;
+		ImGuiID dockspace_id = ImGui::GetID(dockspaceId.c_str());
+		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), 0);
 
-		ImGui::Splitter("##mdleditSplitter", false, 4.f, &sizeL, &sizeR, 100);
+		if (!_init)
+		{
+			_init = true;
 
-		if (ImGui::BeginChild("mdleditProps", ImVec2(sizeL, 0), false, ImGuiWindowFlags_AlwaysUseWindowPadding))
+			ImGui::DockBuilderRemoveNode(dockspace_id);
+			ImGui::DockBuilderAddNode(dockspace_id);
+
+			ImGuiID dock1 = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Left, 0.3f, nullptr, &dockspace_id);
+			ImGuiID dock2 = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.7f, nullptr, &dockspace_id);
+
+			ImGui::DockBuilderDockWindow(propertiesId.c_str(), dock1);
+			ImGui::DockBuilderDockWindow(sceneId.c_str(), dock2);
+
+			ImGui::DockBuilderFinish(dockspace_id);
+		}
+
+		if (ImGui::Begin(sceneId.c_str(), 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar))
+		{
+			auto wndSize = ImGui::GetContentRegionAvail();
+
+			DirectXFrameBuffer* fb = (DirectXFrameBuffer*)framebuffer;
+			ImGui::Image(fb->view, { wndSize.x, wndSize.y });
+
+			if (ImGui::BeginDragDropTarget())
+			{
+				if (auto* p = ImGui::AcceptDragDropPayload("THORIUM_ASSET_FILE"); p != nullptr)
+				{
+					FFile* file = *(FFile**)p->Data;
+					FAssetClass* type = CResourceManager::GetResourceTypeByFile(file);
+					if (type == (FAssetClass*)CModelAsset::StaticClass())
+					{
+						SetModel(CResourceManager::GetResource<CModelAsset>(file->Path()));
+					}
+				}
+				ImGui::EndDragDropTarget();
+			}
+
+			viewportWidth = FMath::Max((int)wndSize.x, 32);
+			viewportHeight = FMath::Max((int)wndSize.y, 32);
+		}
+		ImGui::End();
+
+		if (ImGui::Begin(propertiesId.c_str(), 0, ImGuiWindowFlags_AlwaysUseWindowPadding))
 		{
 			ImGui::BeginDisabled(mdl == nullptr);
 
@@ -260,7 +309,7 @@ void CModelEditor::OnUIRender()
 						/*ImGui::TableNextRow();
 						ImGui::TableNextColumn();*/
 
-						bOpen = ImGui::TableTreeHeader(mesh.name.IsEmpty() ? ("New Mesh##" + FString::ToString(i)).c_str() : (mesh.name + "##" + FString::ToString(i)).c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowOverlap);
+						bOpen = ImGui::TableTreeHeader(mesh.name.IsEmpty() ? ("New Mesh##" + FString::ToString(i)).c_str() : (mesh.name + "##" + FString::ToString(i)).c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowOverlap, true);
 						ImGui::TableNextColumn();
 						ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 2);
 						ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
@@ -479,7 +528,7 @@ void CModelEditor::OnUIRender()
 							ImGui::TableNextColumn();
 
 							const char* preview = lod.meshIndices.Size() == 0 ? "none" : (lod.meshIndices.Size() > 1 ? "Multiple" : mdl->meshes[lod.meshIndices[0]].meshName.c_str());
-							if (ImGui::BeginCombo(("##lodMeshes" + FString::ToString(i)).c_str(), ""))
+							if (ImGui::BeginCombo(("##lodMeshes" + FString::ToString(i)).c_str(), preview))
 							{
 								for (int m = 0; m < mdl->meshes.Size(); m++)
 								{
@@ -488,7 +537,7 @@ void CModelEditor::OnUIRender()
 										if (ii == m)
 											bSelected = true;
 
-									if (ImGui::Selectable(("##_comboMesh" + FString::ToString(i)).c_str(), bSelected))
+									if (ImGui::Selectable((mdl->meshes[m].meshName + "##_comboMesh" + FString::ToString(m)).c_str(), bSelected))
 									{
 										if (bSelected)
 											lod.meshIndices.Erase(lod.meshIndices.Find(m));
@@ -537,34 +586,7 @@ void CModelEditor::OnUIRender()
 
 			ImGui::EndDisabled();
 		}
-		ImGui::EndChild();
-
-		ImGui::SameLine();
-
-		auto wndSize = ImGui::GetContentRegionAvail();
-		auto cursorPos = ImGui::GetCursorScreenPos();
-		viewportX = cursorPos.x;
-		viewportY = cursorPos.y;
-
-		DirectXFrameBuffer* fb = (DirectXFrameBuffer*)framebuffer;
-		ImGui::Image(fb->view, { wndSize.x, wndSize.y });
-
-		if (ImGui::BeginDragDropTarget())
-		{
-			if (auto* p = ImGui::AcceptDragDropPayload("THORIUM_ASSET_FILE"); p != nullptr)
-			{
-				FFile* file = *(FFile**)p->Data;
-				FAssetClass* type = CResourceManager::GetResourceTypeByFile(file);
-				if (type == (FAssetClass*)CModelAsset::StaticClass())
-				{
-					SetModel(CResourceManager::GetResource<CModelAsset>(file->Path()));
-				}
-			}
-			ImGui::EndDragDropTarget();
-		}
-
-		viewportWidth = FMath::Max((int)wndSize.x, 32);
-		viewportHeight = FMath::Max((int)wndSize.y, 32);
+		ImGui::End();
 	}
 	ImGui::End();
 
@@ -740,6 +762,12 @@ void CModelEditor::Compile()
 
 			CompileNode(file, scene, root, meshesOffset, materialsOffset, boneOffset);
 
+			for (int i = 0; i < mdl->meshes.Size(); i++)
+			{
+				if (mdl->meshes[i].meshName.IsEmpty())
+					mdl->meshes[i].meshName = "Mesh " + FString::ToString(i);
+			}
+
 			materialsOffset = mdl->materials.Size();
 			meshesOffset = mdl->meshes.Size();
 			boneOffset = mdl->skeleton.bones.Size();
@@ -776,17 +804,17 @@ aiMatrix4x4 GetNodeWorldTransform(aiNode* node)
 
 void CModelEditor::CompileNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, SizeType& boneOffset)
 {
-	for (uint i = 0; i < node->mNumMeshes; i++)
-	{
-		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+	//for (uint i = 0; i < node->mNumMeshes; i++)
+	//{
+	//	aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
-		for (uint ii = 0; ii < mesh->mNumBones; ii++)
-		{
-			aiBone* bone = mesh->mBones[ii];
+	//	for (uint ii = 0; ii < mesh->mNumBones; ii++)
+	//	{
+	//		aiBone* bone = mesh->mBones[ii];
 
 
-		}
-	}
+	//	}
+	//}
 
 	for (uint i = 0; i < node->mNumMeshes; i++)
 	{

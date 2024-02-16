@@ -62,7 +62,7 @@ bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitive
 	float closesthit = maxDistance > 0.f ? maxDistance : FLT_MAX;
 	bool r = false;
 
-	// this is fucking disgusting. who ever wrote this, kill yourself.
+	// this is fucking disgusting. kill yourself.
 	// TODO: partition the primitives for optimization.
 	for (auto* p : primitves)
 	{

@@ -275,26 +275,26 @@ int CEditorEngine::Run()
 
 void CEditorEngine::OnExit()
 {
+	CONSOLE_LogInfo("CEngine", "Shutting down...");
+
 	SaveEditorConfig();
-	SaveConsoleLog();
 
 	delete assetBrowser;
-	delete gWorld;
+	gWorld->Delete();
 	delete gRenderer;
 	delete gameWindow;
 
 	CWindow::Shutdown();
 
-	CConsole::Shutdown();
 	CResourceManager::Shutdown();
 	CModuleManager::Cleanup();
+
+	SaveConsoleLog();
+	CConsole::Shutdown();
 }
 
 void CEditorEngine::UpdateEditor()
 {
-	if (bImGuiDemo)
-		ImGui::ShowDemoWindow(&bImGuiDemo);
-
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 	const ImGuiViewport* viewport = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -310,6 +310,13 @@ void CEditorEngine::UpdateEditor()
 	ImGui::PopStyleVar(3);
 
 	ImGuiID dockspace_id = ImGui::GetID("EditorDockSpace");
+	static bool bInitDock = false;
+	if (!bInitDock)
+	{
+		bInitDock = true;
+		SetupEditorDocking();
+	}
+
 	ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
 
 	enum EMenuAction {
@@ -418,6 +425,9 @@ void CEditorEngine::UpdateEditor()
 
 	ImGui::End();
 
+	if (bImGuiDemo)
+		ImGui::ShowDemoWindow(&bImGuiDemo);
+
 	if (menuAction == MenuAction_SaveScene || (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_S)))
 		SaveScene();
 	if (menuAction == MenuAction_NewScene || (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_N)))
@@ -427,6 +437,8 @@ void CEditorEngine::UpdateEditor()
 
 	if (bOpenProj)
 		ImGui::OpenPopup("Open Project");
+
+	ImGui::SetNextWindowSize(ImVec2(785, 510), ImGuiCond_FirstUseEver);
 
 	// Project Selection
 	if (ImGui::BeginPopupModal("Open Project", &bOpenProj))
@@ -482,6 +494,26 @@ void CEditorEngine::UpdateEditor()
 
 		if (ImGui::BeginChild("sceneToolBar", ImVec2(wndSize.x, 32)))
 		{
+			ITexture2D* btnSave = ThoriumEditor::GetThemeIcon("floppy");
+			ImGui::SetCursorPos({ 3.f, 3.f });
+
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+			if (ImGui::ImageButton("##btnSaveScene", TEX_VIEW(btnSave), ImVec2(16, 16)))
+				SaveScene();
+			ImGui::PopStyleColor();
+
+			ImGui::SameLine();
+			ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical, 2);
+			ImGui::SameLine();
+
+			ImGui::Button("Create Object", ImVec2(0, 0));
+
+			if (ImGui::BeginPopupContextItem(nullptr, ImGuiPopupFlags_MouseButtonLeft))
+			{
+				DrawObjectCreateMenu();
+				ImGui::EndPopup();
+			}
+
 			ImGui::SetCursorScreenPos(cursorPos + ImVec2(wndSize.x / 2 - 100, 4));
 			ITexture2D* btnPlay = ThoriumEditor::GetThemeIcon("btn-play");
 			ITexture2D* btnPause = ThoriumEditor::GetThemeIcon("btn-pause");
@@ -646,7 +678,7 @@ void CEditorEngine::UpdateEditor()
 
 				for (auto& ent : gWorld->GetEntities())
 				{
-					OutlinerDrawEntity(ent);
+					OutlinerDrawEntity(ent.second);
 				}
 
 				ImGui::EndTable();
@@ -675,6 +707,12 @@ void CEditorEngine::UpdateEditor()
 			ImGui::Text("update: %.2f(ms)", updateTime);
 			ImGui::Text("render: %.2f(ms)", renderTime);
 			ImGui::Text("editor update: %.2f(ms)", editorUpdateTime);
+
+			ImGui::Text("draw calls: %d", gRenderStats.numDrawCalls);
+			ImGui::Text("triangles drawn: %d", gRenderStats.numTris);
+
+			ImGui::Text("primitives drawn: %d/%d", gRenderStats.drawPrimitives, gRenderStats.totalPrimitives);
+
 			if (gWorld)
 				ImGui::Text("cur time: %.2f", gWorld->CurTime());
 
@@ -733,7 +771,7 @@ void CEditorEngine::UpdateEditor()
 			ImGui::Text("object count: %d", CObjectManager::GetAllObjects().size());
 			//ImGui::Text("objects to be deleted: %d", CObjectManager::)
 			if (gWorld)
-				ImGui::Text("entities count: %d", gWorld->GetEntities().Size());
+				ImGui::Text("entities count: %d", gWorld->GetEntities().size());
 
 			// Resources
 			ImGui::Separator();
@@ -844,14 +882,14 @@ void CEditorEngine::GenerateBuildData()
 void CEditorEngine::InitEditorData()
 {
 	TArray<FVertex> boxVerts = {
-	{ { -1, 1, 1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ { 1, 1, 1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ { -1, 1, -1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ { 1, 1, -1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ {-1, -1, 1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ { 1, -1, 1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ { -1, -1, -1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-	{ { 1, -1, -1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
+		{ { -1, 1, 1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ { 1, 1, 1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ { -1, 1, -1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ { 1, 1, -1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ {-1, -1, 1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ { 1, -1, 1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ { -1, -1, -1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ { 1, -1, -1 }, {}, {}, {}, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 	};
 
 	TArray<uint> boxInds = {
@@ -887,6 +925,31 @@ void CEditorEngine::InitEditorData()
 	gridMat = CreateObject<CMaterial>();
 	gridMat->SetShader("Tools");
 	gridMat->SetInt("vType", 1);
+}
+
+void CEditorEngine::SetupEditorDocking()
+{
+	ImGuiID dockspace_id = ImGui::GetID("EditorDockSpace");
+
+	if (ImGui::DockBuilderGetNode(dockspace_id) != nullptr)
+		return;
+
+	ImGui::DockBuilderAddNode(dockspace_id);
+
+	ImGuiID dock1 = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.2f, nullptr, &dockspace_id);
+	//ImGuiID dock2 = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Right, 0.2f, nullptr, &dockspace_id);
+
+	ImGuiID dock3 = ImGui::DockBuilderSplitNode(dock1, ImGuiDir_Down, 0.6f, nullptr, &dock1);
+	ImGuiID dock4 = ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Down, 0.3f, nullptr, &dockspace_id);
+
+	ImGui::DockBuilderDockWindow("Scene##_gameSceneViewport", dockspace_id);
+	ImGui::DockBuilderDockWindow("Scene Outliner##_editorSceneOutliner", dock1);
+	ImGui::DockBuilderDockWindow("Properties##_editorPropertyEditor", dock3);
+	ImGui::DockBuilderDockWindow("Input/Output##_editorIOWidget", dock3);
+	ImGui::DockBuilderDockWindow("Asset Browser##_editorAssetBrowser", dock4);
+	ImGui::DockBuilderDockWindow("Console##_editorConsoleWidget", dock4);
+
+	ImGui::DockBuilderFinish(dockspace_id);
 }
 
 void CEditorEngine::GenerateGrid(float gridSize, float quadSize, FMesh* outMesh)
@@ -967,6 +1030,8 @@ bool CEditorEngine::SaveScene()
 		return false;
 	}
 
+	gWorld->Save();
+
 	CFStream sdkStream = gWorld->GetScene()->File()->GetSdkStream("wb");
 	if (sdkStream.IsOpen())
 	{
@@ -976,8 +1041,6 @@ bool CEditorEngine::SaveScene()
 		sdkStream << &camPos << &camRot;
 		sdkStream.Close();
 	}
-
-	gWorld->Save();
 	return true;
 }
 
@@ -1180,7 +1243,7 @@ void CEditorEngine::DoModelAssetDrop(TObjectPtr<CModelAsset> mdl, bool bPeek)
 
 		CModelEntity* mdlEnt = gWorld->CreateEntity<CModelEntity>(mdl->File()->Name() + " Entity");
 		mdlEnt->SetModel(mdl);
-		mdlEnt->SetPosition(hit.position);
+		mdlEnt->SetPosition(hit.position - FVector(0, mdl->GetBounds().Min().y, 0));
 	}
 }
 
@@ -1364,7 +1427,7 @@ void CEditorEngine::OutlinerDrawEntity(CEntity* ent, bool bRoot)
 		ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0, 0, 0, 0));
 	else
 		ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.21f, 0.26f, 0.38f, 1.00f));
-	if (ImGui::Selectable(("##ent_select_" + ent->Name()).c_str(), bSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap))
+	if (ImGui::Selectable(("##ent_select_" + ent->Name() + FString::ToString(ent->Id())).c_str(), bSelected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap))
 	{
 		if (ImGui::IsKeyDown(ImGuiKey_ModCtrl))
 		{
@@ -1454,8 +1517,9 @@ void CEditorEngine::EntityContextMenu(CEntity* ent, const FVector& clickPos)
 
 	if (ImGui::BeginMenu("Attach To"))
 	{
-		for (auto& e : gWorld->GetEntities())
+		for (auto& _e : gWorld->GetEntities())
 		{
+			auto e = _e.second;
 			if (e == ent)
 				continue;
 
@@ -1539,4 +1603,59 @@ void CEditorEngine::SceneFileDialogs()
 void CEditorEngine::DupeEntity()
 {
 
+}
+
+// Includes for all entity types
+#include "Game/Entities/SunLightEntity.h"
+#include "Game/Entities/PointLightEntity.h"
+#include "Game/Entities/PlayerStart.h"
+#include "Game/Entities/ModelEntity.h"
+
+void CEditorEngine::DrawObjectCreateMenu()
+{
+	auto* scene = gWorld->GetRenderScene();
+	FVector entPos = scene->GetPrimaryCamera() ? scene->GetPrimaryCamera()->position + scene->GetPrimaryCamera()->rotation.Rotate(FVector(0, 0, 1)) : FVector();
+
+	if (ImGui::MenuItem("Entity"))
+		gWorld->CreateEntity<CEntity>("Entity", entPos);
+
+	if (ImGui::MenuItem("Player Start"))
+		gWorld->CreateEntity<CPlayerStart>("Player Start", entPos);
+
+	if (ImGui::BeginMenu("Shapes"))
+	{
+		if (ImGui::MenuItem("Cube"))
+		{
+			auto ent = gWorld->CreateEntity<CModelEntity>("Cube", entPos);
+			ent->SetModel("models/Cube.thmdl");
+		}
+
+		if (ImGui::MenuItem("Sphere"))
+		{
+			auto ent = gWorld->CreateEntity<CModelEntity>("Sphere", entPos);
+			ent->SetModel("models/Sphere.thmdl");
+		}
+
+		if (ImGui::MenuItem("Cylinder"))
+		{
+			auto ent = gWorld->CreateEntity<CModelEntity>("Cube", entPos);
+			ent->SetModel("models/Cube.thmdl");
+		}
+
+		ImGui::EndMenu();
+	}
+
+	if (ImGui::BeginMenu("Lights"))
+	{
+		if (ImGui::MenuItem("Sun Light"))
+			gWorld->CreateEntity<CSunLightEntity>("Sun Light", entPos);
+
+		if (ImGui::MenuItem("Point Light"))
+			gWorld->CreateEntity<CPointLightEntity>("Point Light", entPos);
+
+		if (ImGui::MenuItem("Spot Light"))
+			gWorld->CreateEntity<CPointLightEntity>("Point Light", entPos);
+
+		ImGui::EndMenu();
+	}
 }

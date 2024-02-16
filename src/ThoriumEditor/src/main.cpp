@@ -87,7 +87,7 @@ int main(int argc, char** argv)
 #endif
 {
 #ifdef _WIN32
-#ifdef _DEBUG
+#ifdef IS_DEV
 	if (!IsDebuggerPresent())
 	{
 		//MessageBoxA(nullptr, "", "No debugger attached", MB_OK);

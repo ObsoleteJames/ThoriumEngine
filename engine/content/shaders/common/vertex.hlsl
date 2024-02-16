@@ -45,7 +45,7 @@
     float3x3 normalMat = transpose((float3x3)inverse(mul(skeletonTransform, vObjectMatrix)));\
     output.vNormalWs = normalize(mul(normalMat, output.vNormalWs));\
     output.vTangentUWs = normalize(mul(normalMat, output.vTangentUWs));\
-    output.vTangentVWs = normalize(cross(output.vNormalWs, output.vTangentUWs));\
+    output.vTangentVWs = normalize(cross(output.vTangentUWs, output.vNormalWs));\
     \
     output.vPositionWs = (float3)outPos; \
     output.vPositionPs = mul(vCameraMatrix, outPos); \

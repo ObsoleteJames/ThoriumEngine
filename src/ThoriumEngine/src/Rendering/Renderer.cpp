@@ -11,6 +11,8 @@
 #include <algorithm>
 
 IRenderer* gRenderer = nullptr;
+FRenderStatistics gRenderStats;
+
 std::mutex IRenderer::gpuMutex;
 
 std::thread renderThread;
@@ -225,9 +227,13 @@ void IRenderer::renderAll()
 
 	TArray<CRenderScene*>& renderQueue = gRenderer->renderScenes;
 
+	// reset render stats
+	gRenderStats = FRenderStatistics();
+
 	// Draw each scene.
 	for (auto scene : renderQueue)
 	{
+		gRenderer->curScene = scene;
 		RenderShadowMaps(scene);
 
 		for (auto* cam : scene->cameras)
@@ -240,8 +246,12 @@ void IRenderer::renderAll()
 
 		RenderUserInterface(scene);
 
+		gRenderStats.totalPrimitives += scene->GetPrimitives().Size();
+
 		scene->renderQueue.Clear();
 	}
+	gRenderer->curCamera = nullptr;
+	gRenderer->curScene = nullptr;
 
 	gRenderer->renderScenes.Clear();
 }
@@ -250,6 +260,8 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 {
 	static TArray<FRenderCommand> curCommands;
 	SizeType queueLastIndex = 0;
+
+	gRenderer->curCamera = camera;
 
 	int viewWidth, viewHeight;
 	scene->frameBuffer->GetSize(viewWidth, viewHeight);
@@ -277,10 +289,14 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		if (!primitive->IsVisible())
 			continue;
 
+		if (!primitive->DoFrustumCull(sceneInfo.camMatrix))
+			continue;
+
 		dynamicMeshes.Add({ primitive, FMeshBuilder() });
 		FMeshBuilder& dynamic = dynamicMeshes.last()->Value;
 
 		primitive->GetDynamicMeshes(dynamic);
+		gRenderStats.drawPrimitives++;
 	}
 
 	// ------------- SHADOW PASS -------------

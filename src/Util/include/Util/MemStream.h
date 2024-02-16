@@ -57,5 +57,5 @@ public:
 	inline bool EndOfFile() { return cursor == Size(); }
 
 private:
-	SizeType cursor;
+	SizeType cursor = 0;
 };

@@ -66,7 +66,7 @@ private:
 	FString openMatId;
 	FString saveMatId;
 
-	float sizeL = 360;
+	float sizeL = 460;
 	float sizeR = 200;
 
 	int viewportWidth, viewportHeight;

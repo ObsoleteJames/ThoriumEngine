@@ -63,6 +63,14 @@ protected:
 	void Revert();
 	
 private:
+	bool _init = false;
+
+	// window IDs
+	FString propertiesId;
+	FString dockspaceId;
+	FString sceneId;
+
+private:
 	bool bSaved = true;
 	bool bCompiled = true;
 	bool bExit = false;
@@ -85,8 +93,8 @@ private:
 
 	funcSaveCallback saveCallback = nullptr;
 
-	float sizeL = 420;
-	float sizeR;
+	//float sizeL = 420;
+	//float sizeR;
 
 	int viewportWidth = 32, viewportHeight = 32;
 	float viewportX = 0.f, viewportY = 0.f;

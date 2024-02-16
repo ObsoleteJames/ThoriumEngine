@@ -21,7 +21,10 @@ class IBaseWindow;
 class ITexture2D;
 class ITextureCube;
 
+struct FRenderStatistics;
+
 extern ENGINE_API IRenderer* gRenderer;
+extern ENGINE_API FRenderStatistics gRenderStats;
 
 enum class ERendererApi
 {
@@ -154,6 +157,15 @@ struct FTextSDFBuffer
 	uint uvIndex;
 };
 
+struct FRenderStatistics
+{
+	SizeType numTris;
+	SizeType numDrawCalls;
+
+	SizeType totalPrimitives;
+	SizeType drawPrimitives;
+};
+
 // -- Buffer Registers --
 // 0 : Unused
 // 1 : Scene Buffer
@@ -200,6 +212,12 @@ public:
 	inline static void UnlockGPU() { gpuMutex.unlock(); }
 
 	inline ERendererApi GetApi() const { return api; }
+
+	// the scene that is being rendered.
+	inline CRenderScene* CurrentScene() const { return curScene; }
+
+	// the camera that is being rendered.
+	inline CCameraProxy* CurrentCamera() const { return curCamera; }
 
 public:
 	virtual void CompileShader(const FString& source, IShader::EType shaderType, void** outBuffer, SizeType* outBufferSize) = 0;
@@ -273,6 +291,10 @@ private:
 	
 protected:
 	ERendererApi api;
+
+	// the currently rendering scene and camera
+	CRenderScene* curScene;
+	CCameraProxy* curCamera;
 
 	TArray<CRenderScene*> renderScenes;
 	//TArray<FRenderCommand> renderQueue;

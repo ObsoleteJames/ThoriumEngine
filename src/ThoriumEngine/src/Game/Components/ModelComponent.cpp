@@ -22,15 +22,18 @@ public:
 		if (!bVisible)
 			return;
 
-		//float distanceFromCamera = FVector::Distance(scene->GetCamera()->GetWorldPosition(), model->GetWorldPosition());
-		float distanceFromCamera = 0;
+		CRenderScene* scene = Cast<CModelComponent>(owner)->GetWorld()->GetRenderScene();
+		CCameraProxy* camera = scene ? scene->GetPrimaryCamera() : nullptr;
+
+		float distanceFromCamera = FVector::Distance(camera ? camera->position : FVector(), model->GetWorldPosition());
+		//float distanceFromCamera = 0;
 		int lodLevel = model->GetModel()->GetLodFromDistance(distanceFromCamera);
 		model->GetModel()->Load(lodLevel);
 
 		transform.position = model->GetWorldPosition();
 		transform.rotation = model->GetWorldRotation();
 		transform.scale = model->GetWorldScale();
-		matrix = FMatrix(1.f).Translate(transform.position).Scale(transform.scale) * transform.rotation;
+		matrix = (FMatrix(1.f).Translate(transform.position) * transform.rotation).Scale(transform.scale);
 		meshes = model->GetVisibleMeshes(lodLevel);
 		materials.Resize(model->GetMaterials().Size());
 		bounds = model->Bounds();
@@ -169,6 +172,15 @@ void CModelComponent::SetMaterial(CMaterial* mat, SizeType slot /*= 0*/)
 	materials[slot] = mat;
 }
 
+void CModelComponent::SetMaterial(const FString& matPath, SizeType slot /*= 0*/)
+{
+	TObjectPtr<CMaterial> mat = CResourceManager::GetResource<CMaterial>(matPath);
+	if (!mat)
+		mat = CResourceManager::GetResource<CMaterial>("materials/error.thmat");
+
+	SetMaterial(mat, slot);
+}
+
 void CModelComponent::Init()
 {
 	//FWorldRegisterer::RegisterModelComponent(GetWorld(), this);
@@ -188,6 +200,7 @@ void CModelComponent::OnDelete()
 	{
 		GetWorld()->UnregisterPrimitive(renderProxy);
 		delete renderProxy;
+		renderProxy = nullptr;
 	}
 
 	model = nullptr;

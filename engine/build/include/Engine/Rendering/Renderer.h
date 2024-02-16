@@ -201,6 +201,12 @@ public:
 
 	inline ERendererApi GetApi() const { return api; }
 
+	// the scene that is being rendered.
+	inline CRenderScene* CurrentScene() const { return curScene; }
+
+	// the camera that is being rendered.
+	inline CCameraProxy* CurrentCamera() const { return curCamera; }
+
 public:
 	virtual void CompileShader(const FString& source, IShader::EType shaderType, void** outBuffer, SizeType* outBufferSize) = 0;
 
@@ -273,6 +279,10 @@ private:
 	
 protected:
 	ERendererApi api;
+
+	// the currently rendering scene and camera
+	CRenderScene* curScene;
+	CCameraProxy* curCamera;
 
 	TArray<CRenderScene*> renderScenes;
 	//TArray<FRenderCommand> renderQueue;

@@ -38,6 +38,7 @@ public:
 	CMaterial* GetMaterial(SizeType slot);
 
 	void SetMaterial(CMaterial* mat, SizeType slot = 0);
+	void SetMaterial(const FString& matPath, SizeType slot = 0);
 
 	virtual void Init();
 	virtual void OnDelete();
@@ -61,7 +62,7 @@ private:
 	PROPERTY(Editable, Category = Rendering)
 	bool bCastShadows = true;
 
-	CModelComponentProxy* renderProxy;
+	CModelComponentProxy* renderProxy = nullptr;
 
 	PROPERTY()
 	TArray<int> activeBodyGroups;

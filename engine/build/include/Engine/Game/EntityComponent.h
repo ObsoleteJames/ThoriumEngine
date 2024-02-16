@@ -28,6 +28,8 @@ public:
 
 	inline bool IsUserCreated() const { return bUserCreated; }
 
+	inline SizeType ComponentId() const { return compId; }
+
 protected:
 	virtual void OnDelete();
 	
@@ -36,12 +38,14 @@ public:
 	bool bIsVisible = true;
 
 	PROPERTY(Editable)
-	bool bEditorOnly;
+	bool bEditorOnly = false;
 
 protected:
 	TObjectPtr<CEntity> ent;
 
 	PROPERTY()
-	bool bUserCreated;
+	bool bUserCreated = false;
+
+	FGuid compId;
 
 };

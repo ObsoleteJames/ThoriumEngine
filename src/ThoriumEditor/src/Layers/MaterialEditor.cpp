@@ -112,7 +112,7 @@ void CMaterialEditor::OnUIRender()
 	title += "###materialEditor_" + FString::ToString((SizeType)this);
 
 	bool bOpen = true;
-	ImGui::SetNextWindowSize(ImVec2(900, 620), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(1200, 720), ImGuiCond_FirstUseEver);
 
 	FString f;
 	FString m;

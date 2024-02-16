@@ -35,9 +35,29 @@ VS
 
 PS
 {
+	float3 CalculateNormal(PS_Input input)
+	{
+		float3 normalMap = SampleTexture2D(vNormalMap, input.vTextureCoords).xyz * 2 - 1;
+		//normalMap = float3(normalMap.x, normalMap.z, normalMap.y);	
+
+		normalMap = lerp(float3(0, 0, 1), normalMap, vNormalIntensity);
+		if (vNormalIntensity == 0)
+			return input.vNormalWs;
+
+		float3x3 TBN = float3x3(normalize(input.vTangentUWs), input.vTangentVWs, normalize(input.vNormalWs));
+		return normalize(mul(TBN, normalMap));
+	}
+
 	float4 Main(PS_Input input) : SV_TARGET
 	{
-		//return float4((normalize(input.vTangentUWs) + 1.f) / 2.f, 1.f);
-		return float4((normalize(input.vNormalWs) + 1.f) / 2.f, 1.f);
+		//float3 tan = normalize(cross(input.vNormalWs, input.vTangentUWs));
+		//float3 tan = input.vTangentVWs;
+		//tan = normalize(tan - dot(tan, input.vNormalWs) * input.vNormalWs);
+		//return float4((tan + 1.f) / 2.f, 1.f);
+		//return float4((input.vNormalWs + 1.f) / 2.f, 1.f);
+
+		float3 N = CalculateNormal(input);
+		
+		return float4((N + 1.f) / 2.f, 1.f);
 	}
 }

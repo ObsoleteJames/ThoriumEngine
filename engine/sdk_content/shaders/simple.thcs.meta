@@ -54,11 +54,13 @@ PS
 	float3 CalculateNormal(PS_Input input)
 	{
 		float3 normalMap = SampleTexture2D(vNormalMap, input.vTextureCoords).xyz * 2 - 1;
-		normalMap = normalize(lerp(float3(0, 1, 0), normalMap, vNormalIntensity));
+		//normalMap = float3(normalMap.x, normalMap.z, normalMap.y);	
+
+		normalMap = lerp(float3(0, 0, 1), normalMap, vNormalIntensity);
 		if (vNormalIntensity == 0)
 			return normalize(input.vNormalWs);
 
-		float3x3 TBN = float3x3(input.vTangentUWs, input.vTangentVWs, input.vNormalWs);
+		float3x3 TBN = float3x3(input.vTangentUWs, normalize(cross(input.vTangentUWs, input.vNormalWs)), input.vNormalWs);
 		return normalize(mul(TBN, normalMap));
 	}
 
@@ -244,7 +246,7 @@ PS
 		//float3 debugLod = lerp(float3(0.4f, 1, 0.4f), float3(1, 0.4f, 0.4f), min((float)texLod / 6.0f, 1.f));
 		//float3 debugLod = float3((float)texLod / 6.f, 1.f, 1.f);
 
-		float4 diffuse = SampleTexture2DLOD(vBaseColor, input.vTextureCoords, texLod) /*  * vColorTint */;
+		float4 diffuse = SampleTexture2DLOD(vBaseColor, input.vTextureCoords, texLod) * vColorTint;
 		float4 emmision = SampleTexture2D(vEmission, input.vTextureCoords) * vEmissionIntensity;
 		float rough = SampleTexture2D(vRoughness, input.vTextureCoords).r;
 		float metallic = SampleTexture2D(vMetallic, input.vTextureCoords).r;

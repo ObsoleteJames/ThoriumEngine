@@ -4,6 +4,7 @@
 #include <Util/Event.h>
 #include "EngineCore.h"
 #include "Object/Delegate.h"
+#include "Math/Vectors.h"
 #include <mutex>
 
 #include "World.generated.h"
@@ -118,9 +119,15 @@ public:
 	inline double CurTime() const { return time; }
 
 	template<typename T>
-	T* CreateEntity(const FString& name = "") { return (T*)CreateEntity(T::StaticClass(), name); }
+	T* CreateEntity(const FString& name = FString()) { return (T*)CreateEntity(T::StaticClass(), name); }
+
+	template<typename T>
+	T* CreateEntity(const FString& name, const FVector& position, const FQuaternion& rot = FQuaternion(), const FVector& scale = FVector(1));
 
 	CEntity* CreateEntity(FClass* classType, const FString& name);
+
+	CEntity* GetEntity(const FString& name);
+	CEntity* GetEntity(SizeType entityId);
 
 	inline CGameMode* GetGameMode() const { return gamemode; }
 	void SetGameMode(const TObjectPtr<CGameMode>& gm);
@@ -139,7 +146,7 @@ public:
 	template<typename T>
 	TArray<TObjectPtr<T>> FindEntitiesOfType();
 
-	inline const TArray<TObjectPtr<CEntity>>& GetEntities() const { return entities; }
+	inline const TMap<SizeType, TObjectPtr<CEntity>>& GetEntities() const { return entities; }
 
 	void Start();
 	void Stop();
@@ -182,7 +189,9 @@ protected:
 
 	CWorld* parent = nullptr;
 	TArray<CWorld*> subWorlds;
-	TArray<TObjectPtr<CEntity>> entities;
+
+	//   EntityId, EntityPtr
+	TMap<SizeType, TObjectPtr<CEntity>> entities;
 
 	// The window that this scene gets rendered to.
 	IBaseWindow* renderWindow = nullptr;
@@ -213,12 +222,23 @@ protected:
 };
 
 template<typename T>
+T* CWorld::CreateEntity(const FString& name, const FVector& position, const FQuaternion& rot /*= FQuaternion()*/, const FVector& scale /*= FVector()*/)
+{
+	T* ent = CreateEntity<T>(name);
+
+	ent->SetWorldPosition(position);
+	ent->SetWorldRotation(rot);
+	ent->SetWorldScale(scale);
+	return ent;
+}
+
+template<typename T>
 TArray<TObjectPtr<T>> CWorld::FindEntitiesOfType()
 {
 	TArray<TObjectPtr<T>> r;
 	for (auto& ent : entities)
 	{
-		if (auto c = Cast<T>(ent); c.IsValid())
+		if (auto c = Cast<T>(ent.second); c.IsValid())
 			r.Add(c);
 	}
 

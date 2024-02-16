@@ -131,7 +131,10 @@ void CWorld::LoadScene(CScene* ptr)
 			continue;
 		}
 
-		ent->SetId(entId);
+		entities.erase(ent->entityId);
+		entities[entId] = ent;
+
+		ent->entityId = entId;
 
 		ents.Add();
 		TPair<CEntity*, FMemStream>& d = *ents.last();
@@ -169,10 +172,36 @@ CEntity* CWorld::CreateEntity(FClass* classType, const FString& name)
 	if (bActive)
 		r->OnStart();
 
-	OnEntityCreated.Invoke(r);
+	auto findE = entities.find(r->EntityId());
+	while (findE != entities.end())
+	{
+		// re-generate the id
+		r->entityId = FGuid();
 
-	entities.Add(r);
+		findE = entities.find(r->EntityId());
+	}
+	entities[r->EntityId()] = r;
+
+	OnEntityCreated.Invoke(r);
 	return r;
+}
+
+CEntity* CWorld::GetEntity(const FString& name)
+{
+	for (auto& ent : entities)
+		if (ent.second->Name() == name)
+			return ent.second;
+
+	return nullptr;
+}
+
+CEntity* CWorld::GetEntity(SizeType entityId)
+{
+	for (auto& ent : entities)
+		if (ent.first == entityId)
+			return ent.second;
+
+	return nullptr;
 }
 
 void CWorld::SetGameMode(const TObjectPtr<CGameMode>& gm)
@@ -217,7 +246,7 @@ void CWorld::Start()
 		sub->Start();
 
 	for (auto& ent : entities)
-		ent->OnStart();
+		ent.second->OnStart();
 }
 
 void CWorld::Stop()
@@ -226,7 +255,7 @@ void CWorld::Stop()
 		return;
 
 	for (auto& ent : entities)
-		ent->OnStop();
+		ent.second->OnStop();
 
 	for (auto& sub : subWorlds)
 		sub->Stop();
@@ -261,12 +290,12 @@ void CWorld::Update(double dt)
 		{
 			if (bActive)
 			{
-				if (ent->type == ENTITY_DYNAMIC && !ent->bEditorEntity)
-					ent->Update(dt);
+				if (ent.second->type == ENTITY_DYNAMIC && !ent.second->bEditorEntity)
+					ent.second->Update(dt);
 			}
-			else if (ent->bEditorEntity)
+			else if (ent.second->bEditorEntity)
 			{
-				ent->Update(dt);
+				ent.second->Update(dt);
 			}
 		}
 	}
@@ -274,8 +303,8 @@ void CWorld::Update(double dt)
 	{
 		for (auto& ent : entities)
 		{
-			if (ent->type == ENTITY_DYNAMIC)
-				ent->Update(dt);
+			if (ent.second->type == ENTITY_DYNAMIC)
+				ent.second->Update(dt);
 		}
 	}
 
@@ -289,14 +318,14 @@ void CWorld::Render()
 
 	renderScene->SetTime((float)CurTime());
 
+	for (auto* c : cameras)
+		c->FetchData();
+
 	for (auto* p : primitives)
 		p->FetchData();
 
 	for (auto* l : lights)
 		l->FetchData();
-
-	for (auto* c : cameras)
-		c->FetchData();
 
 	for (auto* p : ppVolumes)
 		p->FetchData();
@@ -324,10 +353,13 @@ void CWorld::OnDelete()
 	if (gamemode)
 		gamemode->Delete();
 
-	for (auto ent = entities.rbegin(); ent != entities.rend(); ent++)
-		(*ent)->Delete();
+	// make a copy of the entities list.
+	// on occasions when deleting the entities the iterators would throw an error and this prevents that.
+	auto ents = entities;
+	for (auto ent = ents.rbegin(); ent != ents.rend(); ent++)
+		ent->second->Delete();
 
-	entities.Clear();
+	entities.clear();
 
 	if (initInfo.bRegisterForRendering)
 		Events::OnRender.RemoveAll(this);
@@ -335,14 +367,14 @@ void CWorld::OnDelete()
 
 void CWorld::RemoveEntity(CEntity* ent)
 {
-	auto it = entities.Find(ent);
+	auto it = entities.find(ent->entityId);
 	if (it != entities.end())
 	{
 		if (bActive)
 			ent->OnStop();
 
 		OnEntityDeleted.Invoke(ent);
-		entities.Erase(it);
+		entities.erase(it);
 	}
 }
 
