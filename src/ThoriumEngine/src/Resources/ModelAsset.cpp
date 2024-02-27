@@ -10,7 +10,8 @@
 #define THMDL_VERSION_3 0x0003
 #define THMDL_VERSION_4 0x0004
 #define THMDL_VERSION_5 0x0005
-#define THMDL_VERSION 0x0006
+#define THMDL_VERSION_6 0x0006
+#define THMDL_VERSION 0x0007
 
 #define THMDL_MAGIC_SIZE 27
 static const char* thmdlMagicStr = "\0\0ThoriumEngine Model File\0";
@@ -49,8 +50,18 @@ void CModelAsset::Init()
 	uint numMeshes;
 	uint numMaterials;
 	uint numBodyGroups;
+	uint numColliders = 0;
+	uint numConvexMeshes = 0;
 
 	*stream >> &numMeshes >> &numMaterials >> &numLODs >> &numBodyGroups;
+
+	if (fileVersion > THMDL_VERSION_6)
+	{
+		*stream >> &numColliders >> &numConvexMeshes;
+
+		colliders.Resize(numColliders);
+		convexMeshes.Resize(numConvexMeshes);
+	}
 
 	meshes.Resize(numMeshes);
 	materials.Resize(numMaterials);
@@ -128,6 +139,26 @@ void CModelAsset::Init()
 		}
 	}
 
+	if (fileVersion > THMDL_VERSION_6)
+	{
+		for (uint i = 0; i < numColliders; i++)
+		{
+			FModelCollider& col = colliders[i];
+			*stream >> &col;
+		}
+
+		for (uint i = 0; i < numConvexMeshes; i++)
+		{
+			TArray<FVector>& mesh = convexMeshes[i];
+			uint vertices;
+			*stream >> &vertices;
+			mesh.Resize(vertices);
+
+			for (uint v = 0; v < vertices; v++)
+				*stream >> &mesh[v];
+		}
+	}
+
 	uint32 numBones;
 	*stream >> &numBones;
 
@@ -192,8 +223,10 @@ void CModelAsset::Save()
 	uint numMeshes = (uint)meshes.Size();
 	uint numMaterials = (uint)materials.Size();
 	uint numBodyGroups = (uint)bodyGroups.Size();
+	uint numColliders = (uint)colliders.Size();
+	uint numConvexMeshes = (uint)convexMeshes.Size();
 
-	*stream << &numMeshes << &numMaterials << &numLODs << &numBodyGroups;
+	*stream << &numMeshes << &numMaterials << &numLODs << &numBodyGroups << &numColliders << &numConvexMeshes;
 
 	for (auto& mesh : meshes)
 	{
@@ -260,6 +293,22 @@ void CModelAsset::Save()
 				*stream << &bg.options[x].meshIndices[y];
 			}
 		}
+	}
+
+	for (uint i = 0; i < numColliders; i++)
+	{
+		FModelCollider& col = colliders[i];
+		*stream << &col;
+	}
+
+	for (uint i = 0; i < numConvexMeshes; i++)
+	{
+		TArray<FVector>& mesh = convexMeshes[i];
+		uint numV = (uint)mesh.Size();
+		*stream << &numV;
+
+		for (uint v = 0; v < numV; v++)
+			*stream << &mesh[v];
 	}
 
 	uint32 numBones = (uint32)skeleton.bones.Size();

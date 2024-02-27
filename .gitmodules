@@ -1,3 +1,6 @@
 [submodule "src/dep/assimp"]
 	path = src/dep/assimp
 	url = https://github.com/assimp/assimp
+[submodule "engine/content/addons/JoltPhysics/dep/JoltPhysics"]
+	path = engine/content/addons/JoltPhysics/dep/JoltPhysics
+	url = https://github.com/jrouwe/JoltPhysics

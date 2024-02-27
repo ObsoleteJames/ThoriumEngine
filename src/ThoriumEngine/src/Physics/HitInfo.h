@@ -5,6 +5,10 @@
 #include "Math/Vectors.h"
 #include "HitInfo.generated.h"
 
+class CPrimitiveComponent;
+class CEntity;
+class IPhysicsBody;
+
 STRUCT()
 struct FHitInfo
 {
@@ -12,7 +16,13 @@ struct FHitInfo
 
 public:
 	PROPERTY()
-	TObjectPtr<CObject> hitObj;
+	TObjectPtr<CPrimitiveComponent> component;
+
+	PROPERTY()
+	TObjectPtr<IPhysicsBody> body;
+
+	PROPERTY()
+	TObjectPtr<CEntity> entity;
 
 	PROPERTY()
 	FVector position;

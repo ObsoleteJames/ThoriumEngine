@@ -14,6 +14,7 @@
 class CLayer;
 class CEntity;
 
+class CEditorMenu;
 class CPropertyEditor;
 class CConsoleWidget;
 class CInputOutputWidget;
@@ -69,8 +70,12 @@ public:
 
 	void SaveProjectConfig();
 
+	void RegisterMenu(CEditorMenu* menu, const FString& path = FString());
+	CEditorMenu* GetMenu(const FString& path);
+
 private:
 	void InitEditorData();
+	void SetupMenu();
 	void SetupEditorDocking();
 
 	void GenerateGrid(float gridSize, float quadSize, FMesh* out);
@@ -108,6 +113,8 @@ private:
 
 	void DrawObjectCreateMenu();
 
+	void DrawMenu(CEditorMenu* m);
+
 public:
 	IFrameBuffer* sceneFrameBuffer;
 	//IDepthBuffer* sceneDepthBuffer;
@@ -122,17 +129,25 @@ public:
 	TArray<TObjectPtr<CEntity>> selectedEntities;
 	TObjectPtr<CObject> selectedObject;
 
+	CEditorMenu* rootMenu;
+
 	CCameraProxy* editorCamera;
 
 	bool bIsPlaying = false;
 	bool bPaused = false;
 	bool bStepFrame = false;
 
-	bool bViewOutliner = true;
-	bool bViewAssetBrowser = true;
-	bool bViewStats = false;
+	//bool bViewOutliner = true;
+	//bool bViewAssetBrowser = true;
+	//bool bViewStats = false;
 
-	bool bImGuiDemo = false;
+	//bool bImGuiDemo = false;
+
+	CEditorMenu* menuViewOutliner = nullptr;
+	CEditorMenu* menuAssetBrowser = nullptr;
+	CEditorMenu* menuStatistics = nullptr;
+
+	CEditorMenu* menuImGuiDemo = nullptr;
 
 	bool bOpenProj = true;
 

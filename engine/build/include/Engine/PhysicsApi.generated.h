@@ -2,7 +2,7 @@
 #include "Object/Class.h"
 #include "Object/ObjectMacros.h"
 
-#define Engine_PhysicsApi_h_11_GeneratedBody \
+#define Engine_PhysicsApi_h_14_GeneratedBody \
 DECLARE_CLASS(IPhysicsApi, CObject, Engine)
 
 

@@ -77,6 +77,9 @@ void CEngine::InitMinimal()
 	// Fetch core addons
 	FetchAddons(engineMod->Path() + "/addons", coreAddons);
 
+	// Load all mandatory addons, these addons are required for the engine to work.
+	LoadMandatoryAddons();
+
 	CONSOLE_LogInfo("CEngine", "Initialization complete");
 	bInitialized = true;
 }
@@ -315,6 +318,14 @@ bool CEngine::LoadProject(const FString& path /*= "."*/)
 	else
 		SetGameInstance(activeGame.gameInstanceClass.Get());
 
+	if (!physicsSettings.api.Get())
+	{
+		CONSOLE_LogWarning("CEngine", "No Physic API class was specified, reverting to default (Jolt Physics).");
+		physicsSettings.api = FString("CJoltPhysicsApi");
+	}
+
+	CreatePhysicsApi(physicsSettings.api.Get());
+
 	// TODO: Make input manager class a config variable.
 	if (!inputManager || inputManager->GetClass() != activeGame.inputManagerClass.Get())
 	{
@@ -335,6 +346,10 @@ bool CEngine::LoadProject(const FString& path /*= "."*/)
 
 void CEngine::LoadAddon(FAddon& addon)
 {
+	// don't load it if it's already been loaded.
+	if (addon.module || addon.mod)
+		return;
+
 	// first load the dependancies
 	for (auto& d : addon.dependencies)
 	{
@@ -409,6 +424,18 @@ void CEngine::LoadAddon(FAddon& addon)
 	}
 }
 
+void CEngine::LoadCoreAddon(const FString& id)
+{
+	for (auto& addon : coreAddons)
+	{
+		if (addon.identity == id)
+		{
+			LoadAddon(addon);
+			break;
+		}
+	}
+}
+
 void CEngine::Exit()
 {
 	bWantsToExit = true;
@@ -423,6 +450,10 @@ void CEngine::OnExit()
 	gWorld->Delete();
 	delete gRenderer;
 	delete gameWindow;
+
+	gPhysicsApi->Shutdown();
+	gPhysicsApi->Delete();
+	gPhysicsApi = nullptr;
 
 	CWindow::Shutdown();
 
@@ -478,6 +509,8 @@ void CEngine::DoLoadWorld()
 		}
 	}
 
+	Events::LevelChange.Invoke();
+
 	if (gWorld)
 		gWorld->Delete();
 
@@ -486,7 +519,7 @@ void CEngine::DoLoadWorld()
 
 	CONSOLE_LogInfo("CEngine", "Loading scene '" + nextSceneName + "'");
 
-	Events::LevelChange.Invoke();
+	gWorld->InitWorld(CWorld::InitializeInfo().RegisterForRendering(false));
 
 	if (nextSceneName != "empty")
 	{
@@ -495,7 +528,6 @@ void CEngine::DoLoadWorld()
 	else
 		gWorld->LoadScene(CreateObject<CScene>());
 
-	gWorld->InitWorld(CWorld::InitializeInfo().RegisterForRendering(false));
 	//gWorld->SetRenderScene(worldRenderScene);
 
 	Events::PostLevelChange.Invoke();
@@ -520,6 +552,11 @@ bool CEngine::LoadProjectConfig(const FString& path, FProject& project)
 
 	if (auto* arr = kv.GetArray("addons"); arr)
 		project.addons = *arr;
+
+	FKeyValue phys(path + "/config/physics.cfg");
+
+	physicsSettings.api = phys.GetValue("api")->Value;
+	physicsSettings.gravity = { 0, -9.8f, 0 };
 
 	return true;
 }
@@ -633,6 +670,13 @@ bool CEngine::LoadAddonConfig(const FString& path, FAddon& out)
 
 	out = addon;
 	return true;
+}
+
+void CEngine::LoadMandatoryAddons()
+{
+	LoadCoreAddon("jolt_physics");
+
+	CreatePhysicsApi(CModuleManager::FindClass("CJoltPhysicsApi"));
 }
 
 void CEngine::SaveUserConfig()
@@ -907,4 +951,20 @@ CGameInstance* CEngine::SetGameInstance(FClass* type)
 	gameInstance = (CGameInstance*)CreateObject(type);
 	gameInstance->Init();
 	return gameInstance;
+}
+
+void CEngine::CreatePhysicsApi(FClass* type)
+{
+	if (gPhysicsApi)
+	{
+		// if the already existing api is the same as what we want, we don't need to do anything.
+		if (gPhysicsApi->GetClass() == type)
+			return;
+
+		gPhysicsApi->Shutdown();
+		gPhysicsApi->Delete();
+	}
+	gPhysicsApi = (IPhysicsApi*)CreateObject(type);
+	gPhysicsApi->Init();
+	gPhysicsApi->MakeIndestructible();
 }

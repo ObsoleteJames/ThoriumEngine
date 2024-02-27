@@ -23,6 +23,8 @@
 #include "ImGui/imgui_thorium.h"
 #include "EditorWidgets.h"
 
+REGISTER_EDITOR_LAYER(CMaterialEditor, "Tools/Material Editor", nullptr, true, false)
+
 class FMaterialOpenAction : public FAssetBrowserAction
 {
 public:

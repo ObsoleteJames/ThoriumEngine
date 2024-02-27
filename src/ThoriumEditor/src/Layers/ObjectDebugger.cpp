@@ -6,9 +6,13 @@
 #include "ImGui/imgui_internal.h"
 #include "Imgui/imgui_thorium.h"
 #include "EditorWidgets.h"
+#include "EditorEngine.h"
+#include "EditorMenu.h"
 
 #include <thread>
 #include <chrono>
+
+REGISTER_EDITOR_LAYER(CObjectDebugger, "Debug/Object Debugger", nullptr, false, false)
 
 FString ToStringHex(SizeType i)
 {
@@ -175,44 +179,99 @@ void CObjectDebugger::OnUIRender()
 	if (ImGui::Begin("Object Debugger", &bEnabled))
 	{
 		static bool bShowAddress = false;
-		ImGui::Checkbox("Show Address", &bShowAddress);
 
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0, 0, 0, 0));
-		if (ImGui::BeginChild("##_OD_objectsList", ImVec2(370, 0)))
+		if (ImGui::BeginChild("##_OD_objectsList", ImVec2(420, 0)))
 		{
-			if (ImGui::BeginTable("tableObjectsLists", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY))
+			if (ImGui::BeginTabBar("tabsObjects"))
 			{
-				ImGui::TableSetupColumn("Name");
-				ImGui::TableSetupColumn("Type");
-				ImGui::TableHeadersRow();
-
-				auto& objs = CObjectManager::GetAllObjects();
-
-				for (auto obj : objs)
+				if (ImGui::BeginTabItem("Object List"))
 				{
-					bool bSelected = obj.second == selected;
-					FString objName = obj.second->Name();
-					if (objName.IsEmpty())
+					static FString filter;
+					ImGui::InputText("Search", &filter);
+
+					ImGui::Checkbox("Show Address", &bShowAddress);
+
+					if (ImGui::BeginTable("tableObjectsLists", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY))
 					{
-						//objName = "Object";
-						objName = obj.second->GetClass()->GetName();
+						ImGui::TableSetupColumn("Name");
+						ImGui::TableSetupColumn("Type");
+						ImGui::TableHeadersRow();
+
+						auto& objs = CObjectManager::GetAllObjects();
+
+						for (auto obj : objs)
+						{
+							bool bSelected = obj.second == selected;
+							FString objName = obj.second->Name();
+							if (objName.IsEmpty())
+							{
+								//objName = "Object";
+								objName = obj.second->GetClass()->GetName();
+							}
+
+							if (objName.Find(filter) == -1)
+								continue;
+
+							ImGui::TableNextRow();
+							ImGui::TableNextColumn();
+
+							if (ImGui::Selectable((objName + (bShowAddress ? " : 0x" : "##") + ToStringHex((SizeType)obj.second)).c_str(), bSelected, ImGuiSelectableFlags_SpanAllColumns))
+							{
+								selected = obj.second;
+							}
+
+							ImGui::TableNextColumn();
+							ImGui::Text(obj.second->GetClass()->GetInternalName().c_str());
+						}
+
+						ImGui::EndTable();
 					}
 
-					ImGui::TableNextRow();
-					ImGui::TableNextColumn();
-
-					if (ImGui::Selectable((objName + (bShowAddress ? " : 0x" : "##") + ToStringHex((SizeType)obj.second)).c_str(), bSelected, ImGuiSelectableFlags_SpanAllColumns))
-					{
-						selected = obj.second;
-					}
-
-					ImGui::TableNextColumn();
-					ImGui::Text(obj.second->GetClass()->GetName().c_str());
+					ImGui::EndTabItem();
 				}
 
-				ImGui::EndTable();
+				if (ImGui::BeginTabItem("Class List"))
+				{
+					TMap<FClass*, int> classCount;
+
+					static FString filter;
+					ImGui::InputText("Search", &filter);
+
+					auto& objs = CObjectManager::GetAllObjects();
+					for (auto obj : objs)
+						if (filter.IsEmpty() || obj.second->GetClass()->GetInternalName().ToLowerCase().Find(filter.ToLowerCase()) != -1)
+							classCount[obj.second->GetClass()] += 1;
+					
+					if (ImGui::BeginTable("tableClassList", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY))
+					{
+						ImGui::TableSetupColumn("Class");
+						ImGui::TableSetupColumn("Count");
+						ImGui::TableHeadersRow();
+
+						for (auto& c : classCount)
+						{
+							ImGui::TableNextRow();
+							ImGui::TableNextColumn();
+
+							ImGui::Text(c.first->GetInternalName().c_str());
+
+							ImGui::TableNextColumn();
+
+							ImGui::Text("%d", c.second);
+						}
+
+						ImGui::EndTable();
+					}
+
+
+					ImGui::EndTabItem();
+				}
+
+				ImGui::EndTabBar();
 			}
 		}
+
 		ImGui::PopStyleColor();
 		ImGui::EndChild();
 
@@ -317,6 +376,7 @@ void CObjectDebugger::OnUIRender()
 		ImGui::PopStyleColor();
 	}
 	ImGui::End();
+	Menu()->bChecked = bEnabled;
 
 	if (searchUsersData.bRunning)
 		ImGui::OpenPopup("SearchObjectUsers");

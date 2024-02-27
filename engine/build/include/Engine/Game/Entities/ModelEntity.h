@@ -19,6 +19,7 @@ public:
 	inline void SetModel(const FString& file) { modelComp->SetModel(file); }
 
 public:
-	CModelComponent* modelComp;
+	PROPERTY(DontSerialize, ExposeProperties)
+	TObjectPtr<CModelComponent> modelComp;
 
 };

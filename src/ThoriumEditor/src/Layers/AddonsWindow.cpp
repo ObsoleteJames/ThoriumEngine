@@ -1,12 +1,16 @@
 
 #include "AddonsWindow.h"
 #include "Engine.h"
+#include "EditorEngine.h"
+#include "EditorMenu.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "ImGui/ImGui.h"
 #include "ImGui/imgui_internal.h"
 #include "ImGui/imgui_thorium.h"
 #include "EditorWidgets.h"
+
+REGISTER_EDITOR_LAYER(CAddonsWindow, "Edit/Addons", "Settings", false, false)
 
 CAddonsWindow::CAddonsWindow()
 {
@@ -165,6 +169,7 @@ void CAddonsWindow::OnUIRender()
 		//ImGui::EndChild();
 	}
 	ImGui::End();
+	Menu()->bChecked = bEnabled;
 }
 
 void CAddonsWindow::DrawAddonList()

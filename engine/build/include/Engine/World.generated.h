@@ -2,7 +2,7 @@
 #include "Object/Class.h"
 #include "Object/ObjectMacros.h"
 
-#define Engine_World_h_73_GeneratedBody \
+#define Engine_World_h_74_GeneratedBody \
 DECLARE_CLASS(CWorld, CObject, Engine)
 
 

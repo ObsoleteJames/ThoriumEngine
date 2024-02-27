@@ -267,6 +267,9 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 	scene->frameBuffer->GetSize(viewWidth, viewHeight);
 	scene->frameBuffer->Clear();
 	
+	if (scene->depth)
+		scene->depth->Clear();
+
 	scene->colorBuffer->Clear();
 
 	if (viewWidth > scene->GetFrameBufferWidth() || viewHeight > scene->GetFrameBufferHeight())

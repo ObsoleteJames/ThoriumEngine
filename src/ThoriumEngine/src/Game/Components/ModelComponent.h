@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SceneComponent.h"
+#include "PrimitiveComponent.h"
 #include "Resources/ModelAsset.h"
 #include "Resources/Material.h"
 #include "ModelComponent.generated.h"
@@ -10,7 +10,7 @@ class CAnimationGraph;
 class CModelComponentProxy;
 
 CLASS()
-class ENGINE_API CModelComponent : public CSceneComponent
+class ENGINE_API CModelComponent : public CPrimitiveComponent
 {
 	GENERATED_BODY()
 
@@ -41,6 +41,7 @@ public:
 	void SetMaterial(const FString& matPath, SizeType slot = 0);
 
 	virtual void Init();
+	virtual void OnStart();
 	virtual void OnDelete();
 
 	TArray<FMesh> GetVisibleMeshes(uint8 lodLevel = 0);
@@ -51,6 +52,8 @@ protected:
 private:
 	FUNCTION()
 	void OnModelEdit();
+
+	void SetupPhysics();
 
 private:
 	PROPERTY(Editable, Category = Rendering, OnEditFunc = OnModelEdit)
@@ -71,4 +74,6 @@ private:
 
 	FSkeletonInstance skeleton;
 	TArray<FMatrix> boneMatrices; // cache for skeletal animation
+
+	TArray<TObjectPtr<IPhysicsBody>> physBodies;
 };

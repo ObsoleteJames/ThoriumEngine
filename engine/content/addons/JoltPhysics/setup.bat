@@ -1,0 +1,2 @@
+F:\MyProjects\VS_Projects\ThoriumEngine\engine\bin\win64\buildtool.exe "F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\addons\JoltPhysics\Build.cfg" -x64 -debug
+cmake -A x64 -DUSE_STATIC_MSVC_RUNTIME_LIBRARY=OFF -B "Intermediate/build" "Intermediate"

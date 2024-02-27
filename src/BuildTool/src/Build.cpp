@@ -565,13 +565,25 @@ int CompileSource(const FCompileConfig& config)
 		// 	<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "\")\n";
 	}
 
-	if (includeOut && bRunHeaderTool)
-	{
-		FString lo = strExp.ParseString(*includeOut);
 
-		cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"" + targetPath + "/Intermediate/module.bin\" \"" + lo + "/module.bin\"\n";
-		// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"module.bin\" \""
-		// 	<< lo.c_str() << "/module.bin\")\n";
+	if (bRunHeaderTool)
+	{
+#if _WIN32
+		FString headerToolP = "\"" + enginePath + "/bin/win64/HeaderTool.exe\" \"" + targetPath + "\" -pt " + (bIsEngine ? "0" : (bIsGame ? "1" : "3"));	
+#else
+		FString headerToolP = "\"" + enginePath + "/bin/linux/HeaderTool\" \"" + targetPath + "\" -pt " + (bIsEngine ? "0" : (bIsGame ? "1" : "3"));	
+#endif
+
+		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " PRE_BUILD COMMAND " << headerToolP.c_str() << ")\n";
+
+		if (includeOut)
+		{
+			FString lo = strExp.ParseString(*includeOut);
+
+			cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"" + targetPath + "/Intermediate/module.bin\" \"" + lo + "/module.bin\"\n";
+			// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"module.bin\" \""
+			// 	<< lo.c_str() << "/module.bin\")\n";
+		}
 	}
 
 	if (auto* binOut = buildCfg.GetValue("BuildOut", false); binOut)

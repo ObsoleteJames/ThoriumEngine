@@ -2,10 +2,14 @@
 #include "ConsoleWidget.h"
 
 #include "Console.h"
+#include "EditorEngine.h"
+#include "EditorMenu.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_internal.h"
+
+REGISTER_EDITOR_LAYER(CConsoleWidget, "View/Console", nullptr, false, true)
 
 FString TimeToHmsString(time_t* time)
 {
@@ -151,4 +155,5 @@ void CConsoleWidget::OnUIRender()
 
 	}
 	ImGui::End();
+	Menu()->bChecked = bEnabled;
 }

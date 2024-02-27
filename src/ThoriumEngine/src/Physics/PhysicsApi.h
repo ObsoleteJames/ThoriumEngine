@@ -4,6 +4,9 @@
 #include "PhysicsApi.generated.h"
 
 class IPhysicsWorld;
+class IPhysicsApi;
+
+extern ENGINE_API IPhysicsApi* gPhysicsApi;
 
 CLASS(Abstract)
 class ENGINE_API IPhysicsApi : public CObject

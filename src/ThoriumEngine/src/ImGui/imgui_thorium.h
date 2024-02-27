@@ -3,6 +3,10 @@
 #include <Util/String.h>
 #include "imgui.h"
 
+struct FVector;
+struct FVector2;
+struct FQuaternion;
+
 namespace ImGui
 {
 	IMGUI_API bool InputText(const char* label, FString* str, ImGuiInputTextFlags flags = 0, ImGuiInputTextCallback callback = NULL, void* user_data = NULL);

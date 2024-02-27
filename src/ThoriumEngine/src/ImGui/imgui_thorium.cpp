@@ -2,6 +2,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_thorium.h"
 #include "imgui_internal.h"
+#include "imgui_thorium_math.h"
 
 struct InputTextCallback_UserData
 {
@@ -129,4 +130,85 @@ bool ImGui::Splitter(const char* _id, bool bVertical, float thickness, float* si
 void ImGui::Text(const FString& txt)
 {
 	ImGui::Text(txt.c_str());
+}
+
+bool ImGui::DragVector(const char* label, FVector* v, float speed, FVector min, FVector max, const char* format, ImGuiSliderFlags flags)
+{
+	auto areaSize = ImGui::GetContentRegionAvail();
+	auto lblSize = ImGui::CalcTextSize(label, nullptr, true);
+
+	ImVec2 frameSize = ImVec2(2.f, (lblSize.y + ImGui::GetStyle().FramePadding.y * 2.0f) - 7.f);
+	
+	float tWidth = (areaSize.x - lblSize.x) / 3 - 5.f;
+
+	FString lblX = FString("##x") + label;
+	FString lblY = FString("##y") + label;
+	FString lblZ = FString("##z") + label;
+
+	bool r = false;
+
+	ImVec2 cursorPos = ImGui::GetCursorScreenPos() + ImVec2(4, 4);
+
+	ImGui::SetNextItemWidth(tWidth);
+	if (ImGui::DragFloat(lblX.c_str(), &v->x, speed, min.x, max.x, format, flags))
+		r = true;
+
+	ImGui::RenderFrame(cursorPos, cursorPos + frameSize, ImGui::GetColorU32(ImVec4(0.7f, 0.2f, 0.2f, 1)), false, 1);
+
+	ImGui::SameLine();
+	cursorPos = ImGui::GetCursorScreenPos() + ImVec2(4, 4);
+
+	ImGui::SetNextItemWidth(tWidth);
+	if (ImGui::DragFloat(lblY.c_str(), &v->y, speed, min.y, max.y, format, flags))
+		r = true;
+
+	ImGui::RenderFrame(cursorPos, cursorPos + frameSize, ImGui::GetColorU32(ImVec4(0.2f, 0.7f, 0.2f, 1)), false, 1);
+
+	ImGui::SameLine();
+	cursorPos = ImGui::GetCursorScreenPos() + ImVec2(4, 4);
+
+	ImGui::SetNextItemWidth(tWidth);
+	if (ImGui::DragFloat(lblZ.c_str(), &v->z, speed, min.z, max.z, format, flags))
+		r = true;
+
+	ImGui::RenderFrame(cursorPos, cursorPos + frameSize, ImGui::GetColorU32(ImVec4(0.2f, 0.2f, 0.7f, 1)), false, 1);
+	return r;
+}
+
+bool ImGui::DragVector(const char* label, FVector2* v, float speed, FVector2 min, FVector2 max, const char* format, ImGuiSliderFlags flags)
+{
+	auto areaSize = ImGui::GetContentRegionAvail();
+	auto lblSize = ImGui::CalcTextSize(label, nullptr, true);
+
+	ImVec2 frameSize = ImVec2(2.f, (lblSize.y + ImGui::GetStyle().FramePadding.y * 2.0f) - 7.f);
+
+	float tWidth = (areaSize.x - lblSize.x) / 3 - 5.f;
+
+	FString lblX = FString("##x") + label;
+	FString lblY = FString("##y") + label;
+
+	bool r = false;
+
+	ImVec2 cursorPos = ImGui::GetCursorScreenPos() + ImVec2(4, 4);
+
+	ImGui::SetNextItemWidth(tWidth);
+	if (ImGui::DragFloat(lblX.c_str(), &v->x, speed, min.x, max.x, format, flags))
+		r = true;
+
+	ImGui::RenderFrame(cursorPos, cursorPos + frameSize, ImGui::GetColorU32(ImVec4(0.7f, 0.2f, 0.2f, 1)), false, 1);
+
+	ImGui::SameLine();
+	cursorPos = ImGui::GetCursorScreenPos() + ImVec2(4, 4);
+
+	ImGui::SetNextItemWidth(tWidth);
+	if (ImGui::DragFloat(lblY.c_str(), &v->y, speed, min.y, max.y, format, flags))
+		r = true;
+
+	ImGui::RenderFrame(cursorPos, cursorPos + frameSize, ImGui::GetColorU32(ImVec4(0.2f, 0.7f, 0.2f, 1)), false, 1);
+	return r;
+}
+
+bool ImGui::DragQuat(const char* label, FQuaternion* v, float speed, FVector min, FVector max, const char* format, ImGuiSliderFlags flags)
+{
+	return false;
 }

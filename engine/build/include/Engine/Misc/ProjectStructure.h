@@ -48,7 +48,7 @@ struct ENGINE_API FAddon
 	bool bInProjectFolder;
 
 	CModule* module = nullptr;
-	FMod* mod;
+	FMod* mod = nullptr;
 	TArray<FDependency> dependencies;
 };
 

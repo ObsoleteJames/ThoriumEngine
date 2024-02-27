@@ -53,7 +53,7 @@ public:
 	inline CSceneComponent* GetParent() const { return parent; }
 	inline const TArray<TObjectPtr<CSceneComponent>>& GetChildren() const { return children; }
 
-	FBounds Bounds() const;
+	virtual FBounds Bounds() const;
 
 private:
 	PROPERTY()

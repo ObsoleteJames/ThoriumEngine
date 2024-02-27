@@ -51,19 +51,6 @@ PS
 
 	static const float PI = 3.14159265359;
 
-	float3 CalculateNormal(PS_Input input)
-	{
-		float3 normalMap = SampleTexture2D(vNormalMap, input.vTextureCoords).xyz * 2 - 1;
-		//normalMap = float3(normalMap.x, normalMap.z, normalMap.y);	
-
-		normalMap = lerp(float3(0, 0, 1), normalMap, vNormalIntensity);
-		if (vNormalIntensity == 0)
-			return normalize(input.vNormalWs);
-
-		float3x3 TBN = float3x3(input.vTangentUWs, normalize(cross(input.vTangentUWs, input.vNormalWs)), input.vNormalWs);
-		return normalize(mul(TBN, normalMap));
-	}
-
 	float DistributionGGX(float3 N, float3 H, float roughness)
 	{
 		float a = roughness * roughness;
@@ -109,7 +96,6 @@ PS
 	
 	float3 fresnelSchlick(float cosTheta, float3 F0)
 	{
-		//return F0 + mul(pow(max(1.0 - cosTheta, 0.0), 5.0), (1.0 - F0));
 		return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 	}
 
@@ -203,7 +189,6 @@ PS
 		float3 kD = float3(1, 1, 1) - kS;
 		kD = mul((1.0 - metallic), kD);
 		float NdotL = max(dot(normal, light.direction), 0);
-		//return float4(kD, 0);
 		return float4((kD * diffuse / PI + specular) * radiance * NdotL, 0) * (1 - shadow);
 	}
 
@@ -214,7 +199,6 @@ PS
 		float3 H = normalize(V + L);
 
 		float distance = length(light.position - posWs);
-		//float attenuation = 1 / (distance * distance);
 		float attenuation = 1 - saturate(distance / light.range);
 		float3 radiance = light.color * attenuation * light.intensity;
 
@@ -251,28 +235,10 @@ PS
 		float rough = SampleTexture2D(vRoughness, input.vTextureCoords).r;
 		float metallic = SampleTexture2D(vMetallic, input.vTextureCoords).r;
 
-		//float4 diffuse = float4(1, 1, 1, 1);
 		float3 d2 = diffuse.xyz;
-		float3 normal = CalculateNormal(input);
-		//float3 normal = normalize(input.vNormalWs);
+		float3 normal = CalculateNormal(input.vNormalWs, input.vTangetUWs, input.vTangentVWs, input.vTextureCoords);
 
 		float4 outColor = float4(0, 0, 0, 0);
-
-		// FPointLight l;
-		// l.range = 10;
-		// l.intensity = 15;
-		// l.position = float3(2, 2, 0);
-		// l.color = float3(1, 1, 1);
-		// outColor = outColor + (PointLight(input.vPositionWs, normal, d2, l));
-
-		// l.intensity = 5;
-		// l.position = float3(1.5, -0.5, 0.5);
-		// l.color = float3(1, 0, 0);
-		// outColor = outColor + (PointLight(input.vPositionWs, normal, d2, l));
-
-		// l.position = float3(1.5, -0.5, -0.5);
-		// l.color = float3(0, 0, 1);
-		// outColor = outColor + (PointLight(input.vPositionWs, normal, d2, l));
 
 		for (int i = 0; i < numDirectionalLights; i++)
 		{
@@ -284,13 +250,9 @@ PS
 			outColor = outColor + PointLight(input.vPositionWs, normal, rough, metallic, d2, pointLights[i]);
 		}
 
-		//float3 amb = float3(0.01, 0.01, 0.01) * d2;
-		//float3 color = amb + outColor;
 		float3 color = outColor.xyz + emmision.xyz;
 
 		const float gamma = 1.6;
-
-		//color = color / (color + float3(1, 1, 1));
 		color = pow(abs(color), abs(float3(1 / gamma, 1 / gamma, 1 / gamma)));
 
 		return float4(color.xyz, min(1, diffuse.a * vAlpha + outColor.w));

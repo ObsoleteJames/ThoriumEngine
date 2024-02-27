@@ -21,7 +21,10 @@ class IBaseWindow;
 class ITexture2D;
 class ITextureCube;
 
+struct FRenderStatistics;
+
 extern ENGINE_API IRenderer* gRenderer;
+extern ENGINE_API FRenderStatistics gRenderStats;
 
 enum class ERendererApi
 {
@@ -152,6 +155,15 @@ struct FTextSDFBuffer
 
 	uint uvStride;
 	uint uvIndex;
+};
+
+struct FRenderStatistics
+{
+	SizeType numTris;
+	SizeType numDrawCalls;
+
+	SizeType totalPrimitives;
+	SizeType drawPrimitives;
 };
 
 // -- Buffer Registers --

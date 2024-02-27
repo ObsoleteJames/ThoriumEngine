@@ -11,6 +11,9 @@
 #include "ImGui/imgui_internal.h"
 #include "ImGui/imgui_thorium.h"
 #include "EditorWidgets.h"
+#include "EditorMenu.h"
+
+REGISTER_EDITOR_LAYER(CProjectSettingsWidget, "Edit/Project Settings", "Settings", false, false)
 
 struct FPSMenu
 {
@@ -65,6 +68,7 @@ void CProjectSettingsWidget::OnUIRender()
 		}*/
 	}
 	ImGui::End();
+	Menu()->bChecked = bEnabled;
 }
 
 void CProjectSettingsWidget::RenderGameSettings()

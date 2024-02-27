@@ -3,6 +3,7 @@
 #include "EngineCore.h"
 #include "Misc/ProjectStructure.h"
 #include "Rendering/Renderer.h"
+#include "Physics/PhysicsSettings.h"
 #include "Engine.generated.h"
 
 class CEngine;
@@ -75,6 +76,8 @@ public:
 	// Load the addon's content and or module.
 	void LoadAddon(FAddon& addon);
 
+	void LoadCoreAddon(const FString& id);
+
 	void Exit();
 
 	void SaveUserConfig();
@@ -111,6 +114,8 @@ public:
 	inline T* SetGameInstance() { return (T*)SetGameInstance(T::StaticClass()); }
 	CGameInstance* SetGameInstance(FClass* type);
 
+	void CreatePhysicsApi(FClass* type);
+
 	inline double GetUpdateTime() const { return updateTime; }
 	inline double GetRenderTime() const { return renderTime; }
 
@@ -134,6 +139,8 @@ protected:
 	void FetchAddons(const FString& addonFolder, TArray<FAddon>& out);
 
 	bool LoadAddonConfig(const FString& path, FAddon& out);
+
+	void LoadMandatoryAddons();
 
 public:
 	FUserConfig userConfig;
@@ -161,6 +168,7 @@ protected:
 	bool bProjectLoaded = false;
 	FProject projectConfig;
 	FGame activeGame;
+	FPhysicsSettings physicsSettings;
 
 	TArray<FAddon> coreAddons;
 

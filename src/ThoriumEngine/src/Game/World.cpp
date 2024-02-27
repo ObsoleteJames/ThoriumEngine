@@ -12,6 +12,7 @@
 #include "Rendering/PostProcessing.h"
 #include "Rendering/Renderer.h"
 #include "Resources/Scene.h"
+#include "Physics/PhysicsWorld.h"
 #include "Console.h"
 #include "Object/ObjectHandle.h"
 #include <Util/Assert.h>
@@ -53,18 +54,19 @@ bool CWorld::IsInUpdate()
 void CWorld::InitWorld(const InitializeInfo& i)
 {
 	initInfo = i;
-	if (initInfo.bCreateRenderScene)
-	{
-		renderScene = new CRenderScene();
-	}
-
-	if (initInfo.bRegisterForRendering)
-	{
-		Events::OnRender.Bind(this, [=]() { this->Render(); gRenderer->PushScene(renderScene); });
-	}
-
 	if (!parent)
+	{
+		if (initInfo.bCreateRenderScene)
+			renderScene = new CRenderScene();
+
+		if (initInfo.bRegisterForRendering)
+			Events::OnRender.Bind(this, [=]() { this->Render(); gRenderer->PushScene(renderScene); });
+
+		if (initInfo.bCreatePhyiscsWorld && gPhysicsApi)
+			physicsWorld = gPhysicsApi->CreateWorld();
+
 		entityIOManager = new CEntityIOManager(this);
+	}
 
 	bInitialized = true;
 }
@@ -247,6 +249,9 @@ void CWorld::Start()
 
 	for (auto& ent : entities)
 		ent.second->OnStart();
+
+	if (physicsWorld)
+		physicsWorld->Start();
 }
 
 void CWorld::Stop()
@@ -282,6 +287,12 @@ void CWorld::Update(double dt)
 
 		if (entityIOManager)
 			entityIOManager->Update();
+
+		if (physicsWorld)
+		{
+			physicsWorld->Update(dt);
+			physicsWorld->ResolveCollisions();
+		}
 	}
 
 	if (gIsEditor)
@@ -360,6 +371,12 @@ void CWorld::OnDelete()
 		ent->second->Delete();
 
 	entities.clear();
+	
+	if (physicsWorld)
+	{
+		gPhysicsApi->DestroyWorld(physicsWorld);
+		physicsWorld = nullptr;
+	}
 
 	if (initInfo.bRegisterForRendering)
 		Events::OnRender.RemoveAll(this);
@@ -374,7 +391,7 @@ void CWorld::RemoveEntity(CEntity* ent)
 			ent->OnStop();
 
 		OnEntityDeleted.Invoke(ent);
-		entities.erase(it);
+		entities.erase(ent->entityId);
 	}
 }
 

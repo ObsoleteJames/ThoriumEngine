@@ -19,6 +19,7 @@ class CPostProcessVolumeProxy;
 class CRenderScene;
 class CGameMode;
 class CEntity;
+class IPhysicsWorld;
 
 extern ENGINE_API CWorld* gWorld;
 
@@ -140,6 +141,8 @@ public:
 	inline void SetRenderScene(CRenderScene* scene) { renderScene = scene; }
 	inline CRenderScene* GetRenderScene() const { return renderScene; }
 
+	inline IPhysicsWorld* GetPhysicsWorld() const { return physicsWorld; }
+
 	inline void SetRenderWindow(IBaseWindow* wnd) { renderWindow = wnd; }
 	inline IBaseWindow* GetRenderWindow() const { return renderWindow; }
 
@@ -207,6 +210,8 @@ protected:
 
 	TObjectPtr<CScene> scene;
 	CRenderScene* renderScene = nullptr;
+
+	TObjectPtr<IPhysicsWorld> physicsWorld;
 
 	// Entity IO Data
 	CEntityIOManager* entityIOManager = nullptr;

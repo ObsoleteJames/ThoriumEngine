@@ -12,6 +12,9 @@
 #include "ImGui/imgui_internal.h"
 #include "ImGui/imgui_thorium.h"
 #include "EditorWidgets.h"
+#include "EditorMenu.h"
+
+REGISTER_EDITOR_LAYER(CPropertyEditor, "View/Properties", nullptr, false, true)
 
 void CPropertyEditor::OnUIRender()
 {
@@ -331,9 +334,10 @@ void CPropertyEditor::OnUIRender()
 		}
 	}
 	ImGui::End();
+	Menu()->bChecked = bEnabled;
 }
 
-void CPropertyEditor::RenderClassProperties(FStruct* type, SizeType offset)
+void CPropertyEditor::RenderClassProperties(FStruct* type, SizeType offset, bool bHeader)
 {
 	auto& selectedEntities = gEditorEngine()->selectedEntities;
 	std::multimap<std::string, const FProperty*> propertyPerCategory;
@@ -368,7 +372,7 @@ void CPropertyEditor::RenderClassProperties(FStruct* type, SizeType offset)
 
 	ImVec4* colors = ImGui::GetStyle().Colors;
 
-	FString curCat = propertyPerCategory.size() > 0 ? propertyPerCategory.begin()->first : "NULL";
+	FString curCat = propertyPerCategory.size() > 0 ? propertyPerCategory.rbegin()->first : "NULL";
 	ImGuiTreeNodeFlags treeFlags = ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_SpanAllColumns | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_FrameDontExpand;
 
 	//ImGui::PushStyleVar(ImGuiStyleVar_CellPadding, ImVec2(5, 0));
@@ -379,24 +383,24 @@ void CPropertyEditor::RenderClassProperties(FStruct* type, SizeType offset)
 
 	//bool bOpen = ImGui::TreeNodeEx(curCat.c_str(), treeFlags);
 	//ImGui::PopStyleVar(3);
-	bool bOpen = ImGui::TableTreeHeader(curCat.c_str(), treeFlags);
+	bool bOpen = bHeader ? ImGui::TableTreeHeader(curCat.c_str(), treeFlags) : false;
 	
-	for (auto& it : propertyPerCategory)
+	for (auto it = propertyPerCategory.rbegin(); it != propertyPerCategory.rend(); it++)
 	{
-		bool bReadOnly = (it.second->flags & VTAG_EDITOR_EDITABLE) == 0;
-		if (curCat != it.first)
+		bool bReadOnly = (it->second->flags & VTAG_EDITOR_EDITABLE) == 0;
+		if (curCat != it->first)
 		{
-			curCat = it.first;
+			curCat = it->first;
 			if (bOpen)
 				ImGui::TreePop();
 
 			bOpen = ImGui::TableTreeHeader(curCat.c_str(), treeFlags);
 		}
 
-		if (!bOpen)
+		if (!bOpen && bHeader)
 			continue;
 
-		const FProperty* prop = it.second;
+		const FProperty* prop = it->second;
 		if (prop->type != EVT_ARRAY && prop->type != EVT_STRUCT)
 		{
 			ImGui::TableNextRow();
@@ -432,6 +436,40 @@ void CPropertyEditor::RenderProperty(uint type, const FProperty* prop, void** ob
 	bool bReadOnly = (prop->flags & VTAG_EDITOR_EDITABLE) == 0;
 	switch (type)
 	{
+	case EVT_STRUCT:
+	{
+		FStruct* _struct = CModuleManager::FindStruct(prop->typeName);
+		if (!_struct)
+			break;
+
+		void* value = (void*)(((SizeType)objects[0]) + offset);
+		FString type = (prop->meta && prop->meta->HasFlag("UIType")) ? prop->meta->FlagValue("UIType") : FString();
+
+		if (prop->typeName == "FVector")
+		{
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::SetCursorScreenPos(ImGui::GetCursorScreenPos() + ImVec2(0, 4));
+			ImGui::Text(prop->name.c_str());
+			ImGui::TableNextColumn();
+
+			if (type == "Color")
+				ImGui::ColorEdit3(("##_ColorEdit" + propId).c_str(), (float*)value);
+			else
+				RenderVectorProperty(offset, false);
+		}
+		else
+		{
+			ImGuiTreeNodeFlags treeFlags = ImGuiTreeNodeFlags_SpanAllColumns | ImGuiTreeNodeFlags_FramePadding | ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_FrameDontExpand;
+
+			if (ImGui::TableTreeHeader(prop->name.c_str(), treeFlags, true))
+			{
+				RenderClassProperties(_struct, offset, false);
+				ImGui::TreePop();
+			}
+		}
+	}
+		break;
 	case EVT_ENUM:
 	{
 		FEnum* _enum = CModuleManager::FindEnum(prop->typeName);

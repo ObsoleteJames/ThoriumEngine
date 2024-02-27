@@ -14,7 +14,7 @@ class CPropertyEditor : public CLayer
 public:
 	void OnUIRender() override;
 
-	void RenderClassProperties(FStruct* type, SizeType offset);
+	void RenderClassProperties(FStruct* type, SizeType offset, bool bHeader = true);
 	void RenderTransformEdit();
 
 	void RenderVectorProperty(SizeType offset, bool bReadOnly);

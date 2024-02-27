@@ -5,6 +5,7 @@
 #include "Math/Bounds.h"
 #include "Mesh.h"
 #include "Skeleton.h"
+#include "Physics/ColliderShapes.h"
 #include "ModelAsset.generated.h"
 
 class IVertexBuffer;
@@ -34,6 +35,18 @@ struct FBodyGroup
 {
 	FString name;
 	TArray<FBodyGroupOption> options;
+};
+
+struct FModelCollider
+{
+public:
+	EShapeType shapeType = SHAPE_BOX;
+	float shape[6] = { 0.f };
+
+	uint meshIndex = -1;
+	uint attachBone = -1;
+
+	bool bComplex = false;
 };
 
 ASSET(Extension = ".thmdl", ImportableAs = ".fbx;.obj;.gltf;.glb")
@@ -81,6 +94,8 @@ public:
 	inline const TArray<FBodyGroup>& GetBodyGroups() const { return bodyGroups; }
 	inline const TArray<FMesh>& GetMeshes() const { return meshes; }
 	inline const TArray<FMaterial>& GetMaterials() const { return materials; }
+	inline const TArray<FModelCollider>& GetColliders() const { return colliders; }
+	inline const TArray<TArray<FVector>>& GetConvexMeshes() const { return convexMeshes; }
 	inline const FSkeleton& GetSkeleton() const { return skeleton; }
 
 private:
@@ -97,6 +112,9 @@ protected:
 	uint8 numLODs;
 
 	TArray<FBodyGroup> bodyGroups;
+
+	TArray<FModelCollider> colliders;
+	TArray<TArray<FVector>> convexMeshes;
 
 	FBounds bounds;
 	TArray<FMesh> meshes;

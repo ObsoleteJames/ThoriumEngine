@@ -8,7 +8,7 @@ PRIVATE_MEMBER_OFFSET_ACCESSOR(CModelComponent, materials) \
 PRIVATE_MEMBER_OFFSET_ACCESSOR(CModelComponent, bCastShadows) \
 PRIVATE_MEMBER_OFFSET_ACCESSOR(CModelComponent, activeBodyGroups) \
 DECLARE_EXEC_FUNCTION(OnModelEdit)\
-DECLARE_CLASS(CModelComponent, CSceneComponent, Engine)
+DECLARE_CLASS(CModelComponent, CPrimitiveComponent, Engine)
 
 
 #undef FILE_ID

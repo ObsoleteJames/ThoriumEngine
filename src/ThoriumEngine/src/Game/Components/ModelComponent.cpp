@@ -3,6 +3,8 @@
 #include "Rendering/RenderScene.h"
 #include "Rendering/RenderProxies.h"
 #include "Game/World.h"
+#include "Physics/PhysicsBody.h"
+#include "Physics/PhysicsWorld.h"
 
 class CModelComponentProxy : public CPrimitiveProxy
 {
@@ -94,6 +96,15 @@ void CModelComponent::SetModel(TObjectPtr<CModelAsset> m)
 
 	model = m;
 
+	for (auto& p : physBodies)
+		p->Delete();
+
+	physBodies.Clear();
+
+	if (physicsBody)
+		physicsBody->Delete();
+	physicsBody = nullptr;
+
 	if (!model)
 	{
 		activeBodyGroups.Clear();
@@ -112,6 +123,9 @@ void CModelComponent::SetModel(TObjectPtr<CModelAsset> m)
 
 	skeleton.bones.Clear();
 	skeleton.bones.Resize(model->GetSkeleton().bones.Size());
+
+	if (GetWorld()->IsActive())
+		SetupPhysics();
 
 	//for (auto& matPath : mats)
 	//{
@@ -193,6 +207,11 @@ void CModelComponent::Init()
 	BaseClass::Init();
 }
 
+void CModelComponent::OnStart()
+{
+	SetupPhysics();
+}
+
 void CModelComponent::OnDelete()
 {
 	//FWorldRegisterer::UnregisterModelComponent(GetWorld(), this);
@@ -202,6 +221,14 @@ void CModelComponent::OnDelete()
 		delete renderProxy;
 		renderProxy = nullptr;
 	}
+
+	for (auto& p : physBodies)
+		p->Delete();
+	physBodies.Clear();
+
+	if (physicsBody)
+		physicsBody->Delete();
+	physicsBody = nullptr;
 
 	model = nullptr;
 	materials.Clear();
@@ -273,4 +300,61 @@ void CModelComponent::Load(FMemStream& in)
 void CModelComponent::OnModelEdit()
 {
 	SetModel(model);
+}
+
+void CModelComponent::SetupPhysics()
+{
+	if (GetWorld() && GetWorld()->GetPhysicsWorld())
+	{
+		auto* physWorld = GetWorld()->GetPhysicsWorld();
+
+		for (auto& coll : model->GetColliders())
+		{
+			FPhysicsBodySettings bodySettings{};
+			bodySettings.component = this;
+			bodySettings.entity = GetEntity();
+			bodySettings.moveType = GetEntity()->type == ENTITY_STATIC ? PHBM_STATIC : (bStaticBody ? PHBM_KINEMATIC : PHBM_DYNAMIC);
+			// :P
+			bodySettings.physicsLayer = bIsTrigger ? EPhysicsLayer::TRIGGER : (coll.bComplex ? EPhysicsLayer::COMPLEX : (bodySettings.moveType == PHBM_DYNAMIC ? EPhysicsLayer::DYNAMIC : EPhysicsLayer::STATIC));
+
+			bodySettings.shapeData = (void*)coll.shape;
+			bodySettings.shapeType = coll.shapeType;
+			bodySettings.transform = FTransform(GetWorldPosition(), GetWorldRotation(), GetWorldScale());
+
+			auto* body = physWorld->CreateBody(bodySettings);
+			if (!body)
+				continue;
+
+			if (!physicsBody)
+			{
+				physicsBody = body;
+
+				if (bWeldToParent)
+				{
+					auto* p = GetParent();
+					while (p)
+					{
+						if (auto* primitve = Cast<CPrimitiveComponent>(p); primitve)
+						{
+							//physWorld->CreateConstraint(EConstraint::FIXED, physicsBody, primitive->physicsBody);
+							bHasParentBody = true;
+							break;
+						}
+
+						p = p->GetParent();
+					}
+				}
+				else
+				{
+					// Detach from the root component.
+					Detach();
+				}
+			}
+			else
+			{
+				physBodies.Add(body);
+				//physWorld->CreateConstraint(EConstraint::FIXED, body, physicsBody);
+			}
+		}
+	}
 }

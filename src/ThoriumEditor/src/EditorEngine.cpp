@@ -25,6 +25,7 @@
 #include "Misc/Timer.h"
 #include <Util/KeyValue.h>
 
+#include "EditorMenu.h"
 #include "AssetBrowserWidget.h"
 #include "Layers/PropertyEditor.h"
 #include "Layers/ConsoleWidget.h"
@@ -46,6 +47,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "ImGui/ImGui.h"
 #include "ImGui/imgui_internal.h"
+#include "ImGui/imgui_thorium.h"
 
 #include "ThemeManager.h"
 
@@ -59,22 +61,27 @@ void CEditorEngine::Init()
 	gIsEditor = true;
 	gIsClient = true;
 
+	rootMenu = new CEditorMenu(FString());
+	SetupMenu();
+
+	CLayer::Init();
+
 	assetBrowser = new CAssetBrowserWidget();
-	propertyEditor = AddLayer<CPropertyEditor>();
-	consoleWidget = AddLayer<CConsoleWidget>();
-	ioWidget = AddLayer<CInputOutputWidget>();
-	projSettingsWidget = AddLayer<CProjectSettingsWidget>();
-	projSettingsWidget->bEnabled = false;
-	addonsWindow = AddLayer<CAddonsWindow>();
-	addonsWindow->bEnabled = false;
-	editorSettings = AddLayer<CEditorSettingsWidget>();
-	editorSettings->bEnabled = false;
+	//propertyEditor = AddLayer<CPropertyEditor>();
+	//consoleWidget = AddLayer<CConsoleWidget>();
+	//ioWidget = AddLayer<CInputOutputWidget>();
+	//projSettingsWidget = AddLayer<CProjectSettingsWidget>();
+	//projSettingsWidget->bEnabled = false;
+	//addonsWindow = AddLayer<CAddonsWindow>();
+	//addonsWindow->bEnabled = false;
+	//editorSettings = AddLayer<CEditorSettingsWidget>();
+	//editorSettings->bEnabled = false;
 
-	logWnd = AddLayer<CEditorLogWnd>();
-	logWnd->bEnabled = false;
+	//logWnd = AddLayer<CEditorLogWnd>();
+	//logWnd->bEnabled = false;
 
-	objectDebuggerWidget = AddLayer<CObjectDebugger>();
-	objectDebuggerWidget->bEnabled = false;
+	//objectDebuggerWidget = AddLayer<CObjectDebugger>();
+	//objectDebuggerWidget->bEnabled = false;
 
 	LoadEditorConfig();
 
@@ -284,6 +291,10 @@ void CEditorEngine::OnExit()
 	delete gRenderer;
 	delete gameWindow;
 
+	gPhysicsApi->Shutdown();
+	gPhysicsApi->Delete();
+	gPhysicsApi = nullptr;
+
 	CWindow::Shutdown();
 
 	CResourceManager::Shutdown();
@@ -292,6 +303,15 @@ void CEditorEngine::OnExit()
 	SaveConsoleLog();
 	CConsole::Shutdown();
 }
+
+enum EMenuAction {
+	MenuAction_NONE,
+	MenuAction_NewScene,
+	MenuAction_OpenScene,
+	MenuAction_SaveScene,
+	MenuAction_SaveSceneAs,
+};
+int menuAction = 0;
 
 void CEditorEngine::UpdateEditor()
 {
@@ -319,114 +339,110 @@ void CEditorEngine::UpdateEditor()
 
 	ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
 
-	enum EMenuAction {
-		MenuAction_NONE,
-		MenuAction_NewScene,
-		MenuAction_OpenScene,
-		MenuAction_SaveScene,
-		MenuAction_SaveSceneAs
-	};
-	int menuAction = 0;
-
 	SceneFileDialogs();
 	
 	if (ImGui::BeginMenuBar())
 	{
-		if (ImGui::BeginMenu("File"))
-		{
-			if (ImGui::MenuItem("New Scene", "Ctrl+N"))
-				menuAction = MenuAction_NewScene;
-			if (ImGui::MenuItem("Open Scene", "Ctrl+O"))
-				menuAction = MenuAction_OpenScene;
-			if (ImGui::MenuItem("Save", "Ctrl+S"))
-				menuAction = MenuAction_SaveScene;
-			if (ImGui::MenuItem("Save As"))
-				menuAction = MenuAction_SaveSceneAs;
+		//for (auto& c : rootMenu->children)
+		//	DrawMenu(c);
 
-			if (!bProjectLoaded)
-			{
-				ImGui::Separator();
+		rootMenu->Render();
 
-				if (ImGui::MenuItem("Open Project"))
-					bOpenProj = true;
-			}
+		//if (ImGui::BeginMenu("File"))
+		//{
+		//	if (ImGui::MenuItem("New Scene", "Ctrl+N"))
+		//		menuAction = MenuAction_NewScene;
+		//	if (ImGui::MenuItem("Open Scene", "Ctrl+O"))
+		//		menuAction = MenuAction_OpenScene;
+		//	if (ImGui::MenuItem("Save", "Ctrl+S"))
+		//		menuAction = MenuAction_SaveScene;
+		//	if (ImGui::MenuItem("Save As"))
+		//		menuAction = MenuAction_SaveSceneAs;
 
-			ImGui::Separator();
+		//	if (!bProjectLoaded)
+		//	{
+		//		ImGui::Separator();
 
-			ImGui::MenuItem("Build All");
-			ImGui::MenuItem("Build Lighting");
-			ImGui::MenuItem("Build Cubemaps");
-			ImGui::MenuItem("Package Engine Content");
+		//		if (ImGui::MenuItem("Open Project"))
+		//			bOpenProj = true;
+		//	}
 
-			ImGui::Separator();
+		//	ImGui::Separator();
 
-			if (ImGui::MenuItem("Quit"))
-				Exit();
+		//	ImGui::MenuItem("Build All");
+		//	ImGui::MenuItem("Build Lighting");
+		//	ImGui::MenuItem("Build Cubemaps");
+		//	ImGui::MenuItem("Package Engine Content");
 
-			ImGui::EndMenu();
-		}
+		//	ImGui::Separator();
 
-		if (ImGui::BeginMenu("Edit"))
-		{
-			ImGui::MenuItem("Undo");
-			ImGui::MenuItem("Redo");
-			ImGui::MenuItem("Copy");
-			ImGui::MenuItem("Paste");
+		//	if (ImGui::MenuItem("Quit"))
+		//		Exit();
 
-			ImGui::Separator();
+		//	ImGui::EndMenu();
+		//}
 
-			if (ImGui::MenuItem("Generate Build Data"))
-				GenerateBuildData();
+		//if (ImGui::BeginMenu("Edit"))
+		//{
+		//	ImGui::MenuItem("Undo");
+		//	ImGui::MenuItem("Redo");
+		//	ImGui::MenuItem("Copy");
+		//	ImGui::MenuItem("Paste");
 
-			ImGui::Separator();
+		//	ImGui::Separator();
 
-			ImGui::MenuItem("Project Settings", 0, &projSettingsWidget->bEnabled);
-			ImGui::MenuItem("Editor Settings", 0, &editorSettings->bEnabled);
-			ImGui::MenuItem("Addons", 0, &addonsWindow->bEnabled);
+		//	if (ImGui::MenuItem("Generate Build Data"))
+		//		GenerateBuildData();
 
-			ImGui::EndMenu();
-		}
+		//	ImGui::Separator();
 
-		if (ImGui::BeginMenu("Tools"))
-		{
-			ImGui::MenuItem("Data Asset Editor");
-			if (ImGui::MenuItem("Model Editor"))
-				AddLayer<CModelEditor>();
-			if (ImGui::MenuItem("Material Editor"))
-				AddLayer<CMaterialEditor>();
+		//	ImGui::MenuItem("Project Settings", 0, &projSettingsWidget->bEnabled);
+		//	ImGui::MenuItem("Editor Settings", 0, &editorSettings->bEnabled);
+		//	ImGui::MenuItem("Addons", 0, &addonsWindow->bEnabled);
 
-			ImGui::EndMenu();
-		}
+		//	ImGui::EndMenu();
+		//}
 
-		if (ImGui::BeginMenu("View"))
-		{
-			ImGui::MenuItem("Scene Outliner", nullptr, &bViewOutliner);
-			ImGui::MenuItem("Asset Browser", nullptr, &bViewAssetBrowser);
-			ImGui::MenuItem("Properties", nullptr, &propertyEditor->bEnabled);
-			ImGui::MenuItem("Entity IO", nullptr, &ioWidget->bEnabled);
-			ImGui::MenuItem("Console", nullptr, &consoleWidget->bEnabled);
-			ImGui::MenuItem("Log", nullptr, &logWnd->bEnabled);
+		//if (ImGui::BeginMenu("Tools"))
+		//{
+		//	ImGui::MenuItem("Data Asset Editor");
+		//	if (ImGui::MenuItem("Model Editor"))
+		//		AddLayer<CModelEditor>();
+		//	if (ImGui::MenuItem("Material Editor"))
+		//		AddLayer<CMaterialEditor>();
+
+		//	ImGui::EndMenu();
+		//}
+
+		//if (ImGui::BeginMenu("View"))
+		//{
+		//	ImGui::MenuItem("Scene Outliner", nullptr, &bViewOutliner);
+		//	ImGui::MenuItem("Asset Browser", nullptr, &bViewAssetBrowser);
+		//	ImGui::MenuItem("Properties", nullptr, &propertyEditor->bEnabled);
+		//	ImGui::MenuItem("Entity IO", nullptr, &ioWidget->bEnabled);
+		//	ImGui::MenuItem("Console", nullptr, &consoleWidget->bEnabled);
+		//	ImGui::MenuItem("Log", nullptr, &logWnd->bEnabled);
 
 
-			ImGui::EndMenu();
-		}
+		//	ImGui::EndMenu();
+		//}
 
-		if (ImGui::BeginMenu("Debug"))
-		{
-			ImGui::MenuItem("ImGui Demo", nullptr, &bImGuiDemo);
-			ImGui::MenuItem("Statistics", nullptr, &bViewStats);
-			ImGui::MenuItem("Object Debugger", nullptr, &objectDebuggerWidget->bEnabled);
+		//if (ImGui::BeginMenu("Debug"))
+		//{
+		//	ImGui::MenuItem("ImGui Demo", nullptr, &bImGuiDemo);
+		//	ImGui::MenuItem("Statistics", nullptr, &bViewStats);
+		//	ImGui::MenuItem("Object Debugger", nullptr, &objectDebuggerWidget->bEnabled);
 
-			ImGui::EndMenu();
-		}
+		//	ImGui::EndMenu();
+		//}
 
 		ImGui::EndMenuBar();
 	}
 
 	ImGui::End();
 
-	if (bImGuiDemo)
-		ImGui::ShowDemoWindow(&bImGuiDemo);
+	if (menuImGuiDemo->bChecked)
+		ImGui::ShowDemoWindow(&menuImGuiDemo->bChecked);
 
 	if (menuAction == MenuAction_SaveScene || (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_S)))
 		SaveScene();
@@ -434,6 +450,9 @@ void CEditorEngine::UpdateEditor()
 		NewScene();
 	if (menuAction == MenuAction_OpenScene)
 		ThoriumEditor::OpenFile("openEditorScene", (FAssetClass*)CScene::StaticClass());
+
+	if (menuAction != 0)
+		menuAction = 0;
 
 	if (bOpenProj)
 		ImGui::OpenPopup("Open Project");
@@ -653,13 +672,12 @@ void CEditorEngine::UpdateEditor()
 	DoEntityShortcuts();
 
 	// Scene outliner
-	if (bViewOutliner)
+	if (menuViewOutliner->bChecked)
 	{
-		if (ImGui::Begin("Scene Outliner##_editorSceneOutliner", &bViewOutliner))
+		if (ImGui::Begin("Scene Outliner##_editorSceneOutliner", &menuViewOutliner->bChecked))
 		{
 			static FString searchText;
-			searchText.Reserve(64);
-			ImGui::InputText("Search", searchText.Data(), 63);
+			ImGui::InputText("Search", &searchText);
 			constexpr ImGuiTableFlags flags = ImGuiTableFlags_BordersV | ImGuiTableFlags_BordersOuterH | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_Hideable;
 
 			ImGui::TextColored(ImVec4(1, 1, 0, 1), ("Count Selected: " + FString::ToString(selectedEntities.Size())).c_str());
@@ -676,9 +694,11 @@ void CEditorEngine::UpdateEditor()
 				ImGui::TableSetupColumn("Visibility");
 				ImGui::TableHeadersRow();
 
-				for (auto& ent : gWorld->GetEntities())
+				auto ents = gWorld->GetEntities();
+				for (auto& ent : ents)
 				{
-					OutlinerDrawEntity(ent.second);
+					if (searchText.IsEmpty() || ent.second->Name().ToLowerCase().Find(searchText.ToLowerCase()) != -1)
+						OutlinerDrawEntity(ent.second);
 				}
 
 				ImGui::EndTable();
@@ -688,9 +708,9 @@ void CEditorEngine::UpdateEditor()
 	}
 
 	// Asset Browser
-	if (bViewAssetBrowser)
+	if (menuAssetBrowser->bChecked)
 	{
-		if (ImGui::Begin("Asset Browser##_editorAssetBrowser", &bViewAssetBrowser))
+		if (ImGui::Begin("Asset Browser##_editorAssetBrowser", &menuAssetBrowser->bChecked))
 		{
 			assetBrowser->RenderUI();
 		}
@@ -698,9 +718,9 @@ void CEditorEngine::UpdateEditor()
 	}
 
 	// Statistics
-	if (bViewStats)
+	if (menuStatistics->bChecked)
 	{
-		if (ImGui::Begin("Statistics##_editorStats", &bViewStats))
+		if (ImGui::Begin("Statistics##_editorStats", &menuStatistics->bChecked))
 		{
 			// Time
 			ImGui::Text("frame time: %.2f(ms)", deltaTime * 1000.f);
@@ -806,16 +826,18 @@ void CEditorEngine::LoadEditorConfig()
 	editorCfg.wndHeight = kv.GetValue("wndHeight")->AsInt(1080);
 	editorCfg.wndMode = kv.GetValue("wndMode")->AsInt(1);
 
-	bViewOutliner = kv.GetValue("view_outliner")->AsBool(true);
-	bViewAssetBrowser = kv.GetValue("view_assetbrowser")->AsBool(true);
-	bViewStats = kv.GetValue("view_statistics")->AsBool();
-	propertyEditor->bEnabled = kv.GetValue("view_properties")->AsBool(true);
-	consoleWidget->bEnabled = kv.GetValue("view_console")->AsBool(true);
-	ioWidget->bEnabled = kv.GetValue("view_entityio")->AsBool(true);
-	projSettingsWidget->bEnabled = kv.GetValue("view_projectsettings")->AsBool();
-	editorSettings->bEnabled = kv.GetValue("view_editorsettings")->AsBool();
-	addonsWindow->bEnabled = kv.GetValue("view_addons")->AsBool();
-	logWnd->bEnabled = kv.GetValue("view_log")->AsBool();
+	menuViewOutliner->bChecked = kv.GetValue("view_outliner")->AsBool(true);
+	menuAssetBrowser->bChecked = kv.GetValue("view_assetbrowser")->AsBool(true);
+	menuStatistics->bChecked = kv.GetValue("view_statistics")->AsBool();
+	//propertyEditor->bEnabled = kv.GetValue("view_properties")->AsBool(true);
+	//consoleWidget->bEnabled = kv.GetValue("view_console")->AsBool(true);
+	//ioWidget->bEnabled = kv.GetValue("view_entityio")->AsBool(true);
+	//projSettingsWidget->bEnabled = kv.GetValue("view_projectsettings")->AsBool();
+	//editorSettings->bEnabled = kv.GetValue("view_editorsettings")->AsBool();
+	//addonsWindow->bEnabled = kv.GetValue("view_addons")->AsBool();
+	//logWnd->bEnabled = kv.GetValue("view_log")->AsBool();
+
+	CLayer::LoadConfig(kv);
 
 	KVCategory* projs = kv.GetCategory("projects", true);
 	for (auto& v : projs->GetValues())
@@ -842,16 +864,18 @@ void CEditorEngine::SaveEditorConfig()
 	kv.SetValue("wndHeight", FString::ToString(editorCfg.wndHeight));
 	kv.SetValue("wndMode", FString::ToString((int)gameWindow->GetWindowMode()));
 
-	kv.SetValue("view_outliner", FString::ToString((int)bViewOutliner));
-	kv.SetValue("view_assetbrowser", FString::ToString((int)bViewAssetBrowser));
-	kv.SetValue("view_statistics", FString::ToString((int)bViewStats));
-	kv.SetValue("view_properties", FString::ToString((int)propertyEditor->bEnabled));
-	kv.SetValue("view_console", FString::ToString((int)consoleWidget->bEnabled));
-	kv.SetValue("view_entityio", FString::ToString((int)ioWidget->bEnabled));
-	kv.SetValue("view_projectsettings", FString::ToString((int)projSettingsWidget->bEnabled));
-	kv.SetValue("view_editorsettings", FString::ToString((int)editorSettings->bEnabled));
-	kv.SetValue("view_addons", FString::ToString((int)addonsWindow->bEnabled));
-	kv.SetValue("view_log", FString::ToString((int)logWnd->bEnabled));
+	kv.SetValue("view_outliner", FString::ToString((int)menuViewOutliner->bChecked));
+	kv.SetValue("view_assetbrowser", FString::ToString((int)menuAssetBrowser->bChecked));
+	kv.SetValue("view_statistics", FString::ToString((int)menuStatistics->bChecked));
+	//kv.SetValue("view_properties", FString::ToString((int)propertyEditor->bEnabled));
+	//kv.SetValue("view_console", FString::ToString((int)consoleWidget->bEnabled));
+	//kv.SetValue("view_entityio", FString::ToString((int)ioWidget->bEnabled));
+	//kv.SetValue("view_projectsettings", FString::ToString((int)projSettingsWidget->bEnabled));
+	//kv.SetValue("view_editorsettings", FString::ToString((int)editorSettings->bEnabled));
+	//kv.SetValue("view_addons", FString::ToString((int)addonsWindow->bEnabled));
+	//kv.SetValue("view_log", FString::ToString((int)logWnd->bEnabled));
+
+	CLayer::SaveConfig(kv);
 
 	KVCategory* projs = kv.GetCategory("projects", true);
 	for (auto& p : availableProjects)
@@ -925,6 +949,93 @@ void CEditorEngine::InitEditorData()
 	gridMat = CreateObject<CMaterial>();
 	gridMat->SetShader("Tools");
 	gridMat->SetInt("vType", 1);
+}
+
+void CEditorEngine::SetupMenu()
+{
+	// --- FILE ---
+	CEditorMenu* menu = new CEditorMenu("New Scene", "Scene", "Ctrl+N", false);
+	menu->OnClicked = []() { menuAction = MenuAction_NewScene; };
+	RegisterMenu(menu, "File");
+
+	menu = new CEditorMenu("Open Scene", "Scene", "Ctrl+O", false);
+	menu->OnClicked = []() { menuAction = MenuAction_OpenScene; };
+	RegisterMenu(menu, "File");
+
+	menu = new CEditorMenu("Save", "Scene", "Ctrl+S", false);
+	menu->OnClicked = []() { menuAction = MenuAction_SaveScene; };
+	RegisterMenu(menu, "File");
+
+	menu = new CEditorMenu("Save As", "Scene", FString(), false);
+	menu->OnClicked = []() { menuAction = MenuAction_SaveSceneAs; };
+	RegisterMenu(menu, "File");
+
+	menu = new CEditorMenu("Build All", "Build", FString(), false);
+	//menu->OnClicked = []() { menuAction = MenuAction_SaveSceneAs; };
+	RegisterMenu(menu, "File");
+
+	menu = new CEditorMenu("Build Lighting", "Build", FString(), false);
+	//menu->OnClicked = []() { menuAction = MenuAction_SaveSceneAs; };
+	RegisterMenu(menu, "File");
+
+	menu = new CEditorMenu("Build Cubemaps", "Build", FString(), false);
+	//menu->OnClicked = []() { menuAction = MenuAction_SaveSceneAs; };
+	RegisterMenu(menu, "File");
+
+	menu = new CEditorMenu("Package Engine Content", "Build", FString(), false);
+	//menu->OnClicked = []() { menuAction = MenuAction_SaveSceneAs; };
+	RegisterMenu(menu, "File");
+
+	menu = new CEditorMenu("Compile Project Code", "Build", FString(), false);
+	//menu->OnClicked = []() { gEditorEngine()->Undo(); };
+	RegisterMenu(menu, "File");
+
+	menu = new CEditorMenu("Quit", false);
+	menu->OnClicked = []() { gEditorEngine()->Exit(); };
+	RegisterMenu(menu, "File");
+
+	// --- EDIT ---
+	menu = new CEditorMenu("Undo", "Scene", FString(), false);
+	//menu->OnClicked = []() { gEditorEngine()->Undo(); };
+	RegisterMenu(menu, "Edit");
+
+	menu = new CEditorMenu("Redo", "Scene", FString(), false);
+	//menu->OnClicked = []() { gEditorEngine()->Undo(); };
+	RegisterMenu(menu, "Edit");
+
+	menu = new CEditorMenu("Copy", "Scene", FString(), false);
+	//menu->OnClicked = []() { gEditorEngine()->Undo(); };
+	RegisterMenu(menu, "Edit");
+
+	menu = new CEditorMenu("Paste", "Scene", FString(), false);
+	//menu->OnClicked = []() { gEditorEngine()->Undo(); };
+	RegisterMenu(menu, "Edit");
+
+	RegisterMenu(new CEditorMenu("Tools"));
+
+	// --- VIEW ---
+	menu = new CEditorMenu("Outliner", true);
+	//menu->OnClicked = [=]() { gEditorEngine()->bImGuiDemo = menu->Checked(); };
+	RegisterMenu(menu, "View");
+	menuViewOutliner = menu;
+
+	menu = new CEditorMenu("Asset Browser", true);
+	//menu->OnClicked = [=]() { gEditorEngine()->bViewAssetBrowser = menu->Checked(); };
+	RegisterMenu(menu, "View");
+	menuAssetBrowser = menu;
+
+	// --- DEBUG ---
+	menu = new CEditorMenu("ImGui Demo", true);
+	//menu->OnClicked = [=]() { gEditorEngine()->bViewStats = menu->Checked(); };
+	RegisterMenu(menu, "Debug");
+	menuImGuiDemo = menu;
+
+	menu = new CEditorMenu("Statistics", true);
+	//menu->OnClicked = [=]() { gEditorEngine()->bViewStats = menu->Checked(); };
+	RegisterMenu(menu, "Debug");
+	menuStatistics = menu;
+
+	//RegisterMenu(new CEditorMenu("Debug"));
 }
 
 void CEditorEngine::SetupEditorDocking()
@@ -1335,6 +1446,51 @@ void CEditorEngine::SaveProjectConfig()
 
 }
 
+void CEditorEngine::RegisterMenu(CEditorMenu* menu, const FString& path /*= FString()*/)
+{
+	CEditorMenu* parent = rootMenu;
+	if (!path.IsEmpty())
+		parent = GetMenu(path);
+
+	parent->children.Add(menu);
+	menu->parent = parent;
+
+	parent->SortChildren();
+}
+
+CEditorMenu* CEditorEngine::GetMenu(const FString& path)
+{
+	TArray<FString> paths = path.Split("/\\");
+
+	CEditorMenu* curMenu = rootMenu;
+	for (auto& p : paths)
+	{
+		bool bFound = false;
+		for (auto* m : curMenu->children)
+		{
+			if (m->Name() == p)
+			{
+				curMenu = m;
+				bFound = true;
+				break;
+			}
+		}
+
+		if (!bFound)
+		{
+			CEditorMenu* m = new CEditorMenu(p, FString());
+			curMenu->children.Add(m);
+			m->parent = curMenu;
+			curMenu = m;
+		}
+	}
+
+	if (curMenu == rootMenu)
+		return nullptr;
+
+	return curMenu;
+}
+
 void CEditorEngine::RegisterProject(const FProject& proj)
 {
 	for (auto& p : availableProjects)
@@ -1657,5 +1813,37 @@ void CEditorEngine::DrawObjectCreateMenu()
 			gWorld->CreateEntity<CPointLightEntity>("Point Light", entPos);
 
 		ImGui::EndMenu();
+	}
+}
+
+void CEditorEngine::DrawMenu(CEditorMenu* m)
+{
+	if (m->children.Size() > 0)
+	{
+		if (ImGui::BeginMenu(m->Name().c_str()))
+		{
+			for (auto& c : m->children)
+				DrawMenu(c);
+
+			ImGui::EndMenu();
+		}
+	}
+	else
+	{
+		if (ImGui::MenuItem(m->Name().c_str(), m->Shortcut().c_str(), m->bToggle ? m->bEnabled : false))
+		{
+			if (m->OnClicked)
+				m->OnClicked();
+
+			if (m->bToggle)
+			{
+				m->bEnabled ^= 1;
+
+				if (m->bEnabled && m->OnEnabled)
+					m->OnEnabled();
+				else if (m->OnDisabled)
+					m->OnDisabled();
+			}
+		}
 	}
 }

@@ -106,12 +106,37 @@ void CObject::SerializeProperties(FMemStream& out, FStruct* structType, void* ob
 	out << &type;
 	out << structType->GetInternalName();
 
-	SizeType numProp = structType->NumProperties();
-	out << &numProp;
+	SizeType numProp = 0;
 
+	// Calculate number of properties
 	const FProperty* p = structType->GetPropertyList();
 	while (p)
 	{
+		bool bSerialize = p->flags & VTAG_SERIALIZABLE;
+		bool bStatic = p->flags & VTAG_STATIC;
+		if (!bSerialize || bStatic)
+		{
+			p = p->next;
+			continue;
+		}
+
+		numProp++;
+		p = p->next;
+	}
+
+	out << &numProp;
+
+	p = structType->GetPropertyList();
+	while (p)
+	{
+		bool bSerialize = p->flags & VTAG_SERIALIZABLE;
+		bool bStatic = p->flags & VTAG_STATIC;
+		if (!bSerialize || bStatic)
+		{
+			p = p->next;
+			continue;
+		}
+
 		out << &p->type;
 		out << p->cppName;
 		
@@ -132,10 +157,18 @@ void CObject::SerializeProperties(FMemStream& out, FStruct* structType, void* ob
 
 void CObject::LoadProperties(FMemStream& in, FStruct* structType, void* object)
 {
+	SizeType offset = in.Tell();
+
 	uint8 type;
 	FString structName;
 	in >> &type;
 	in >> structName;
+
+	//if (structName != structType->cppName)
+	//{
+	//	in.Seek(offset, SEEK_SET);
+	//	return;
+	//}
 
 	SizeType numProp;
 	in >> &numProp;

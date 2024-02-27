@@ -20,7 +20,7 @@ public:
 	PROPERTY(Editable)
 	float intensity = 5.f;
 
-	PROPERTY(Editable)
+	PROPERTY(Editable, UIType = Color)
 	FVector color = FVector(1.f);
 
 	PROPERTY(Editable)

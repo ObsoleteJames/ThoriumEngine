@@ -6,6 +6,10 @@
 #include "ImGui/imgui_internal.h"
 #include "ImGui/imgui_thorium.h"
 #include "EditorWidgets.h"
+#include "EditorEngine.h"
+#include "EditorMenu.h"
+
+REGISTER_EDITOR_LAYER(CEditorSettingsWidget, "Edit/Editor Settings", "Settings", false, false)
 
 void CEditorSettingsWidget::OnUIRender()
 {
@@ -20,4 +24,5 @@ void CEditorSettingsWidget::OnUIRender()
 		ImGui::EndChild();
 	}
 	ImGui::End();
+	Menu()->bChecked = bEnabled;
 }

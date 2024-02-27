@@ -6,6 +6,10 @@
 #include "ImGui/imgui_internal.h"
 #include "ImGui/imgui_thorium.h"
 #include "EditorWidgets.h"
+#include "EditorEngine.h"
+#include "EditorMenu.h"
+
+REGISTER_EDITOR_LAYER(CEditorLogWnd, "View/Log", nullptr, false, false)
 
 inline TArray<FEditorLog*>& Logs()
 {
@@ -50,7 +54,8 @@ void CEditorLogWnd::OnUIRender()
         }
         ImGui::EndChild();
     }
-    ImGui::End();
+	ImGui::End();
+	Menu()->bChecked = bEnabled;
 }
 
 void CEditorLogWnd::OpenLog(const FString &name)

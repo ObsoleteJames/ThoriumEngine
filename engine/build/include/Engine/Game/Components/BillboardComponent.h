@@ -16,8 +16,12 @@ class ENGINE_API CBillboardComponent : public CSceneComponent
 	friend class CBillboardPrimitiveProxy;
 
 public:
+	virtual ~CBillboardComponent() = default;
+
 	void Init();
 	void OnDelete();
+
+	FBounds Bounds() const override;
 
 public:
 	PROPERTY(Editable)

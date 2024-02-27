@@ -6,6 +6,7 @@
 #include "Game/Components/SkyboxComponent.h"
 #include "Game/Components/PointLightComponent.h"
 #include "Rendering/RenderScene.h"
+#include "Rendering/DebugRenderer.h"
 #include "AssetBrowserWidget.h"
 #include <Util/KeyValue.h>
 
@@ -22,7 +23,10 @@
 #include "ImGui/ImGui.h"
 #include "ImGui/imgui_internal.h"
 #include "ImGui/imgui_thorium.h"
+#include "ImGui/imgui_thorium_math.h"
 #include "EditorWidgets.h"
+
+REGISTER_EDITOR_LAYER(CModelEditor, "Tools/Model Editor", nullptr, true, false)
 
 class FModelOpenAction : public FAssetBrowserAction
 {
@@ -476,7 +480,144 @@ void CModelEditor::OnUIRender()
 
 				if (ImGui::TableTreeHeader("Colliders", ImGuiTreeNodeFlags_AllowOverlap))
 				{
+					ImGui::TableNextRow();
+					ImGui::TableNextColumn();
 
+					ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.180f, 0.180f, 0.180f, 1.000f));
+					if (ImGui::Button("Add##colliderAdd", ImVec2(0, 24)))
+					{
+						bCompiled = false;
+						bSaved = false;
+						mdl->colliders.Add();
+					}
+					ImGui::SameLine();
+					if (ImGui::Button("Clear##colliderClear", ImVec2(0, 24)))
+					{
+						bCompiled = false;
+						bSaved = false;
+						mdl->colliders.Clear();
+					}
+					ImGui::PopStyleColor();
+
+					int remove = -1;
+					for (int i = 0; i < mdl->colliders.Size(); i++)
+					{
+						FModelCollider& coll = mdl->colliders[i];
+
+						bOpen = ImGui::TableTreeHeader(("Collider " + FString::ToString(i)).c_str(), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_AllowOverlap, true);
+						ImGui::TableNextColumn();
+						ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 2);
+						ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+						if (ImGui::Button("Remove"))
+							remove = i;
+						ImGui::SameLine();
+						ImGui::PopStyleColor();
+
+						if (bOpen)
+						{
+							ImGui::TableNextRow();
+							ImGui::TableNextColumn();
+
+							ImGui::Text("Type");
+
+							constexpr static const char* colliderTypeNames[] = {
+								"INVALID",
+								"Box",
+								"Sphere",
+								"Plane (not working)",
+								"Capsule",
+								"Mesh",
+								"Convex Mesh"
+							};
+
+							ImGui::TableNextColumn();
+
+							bool bTypeChanged = false;
+
+							if (ImGui::BeginCombo(("##colliderType" + FString::ToString(i)).c_str(), colliderTypeNames[(int)coll.shapeType]))
+							{
+								for (int i = 0; i < EShapeType::SHAPE_END - 1; i++)
+								{
+									if (ImGui::Selectable(colliderTypeNames[i + 1], coll.shapeType == i + 1))
+									{
+										coll.shapeType = (EShapeType)(i + 1);
+										bTypeChanged = true;
+									}
+								}
+
+								ImGui::EndCombo();
+							}
+
+							if (bTypeChanged)
+							{
+								coll.shape[0] = 0.f;
+								coll.shape[1] = 0.f;
+								coll.shape[2] = 0.f;
+								coll.shape[3] = 1.f;
+								coll.shape[4] = 1.f;
+								coll.shape[5] = 1.f;
+							}
+
+							FVector& offset = *(FVector*)coll.shape;
+							if (coll.shapeType < SHAPE_MESH)
+							{
+								ImGui::TableNextRow();
+								ImGui::TableNextColumn();
+								ImGui::Text("Offset");
+								ImGui::TableNextColumn();
+
+								ImGui::DragVector("##offsetVec", &offset);
+
+								if (coll.shapeType == SHAPE_BOX)
+								{
+									ImGui::TableNextRow();
+									ImGui::TableNextColumn();
+									ImGui::Text("Size");
+									ImGui::TableNextColumn();
+
+									FVector* size = ((FVector*)coll.shape) + 1;
+									ImGui::DragVector("##sizeVec", size);
+
+									gDebugRenderer->SetScene(scene->GetRenderScene());
+									gDebugRenderer->DrawBox(FTransform(offset, FQuaternion(), *size), FColor::green.WithAlpha(0.1f), DebugDrawType_Solid | DebugDrawType_Overlay);
+									gDebugRenderer->DrawBox(FTransform(offset, FQuaternion(), *size), FColor::green.WithAlpha(0.5f), DebugDrawType_Wireframe | DebugDrawType_Overlay);
+									gDebugRenderer->SetScene(nullptr);
+								}
+								else if (coll.shapeType == SHAPE_SPHERE)
+								{
+									ImGui::TableNextRow();
+									ImGui::TableNextColumn();
+									ImGui::Text("Radius");
+									ImGui::TableNextColumn();
+
+									float* size = ((float*)coll.shape) + 3;
+									ImGui::DragFloat("##sizeVec", size);
+								}
+								else if (coll.shapeType == SHAPE_CAPSULE)
+								{
+									ImGui::TableNextRow();
+									ImGui::TableNextColumn();
+									ImGui::Text("Radius");
+									ImGui::TableNextColumn();
+
+									float* size = ((float*)coll.shape) + 3;
+									ImGui::DragFloat("##sizeVec", size);
+
+									ImGui::TableNextRow();
+									ImGui::TableNextColumn();
+									ImGui::Text("Height");
+									ImGui::TableNextColumn();
+
+									float* height = ((float*)coll.shape) + 4;
+									ImGui::DragFloat("##sizeVec", height);
+								}
+							}
+
+							ImGui::TreePop();
+						}
+					}
+					if (remove != -1)
+						mdl->colliders.Erase(mdl->colliders.At(remove));
 
 					ImGui::TreePop();
 				}

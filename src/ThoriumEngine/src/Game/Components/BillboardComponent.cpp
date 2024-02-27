@@ -32,6 +32,7 @@ void CBillboardComponent::Init()
 			transform.position = comp->GetWorldPosition();
 			transform.scale = comp->GetWorldScale();
 			matrix = FMatrix(1.f).Translate(transform.position).Scale(transform.scale);
+			bounds = comp->Bounds();
 		}
 
 		void GetDynamicMeshes(FMeshBuilder& out) override
@@ -47,9 +48,11 @@ void CBillboardComponent::Init()
 		TObjectPtr<CTexture> sprite;
 	};
 
-	mat = CreateObject<CMaterial>();
+	mat = CreateObject<CMaterial>("BillboardMat");
 	mat->SetShader("Billboard");
 	mat->SetFloat("vAlpha", 1.f);
+
+	bounds.extents = FVector::one * 0.5f;
 
 	sprite = CResourceManager::GetResource<CTexture>("misc/Obsolete.thtex");
 
@@ -67,4 +70,15 @@ void CBillboardComponent::OnDelete()
 		GetWorld()->UnregisterPrimitive(renderProxy);
 		delete renderProxy;
 	}
+	mat = nullptr;
+}
+
+FBounds CBillboardComponent::Bounds() const
+{
+	FBounds r = bounds;
+
+	FVector scale = GetWorldScale();
+	r.extents = r.extents * scale;
+	r.position = r.position * scale + GetWorldPosition();
+	return r;
 }

@@ -1,26 +1,16 @@
-[Tue Feb 13 16:38:17 2024][CEngine] Initializing...
-[Tue Feb 13 16:38:17 2024][CResourceManager] Created resource threads (2)
-[Tue Feb 13 16:38:17 2024][CResourceManager] Initialized
-[Tue Feb 13 16:38:17 2024][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine/content
-[Tue Feb 13 16:38:17 2024][CResourceManager] Found 37 assets in 'Engine'
-[Tue Feb 13 16:38:17 2024][CEngine] Initialization complete
-[Tue Feb 13 16:38:17 2024][CEngine] Loading scene 'empty'
-[Tue Feb 13 16:38:18 2024][CEngine] Loading project 'engine_testing'
-[Tue Feb 13 16:38:18 2024][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
-F:\MyProjects\VS_Projects\ThoriumEngine\engine/content/addons/physx_4.1/bin\PhysXCommon_64.dll
-[Tue Feb 13 16:38:18 2024][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
-F:\MyProjects\VS_Projects\ThoriumEngine\engine/content/addons/physx_4.1/bin\PhysXCooking_64.dll
-[Tue Feb 13 16:38:18 2024][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
-F:\MyProjects\VS_Projects\ThoriumEngine\engine/content/addons/physx_4.1/bin\PhysXDevice64.dll
-[Tue Feb 13 16:38:18 2024][CEngine] ERROR: Failed to load addon dependency (FDependency::LIBRARY)
-F:\MyProjects\VS_Projects\ThoriumEngine\engine/content/addons/physx_4.1/bin\PhysXFoundation_64.dll
-[Tue Feb 13 16:38:18 2024][CEngine] ERROR: Failed to load addon module, file does not exist
-F:\MyProjects\VS_Projects\ThoriumEngine\engine/content/addons/physx_4.1/bin/win64/Debug/physx_4_1.dll
-[Tue Feb 13 16:38:18 2024][CEngine] WARNING: Failed to locate module for mod 'MGS'
-[Tue Feb 13 16:38:18 2024][CFileSystem] Mounting Mod: MGS
-[Tue Feb 13 16:38:18 2024][CResourceManager] Found 26 assets in 'MGS'
-[Tue Feb 13 16:38:18 2024][CResourceManager] ERROR: Failed to get resource 'ImHalfMeFoxy.thscene', resource doesn't exist!
-[Tue Feb 13 16:38:18 2024][CEngine] ERROR: Failed to find scene file 'ImHalfMeFoxy.thscene'
-[Tue Feb 13 16:38:18 2024][CEngine] Loading scene 'empty'
-[Tue Feb 13 16:38:39 2024][CEngine] Shutting down...
-[Tue Feb 13 16:38:39 2024][CResourceManager] Shutting down resource threads...
+[Mon Feb 26 02:32:26 2024][CEngine] Initializing...
+[Mon Feb 26 02:32:26 2024][CResourceManager] Created resource threads (2)
+[Mon Feb 26 02:32:26 2024][CResourceManager] Initialized
+[Mon Feb 26 02:32:26 2024][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine/content
+[Mon Feb 26 02:32:26 2024][CResourceManager] Found 38 assets in 'Engine'
+[Mon Feb 26 02:32:26 2024][CEngine] Initialization complete
+[Mon Feb 26 02:32:26 2024][CEngine] Loading project 'engine_testing'
+[Mon Feb 26 02:32:27 2024][CEngine] WARNING: Failed to locate module for mod 'MGS'
+[Mon Feb 26 02:32:27 2024][CFileSystem] Mounting Mod: MGS
+[Mon Feb 26 02:32:27 2024][CResourceManager] Found 26 assets in 'MGS'
+[Mon Feb 26 02:32:27 2024][CEngine] WARNING: No Physic API class was specified, reverting to default (Jolt Physics).
+[Mon Feb 26 02:32:27 2024][CResourceManager] ERROR: Failed to get resource 'ImHalfMeFoxy.thscene', resource doesn't exist!
+[Mon Feb 26 02:32:27 2024][CEngine] ERROR: Failed to find scene file 'ImHalfMeFoxy.thscene'
+[Mon Feb 26 02:32:27 2024][CEngine] Loading scene 'empty'
+[Mon Feb 26 02:32:29 2024][CEngine] Shutting down...
+[Mon Feb 26 02:32:29 2024][CResourceManager] Shutting down resource threads...

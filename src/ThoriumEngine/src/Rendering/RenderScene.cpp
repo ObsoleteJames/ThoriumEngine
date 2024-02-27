@@ -69,14 +69,21 @@ bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitive
 		FMeshBuilder mb;
 		p->GetDynamicMeshes(mb);
 
-		if (!FMath::RayAABB(p->Bounds(), FRay(raypos, dir)))
+		// bounds raycast output
+		FVector bPos;
+		FVector bNormal;
+
+		if (!FMath::RayAABB(p->Bounds(), FRay(raypos, dir), &bPos, &bNormal))
 			continue;
 
+		bool bHadMeshes = false;
 		for (auto& m : mb.GetMeshes())
 		{
 			FMesh& mesh = m.mesh;
 			if (!mesh.vertexData || mesh.topologyType != FMesh::TOPOLOGY_TRIANGLES)
 				continue;
+
+			bHadMeshes = true;
 
 			uint faceCount = mesh.numIndexData / 3;
 			for (int i = 0; i < faceCount; i++)
@@ -114,6 +121,26 @@ bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitive
 						outHit->hitFace = i * 3;
 						outHit->materialIndex = mesh.materialIndex;
 					}
+				}
+			}
+		}
+
+		// if the primitive had no proper mesh data, use the bounds as the raycast target instead
+		if (!bHadMeshes)
+		{
+			float dist = FVector::Distance(bPos, raypos);
+			if (dist < closesthit && dist > 0.f)
+			{
+				r = true;
+				closesthit = dist;
+				if (outHit)
+				{
+					outHit->distance = dist;
+					outHit->hitProxy = p;
+					outHit->normal = bNormal;
+					outHit->position = bPos;
+					outHit->hitFace = -1;
+					outHit->materialIndex = -1;
 				}
 			}
 		}
