@@ -402,7 +402,10 @@ bool CFileSystem::UnmountMod(FMod* mod)
 	if (!modIndex)
 		return false;
 
+	CResourceManager::DeleteResourcesFromMod(mod);
+
 	Mods.Erase(Mods.At(modIndex));
+	delete mod;
 	return true;
 }
 

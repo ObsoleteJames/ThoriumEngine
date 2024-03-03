@@ -7,6 +7,7 @@ PRIVATE_MEMBER_OFFSET_ACCESSOR(CModelComponent, model) \
 PRIVATE_MEMBER_OFFSET_ACCESSOR(CModelComponent, materials) \
 PRIVATE_MEMBER_OFFSET_ACCESSOR(CModelComponent, bCastShadows) \
 PRIVATE_MEMBER_OFFSET_ACCESSOR(CModelComponent, activeBodyGroups) \
+PRIVATE_MEMBER_OFFSET_ACCESSOR(CModelComponent, skeleton) \
 DECLARE_EXEC_FUNCTION(OnModelEdit)\
 DECLARE_CLASS(CModelComponent, CPrimitiveComponent, Engine)
 

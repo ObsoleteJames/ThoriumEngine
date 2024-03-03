@@ -1,13 +1,13 @@
 #pragma once
 
-#include "EngineCore.h"
+#include "MgsDemo.h"
 #include "Game/Pawn.h"
 #include "MgsPawn.generated.h"
 
 class CCameraComponent;
 
 CLASS()
-class CMgsPawn : public CPawn
+class MGS_API CMgsPawn : public CPawn
 {
 	GENERATED_BODY()
 

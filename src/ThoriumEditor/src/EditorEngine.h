@@ -48,7 +48,7 @@ public:
 	void LoadEditorConfig();
 	void SaveEditorConfig();
 
-	void GenerateBuildData();
+	void CompileProjectCode(int config = 0);
 
 	void RegisterProject(const FProject& proj);
 
@@ -148,6 +148,8 @@ public:
 	CEditorMenu* menuStatistics = nullptr;
 
 	CEditorMenu* menuImGuiDemo = nullptr;
+
+	CEditorMenu* menuCloseProject = nullptr;
 
 	bool bOpenProj = true;
 

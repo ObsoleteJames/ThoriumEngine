@@ -560,6 +560,15 @@ int CompileSource(const FCompileConfig& config)
 			// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
 			// 	<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "\")\n";
 
+		try
+		{
+			std::filesystem::create_directories(lo.c_str());
+		}
+		catch(std::exception& e)
+		{
+			std::cout << e.what();
+		}
+
 		cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_LINKER_FILE:" + cmakeLib + ">\" \"" + lo + "/\"\n";
 		// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_LINKER_FILE:"
 		// 	<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "\")\n";
@@ -590,6 +599,15 @@ int CompileSource(const FCompileConfig& config)
 	{
 		FString bo = strExp.ParseString(*binOut);
 		bo.ReplaceAll('\\', '/');
+
+		try
+		{
+			std::filesystem::create_directories(bo.c_str());
+		}
+		catch(std::exception& e)
+		{
+			std::cout << e.what();
+		}
 
 		cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:" + cmakeLib + ">\" \"" + bo + "/\"\n";
 		// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
@@ -694,7 +712,7 @@ bool GenerateBuildFromProject(const FString& projectCfg)
 	buildCfg.SetValue("IncludeOut", "${PATH}/include");
 
 	buildCfg.SetValue("LibOut", "${PATH}/bin");
-	buildCfg.SetValue("BuildOut", projFolder + "/" + game + "/bin");
+	buildCfg.SetValue("BuildOut", projFolder + "/" + game + "/bin/${PLATFORM}");
 
 	auto* includes = buildCfg.GetArray("Include", true);
 	includes->Clear();

@@ -21,6 +21,42 @@ FVector FBounds::Clamp(const FVector& point) const
 	return FVector(FMath::Clamp(point.x, min.x, max.x), FMath::Clamp(point.y, min.y, max.y), FMath::Clamp(point.z, min.z, max.z));
 }
 
+bool FBounds::IsOverlapping(const FBounds& other) const
+{
+	FVector min = Min();
+	FVector max = Max();
+
+	FVector oMin = other.Min();
+	FVector oMax = other.Max();
+
+	return	min.x <= oMax.x && 
+			max.x >= oMax.x &&
+			min.y <= oMax.y &&
+			max.y >= oMax.y &&
+			min.z <= oMax.z &&
+			max.z >= oMax.z;
+}
+
+bool FBounds::IsInside(const FBounds& b) const
+{
+	return b.Min() > Min() && b.Max() < Max();
+}
+
+bool FBounds::IsInside(const FVector& point) const
+{
+	return point > Min() && point < Max();
+}
+
+float FBounds::Distance(const FBounds& b) const
+{
+	return FVector::Distance(Clamp(b.position), b.Clamp(position));
+}
+
+float FBounds::Distance(const FVector& point) const
+{
+	return FVector::Distance(Clamp(point), point);
+}
+
 FBounds FBounds::Combine(const FBounds& b) const
 {
 	FVector aMin = Min();
@@ -97,17 +133,7 @@ FBounds FBounds::operator*(const FTransform& t)
 
 	FVector pivot = r.position - t.position;
 
-	FVector maxX = FVector(r.extents.x * 2, r.extents.y, 0) - pivot;
-	FVector maxY = FVector(0, r.extents.y * 2, 0) - pivot;
-	FVector maxZ = FVector(0, r.extents.y, r.extents.z * 2) - pivot;
-
-	maxX = t.rotation.Rotate(maxX) + pivot;
-	maxY = t.rotation.Rotate(maxY) + pivot;
-	maxZ = t.rotation.Rotate(maxZ) + pivot;
-
-	r.extents.x = maxX.x > maxY.x ? (maxX.x > maxZ.x ? maxX.x : maxZ.x) : maxY.x;
-	r.extents.y = maxX.y > maxY.y ? (maxX.y > maxZ.y ? maxX.y : maxZ.y) : maxY.y;
-	r.extents.z = maxX.z > maxY.z ? (maxX.z > maxZ.z ? maxX.z : maxZ.z) : maxY.z;
+	r = r.Rotate(t.rotation, pivot);
 
 	r.position += t.position;
 	return r;

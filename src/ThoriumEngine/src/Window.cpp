@@ -199,6 +199,16 @@ bool CWindow::WantsToClose() const
 	return glfwWindowShouldClose(nativeHandle);
 }
 
+void CWindow::GetWindowPos(int* x, int* y)
+{
+	glfwGetWindowPos(nativeHandle, x, y);
+}
+
+void CWindow::SetWindowPos(int x, int y)
+{
+	glfwSetWindowPos(nativeHandle, x, y);
+}
+
 void CWindow::Present(int vSync, int flags)
 {
 	if (swapChain) 

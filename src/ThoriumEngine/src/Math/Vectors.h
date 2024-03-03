@@ -128,8 +128,11 @@ public:
 	FVector& operator*=(float f);
 	FVector& operator/=(float f);
 
-	bool operator==(const FVector& right) { return x == right.x && y == right.y && z == right.z; }
-	bool operator!=(const FVector& right) { return x != right.x && y != right.y && z != right.z; }
+	bool operator==(const FVector& right) const { return x == right.x && y == right.y && z == right.z; }
+	bool operator!=(const FVector& right) const { return x != right.x && y != right.y && z != right.z; }
+
+	bool operator<(const FVector& right) const { return x < right.x && y < right.y && z < right.z; }
+	bool operator>(const FVector& right) const { return x > right.x && y > right.y && z > right.z; }
 
 public:
 	PROPERTY(Editable)

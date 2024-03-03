@@ -64,7 +64,7 @@ bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitive
 
 	// this is fucking disgusting. kill yourself.
 	// TODO: partition the primitives for optimization.
-	for (auto* p : primitves)
+	for (auto* p : primitives)
 	{
 		FMeshBuilder mb;
 		p->GetDynamicMeshes(mb);
@@ -154,7 +154,7 @@ bool CRenderScene::RayCastBounds(const FRay& ray, FPrimitiveHitInfo* outHit, flo
 	float closesthit = maxDistance > 0.f ? maxDistance : FLT_MAX;
 	bool r = false;
 
-	for (auto* p : primitves)
+	for (auto* p : primitives)
 	{
 		FMeshBuilder mb;
 		p->GetDynamicMeshes(mb);
@@ -180,4 +180,9 @@ bool CRenderScene::RayCastBounds(const FRay& ray, FPrimitiveHitInfo* outHit, flo
 		}
 	}
 	return r;
+}
+
+void CRenderScene::GeneratePrimitiveGraph()
+{
+
 }

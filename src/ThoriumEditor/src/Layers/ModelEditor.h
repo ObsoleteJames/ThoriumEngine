@@ -18,6 +18,7 @@ class IDepthBuffer;
 
 struct aiNode;
 struct aiScene;
+struct aiBone;
 
 struct FMeshFile
 {
@@ -49,8 +50,8 @@ protected:
 	void LoadMeshFile(FMeshFile& m);
 
 	void Compile();
-	void CompileNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, SizeType& boneOffset);
-	void CompileArmatureNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, SizeType& boneOffset);
+	void CompileNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, TArray<TPair<int, aiBone*>>& outBones);
+	//void CompileArmatureNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, SizeType& boneOffset);
 
 	void DrawMeshResources(FMeshFile& m);
 	void DrawAiNode(const aiScene* scene, aiNode* node);
@@ -61,6 +62,8 @@ protected:
 
 	void SaveMdl();
 	void Revert();
+
+	void RenderSkeleton();
 	
 private:
 	bool _init = false;

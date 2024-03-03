@@ -50,6 +50,7 @@ public:
 	static void Update();
 
 	static void ScanMod(FMod* mod);
+	static void DeleteResourcesFromMod(FMod* mod);
 	static void RegisterNewFile(FFile* file);
 	
 	//template<typename T>

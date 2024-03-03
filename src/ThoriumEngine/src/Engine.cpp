@@ -137,9 +137,13 @@ void CEngine::LoadGame()
 // #if CONFIG_Release
 // 	FString libPath = wGame + L"\\bin\\" + wGame + L".dll";
 // #endif
-	FString libPath = wGame + ("/bin/" PLATFORM_NAME "/" CONFIG_NAME) + wGame + ".dll";
+#if CONFIG_Release
+	FString libPath = wGame + ("/bin/" PLATFORM_NAME "/") + wGame + ".dll";
+#else
+	FString libPath = wGame + ("/bin/" PLATFORM_NAME "/" CONFIG_NAME "/") + wGame + ".dll";
+#endif
 
-	int r = CModuleManager::LoadModule(libPath);
+	int r = CModuleManager::LoadModule(libPath, &activeGame.module);
 	if (r == 1)
 		CONSOLE_LogWarning("CEngine", FString("Failed to locate module for mod '") + projectConfig.game + "'");
 	else if (r > 1)
@@ -259,6 +263,9 @@ int CEngine::Run()
 
 bool CEngine::LoadProject(const FString& path /*= "."*/)
 {
+	if (bProjectLoaded)
+		UnloadProject();
+
 	if (!LoadProjectConfig(path, projectConfig))
 		return false;
 
@@ -344,11 +351,59 @@ bool CEngine::LoadProject(const FString& path /*= "."*/)
 	return true;
 }
 
+bool CEngine::UnloadProject()
+{
+	if (!bProjectLoaded)
+		return false;
+
+	THORIUM_ASSERT(CWorld::IsInUpdate() == false, "Cannot unload project while in update function.");
+
+	// Make sure to unload the current world in case it holds objects that are from the games' module
+	UnloadWorld();
+
+	// Replace all customizable objects with default types, since they could be from the games' module.
+	SetGameInstance<CGameInstance>();
+
+	physicsSettings.api = FString("CJoltPhysicsApi");
+	CreatePhysicsApi(physicsSettings.api.Get());
+
+	TObjectPtr<CInputManager> oldIm = inputManager;
+	inputManager = CreateObject<CInputManager>();
+	if (oldIm)
+	{
+		inputManager->CopyState(oldIm);
+		oldIm->Delete();
+	}
+
+	// Update the object manager to make sure all old objects are safely deleted
+	CObjectManager::Update();
+
+	for (auto& a : projectConfig.projectAddons)
+		UnloadAddon(a);
+
+	if (!CFileSystem::UnmountMod(activeGame.mod))
+		return false;
+
+	// now delete all remaining objects in a not so safe way
+	CObjectManager::DeleteObjectsFromModule(activeGame.module);
+
+	if (activeGame.module && !CModuleManager::UnloadModule(activeGame.module))
+		return false;
+
+	// now load a new world so we don't crash
+	LoadWorld("empty", true);
+
+	bProjectLoaded = false;
+	return true;
+}
+
 void CEngine::LoadAddon(FAddon& addon)
 {
 	// don't load it if it's already been loaded.
 	if (addon.module || addon.mod)
 		return;
+
+	CONSOLE_LogInfo("CEngine", "Loading Addon '" + addon.name + "'");
 
 	// first load the dependancies
 	for (auto& d : addon.dependencies)
@@ -424,6 +479,30 @@ void CEngine::LoadAddon(FAddon& addon)
 	}
 }
 
+void CEngine::UnloadAddon(FAddon& addon)
+{
+	for (auto& d : addon.dependencies)
+	{
+		if (d.type == FDependency::LIBRARY && d.instance != nullptr)
+		{
+			CModuleManager::UnloadLibrary((FLibrary*)d.instance);
+			d.instance = nullptr;
+		}
+	}
+
+	if (addon.module)
+	{
+		CObjectManager::DeleteObjectsFromModule(addon.module);
+		CModuleManager::UnloadModule(addon.module);
+	}
+
+	if (addon.mod)
+		CFileSystem::UnmountMod(addon.mod);
+
+	addon.module = nullptr; 
+	addon.mod = nullptr;
+}
+
 void CEngine::LoadCoreAddon(const FString& id)
 {
 	for (auto& addon : coreAddons)
@@ -454,6 +533,9 @@ void CEngine::OnExit()
 	gPhysicsApi->Shutdown();
 	gPhysicsApi->Delete();
 	gPhysicsApi = nullptr;
+
+	gameInstance->Delete();
+	gameInstance = nullptr;
 
 	CWindow::Shutdown();
 
@@ -677,6 +759,15 @@ void CEngine::LoadMandatoryAddons()
 	LoadCoreAddon("jolt_physics");
 
 	CreatePhysicsApi(CModuleManager::FindClass("CJoltPhysicsApi"));
+}
+
+void CEngine::UnloadWorld()
+{
+	if (gWorld)
+	{
+		gWorld->Delete();
+		gWorld = nullptr;
+	}
 }
 
 void CEngine::SaveUserConfig()
@@ -913,13 +1004,27 @@ FString CEngine::OpenFolderDialog()
 extern char** environ;
 #endif
 
-int CEngine::ExecuteProgram(const FString& cmd)
+int CEngine::ExecuteProgram(const FString& cmd, bool bWait)
 {
 #if PLATFORM_WINDOWS
 	PROCESS_INFORMATION ht{};
 	STARTUPINFO si{};
 	si.cb = sizeof(si);
 	int r = CreateProcessA(NULL, (char*)cmd.c_str(), nullptr, nullptr, false, 0, nullptr, nullptr, &si, &ht);
+	if (r != 0)
+		return r;
+
+	if (bWait)
+	{
+		WaitForSingleObject(ht.hProcess, INFINITE);
+		
+		DWORD ec;
+		GetExitCodeProcess(ht.hProcess, &ec);
+		r = ec;
+
+		CloseHandle(ht.hProcess);
+		CloseHandle(ht.hThread);
+	}
 	return r;
 #else
 	TArray<FString> args = cmd.Split(" \t");
@@ -938,7 +1043,9 @@ int CEngine::ExecuteProgram(const FString& cmd)
 	if (status != 0)
 		return status;
 
-	waitpid(pid, &status, 0);
+	if (bWait)
+		waitpid(pid, &status, 0);
+
 	return status;
 #endif
 }

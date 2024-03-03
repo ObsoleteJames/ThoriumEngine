@@ -5,6 +5,7 @@
 #include "Game/World.h"
 #include "Physics/PhysicsBody.h"
 #include "Physics/PhysicsWorld.h"
+#include "Resources/Skeleton.h"
 
 class CModelComponentProxy : public CPrimitiveProxy
 {
@@ -124,6 +125,8 @@ void CModelComponent::SetModel(TObjectPtr<CModelAsset> m)
 	skeleton.bones.Clear();
 	skeleton.bones.Resize(model->GetSkeleton().bones.Size());
 
+	UpdateSkeletonMatrix();
+
 	if (GetWorld()->IsActive())
 		SetupPhysics();
 
@@ -147,21 +150,42 @@ void CModelComponent::SetAnimationGraph(CAnimationGraph* animGraph)
 
 void CModelComponent::CalculateSkeletonMatrix()
 {
-	if (!model)
+	if (!model || model->GetSkeleton().bones.Size() == 0)
 		return;
 
 	const FSkeleton& sk = model->GetSkeleton();
 	boneMatrices.Resize(sk.bones.Size());
 
+	TArray<FMatrix> local(boneMatrices.Size());
+	TArray<FMatrix> model(boneMatrices.Size());
+
 	for (SizeType i = 0; i < sk.bones.Size(); i++)
 	{
-		FMatrix& mat = boneMatrices[i];
-
-		FMatrix local = (FMatrix(1.f).Translate(sk.bones[i].position) * sk.bones[i].rotation) * skeleton.bones[i].ToMatrix();
-		FMatrix model = sk.bones[i].parent != -1 ? boneMatrices[sk.bones[i].parent] * local : local;
-
-		mat = model * sk.invModel[i];
+		local[i] = (FMatrix(1.f).Translate(sk.bones[i].position) * sk.bones[i].rotation) * skeleton.bones[i].ToMatrix();
 	}
+
+	model[0] = local[0];
+
+	for (SizeType i = 1; i < sk.bones.Size(); i++)
+	{
+		int parent = sk.bones[i].parent;
+		model[i] = model[parent] * local[i];
+	}
+
+	for (SizeType i = 0; i < sk.bones.Size(); i++)
+	{
+		boneMatrices[i] = model[i] * sk.invModel[i];
+	}
+
+	//for (SizeType i = 0; i < sk.bones.Size(); i++)
+	//{
+	//	FMatrix& mat = boneMatrices[i];
+
+	//	FMatrix local = (FMatrix(1.f).Translate(sk.bones[i].position) * sk.bones[i].rotation) * skeleton.bones[i].ToMatrix();
+	//	FMatrix model = /*sk.bones[i].parent != -1 ? boneMatrices[sk.bones[i].parent] * local :*/ local;
+
+	//	mat = sk.invModel[i] * model;
+	//}
 }
 
 CMaterial* CModelComponent::GetMaterial(SizeType slot)

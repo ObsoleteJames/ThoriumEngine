@@ -59,6 +59,7 @@ CModelEditor::CModelEditor()
 
 	camera = new CCameraProxy();
 	camera->position = { 0, 0, -1.5f };
+	camera->fov = 90.f;
 
 	//scene->SetPrimaryCamera(camera);
 
@@ -80,6 +81,8 @@ void CModelEditor::SetModel(CModelAsset* mdl)
 	meshFiles.Clear();
 	this->mdl = mdl;
 	modelEnt->SetModel(mdl);
+
+	camera->position = mdl->bounds.position - camera->GetForwardVector() * FMath::Max(mdl->bounds.extents.Magnitude() * 1.5f, 1.f);
 
 	if (mdl->File())
 	{
@@ -705,18 +708,29 @@ void CModelEditor::OnUIRender()
 					ImGui::TableNextColumn();
 					ImGui::Text("%d", (int)mdl->skeleton.bones.Size());
 
+					RenderSkeleton();
+
 					for (SizeType i = 0; i < mdl->skeleton.bones.Size(); i++)
 					{
 						auto& b = mdl->skeleton.bones[i];
+						if (ImGui::TableTreeHeader(b.name.c_str()))
+						{
+							ImGui::TableNextRow();
+							ImGui::TableNextColumn();
+							ImGui::Text("Parent");
+							ImGui::TableNextColumn();
+							ImGui::Text("%s", b.parent != -1 ? mdl->skeleton.bones[b.parent].name.c_str() : "none");
 
-						ImGui::TableNextRow();
-						ImGui::TableNextColumn();
+							ImGui::TableNextRow();
+							ImGui::TableNextColumn();
+							ImGui::Text("Position");
+							ImGui::TableNextColumn();
+							ImGui::BeginDisabled();
+							ImGui::DragVector("##_bonePosition", &b.position);
+							ImGui::EndDisabled();
 
-						ImGui::Text(b.name.c_str());
-
-						ImGui::TableNextColumn();
-
-						ImGui::Text("parent: %s", b.parent != -1 ? mdl->skeleton.bones[b.parent].name.c_str() : "none");
+							ImGui::TreePop();
+						}
 					}
 
 					ImGui::TreePop();
@@ -875,10 +889,10 @@ void CModelEditor::Compile()
 				mdl->materials.Add(mat);
 			}
 
-			for (uint i = 0; i < scene->mNumSkeletons; i++)
+			/*for (uint i = 0; i < scene->mNumSkeletons; i++)
 			{
 				aiSkeleton* skeleton = scene->mSkeletons[i];
-				
+
 				for (int ii = 0; ii < skeleton->mNumBones; ii++)
 				{
 					aiSkeletonBone* bone = skeleton->mBones[ii];
@@ -887,7 +901,7 @@ void CModelEditor::Compile()
 					aiVector3D scale;
 					aiVector3D pos;
 					aiQuaternion rot;
-					
+
 					mat.Decompose(scale, rot, pos);
 
 					FBone b;
@@ -899,9 +913,58 @@ void CModelEditor::Compile()
 
 					mdl->skeleton.bones.Add(b);
 				}
+			}*/
+
+			TArray<TPair<int, aiBone*>> bones;
+
+			CompileNode(file, scene, root, meshesOffset, materialsOffset, bones);
+
+			for (auto& b : bones)
+			{
+				FBone newBone;
+				newBone.name = b.Value->mName.C_Str();
+
+				aiVector3D scale;
+				aiVector3D pos;
+				aiQuaternion rot;
+
+				b.Value->mOffsetMatrix.Decompose(scale, rot, pos);
+				newBone.position = { pos.x, pos.y, pos.z };
+				newBone.rotation = { rot.x, rot.y, rot.z, rot.w };
+
+				auto& mesh = mdl->meshes[b.Key];
+
+				for (int i = 0; i < b.Value->mNumWeights; i++)
+				{
+					if (!mesh.vertexData)
+						continue;
+
+					auto& weight = b.Value->mWeights[i];
+					if (weight.mVertexId >= mesh.numVertexData)
+						continue;
+
+					FVertex& vertex = mesh.vertexData[weight.mVertexId];
+
+					for (int x = 0; x < 4; x++)
+					{
+						if (vertex.bones[x] == -1)
+						{
+							vertex.bones[x] = (int)mdl->skeleton.bones.Size();
+							vertex.boneInfluence[x] = weight.mWeight;
+							break;
+						}
+					}
+				}
+
+				mdl->skeleton.bones.Add(newBone);
 			}
 
-			CompileNode(file, scene, root, meshesOffset, materialsOffset, boneOffset);
+			// Resolve bone parents
+			for (int i = 0; i < bones.Size(); i++)
+			{
+				aiNode* parent = bones[i].Value->mNode->mParent;
+				mdl->skeleton.bones[i].parent = mdl->GetBoneIndex(parent->mName.C_Str());
+			}
 
 			for (int i = 0; i < mdl->meshes.Size(); i++)
 			{
@@ -943,7 +1006,7 @@ aiMatrix4x4 GetNodeWorldTransform(aiNode* node)
 	return node->mTransformation;
 }
 
-void CModelEditor::CompileNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, SizeType& boneOffset)
+void CModelEditor::CompileNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, TArray<TPair<int, aiBone*>>& outBones)
 {
 	//for (uint i = 0; i < node->mNumMeshes; i++)
 	//{
@@ -1039,27 +1102,28 @@ void CModelEditor::CompileNode(FMeshFile& file, const aiScene* scene, aiNode* no
 		for (uint i = 0; i < mesh->mNumBones; i++)
 		{
 			auto* b = mesh->mBones[i];
-			
-			SizeType bIndex = mdl->GetBoneIndex(b->mName.C_Str());
-			if (bIndex == -1)
-			{
-				
-				continue;
-			}
+			outBones.Add({ (int)mdl->meshes.Size(), b });
 
-			for (uint ii = 0; ii < b->mNumWeights; ii++)
-			{
-				auto& weight = b->mWeights[ii];
-				for (int x = 0; x < 4; x++)
-				{
-					if (vertices[weight.mVertexId].bones[x] == -1)
-					{
-						vertices[weight.mVertexId].bones[x] = (int)bIndex;
-						vertices[weight.mVertexId].boneInfluence[x] = weight.mWeight;
-						break;
-					}
-				}
-			}
+			//SizeType bIndex = mdl->GetBoneIndex(b->mName.C_Str());
+			//if (bIndex == -1)
+			//{
+			//	
+			//	continue;
+			//}
+
+			//for (uint ii = 0; ii < b->mNumWeights; ii++)
+			//{
+			//	auto& weight = b->mWeights[ii];
+			//	for (int x = 0; x < 4; x++)
+			//	{
+			//		if (vertices[weight.mVertexId].bones[x] == -1)
+			//		{
+			//			vertices[weight.mVertexId].bones[x] = (int)bIndex;
+			//			vertices[weight.mVertexId].boneInfluence[x] = weight.mWeight;
+			//			break;
+			//		}
+			//	}
+			//}
 		}
 
 		fmesh.vertexData = (FVertex*)malloc(vertices.Size() * sizeof(FVertex));
@@ -1084,7 +1148,7 @@ void CModelEditor::CompileNode(FMeshFile& file, const aiScene* scene, aiNode* no
 	}
 
 	for (int i = 0; i < node->mNumChildren; i++)
-		CompileNode(file, scene, node->mChildren[i], meshOffset, matOffset, boneOffset);
+		CompileNode(file, scene, node->mChildren[i], meshOffset, matOffset, outBones);
 }
 
 void CModelEditor::DrawMeshResources(FMeshFile& m)
@@ -1152,6 +1216,21 @@ void CModelEditor::DrawAiNode(const aiScene* scene, aiNode* node)
 						ImGui::Text("Has Tangents");
 						ImGui::TableNextColumn();
 						ImGui::Text(mesh->mTangents ? "true" : "false");
+
+						ImGui::TreePop();
+					}
+					if (mesh->mNumBones > 0 && ImGui::TableTreeHeader(("Bones##mesh" + FString::ToString(i)).c_str(), 0, true))
+					{
+						for (int b = 0; b < mesh->mNumBones; b++)
+						{
+							aiBone* bone = mesh->mBones[b];
+
+							ImGui::TableNextRow();
+							ImGui::TableNextColumn();
+							ImGui::Text(bone->mName.C_Str());
+							ImGui::TableNextColumn();
+							ImGui::Text("Weights: %d", bone->mNumWeights);
+						}
 
 						ImGui::TreePop();
 					}
@@ -1233,4 +1312,24 @@ void CModelEditor::Revert()
 {
 	// ??
 	bSaved = true;
+}
+
+void CModelEditor::RenderSkeleton()
+{
+	gDebugRenderer->SetScene(scene->GetRenderScene());
+	
+	for (int i = 0; i < mdl->skeleton.bones.Size(); i++)
+	{
+		FBone& bone = mdl->skeleton.bones[i];
+		FBone* parent = bone.parent == -1 ? nullptr : &mdl->skeleton.bones[bone.parent];
+
+		//gDebugRenderer->DrawBox(FTransform(bone.position, FQuaternion(), FVector(0.1f)), FColor::blue, DebugDrawType_Solid);
+
+		if (!parent || bone.parent == 0)
+			continue;
+		
+		gDebugRenderer->DrawLine(bone.position, parent->position, FColor::orange, 0, true);
+	}
+
+	gDebugRenderer->SetScene(nullptr);
 }

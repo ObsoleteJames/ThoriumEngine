@@ -287,7 +287,7 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 	static TArray<TPair<CPrimitiveProxy*, FMeshBuilder>> dynamicMeshes;
 	dynamicMeshes.Clear();
 
-	for (auto* primitive : scene->primitves)
+	for (auto* primitive : scene->primitives)
 	{
 		if (!primitive->IsVisible())
 			continue;
@@ -693,7 +693,7 @@ void IRenderer::RenderShadowMaps(CRenderScene* scene)
 
 	FShadowDataBuffer shadowData{};
 
-	for (auto* primitive : scene->primitves)
+	for (auto* primitive : scene->primitives)
 	{
 		if (!primitive->IsVisible() || !primitive->CastShadows())
 			continue;

@@ -1,16 +1,16 @@
-[Mon Feb 26 02:32:26 2024][CEngine] Initializing...
-[Mon Feb 26 02:32:26 2024][CResourceManager] Created resource threads (2)
-[Mon Feb 26 02:32:26 2024][CResourceManager] Initialized
-[Mon Feb 26 02:32:26 2024][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine/content
-[Mon Feb 26 02:32:26 2024][CResourceManager] Found 38 assets in 'Engine'
-[Mon Feb 26 02:32:26 2024][CEngine] Initialization complete
-[Mon Feb 26 02:32:26 2024][CEngine] Loading project 'engine_testing'
-[Mon Feb 26 02:32:27 2024][CEngine] WARNING: Failed to locate module for mod 'MGS'
-[Mon Feb 26 02:32:27 2024][CFileSystem] Mounting Mod: MGS
-[Mon Feb 26 02:32:27 2024][CResourceManager] Found 26 assets in 'MGS'
-[Mon Feb 26 02:32:27 2024][CEngine] WARNING: No Physic API class was specified, reverting to default (Jolt Physics).
-[Mon Feb 26 02:32:27 2024][CResourceManager] ERROR: Failed to get resource 'ImHalfMeFoxy.thscene', resource doesn't exist!
-[Mon Feb 26 02:32:27 2024][CEngine] ERROR: Failed to find scene file 'ImHalfMeFoxy.thscene'
-[Mon Feb 26 02:32:27 2024][CEngine] Loading scene 'empty'
-[Mon Feb 26 02:32:29 2024][CEngine] Shutting down...
-[Mon Feb 26 02:32:29 2024][CResourceManager] Shutting down resource threads...
+[Fri Mar  1 19:35:47 2024][CEngine] Initializing...
+[Fri Mar  1 19:35:47 2024][CResourceManager] Created resource threads (2)
+[Fri Mar  1 19:35:47 2024][CResourceManager] Initialized
+[Fri Mar  1 19:35:47 2024][CFileSystem] Mounting Mod: F:\MyProjects\VS_Projects\ThoriumEngine\engine/content
+[Fri Mar  1 19:35:47 2024][CResourceManager] Found 38 assets in 'Engine'
+[Fri Mar  1 19:35:47 2024][CEngine] Loading Addon 'Jolt Physics'
+[Fri Mar  1 19:35:47 2024][CEngine] Initialization complete
+[Fri Mar  1 19:35:47 2024][CEngine] Loading scene 'empty'
+[Fri Mar  1 19:35:52 2024][CEngine] Loading project 'engine_testing'
+[Fri Mar  1 19:35:52 2024][CFileSystem] Mounting Mod: MGS
+[Fri Mar  1 19:35:52 2024][CResourceManager] Found 26 assets in 'MGS'
+[Fri Mar  1 19:35:52 2024][CEngine] WARNING: No Physic API class was specified, reverting to default (Jolt Physics).
+[Fri Mar  1 19:36:24 2024][CEngine] Loading scene 'maps/Basic.thscene'
+[Fri Mar  1 19:36:25 2024][CEngine] Loading scene 'maps/Tes.thscene'
+[Fri Mar  1 19:36:58 2024][CEngine] Shutting down...
+[Fri Mar  1 19:36:58 2024][CResourceManager] Shutting down resource threads...

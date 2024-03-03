@@ -75,6 +75,7 @@ public:
 	static int LoadModule(const FString& path, CModule** outPtr = nullptr);
 	static inline bool IsModuleLoaded(const FString& name) { return FindModule(name) != nullptr; }
 	static bool UnloadModule(const FString& name);
+	static bool UnloadModule(CModule* module);
 
 	// Thanks to the lovely windows API, I can't name this LoadLibrary.
 	static FLibrary* LoadFLibrary(const FString& name, const FString& path);

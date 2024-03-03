@@ -8,6 +8,7 @@
 class CObject;
 class FClass;
 class FStruct;
+class CModule;
 
 class ENGINE_API CObjectManager
 {
@@ -34,6 +35,9 @@ protected:
 	static bool DeleteObject(CObject* obj, bool bNoErase = false);
 	static void RegisterObject(CObject* obj);
 	static void Update();
+
+	// this could cause a crash :)
+	static void DeleteObjectsFromModule(CModule* module);
 
 #if OBJECT_KEEP_REFERENCES
 	static bool ReplaceObject(CObject* target, CObject* replacement);

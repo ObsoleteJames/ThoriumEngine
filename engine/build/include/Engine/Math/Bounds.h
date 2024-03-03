@@ -22,6 +22,16 @@ public:
 
 	FVector Clamp(const FVector& point) const;
 
+	// wether this bounding box is overlapping another.
+	bool IsOverlapping(const FBounds&) const;
+
+	// wether the given bounding box is inside this.
+	bool IsInside(const FBounds&) const;
+	bool IsInside(const FVector& point) const;
+
+	float Distance(const FBounds&) const;
+	float Distance(const FVector& point) const;
+
 	FBounds Combine(const FBounds& b) const;
 
 	FBounds Rotate(const FQuaternion& r, const FVector& pivot = FVector()) const;

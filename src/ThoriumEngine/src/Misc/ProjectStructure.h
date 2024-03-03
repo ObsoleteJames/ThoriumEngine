@@ -59,6 +59,7 @@ struct ENGINE_API FGame
 	FString version;
 
 	FMod* mod;
+	CModule* module;
 
 	FString startupScene;
 	TClassPtr<CGameInstance> gameInstanceClass;

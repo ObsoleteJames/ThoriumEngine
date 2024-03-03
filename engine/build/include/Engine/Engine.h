@@ -73,8 +73,15 @@ public:
 
 	virtual bool LoadProject(const FString& path = ".");
 
+	/**
+	 * Unloads the current project.
+	 */
+	virtual bool UnloadProject();
+
 	// Load the addon's content and or module.
 	void LoadAddon(FAddon& addon);
+
+	void UnloadAddon(FAddon& addon);
 
 	void LoadCoreAddon(const FString& id);
 
@@ -95,7 +102,7 @@ public:
 	static FString SaveFileDialog(const FString& filter = FString());
 	static FString OpenFolderDialog();
 
-	static int ExecuteProgram(const FString& cmd);
+	static int ExecuteProgram(const FString& cmd, bool bWaitForExit = true);
 
 public:
 	inline CWindow* GetGameWindow() const { return gameWindow; }
@@ -141,6 +148,8 @@ protected:
 	bool LoadAddonConfig(const FString& path, FAddon& out);
 
 	void LoadMandatoryAddons();
+
+	void UnloadWorld();
 
 public:
 	FUserConfig userConfig;

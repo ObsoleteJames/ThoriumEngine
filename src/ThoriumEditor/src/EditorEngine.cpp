@@ -37,6 +37,7 @@
 #include "Layers/ModelEditor.h"
 #include "Layers/EditorSettings.h"
 #include "Layers/EditorLog.h"
+#include "Layers/ProjectManager.h"
 
 #include <map>
 
@@ -82,6 +83,11 @@ void CEditorEngine::Init()
 
 	//objectDebuggerWidget = AddLayer<CObjectDebugger>();
 	//objectDebuggerWidget->bEnabled = false;
+
+	editorCamera = new CCameraProxy();
+	editorCamera->position = { 0, 1, -1 };
+	camController = new CCameraController();
+	camController->SetCamera(editorCamera);
 
 	LoadEditorConfig();
 
@@ -132,11 +138,6 @@ void CEditorEngine::Init()
 
 	if (!gameInstance)
 		SetGameInstance<CGameInstance>();
-
-	editorCamera = new CCameraProxy();
-	editorCamera->position = { 0, 1, -1 };
-	camController = new CCameraController();
-	camController->SetCamera(editorCamera);
 
 	InitEditorData();
 
@@ -310,6 +311,8 @@ enum EMenuAction {
 	MenuAction_OpenScene,
 	MenuAction_SaveScene,
 	MenuAction_SaveSceneAs,
+	MenuAction_OpenProject,
+	MenuAction_NewProject
 };
 int menuAction = 0;
 
@@ -444,6 +447,8 @@ void CEditorEngine::UpdateEditor()
 	if (menuImGuiDemo->bChecked)
 		ImGui::ShowDemoWindow(&menuImGuiDemo->bChecked);
 
+	menuCloseProject->SetEnabled(bProjectLoaded);
+
 	if (menuAction == MenuAction_SaveScene || (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_S)))
 		SaveScene();
 	if (menuAction == MenuAction_NewScene || (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_N)))
@@ -451,51 +456,59 @@ void CEditorEngine::UpdateEditor()
 	if (menuAction == MenuAction_OpenScene)
 		ThoriumEditor::OpenFile("openEditorScene", (FAssetClass*)CScene::StaticClass());
 
+	if (menuAction == MenuAction_OpenProject)
+		CProjectManager::Open(0);
+	if (menuAction == MenuAction_NewProject)
+		CProjectManager::Open(1);
+
 	if (menuAction != 0)
 		menuAction = 0;
 
-	if (bOpenProj)
-		ImGui::OpenPopup("Open Project");
+	if (bOpenProj && !CProjectManager::IsOpen())
+	{
+		CProjectManager::Open(0);
+		bOpenProj = false;
+	}
 
 	ImGui::SetNextWindowSize(ImVec2(785, 510), ImGuiCond_FirstUseEver);
 
 	// Project Selection
-	if (ImGui::BeginPopupModal("Open Project", &bOpenProj))
-	{
-		ImGui::Text("Projects");
+	//if (ImGui::BeginPopupModal("Open Project", &bOpenProj))
+	//{
+	//	ImGui::Text("Projects");
 
-		ImGui::BeginChild("projects_list");
+	//	ImGui::BeginChild("projects_list");
 
-		float panelWidth = ImGui::GetContentRegionAvail().x;
-		int columnCount = FMath::Max((int)(panelWidth / 128.f), 1);
+	//	float panelWidth = ImGui::GetContentRegionAvail().x;
+	//	int columnCount = FMath::Max((int)(panelWidth / 128.f), 1);
 
-		if (ImGui::BeginTable("projects_table", columnCount))
-		{
-			for (auto& p : availableProjects)
-			{
-				ImGui::TableNextColumn();
+	//	if (ImGui::BeginTable("projects_table", columnCount))
+	//	{
+	//		for (auto& p : availableProjects)
+	//		{
+	//			ImGui::TableNextColumn();
 
-				if (ImGui::Button(("##_project" + p.name).c_str(), ImVec2(112, 112)))
-				{
-					LoadProject(p.dir);
-					// Since the input manager gets reinstantiated, we have to make sure we set it up correctly.
-					//inputManager->SetInputWindow(gameWindow);
-					//inputManager->SetShowCursor(true);
+	//			if (ImGui::Button(("##_project" + p.name).c_str(), ImVec2(112, 112)))
+	//			{
+	//				LoadProject(p.dir);
+	//				// Since the input manager gets reinstantiated, we have to make sure we set it up correctly.
+	//				//inputManager->SetInputWindow(gameWindow);
+	//				//inputManager->SetShowCursor(true);
 
-					assetBrowser->SetDir(activeGame.mod->Name(), FString());
+	//				assetBrowser->SetDir(activeGame.mod->Name(), FString());
 
-					LoadWorld(activeGame.startupScene);
-					ImGui::CloseCurrentPopup();
-				}
-				ImGui::Text(p.displayName.c_str());
-			}
+	//				LoadWorld(activeGame.startupScene);
+	//				ImGui::CloseCurrentPopup();
+	//			}
+	//			ImGui::Text(p.displayName.c_str());
+	//		}
 
-			ImGui::EndTable();
-		}
+	//		ImGui::EndTable();
+	//	}
 
-		ImGui::EndChild();
-		ImGui::EndPopup();
-	}
+	//	ImGui::EndChild();
+	//	ImGui::EndPopup();
+	//}
 
 	for (auto& l : layers)
 		if (l->bEnabled)
@@ -562,10 +575,13 @@ void CEditorEngine::UpdateEditor()
 		}
 		ImGui::EndChild();
 
+		int wndX, wndY;
+		gameWindow->GetWindowPos(&wndX, &wndY);
+
 		wndSize = ImGui::GetContentRegionAvail();
 		cursorPos = ImGui::GetCursorScreenPos();
-		viewportX = cursorPos.x;
-		viewportY = cursorPos.y - 24.f;
+		viewportX = cursorPos.x - (float)wndX;
+		viewportY = cursorPos.y - (float)wndY;
 
 		DirectXFrameBuffer* fb = (DirectXFrameBuffer*)sceneFrameBuffer;
 		ImGui::Image(fb->view, { wndSize.x, wndSize.y });
@@ -632,6 +648,7 @@ void CEditorEngine::UpdateEditor()
 			ImGui::DragFloat("FOV", &editorCamera->fov, 1.f, 25, 160);
 			ImGui::DragFloat("Near Clip", &editorCamera->nearPlane, 0.1f, 0.001f, 10000.f);
 			ImGui::DragFloat("Far Clip", &editorCamera->farPlane, 0.1f, 0.001f, 10000.f);
+			ImGui::DragInt("Camera Speed", &camController->cameraSpeed, 0.1f, camController->minCamSpeed, camController->maxCamSpeed);
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
 			ImGui::EndPopup();
@@ -658,9 +675,14 @@ void CEditorEngine::UpdateEditor()
 		ImGui::PopStyleVar();
 		ImGui::PopStyleColor(4);
 
-		//ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0.5, 0, 1));
-		//ImGui::RenderText(cursorPos + ImGui::GetStyle().FramePadding, "Hello!!");
-		//ImGui::PopStyleColor();
+		FString windowPosTxt = "Viewport Pos: " + FString::ToString((int)viewportX) + "x" + FString::ToString((int)viewportY);
+		auto mp = InputManager()->GetMousePos();
+		FString mousePosTxt = "Mouse Pos: " + FString::ToString((int)mp.x) + "x" + FString::ToString((int)mp.y);
+
+		ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0.6, 0.1, 1));
+		ImGui::RenderText(cursorPos + ImGui::GetStyle().FramePadding + ImVec2(0, 24), windowPosTxt.c_str());
+		ImGui::RenderText(cursorPos + ImGui::GetStyle().FramePadding + ImVec2(0, 38), mousePosTxt.c_str());
+		ImGui::PopStyleColor();
 
 		viewportWidth = FMath::Max((int)wndSize.x, 32);
 		viewportHeight = FMath::Max((int)wndSize.y, 32);
@@ -829,13 +851,9 @@ void CEditorEngine::LoadEditorConfig()
 	menuViewOutliner->bChecked = kv.GetValue("view_outliner")->AsBool(true);
 	menuAssetBrowser->bChecked = kv.GetValue("view_assetbrowser")->AsBool(true);
 	menuStatistics->bChecked = kv.GetValue("view_statistics")->AsBool();
-	//propertyEditor->bEnabled = kv.GetValue("view_properties")->AsBool(true);
-	//consoleWidget->bEnabled = kv.GetValue("view_console")->AsBool(true);
-	//ioWidget->bEnabled = kv.GetValue("view_entityio")->AsBool(true);
-	//projSettingsWidget->bEnabled = kv.GetValue("view_projectsettings")->AsBool();
-	//editorSettings->bEnabled = kv.GetValue("view_editorsettings")->AsBool();
-	//addonsWindow->bEnabled = kv.GetValue("view_addons")->AsBool();
-	//logWnd->bEnabled = kv.GetValue("view_log")->AsBool();
+	
+	editorCamera->fov = kv.GetValue("camera_fov")->AsFloat(90.f);
+	camController->cameraSpeed = kv.GetValue("camera_speed")->AsInt(4);
 
 	CLayer::LoadConfig(kv);
 
@@ -867,13 +885,9 @@ void CEditorEngine::SaveEditorConfig()
 	kv.SetValue("view_outliner", FString::ToString((int)menuViewOutliner->bChecked));
 	kv.SetValue("view_assetbrowser", FString::ToString((int)menuAssetBrowser->bChecked));
 	kv.SetValue("view_statistics", FString::ToString((int)menuStatistics->bChecked));
-	//kv.SetValue("view_properties", FString::ToString((int)propertyEditor->bEnabled));
-	//kv.SetValue("view_console", FString::ToString((int)consoleWidget->bEnabled));
-	//kv.SetValue("view_entityio", FString::ToString((int)ioWidget->bEnabled));
-	//kv.SetValue("view_projectsettings", FString::ToString((int)projSettingsWidget->bEnabled));
-	//kv.SetValue("view_editorsettings", FString::ToString((int)editorSettings->bEnabled));
-	//kv.SetValue("view_addons", FString::ToString((int)addonsWindow->bEnabled));
-	//kv.SetValue("view_log", FString::ToString((int)logWnd->bEnabled));
+
+	kv.SetValue("camera_fov", FString::ToString((int)editorCamera->fov));
+	kv.SetValue("camera_speed", FString::ToString((int)camController->cameraSpeed));
 
 	CLayer::SaveConfig(kv);
 
@@ -884,23 +898,38 @@ void CEditorEngine::SaveEditorConfig()
 	kv.Save();
 }
 
-void CEditorEngine::GenerateBuildData()
+void CEditorEngine::CompileProjectCode(int config)
 {
-	FString cmd = OSGetEnginePath(ENGINE_VERSION) + "/bin/BuildTool.exe \"";
-	cmd += CFileSystem::GetCurrentPath() + "/config/project.cfg\" -build ";
+	FString cmd = OSGetEnginePath(ENGINE_VERSION) + "/bin/win64/BuildTool.exe \"";
+	cmd += CFileSystem::GetCurrentPath() + "/.project/" + activeGame.name + "/Build.cfg\" ";
 #if PLATFORM_WINDOWS
 	cmd += "-x64 ";
 #endif
 
-#if _DEBUG
-	cmd += "-debug";
-#elif _DEVELOPMENT
-	cmd += "-development";
-#elif _RELEASE
-	cmd += "-release";
-#endif
+//#if _DEBUG
+//	cmd += "-debug";
+//#elif _DEVELOPMENT
+//	cmd += "-development";
+//#elif _RELEASE
+//	cmd += "-release";
+//#endif
+
+	switch (config)
+	{
+	case 0:
+		cmd += "-release";
+		break;
+	case 1:
+		cmd += "-development";
+		break;
+	case 2:
+		cmd += "-debug";
+		break;
+	}
 
 	ExecuteProgram(cmd);
+	ExecuteProgram("cmake -A x64 -B \"" + CFileSystem::GetCurrentPath() + "/.project/" + activeGame.name + "/Intermediate/Build\" \"" + CFileSystem::GetCurrentPath() + "/.project/" + activeGame.name + "/Intermediate\"");
+	ExecuteProgram("cmake --build \"" + CFileSystem::GetCurrentPath() + "/.project/" + activeGame.name + "/Intermediate/Build\"");
 }
 
 void CEditorEngine::InitEditorData()
@@ -970,6 +999,19 @@ void CEditorEngine::SetupMenu()
 	menu->OnClicked = []() { menuAction = MenuAction_SaveSceneAs; };
 	RegisterMenu(menu, "File");
 
+	menu = new CEditorMenu("New Project", "Project", FString(), false);
+	menu->OnClicked = []() { menuAction = MenuAction_NewProject; };
+	RegisterMenu(menu, "File");
+
+	menu = new CEditorMenu("Open Project", "Project", FString(), false);
+	menu->OnClicked = []() { menuAction = MenuAction_OpenProject; };
+	RegisterMenu(menu, "File");
+
+	menu = new CEditorMenu("Close Project", "Project", FString(), false);
+	menu->OnClicked = []() { gEditorEngine()->UnloadProject(); };
+	RegisterMenu(menu, "File");
+	menuCloseProject = menu;
+
 	menu = new CEditorMenu("Build All", "Build", FString(), false);
 	//menu->OnClicked = []() { menuAction = MenuAction_SaveSceneAs; };
 	RegisterMenu(menu, "File");
@@ -987,7 +1029,15 @@ void CEditorEngine::SetupMenu()
 	RegisterMenu(menu, "File");
 
 	menu = new CEditorMenu("Compile Project Code", "Build", FString(), false);
-	//menu->OnClicked = []() { gEditorEngine()->Undo(); };
+	menu->OnClicked = []() { 
+#if _DEBUG
+		gEditorEngine()->CompileProjectCode(2);
+#elif _DEVELOPMENT
+		gEditorEngine()->CompileProjectCode(1);
+#elif _RELEASE
+		gEditorEngine()->CompileProjectCode(0);
+#endif
+	};
 	RegisterMenu(menu, "File");
 
 	menu = new CEditorMenu("Quit", false);
@@ -1034,6 +1084,14 @@ void CEditorEngine::SetupMenu()
 	//menu->OnClicked = [=]() { gEditorEngine()->bViewStats = menu->Checked(); };
 	RegisterMenu(menu, "Debug");
 	menuStatistics = menu;
+
+	menu = new CEditorMenu("Documentation", false);
+	//menu->OnClicked = []() { gEditorEngine()->Undo(); };
+	RegisterMenu(menu, "Help");
+
+	menu = new CEditorMenu("About", false);
+	//menu->OnClicked = []() { gEditorEngine()->Undo(); };
+	RegisterMenu(menu, "Help");
 
 	//RegisterMenu(new CEditorMenu("Debug"));
 }

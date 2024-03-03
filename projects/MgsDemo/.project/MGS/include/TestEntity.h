@@ -6,7 +6,7 @@
 #include "TestEntity.generated.h"
 
 STRUCT()
-struct FTestStruct
+struct MGS_API FTestStruct
 {
 	GENERATED_BODY()
 

@@ -14,7 +14,12 @@ void FCommandLine::Parse(const char* in_cmd, bool bIgnoreFirst)
 	if (bIgnoreFirst)
 	{
 		while (*in_cmd != ' ')
+		{
+			if (*in_cmd == '\0')
+				return;
+
 			in_cmd++;
+		}
 		in_cmd++; // Make sure that we don't stay on the space.
 	}
 

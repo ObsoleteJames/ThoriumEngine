@@ -72,7 +72,9 @@ private:
 
 	bool bUpdateSkeleton = false;
 
+	PROPERTY(Editable)
 	FSkeletonInstance skeleton;
+
 	TArray<FMatrix> boneMatrices; // cache for skeletal animation
 
 	TArray<TObjectPtr<IPhysicsBody>> physBodies;

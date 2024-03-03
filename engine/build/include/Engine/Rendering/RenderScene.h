@@ -46,10 +46,10 @@ public:
 
 	inline void PushCommand(const FRenderCommand& cmd) { renderQueue.Add(cmd); }
 	
-	inline void RegisterPrimitive(CPrimitiveProxy* proxy) { primitves.Add(proxy); }
-	inline void UnregisterPrimitve(CPrimitiveProxy* proxy) { if (auto it = primitves.Find(proxy); it != primitves.end()) primitves.Erase(it); }
-	inline const TArray<CPrimitiveProxy*>& GetPrimitives() const { return primitves; }
-	inline void SetPrimitives(const TArray<CPrimitiveProxy*>& arr) { primitves = arr; }
+	inline void RegisterPrimitive(CPrimitiveProxy* proxy) { primitives.Add(proxy); }
+	inline void UnregisterPrimitve(CPrimitiveProxy* proxy) { if (auto it = primitives.Find(proxy); it != primitives.end()) primitives.Erase(it); }
+	inline const TArray<CPrimitiveProxy*>& GetPrimitives() const { return primitives; }
+	inline void SetPrimitives(const TArray<CPrimitiveProxy*>& arr) { primitives = arr; }
 
 	inline void RegisterCamera(CCameraProxy* proxy) { cameras.Add(proxy); }
 	inline void UnregisterCamera(CCameraProxy* proxy) { if (auto it = cameras.Find(proxy); it != cameras.end()) cameras.Erase(it); }
@@ -77,13 +77,15 @@ public:
 	bool RayCast(const FVector& pos, const FVector& dir, FPrimitiveHitInfo* outHit, float maxDistance = 0.f);
 	bool RayCastBounds(const FRay& ray, FPrimitiveHitInfo* outHit, float maxDistance = 0.f);
 
+	void GeneratePrimitiveGraph();
+
 private:
 	void ResizeBuffers(int width, int height);
 
 private:
 	TArray<FRenderCommand> renderQueue;
 
-	TArray<CPrimitiveProxy*> primitves;
+	TArray<CPrimitiveProxy*> primitives;
 	TArray<CCameraProxy*> cameras;
 	TArray<CLightProxy*> lights;
 	TArray<CPostProcessVolumeProxy*> ppVolumes;

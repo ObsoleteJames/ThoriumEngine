@@ -113,7 +113,17 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 		int columns = FMath::Max((int)(contentSize.x / (itemSize.x + 10.f)), 1);
 
 		FMod* curMod = CFileSystem::FindMod(mod);
+		if (!curMod)
+		{
+			curMod = CFileSystem::FindMod("Engine");
+			mod = "Engine";
+		}
 		FDirectory* curDir = dir.IsEmpty() ? curMod->GetRootDir() : curMod->FindDirectory(dir);
+		if (!curDir)
+		{
+			dir.Clear();
+			curDir = curMod->GetRootDir();
+		}
 
 		if (ImGui::BeginTable("tableAssetBrowser", columns, ImGuiTableFlags_None))
 		{

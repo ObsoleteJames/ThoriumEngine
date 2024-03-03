@@ -2,6 +2,7 @@
 #include "ObjectManager.h"
 #include "Object.h"
 #include "Console.h"
+#include "Module.h"
 
 TMap<FGuid, CObject*> CObjectManager::Objects;
 TArray<CObject*> CObjectManager::ObjectsToDelete;
@@ -119,6 +120,38 @@ void CObjectManager::Update()
 		}
 		else
 			++it;
+	}
+}
+
+void CObjectManager::DeleteObjectsFromModule(CModule* module)
+{
+	auto objs = Objects;
+	for (auto obj : objs)
+	{
+		for (auto* c : module->Classes)
+		{
+			if (obj.second->GetClass() == c)
+			{
+				delete obj.second;
+
+				Objects.erase(obj.first);
+				break;
+			}
+		}
+	}
+
+	for (auto it = ObjectsToDelete.rbegin(); it != ObjectsToDelete.rend(); it++)
+	{
+		for (auto* c : module->Classes)
+		{
+			if (it->GetClass() == c)
+			{
+				delete *it;
+
+				ObjectsToDelete.Erase(it);
+				break;
+			}
+		}
 	}
 }
 

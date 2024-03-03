@@ -158,6 +158,21 @@ bool CModuleManager::UnloadModule(const FString& name)
 	return true;
 }
 
+bool CModuleManager::UnloadModule(CModule* module)
+{
+	if (module->name == "Engine")
+		return false;
+
+#ifdef PLATFORM_WINDOWS
+	FreeLibrary((HMODULE)module->handle);
+#else
+	dlclose(module->handle);
+#endif
+
+	modules.Erase(modules.Find(module));
+	return true;
+}
+
 FLibrary* CModuleManager::LoadFLibrary(const FString& name, const FString& path)
 {
 	// Check if this library is already loaded

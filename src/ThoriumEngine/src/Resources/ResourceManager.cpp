@@ -197,6 +197,23 @@ void CResourceManager::ScanMod(FMod* mod)
 	}
 }
 
+void CResourceManager::DeleteResourcesFromMod(FMod* mod)
+{
+	auto ar = availableResources;
+
+	for (auto& it : ar)
+	{
+		if (it.second.file->Mod() == mod)
+		{
+			auto allocated = allocatedResources.find(it.first);
+			if (allocated != allocatedResources.end())
+				allocated->second->Delete();
+			
+			availableResources.erase(it.first);
+		}
+	}
+}
+
 void CResourceManager::RegisterNewFile(FFile* file)
 {
 	const FString& ext = file->Extension();

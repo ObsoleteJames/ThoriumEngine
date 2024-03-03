@@ -1,10 +1,10 @@
 
-#include "EngineCore.h"
+#include "MgsDemo.h"
 #include "Game/GameMode.h"
 #include "MgsGameMode.generated.h"
 
 CLASS()
-class CMgsGameMode : public CGameMode
+class MGS_API CMgsGameMode : public CGameMode
 {
 	GENERATED_BODY()
 

@@ -241,6 +241,9 @@ public:
 	inline void SetSwapChain(ISwapChain* sc) { swapChain = sc; }
 	inline ISwapChain* GetSwapChain() const { return swapChain; }
 
+	void GetWindowPos(int* x, int* y);
+	void SetWindowPos(int x, int y);
+
 	inline const FString& GetWindowTitle() const { return windowTitle; }
 	inline EWindowMode GetWindowMode() const { return bIsMaximized ? WM_WINDOWED_MAXIMIZED : _WindowMode; }
 	inline bool IsMaximized() const { return bIsMaximized; }

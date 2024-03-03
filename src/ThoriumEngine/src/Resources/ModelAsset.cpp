@@ -173,6 +173,8 @@ void CModelAsset::Init()
 		*stream >> &bone.position >> &bone.rotation;
 	}
 
+	UpdateBoneMatrices();
+
 	bInitialized = true;
 }
 
@@ -323,8 +325,6 @@ void CModelAsset::Save()
 		*stream << &bone.position << &bone.rotation;
 	}
 
-	UpdateBoneMatrices();
-	
 	if (bLoadedMeshData)
 		ClearMeshData();
 }
@@ -569,6 +569,8 @@ void CModelAsset::ClearMeshes()
 
 void CModelAsset::UpdateBoneMatrices()
 {
+	skeleton.invModel.Resize(skeleton.bones.Size());
+
 	for (SizeType i = 0; i < skeleton.bones.Size(); i++)
 	{
 		FMatrix local = (FMatrix(1.f).Translate(skeleton.bones[i].position) * skeleton.bones[i].rotation);
