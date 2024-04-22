@@ -9,7 +9,7 @@ class ENGINE_API DirectXFrameBuffer : public IFrameBuffer
 {
 public:
 	DirectXFrameBuffer(ID3D11Texture2D* fromTexture, int w = 0, int h = 0);
-	DirectXFrameBuffer(int width, int height, ETextureFormat format);
+	DirectXFrameBuffer(int width, int height, ETextureFormat format, ETextureFilter filter);
 	virtual ~DirectXFrameBuffer();
 
 	virtual void Resize(int width, int height);
@@ -22,6 +22,8 @@ private:
 
 public:
 	ETextureFormat format;
+	ETextureFilter filter;
+
 	ID3D11RenderTargetView* targetView = nullptr;
 	ID3D11Texture2D* buffer = nullptr;
 

@@ -13,7 +13,6 @@ class ENGINE_API CEntityComponent : public CObject
 	GENERATED_BODY()
 
 	friend class CEntity;
-	friend class CPropertiesWidget;
 
 public:
 	virtual void Init() {}

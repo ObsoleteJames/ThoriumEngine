@@ -48,9 +48,6 @@ VS
 
 PS
 {
-	Texture2D vFrameBuffer : TEXTURE : register(t3);
-	SamplerState vFrameBufferSampler : SAMPLER : register(s3);
-
 	float4 Main(PS_Input input) : SV_TARGET
 	{
 		float3 refractVec = refract(vCameraDir, -input.vNormalWs, vRefraction);

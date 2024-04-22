@@ -2,8 +2,13 @@
 #include "DirectXTexture.h"
 #include "Console.h"
 
-DirectXTexture2D::DirectXTexture2D(void* data, int w, int h, ETextureFormat f, ETextureFilter filter) : format(f), width(w), height(h)
+DirectXTexture2D::DirectXTexture2D(void* data, int w, int h, ETextureFormat f, ETextureFilter filter) : format(f)
 {
+	type = TextureType_2D;
+
+	width = w;
+	height = h;
+
 	D3D11_TEXTURE2D_DESC texd{};
 	texd.Width = width;
 	texd.Height = height;
@@ -12,9 +17,9 @@ DirectXTexture2D::DirectXTexture2D(void* data, int w, int h, ETextureFormat f, E
 	texd.Format = DirectXRenderer::GetDXTextureFormat(format).Key;
 	texd.SampleDesc.Count = 1;
 	texd.SampleDesc.Quality = 0;
-	texd.Usage = D3D11_USAGE_DYNAMIC;
+	texd.Usage = data ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_DEFAULT;
 	texd.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	texd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	texd.CPUAccessFlags = data ? D3D11_CPU_ACCESS_WRITE : 0;
 	//texd.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
 	int pitch = width * DirectXRenderer::GetDXTextureFormat(format).Value;
@@ -23,7 +28,7 @@ DirectXTexture2D::DirectXTexture2D(void* data, int w, int h, ETextureFormat f, E
 	imgData.pSysMem = data;
 	imgData.SysMemPitch = pitch;
 
-	HRESULT hr = GetDirectXRenderer()->device->CreateTexture2D(&texd, &imgData, &tex);
+	HRESULT hr = GetDirectXRenderer()->device->CreateTexture2D(&texd, data ? &imgData : nullptr, &tex);
 	if (FAILED(hr))
 	{
 		CONSOLE_LogError("ITexture", "Failed to create DirectX Texture2D");
@@ -64,8 +69,13 @@ DirectXTexture2D::DirectXTexture2D(void* data, int w, int h, ETextureFormat f, E
 	mipMapCount = 1;
 }
 
-DirectXTexture2D::DirectXTexture2D(void** data, int numMimMaps, int w, int h, ETextureFormat f, ETextureFilter filter) : format(f), width(w), height(h)
+DirectXTexture2D::DirectXTexture2D(void** data, int numMimMaps, int w, int h, ETextureFormat f, ETextureFilter filter) : format(f)
 {
+	type = TextureType_2D;
+
+	width = w;
+	height = h;
+
 	D3D11_TEXTURE2D_DESC texd{};
 	texd.Width = width;
 	texd.Height = height;
@@ -203,7 +213,7 @@ void DirectXTexture2D::UpdateView()
 
 DirectXTextureCube::DirectXTextureCube(void* data, int width, int height, ETextureFormat format, ETextureFilter filter)
 {
-
+	type = TextureType_Cube;
 }
 
 DirectXTextureCube::~DirectXTextureCube()

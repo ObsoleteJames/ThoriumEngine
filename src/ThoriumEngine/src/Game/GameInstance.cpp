@@ -20,6 +20,11 @@ void CGameInstance::Stop()
 
 }
 
+CGameInstance* CGameInstance::Get()
+{
+	return gEngine->GameInstance();
+}
+
 void CGameInstance::SpawnLocalPlayers()
 {
 	CGameMode* gamemode = gWorld->GetGameMode();
@@ -55,15 +60,15 @@ bool CGameInstance::AddLocalPlayer(uint controllerId)
 	localPlayers.Add();
 	FLocalPlayer& newPlayer = *localPlayers.last();
 
-	newPlayer.controllerId = controllerId == -1 ? localPlayers.Size() - 1 : controllerId;
-	newPlayer.playerId = localPlayers.Size() - 1;
+	newPlayer.controllerId = (uint8)(controllerId == -1 ? localPlayers.Size() - 1 : controllerId);
+	newPlayer.playerId = (uint8)localPlayers.Size() - 1;
 
 	CPlayer* player = CreateObject<CPlayer>();
 	players.Add(player);
 
 	newPlayer.player = player;
 
-	newPlayer.SetupViewport(localPlayers.Size(), false);
+	newPlayer.SetupViewport((uint8)localPlayers.Size(), false);
 	return true;
 }
 

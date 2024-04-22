@@ -411,13 +411,19 @@ void CModelAsset::Load(uint8 lodLevel)
 		// keep vertex data loaded in ram if we're running the editor
 		if (gIsEditor)
 		{
-			meshes[it].vertexData = new FVertex[vertices.Size()];
-			meshes[it].numVertexData = vertices.Size();
-			memcpy(meshes[it].vertexData, vertices.Data(), vertices.Size() * sizeof(FVertex));
+			if (meshes[it].vertexData == nullptr)
+			{
+				meshes[it].vertexData = new FVertex[vertices.Size()];
+				meshes[it].numVertexData = vertices.Size();
+				memcpy(meshes[it].vertexData, vertices.Data(), vertices.Size() * sizeof(FVertex));
+			}
 
-			meshes[it].indexData = new uint[indices.Size()];
-			meshes[it].numIndexData = indices.Size();
-			memcpy(meshes[it].indexData, indices.Data(), indices.Size() * sizeof(uint));
+			if (meshes[it].indexData == nullptr)
+			{
+				meshes[it].indexData = new uint[indices.Size()];
+				meshes[it].numIndexData = indices.Size();
+				memcpy(meshes[it].indexData, indices.Data(), indices.Size() * sizeof(uint));
+			}
 		}
 
 		*stream >> &meshes[it].materialIndex;
@@ -537,6 +543,22 @@ SizeType CModelAsset::GetBoneIndex(const FString& name)
 	return -1;
 }
 
+FTransform CModelAsset::GetBoneModelTransform(int bone) const
+{
+	FTransform r;
+	r.position = skeleton.bones[bone].position;
+	r.rotation = skeleton.bones[bone].rotation;
+
+	if (skeleton.bones[bone].parent != -1)
+	{
+		FTransform parent = GetBoneModelTransform(skeleton.bones[bone].parent);
+		r.position = parent.rotation.Rotate(r.position) + parent.position;
+		r.rotation *= parent.rotation;
+	}
+
+	return r;
+}
+
 int CModelAsset::GetLodFromDistance(float distance)
 {
 	for (int8 i = numLODs; i > 0; i--)
@@ -564,6 +586,7 @@ void CModelAsset::ClearMeshes()
 		if (mesh.indexData)
 			delete[] mesh.indexData;
 	}
+	lodLevels = 0;
 	meshes.Clear();
 }
 

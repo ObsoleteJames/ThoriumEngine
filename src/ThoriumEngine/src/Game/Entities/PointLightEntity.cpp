@@ -1,6 +1,6 @@
 
 #include "PointLightEntity.h"
-#include "Resources/Texture.h"
+#include "Resources/TextureAsset.h"
 #include "Game/Components/PointLightComponent.h"
 #include "Game/Components/BillboardComponent.h"
 

@@ -67,7 +67,7 @@ public:
 		case (int)EPhysicsLayer::COMPLEX:
 			return false;
 		case (int)EPhysicsLayer::TRIGGER:
-			return layer2 != (int)EPhysicsLayer::COMPLEX;
+			return layer2 == (int)EPhysicsLayer::DYNAMIC;
 		}
 
 		return false;
@@ -88,7 +88,7 @@ public:
 		case (int)EPhysicsLayer::COMPLEX:
 			return false;
 		case (int)EPhysicsLayer::TRIGGER:
-			return layer2 != bpLayerComplex;
+			return layer2 == bpLayerDynamic;
 		}
 
 		return false;

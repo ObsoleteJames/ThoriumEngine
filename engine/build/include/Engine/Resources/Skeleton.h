@@ -32,7 +32,6 @@ public:
 	// inverse model matrices of all bones
 	TArray<FMatrix> invModel; 
 
-	PROPERTY(Editable)
 	TArray<FBone> bones;
 };
 

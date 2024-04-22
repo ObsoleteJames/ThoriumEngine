@@ -21,6 +21,8 @@ void CSunLightComponent::Init()
 			bEnabled = lightComp->IsVisible();
 			bCastShadows = lightComp->bCastShadows;
 
+			bakingMode = CLightProxy::BAKE_NONE;
+
 			direction = -lightComp->GetForwardVector();
 			rotation = lightComp->GetWorldRotation();
 			color = lightComp->color;

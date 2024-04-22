@@ -1,7 +1,7 @@
 
 #include "BillboardComponent.h"
 #include "Resources/Material.h"
-#include "Resources/Texture.h"
+#include "Resources/TextureAsset.h"
 #include "Game/World.h"
 
 void CBillboardComponent::Init()

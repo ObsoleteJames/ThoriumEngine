@@ -24,6 +24,8 @@ class ENGINE_API CSceneComponent : public CEntityComponent
 {
 	GENERATED_BODY()
 
+	friend class CEntity;
+
 public:
 	CSceneComponent() = default;
 
@@ -31,13 +33,15 @@ public:
 	FVector GetWorldScale() const;
 	FQuaternion GetWorldRotation() const;
 
+	inline FTransform GetWorldTransform() const { return worldTransform; }
+
 	void SetWorldPosition(const FVector& pos);
 	void SetWorldScale(const FVector& scale);
 	void SetWorldRotation(const FQuaternion& rot);
 
-	inline void SetPosition(const FVector& pos) { position = pos; }
-	inline void SetScale(const FVector& s) { scale = s; }
-	inline void SetRotation(const FQuaternion& q) { rotation = q; }
+	void SetPosition(const FVector& pos);
+	void SetScale(const FVector& s);
+	void SetRotation(const FQuaternion& q);
 
 	inline const FVector& GetPosition() const { return position; }
 	inline const FVector& GetScale() const { return scale; }
@@ -55,6 +59,11 @@ public:
 
 	virtual FBounds Bounds() const;
 
+protected:
+	virtual void UpdateWorldTransform(bool bUpdateChildren = true);
+
+	virtual void OnDelete() override;
+
 private:
 	PROPERTY()
 	TObjectPtr<CSceneComponent> parent;
@@ -62,14 +71,16 @@ private:
 	PROPERTY()
 	TArray<TObjectPtr<CSceneComponent>> children;
 
-	PROPERTY()
+	PROPERTY(OnEditFunc = UpdateWorldTransform)
 	FVector position;
 
-	PROPERTY()
+	PROPERTY(OnEditFunc = UpdateWorldTransform)
 	FVector scale = FVector(1.f);
 
-	PROPERTY()
+	PROPERTY(OnEditFunc = UpdateWorldTransform)
 	FQuaternion rotation;
+
+	FTransform worldTransform;
 
 protected:
 	FBounds bounds;

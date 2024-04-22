@@ -16,6 +16,21 @@ FVector CPrimitiveComponent::GetVelocity()
 	return FVector::zero;
 }
 
+void CPrimitiveComponent::EnableCollision(bool bEnabled)
+{
+	if (physicsBody)
+		physicsBody->SetEnabled(bEnabled);
+	bEnableCollision = bEnabled;
+
+	for (TObjectPtr<CSceneComponent> child : GetChildren())
+	{
+		if (CPrimitiveComponent* prim = CastChecked<CPrimitiveComponent>(child); prim != nullptr)
+		{
+			prim->EnableCollision(bEnabled);
+		}
+	}
+}
+
 void CPrimitiveComponent::Update(double dt)
 {
 	if (physicsBody)
@@ -26,5 +41,16 @@ void CPrimitiveComponent::Update(double dt)
 			r->SetPosition(physicsBody->GetPosition());
 			r->SetRotation(physicsBody->GetRotation());
 		}
+	}
+}
+
+void CPrimitiveComponent::UpdateWorldTransform()
+{
+	BaseClass::UpdateWorldTransform();
+
+	if (physicsBody && !bHasParentBody)
+	{
+		physicsBody->SetPosition(GetWorldPosition());
+		physicsBody->SetRotation(GetWorldRotation());
 	}
 }

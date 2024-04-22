@@ -3,6 +3,7 @@
 #include "RenderProxies.h"
 #include "Math/Transform.h"
 #include "Renderer.h"
+#include "Rendering/Texture.h"
 
 CRenderScene::CRenderScene(int fbWidth /*= 1280*/, int fbHeight /*= 720*/)
 {
@@ -11,17 +12,24 @@ CRenderScene::CRenderScene(int fbWidth /*= 1280*/, int fbHeight /*= 720*/)
 	bufferWidth = fbWidth;
 	bufferHeight = fbHeight;
 
-	colorBuffer = gRenderer->CreateFrameBuffer(fbWidth, fbHeight, TEXTURE_FORMAT_RGBA16_FLOAT);
-	GBufferA = gRenderer->CreateFrameBuffer(fbWidth, fbHeight, TEXTURE_FORMAT_R10G10B10A2_UNORM);
-	GBufferB = gRenderer->CreateFrameBuffer(fbWidth, fbHeight, TEXTURE_FORMAT_RGBA8_UNORM);
-	GBufferC = gRenderer->CreateFrameBuffer(fbWidth, fbHeight, TEXTURE_FORMAT_RGBA8_UNORM);
-	GBufferD = gRenderer->CreateFrameBuffer(fbWidth, fbHeight, TEXTURE_FORMAT_RGBA8_UNORM);
+	float sp = screenPercentage / 100.f;
 
-	preTranslucentBuff = gRenderer->CreateFrameBuffer(fbWidth, fbHeight, TEXTURE_FORMAT_RGBA16_FLOAT);
+	int widthB = int((float)fbWidth * sp);
+	int heightB = int((float)fbHeight * sp);
+
+	colorBuffer = gRenderer->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA16_FLOAT, cvRenderFBPointFilter.AsBool() ? THTX_FILTER_POINT : THTX_FILTER_LINEAR);
+	GBufferA = gRenderer->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_R10G10B10A2_UNORM);
+	GBufferB = gRenderer->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA8_UNORM);
+	GBufferC = gRenderer->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA8_UNORM);
+	GBufferD = gRenderer->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA8_UNORM);
+
+	preTranslucentBuff = gRenderer->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA16_FLOAT);
 
 	aoBuffer = gRenderer->CreateFrameBuffer(fbWidth / 2, fbHeight / 2, TEXTURE_FORMAT_R8_UNORM);
 
-	depth = gRenderer->CreateDepthBuffer({ fbWidth, fbHeight, TH_DBF_D24_S8, 1, false });
+	depth = gRenderer->CreateDepthBuffer({ widthB, heightB, TH_DBF_D24_S8, 1, false });
+
+	depthTex = gRenderer->CreateTexture2D(nullptr, widthB, heightB, TEXTURE_FORMAT_R24G8, THTX_FILTER_POINT);
 }
 
 CRenderScene::~CRenderScene()
@@ -34,27 +42,32 @@ CRenderScene::~CRenderScene()
 	delete preTranslucentBuff;
 	delete aoBuffer;
 	delete depth;
+	delete depthTex;
 }
 
 void CRenderScene::ResizeBuffers(int width, int height)
 {
-	if (width == bufferWidth && height == bufferHeight)
-		return;
-
 	bufferWidth = width;
 	bufferHeight = height;
 
-	colorBuffer->Resize(width, height);
-	GBufferA->Resize(width, height);
-	GBufferB->Resize(width, height);
-	GBufferC->Resize(width, height);
-	GBufferD->Resize(width, height);
+	float sp = screenPercentage / 100.f;
 
-	preTranslucentBuff->Resize(width, height);
+	int widthB = int((float)width * sp);
+	int heightB = int((float)height * sp);
+
+	colorBuffer->Resize(widthB, heightB);
+	GBufferA->Resize(widthB, heightB);
+	GBufferB->Resize(widthB, heightB);
+	GBufferC->Resize(widthB, heightB);
+	GBufferD->Resize(widthB, heightB);
+
+	preTranslucentBuff->Resize(widthB, heightB);
 
 	aoBuffer->Resize(width / 2, height / 2);
 
-	depth->Resize(width, height);
+	depth->Resize(widthB, heightB);
+	delete depthTex;
+	depthTex = gRenderer->CreateTexture2D(nullptr, widthB, heightB, TEXTURE_FORMAT_R24G8, THTX_FILTER_POINT);
 }
 
 bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitiveHitInfo* outHit, float maxDistance /*= 0.f*/)

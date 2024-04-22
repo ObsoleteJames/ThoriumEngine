@@ -127,6 +127,73 @@ bool ImGui::Splitter(const char* _id, bool bVertical, float thickness, float* si
 	//return SplitterBehavior(bb, id, bVertical ? ImGuiAxis_X : ImGuiAxis_Y, size0, size1, padding, padding, 0.0f);
 }
 
+bool ImGui::ImageButtonClear(const char* str_id, ImTextureID texture, const ImVec2& size, ImGuiButtonFlags flags, const ImVec2& uv0 /*= ImVec2(0, 0)*/, const ImVec2& uv1 /*= ImVec2(1, 1)*/, const ImVec4& tint_col /*= ImVec4(1, 1, 1, 1)*/)
+{
+	ImGuiContext& g = *GImGui;
+	ImGuiWindow* window = GetCurrentWindow();
+	if (window->SkipItems)
+		return false;
+
+	ImGuiID id = window->GetID(str_id);
+
+	const ImVec2 padding = g.Style.FramePadding;
+	const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size + padding * 2.0f);
+	ItemSize(bb);
+	if (!ItemAdd(bb, id))
+		return false;
+
+	bool hovered, held;
+	bool pressed = ButtonBehavior(bb, id, &hovered, &held, flags);
+
+	// Render
+	auto col = (hovered && pressed) ? ImVec4(0.8f, 0.8f, 0.8f, 1.f) : (hovered ? ImVec4(0.9f, 0.9f, 0.9f, 1.f) : ImVec4(1, 1, 1, 1));
+	RenderNavHighlight(bb, id);
+	window->DrawList->AddImage(texture, bb.Min, bb.Max, uv0, uv1, GetColorU32(tint_col * col));
+
+	return pressed;
+}
+
+bool ImGui::ButtonClear(const char* label, const ImVec2 size_arg /*= ImVec2(0,0)*/, ImGuiButtonFlags flags /*= 0*/)
+{
+	ImGuiWindow* window = GetCurrentWindow();
+	if (window->SkipItems)
+		return false;
+
+	ImGuiContext& g = *GImGui;
+	const ImGuiStyle& style = g.Style;
+	const ImGuiID id = window->GetID(label);
+	const ImVec2 label_size = CalcTextSize(label, NULL, true);
+
+	ImVec2 pos = window->DC.CursorPos;
+	if ((flags & ImGuiButtonFlags_AlignTextBaseLine) && style.FramePadding.y < window->DC.CurrLineTextBaseOffset) // Try to vertically align buttons that are smaller/have no padding so that text baseline matches (bit hacky, since it shouldn't be a flag)
+		pos.y += window->DC.CurrLineTextBaseOffset - style.FramePadding.y;
+	ImVec2 size = CalcItemSize(size_arg, label_size.x + style.FramePadding.x * 2.0f, label_size.y + style.FramePadding.y * 2.0f);
+
+	const ImRect bb(pos, pos + size);
+	ItemSize(size, style.FramePadding.y);
+	if (!ItemAdd(bb, id))
+		return false;
+
+	bool hovered, held;
+	bool pressed = ButtonBehavior(bb, id, &hovered, &held, flags);
+
+	// Render
+	//const ImU32 col = GetColorU32((held && hovered) ? ImGuiCol_ButtonActive : hovered ? ImGuiCol_ButtonHovered : ImGuiCol_Button);
+	RenderNavHighlight(bb, id);
+	//RenderFrame(bb.Min, bb.Max, col, true, style.FrameRounding);
+
+	if (g.LogEnabled)
+		LogSetNextTextDecoration("[", "]");
+
+	auto col = (hovered && pressed) ? ImVec4(0.8f, 0.8f, 0.8f, 1.f) : (hovered ? ImVec4(0.9f, 0.9f, 0.9f, 1.f) : ImVec4(1, 1, 1, 1));
+	ImGui::PushStyleColor(ImGuiCol_Text, col);
+	RenderTextClipped(bb.Min + style.FramePadding, bb.Max - style.FramePadding, label, NULL, &label_size, style.ButtonTextAlign, &bb);
+	ImGui::PopStyleColor();
+
+	IMGUI_TEST_ENGINE_ITEM_INFO(id, label, g.LastItemData.StatusFlags);
+	return pressed;
+}
+
 void ImGui::Text(const FString& txt)
 {
 	ImGui::Text(txt.c_str());

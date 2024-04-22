@@ -35,9 +35,11 @@ VS
 
 PS
 {
+	#include "common/normal_map.hlsl"
+
 	float4 Main(PS_Input input) : SV_TARGET
 	{
-		float3 N = CalculateNormal(input.vNormalWs, input.vTangetUWs, input.vTangentVWs, input.vTextureCoords);
+		float3 N = CalculateNormal(input.vNormalWs, input.vTangentUWs, input.vTangentVWs, input.vTextureCoords);
 		
 		return float4((N + 1.f) / 2.f, 1.f);
 	}

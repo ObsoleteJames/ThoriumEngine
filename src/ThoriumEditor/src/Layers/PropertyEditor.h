@@ -17,9 +17,9 @@ public:
 	void RenderClassProperties(FStruct* type, SizeType offset, bool bHeader = true);
 	void RenderTransformEdit();
 
-	void RenderVectorProperty(SizeType offset, bool bReadOnly);
-	void RenderColorProperty(SizeType offset, bool bReadOnly);
-	void RenderQuatProperty(SizeType offset, bool bReadOnly);
+	bool RenderVectorProperty(SizeType offset, bool bReadOnly);
+	bool RenderColorProperty(SizeType offset, bool bReadOnly);
+	bool RenderQuatProperty(SizeType offset, bool bReadOnly);
 
 	void RenderProperty(uint type, const FProperty* prop, void** objects, int objCount, SizeType offset);
 

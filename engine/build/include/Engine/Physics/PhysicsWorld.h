@@ -40,7 +40,7 @@ struct FPhysicsBodySettings
 	void* shapeData = nullptr;
 
 	EPhysicsLayer physicsLayer = EPhysicsLayer::STATIC;
-	EPhysicsBodyMovement moveType = PHBM_STATIC;
+	EPhysicsBodyMotion motionType = PHBM_STATIC;
 
 	FTransform transform;
 };

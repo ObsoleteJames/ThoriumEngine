@@ -130,6 +130,9 @@ public:
 	template<typename T>
 	void BindKey(EKeyCode key, EInputAction action, EInputMod mods, T* target, void(T::* func)(), EInputMode layer = EInputMode::GAME_ONLY);
 
+	inline bool IsKeyPressed(EKeyCode key) const { return (bool)keyStates[(int)key]; }
+	inline bool IsMousePressed(EMouseButton btn) const { return (bool)mouseStates[(int)btn]; }
+
 protected:
 	void OnCharEvent(uint key);
 	void KeyEvent(EKeyCode key, EInputAction action, EInputMod mod);
@@ -154,7 +157,7 @@ protected:
 	FVector2 prevMousePos;
 
 	int8 keyStates[(SizeType)EKeyCode::KEYS_COUNT];
-	int8 mouseStates[(SizeType)EMouseButton::NONE + 1];
+	int8 mouseStates[(SizeType)EMouseButton::NONE];
 };
 
 template<typename T>

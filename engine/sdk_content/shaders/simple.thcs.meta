@@ -2,7 +2,12 @@
 Shader
 {
     Name = "Simple";
-    Type = SHADER_FORWARD;
+    Type = SHADER_FORWARD_DEFERRED;
+
+	// Shader Features
+	Feature_Lighting = true;
+	Feature_CubeMapLighting = true;
+	Feature_Shadows = true;
 }
 
 Global
@@ -24,6 +29,7 @@ Global
 
 	Property<Texture2D> vRoughness(Name = "Roughness", UiGroup = "Specular") = "misc\\grey_127.thtex";
 	Property<Texture2D> vMetallic(Name = "Metallic", UiGroup = "Specular") = "misc\\black.thtex";
+	Property<Texture2D> vAmbientOcclusion(Name = "Ambient Occlusion", UiGroup = "Color") = "misc\\white.thtex";
 
 	Property<Texture2D> vEmission(Name = "Emmision", UiGroup = "Color");
 	Property<float> vEmissionIntensity(Name = "Emmision Intensity", UiGroup = "Color");
@@ -42,39 +48,14 @@ VS
     }
 }
 
-PS
+PS_FORWARD
 {
 	#include "common/forward_light_data.hlsl"
 	#include "common/shadow_data.hlsl"
+	#include "common/normal_map.hlsl"
+	#include "common/lighting.hlsl"
 
 	#define SHADOW_SAMPLES 8
-
-	static const float PI = 3.14159265359;
-
-	float DistributionGGX(float3 N, float3 H, float roughness)
-	{
-		float a = roughness * roughness;
-		float a2 = a * a;
-		float NdotH = max(dot(N, H), 0.0);
-		float NdotH2 = NdotH * NdotH;
-
-		float nom = a2;
-		float denom = (NdotH2 * (a2 - 1.0) + 1.0);
-		denom = PI * denom * denom;
-
-		return nom / denom;
-	}
-
-	float GeometrySchlickGGX(float NdotV, float roughness)
-	{
-		float r = (roughness + 1.0);
-		float k = (r*r) / 8.0;
-
-		float nom   = NdotV;
-		float denom = NdotV * (1.0 - k) + k;
-
-		return nom / denom;
-	}
 
 	float3 divide(float a, float3 b)
 	{
@@ -84,91 +65,10 @@ PS
 		return float3(x, y, z);
 	}
 
-	float GeometrySmith(float3 N, float3 V, float3 L, float roughness)
-	{
-		float NdotV = max(dot(N, V), 0.0);
-		float NdotL = max(dot(N, L), 0.0);
-		float ggx2 = GeometrySchlickGGX(NdotV, roughness);
-		float ggx1 = GeometrySchlickGGX(NdotL, roughness);
-
-		return ggx1 * ggx2;
-	}
-	
-	float3 fresnelSchlick(float cosTheta, float3 F0)
-	{
-		return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
-	}
-
-	float3 fresnelSchlickRoughness(float cosTheta, float3 F0, float roughness)
-	{
-		return F0 + mul(pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0), max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0);
-	}
-
 	float4 DirLight(float3 posWs, float3 normal, float roughness, float metallic, float3 diffuse, FDirectionalLight light)
 	{
 		// Is in shadow?
-		float shadow = 0.f;
-		if (light.shadowIndex != -1)
-		{
-			for (int i = 0; i < 4; i++)
-			{
-				float4x4 shadowMat = vSunShadowMatrix[0];
-				switch (i)
-				{
-				case 1:
-					shadowMat = vSunShadowMatrix[1];
-					break;
-				case 2:
-					shadowMat = vSunShadowMatrix[2];
-					break;
-				case 3:
-					shadowMat = vSunShadowMatrix[3];
-					break;
-				}
-
-				float4 fragPosLightSpace = mul(shadowMat, float4(posWs, 1.f));
-				float3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-				projCoords = projCoords * 0.5 + 0.5;
-
-				if (projCoords.x < 1 && projCoords.y < 1 && projCoords.x > 0 && projCoords.y > 0)
-				{
-					if (i > 1)
-					{
-						float shadowDepth = SampleTexture2DLOD(vSunShadow, float2(projCoords.x / 4 + (0.25f * i), 1.f - projCoords.y), 0).r;
-						if (fragPosLightSpace.z - 0.0002 > shadowDepth)
-							return float4(0.f, 0.f, 0.f, 0.f);
-					}
-					else
-					{
-						float averageShadow = 0.f;
-
-						for (int j = 0; j < SHADOW_SAMPLES * SHADOW_SAMPLES; j++)
-						{
-							uint texHeight;
-							uint texWidth;
-							uint texLevels;
-							vSunShadow.GetDimensions(0, texHeight, texWidth, texLevels);
-
-							float pixelSize = 1.f / texHeight;
-							float2 offset = float2((float(j % SHADOW_SAMPLES) - 0.5f), ((float(j) / SHADOW_SAMPLES) - 0.5f)) * pixelSize;
-							float2 mapUv = float2(projCoords.x / 4 + (0.25f * i), 1.f - projCoords.y);
-
-							mapUv = mapUv + offset;
-							mapUv.x = clamp(mapUv.x, 0.25f * i, (0.25f * i) + 0.248888f);
-							mapUv.y = clamp(mapUv.y, 0, 1);
-
-							float shadowDepth = SampleTexture2DLOD(vSunShadow, mapUv, 0).r;
-
-							if (fragPosLightSpace.z - (i == 0 ? vSunShadowBias : 0.0005) > shadowDepth)
-								averageShadow = averageShadow + 1.f;
-						}
-
-						shadow = averageShadow / (SHADOW_SAMPLES * SHADOW_SAMPLES);
-						break;
-					}
-				}
-			}
-		}
+		float shadow = DirectionalLightShadow(light, posWs, SHADOW_SAMPLES);
 
 		float3 V = normalize(vCameraPos - posWs);
 		float3 H = normalize(V + light.direction);
@@ -189,7 +89,7 @@ PS
 		float3 kD = float3(1, 1, 1) - kS;
 		kD = mul((1.0 - metallic), kD);
 		float NdotL = max(dot(normal, light.direction), 0);
-		return float4((kD * diffuse / PI + specular) * radiance * NdotL, 0) * (1 - shadow);
+		return float4((kD * diffuse / PI + specular) * radiance * NdotL, length(specular) * length(radiance) * NdotL) * (1 - shadow);
 	}
 
 	float4 PointLight(float3 posWs, float3 normal, float roughness, float metallic, float3 diffuse, FPointLight light)
@@ -219,7 +119,7 @@ PS
 
 		float NdotL = max(dot(normal, L), 0);
 
-		return float4((kD * diffuse / PI + specular) * radiance * NdotL, (specular.r + specular.g + specular.b) / 3);
+		return float4((kD * diffuse / PI + specular) * radiance * NdotL, length(specular) * length(radiance) * NdotL);
 	}
 
     float4 Main(PS_Input input) : SV_TARGET
@@ -231,12 +131,14 @@ PS
 		//float3 debugLod = float3((float)texLod / 6.f, 1.f, 1.f);
 
 		float4 diffuse = SampleTexture2DLOD(vBaseColor, input.vTextureCoords, texLod) * vColorTint;
-		float4 emmision = SampleTexture2D(vEmission, input.vTextureCoords) * vEmissionIntensity;
+		float4 emission = SampleTexture2D(vEmission, input.vTextureCoords) * vEmissionIntensity;
 		float rough = SampleTexture2D(vRoughness, input.vTextureCoords).r;
 		float metallic = SampleTexture2D(vMetallic, input.vTextureCoords).r;
 
+		float ao = SampleTexture2D(vAmbientOcclusion, input.vTextureCoords).r;
+
 		float3 d2 = diffuse.xyz;
-		float3 normal = CalculateNormal(input.vNormalWs, input.vTangetUWs, input.vTangentVWs, input.vTextureCoords);
+		float3 normal = CalculateNormal(input.vNormalWs, input.vTangentUWs, input.vTangentVWs, input.vTextureCoords);
 
 		float4 outColor = float4(0, 0, 0, 0);
 
@@ -250,11 +152,41 @@ PS
 			outColor = outColor + PointLight(input.vPositionWs, normal, rough, metallic, d2, pointLights[i]);
 		}
 
-		float3 color = outColor.xyz + emmision.xyz;
+		float3 color = outColor.xyz + emission.xyz;
 
-		const float gamma = 1.6;
-		color = pow(abs(color), abs(float3(1 / gamma, 1 / gamma, 1 / gamma)));
+		//const float gamma = 1.6;
+		//color = pow(abs(color), abs(float3(1 / gamma, 1 / gamma, 1 / gamma)));
 
-		return float4(color.xyz, min(1, diffuse.a * vAlpha + outColor.w));
+		return float4(color.xyz * ao, min(1, diffuse.a * vAlpha + outColor.w));
     }
+}
+
+PS_DEFERRED
+{	
+	#include "common/deferred_output.hlsl"
+	#include "common/normal_map.hlsl"
+
+	PS_Output Main(PS_Input input)
+	{
+		float distanceFromCam = length(vCameraPos - input.vPositionWs);
+		int texLod = (int)floor(distanceFromCam / 10);
+
+		float3 normal = (CalculateNormal(input.vNormalWs, input.vTangentUWs, input.vTangentVWs, input.vTextureCoords) + 1.f) / 2;
+		float4 diffuse = SampleTexture2DLOD(vBaseColor, input.vTextureCoords, texLod) * vColorTint;
+		float4 emission = SampleTexture2D(vEmission, input.vTextureCoords) * vEmissionIntensity;
+		float rough = SampleTexture2D(vRoughness, input.vTextureCoords).r;
+		float metallic = SampleTexture2D(vMetallic, input.vTextureCoords).r;
+		float ao = SampleTexture2D(vAmbientOcclusion, input.vTextureCoords).r;
+
+		if (diffuse.a < 0.5)
+			discard;
+
+		PS_Output output;
+		output.vColor = float4(emission.xyz, 1);
+		output.vNormal = float4(normal, 1);
+		output.vDiffuse = float4(diffuse.xyz, 1);
+		output.vMaterial = float4(metallic, rough, ao, 1.f);
+		output.GBufferD = float4(0, 0, 0, 0);
+		return output;
+	}
 }

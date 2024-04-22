@@ -4,13 +4,16 @@
 #include "Shader.h"
 #include "RenderCommands.h"
 #include "Resources/ModelAsset.h"
-#include "Resources/Texture.h"
+#include "Resources/TextureAsset.h"
 #include "Rendering/RenderProxies.h"
 #include "Rendering/Texture.h"
 #include "Framebuffer.h"
 #include "Buffers.h"
+#include "Console.h"
 
 #include <mutex>
+
+#define ENABLE_DEFERRED_RENDERING 1
 
 class IRenderer;
 class CRenderScene;
@@ -26,6 +29,27 @@ struct FRenderStatistics;
 extern ENGINE_API IRenderer* gRenderer;
 extern ENGINE_API FRenderStatistics gRenderStats;
 
+// 0 = None, 1 = Unlit, 2 = Normal, 3 = Material
+extern ENGINE_API CConVar cvRenderMaterialMode;
+
+extern ENGINE_API CConVar cvRenderShadowEnabled;
+extern ENGINE_API CConVar cvRenderShadowQuality;
+extern ENGINE_API CConVar cvRenderTextureQuality;
+
+extern ENGINE_API CConVar cvRenderScreenPercentage;
+
+// Screen space Ambient Occlusion.
+extern ENGINE_API CConVar cvRenderSsaoEnabled;
+extern ENGINE_API CConVar cvRenderSsaoQuality;
+
+// Screen space shadows.
+extern ENGINE_API CConVar cvRenderSsShadows;
+extern ENGINE_API CConVar cvRenderSsShadowsQuality;
+
+extern ENGINE_API CConVar cvRenderFBPointFilter;
+
+extern ENGINE_API CConVar cvForceForwardRendering;
+
 enum class ERendererApi
 {
 	NONE,
@@ -38,6 +62,7 @@ enum class EBlendMode
 {
 	BLEND_DISABLED,
 	BLEND_ADDITIVE,
+	BLEND_ADDITIVE_COLOR
 };
 
 // DEPRECATED - Moved to using ConVars
@@ -59,6 +84,9 @@ struct FSceneInfoBuffer
 	FMatrix camMatrix;
 	FMatrix camView;
 	FMatrix camProjection;
+	FMatrix invCamMatrix;
+	FMatrix invCamView;
+	FMatrix invCamProjection;
 
 	FVector cameraPos;
 	int padding_cameraPos;
@@ -66,6 +94,10 @@ struct FSceneInfoBuffer
 	int padding_cameraDir;
 
 	float time;
+	float exposure;
+	float gamma;
+
+	float padding_gamma;
 
 	FVector2 framebufferScale;
 };
@@ -141,7 +173,12 @@ struct FShadowDataBuffer
 	float vSunShadowBias;
 };
 
-constexpr SizeType off = offsetof(FShadowDataBuffer, vSpotShadowId);
+struct FBloomSettings
+{
+	float intensity;
+	float threshold;
+	float blur;
+};
 
 struct FTextSDFBuffer
 {
@@ -222,8 +259,7 @@ public:
 public:
 	virtual void CompileShader(const FString& source, IShader::EType shaderType, void** outBuffer, SizeType* outBufferSize) = 0;
 
-	virtual IShader* GetVsShader(CShaderSource* shader) = 0;
-	virtual IShader* GetPsShader(CShaderSource* shader) = 0;
+	virtual IShader* LoadShader(CShaderSource* source, EShaderType type, FString file) = 0;
 
 	virtual IVertexBuffer* CreateVertexBuffer(const TArray<FVertex>& vertices) = 0;
 	virtual IIndexBuffer* CreateIndexBuffer(const TArray<uint>& indices) = 0;
@@ -232,24 +268,35 @@ public:
 
 	virtual ISwapChain* CreateSwapChain(IBaseWindow* window) = 0;
 	virtual IDepthBuffer* CreateDepthBuffer(FDepthBufferInfo depthInfo) = 0;
-	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, ETextureFormat format) = 0;
+	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, ETextureFormat format, ETextureFilter filter = THTX_FILTER_LINEAR) = 0;
 
 	virtual ITexture2D* CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter) = 0;
 	virtual ITexture2D* CreateTexture2D(void** data, int numMipMaps, int width, int height, ETextureFormat format, ETextureFilter filter) = 0;
 	virtual ITextureCube* CreateTextureCube(void* data, int width, int height, ETextureFormat format, ETextureFilter filter) = 0;
 
+	virtual void CopyResource(ITexture2D* source, ITexture2D* destination) = 0;
+	virtual void CopyResource(IFrameBuffer* source, ITexture2D* destination) = 0;
+	virtual void CopyResource(IFrameBuffer* source, IFrameBuffer* destination) = 0;
+	virtual void CopyResource(IDepthBuffer* source, ITexture2D* destination) = 0;
+	virtual void CopyResource(IDepthBuffer* source, IFrameBuffer* destination) = 0;
+
 	virtual void DrawMesh(FMesh* mesh) = 0;
 	virtual void DrawMesh(FDrawMeshCmd* info) = 0;
 	virtual void DrawMesh(FMeshBuilder::FRenderMesh* mesh) = 0;
+
+	// Binds all material data to the current context.
+	virtual void SetMaterial(CMaterial* mat) = 0;
 
 	virtual void SetVsShader(IShader* shader) = 0;
 	virtual void SetPsShader(IShader* shader) = 0;
 
 	virtual void SetShaderBuffer(IShaderBuffer* buffer, int _register) = 0;
 
-	virtual void SetShaderResource(ITexture2D* texture, int _register) = 0;
-	virtual void SetShaderResource(IFrameBuffer* fb, int _register) = 0;
+	virtual void SetShaderResource(IBaseTexture* texture, int _register) = 0;
 	virtual void SetShaderResource(IDepthBuffer* depthTex, int _register) = 0;
+
+	// OBSOLETE
+	//virtual void SetShaderResource(IFrameBuffer* fb, int _register) = 0;
 
 	virtual void SetFrameBuffer(IFrameBuffer* framebuffer, IDepthBuffer* depth = nullptr) = 0;
 	virtual void SetFrameBuffers(IFrameBuffer** framebuffers, SizeType count, IDepthBuffer* depth = nullptr) = 0;
@@ -258,7 +305,7 @@ public:
 
 	virtual void SetBlendMode(EBlendMode mode) = 0;
 
-	virtual void BindGBuffer() = 0;
+	virtual void SetFaceCulling(bool bBack) = 0;
 
 	virtual void Present() = 0;
 
@@ -274,6 +321,7 @@ protected:
 	//virtual void BindGlobalData() = 0;
 
 	static void Blit(IFrameBuffer* source, IFrameBuffer* destination);
+	static void Blit(IFrameBuffer* source, IFrameBuffer* destination, FVector2 viewportPos, FVector2 viewportScale);
 
 private:
 	static void renderAll();
@@ -281,6 +329,8 @@ private:
 	//static void RenderSpotLightShadow(CLightProxy* light, ITexture2D* out);
 	//static void RenderSunLightShadow(CLightProxy* light, ITexture2D* out);
 	//static void RenderSpotLightShadow(CLightProxy* light, ITextureCube* out);
+
+	static void PreDeferredLightSetup(CRenderScene* scene);
 
 	static void RenderCamera(CRenderScene* scene, CCameraProxy* camera);
 	static void RenderShadowMaps(CRenderScene* scene);
@@ -305,10 +355,21 @@ protected:
 	TObjectPtr<CShaderSource> shaderScreenPlane;
 	TObjectPtr<CShaderSource> shaderBlit;
 
+	TObjectPtr<CShaderSource> shaderDeferredDirLight;
+	TObjectPtr<CShaderSource> shaderDeferredPointLight;
+	TObjectPtr<CShaderSource> shaderDeferredSpotLight;
+
+	TObjectPtr<CShaderSource> shaderPPExposure;
+	TObjectPtr<CShaderSource> shaderBloomPass;
+
 	TObjectPtr<IShaderBuffer> sceneBuffer;
 	TObjectPtr<IShaderBuffer> objectBuffer;
 	TObjectPtr<IShaderBuffer> forwardLightsBuffer;
-	TObjectPtr<IShaderBuffer> forwardShadowDataBuffer;
+	TObjectPtr<IShaderBuffer> shadowDataBuffer;
+
+	TObjectPtr<IShaderBuffer> deferredLightBuffer;
+
+	TObjectPtr<CModelAsset> meshIcoSphere;
 
 	//IFrameBuffer* gBuffers[4];
 
@@ -322,10 +383,10 @@ protected:
 
 	FMesh* quadMesh;
 
-	IShader* vsShaderShadow;
-	IShader* psShaderDeferred;
-	IShader* vsShaderDeferredLighting;
-	IShader* psShaderDeferredLighting;
+	//IShader* vsShaderShadow;
+	//IShader* psShaderDeferred;
+	//IShader* vsShaderDeferredLighting;
+	//IShader* psShaderDeferredLighting;
 
 	static std::mutex gpuMutex;
 };
@@ -338,8 +399,8 @@ public:
 	template<typename T>
 	static void CreateRenderer();
 
-	static inline IShader* GetVsShader(CShaderSource* shader) { return gRenderer->GetVsShader(shader); }
-	static inline IShader* GetPsShader(CShaderSource* shader) { return gRenderer->GetPsShader(shader); }
+	//static inline IShader* GetVsShader(CShaderSource* shader) { return gRenderer->GetVsShader(shader); }
+	//static inline IShader* GetPsShader(CShaderSource* shader) { return gRenderer->GetPsShader(shader); }
 
 	static inline IVertexBuffer* CreateVertexBuffer(const TArray<FVertex>& vertices) { return gRenderer->CreateVertexBuffer(vertices); }
 	static inline IIndexBuffer* CreateIndexBuffer(const TArray<uint>& indices) { return gRenderer->CreateIndexBuffer(indices); }

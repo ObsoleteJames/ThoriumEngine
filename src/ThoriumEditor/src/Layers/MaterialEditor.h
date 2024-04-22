@@ -69,8 +69,10 @@ private:
 	float sizeL = 460;
 	float sizeR = 200;
 
-	int viewportWidth, viewportHeight;
+	int viewportWidth = 1280, viewportHeight = 720;
 	float viewportX = 0.f, viewportY = 0.f;
+
+	int curMenu = 0;
 
 	funcSaveCallback saveCallback = nullptr;
 

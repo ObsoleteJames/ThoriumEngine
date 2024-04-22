@@ -33,6 +33,8 @@ public:
 	static float Distance(const FVector2& a, const FVector2& b);
 	static float Dot(const FVector2& a, const FVector2& b);
 
+	static FVector2 Lerp(const FVector2& a, const FVector2& b, float t);
+
 	FVector2 Radians() const { return FVector2(FMath::Radians(x), FMath::Radians(y)); }
 	FVector2 Degrees() const { return FVector2(FMath::Degrees(x), FMath::Degrees(y)); }
 
@@ -103,6 +105,11 @@ public:
 	static float Dot(const FVector& a, const FVector& b);
 	static FVector Cross(const FVector& a, const FVector& b);
 
+	static FVector Lerp(const FVector& a, const FVector& b, float t);
+	static FVector Slerp(const FVector& a, const FVector& b, float t);
+
+	static FVector ProjectOnPlane(const FVector& vec, const FVector& normal);
+
 	FVector Radians() const { return FVector(FMath::Radians(x), FMath::Radians(y), FMath::Radians(z)); }
 	FVector Degrees() const { return FVector(FMath::Degrees(x), FMath::Degrees(y), FMath::Degrees(z)); }
 
@@ -172,6 +179,8 @@ public:
 
 	static FQuaternion LookRotation(const FVector& dir, const FVector& up);
 
+	static FQuaternion Slerp(const FQuaternion& a, const FQuaternion& b, float t);
+
 	inline FQuaternion Conjugate() const { return glm::conjugate((glm::quat)*this); }
 	inline FQuaternion Invert() const { return glm::inverse((glm::quat)*this); }
 	FQuaternion Normalized() const;
@@ -198,7 +207,7 @@ public:
 	float w = 1.f;
 };
 
-FQuaternion operator*(const FQuaternion& a, const FQuaternion& b);
+ENGINE_API FQuaternion operator*(const FQuaternion& a, const FQuaternion& b);
 inline FQuaternion operator+(const FQuaternion& a, const FQuaternion& b) { return FQuaternion(a) += b; }
 
 STRUCT()

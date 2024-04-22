@@ -1,19 +1,15 @@
 #pragma once
 
 #include "EngineCore.h"
+#include "Texture.h"
 
-class ENGINE_API IFrameBuffer
+class ENGINE_API IFrameBuffer : public IBaseTexture
 {
 public:
 	virtual ~IFrameBuffer() = default;
 
 	virtual void Resize(int width, int height) = 0;
 	virtual void Clear(float r = 0.f, float g = 0.f, float b = 0.f, float a = 1.f) = 0;
-	
-	inline void GetSize(int& w, int& h) const { w = width; h = height; }
-
-protected:
-	int width, height;
 };
 
 enum EDepthBufferFormat

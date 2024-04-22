@@ -204,7 +204,7 @@ FString GetEnginePath(const FString& version)
 #endif
 }
 
-int CompileSource(const FCompileConfig& config)
+int GenerateCMakeProject(const FCompileConfig& config)
 {
 	std::cout << "Generating build file for '" << config.path.c_str() << "'\n";
 

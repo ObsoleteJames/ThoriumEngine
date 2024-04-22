@@ -14,15 +14,28 @@ class ENGINE_API CPrimitiveComponent : public CSceneComponent
 public:
 	CPrimitiveComponent() = default;
 
+	void Update(double dt) override;
+
 	void SetVelocity(const FVector& v);
 	FVector GetVelocity();
 
 	inline bool IsKinematic() const { return GetEntity() ? (GetEntity()->type == ENTITY_DYNAMIC && bStaticBody) : bStaticBody; }
 	inline bool IsStatic() const { return GetEntity() ? GetEntity()->type == ENTITY_STATIC : bStaticBody; }
 
-	void Update(double dt) override;
+	void EnableCollision(bool bEnabled);
+
+	inline bool CollisionEnabled() const { return bEnableCollision; }
+
+protected:
+	virtual void UpdateWorldTransform();
+
+	FUNCTION()
+	inline void OnCollisionChanged() { EnableCollision(bEnableCollision); }
 
 public:
+	PROPERTY(Editable, Category = Physics, OnEditFunc = OnCollisionChanged)
+	bool bEnableCollision = true;
+
 	/*
 	 * if true, this component will be either kinematic or completely static, depending on the owning entity's type.
 	 * if false, this component will simulate physics, and its transform will be controlled by the physics body.

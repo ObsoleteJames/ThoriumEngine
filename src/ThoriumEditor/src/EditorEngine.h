@@ -25,11 +25,61 @@ class CAddonsWindow;
 class CEditorLogWnd;
 class FClass;
 
+class CModelComponent;
 class CObjectDebugger;
 
 struct FEditorLog;
 
+enum ImGuiKey : int;
+
 extern FEditorLog gBuildLog;
+
+enum ESelectMode
+{
+	ESelectMode_Object,
+	ESelectMode_Skeleton,
+	ESelectMode_Vertices,
+	ESelectMode_Faces,
+	ESelectMode_Edges
+};
+
+struct SDK_API FEditorShortcut
+{
+public:
+	FEditorShortcut(const FString& name, const FString& context, ImGuiKey key, bool shift = false, bool ctrl = false);
+	
+	operator bool();
+
+	inline const FString& ToString() const { return asString; }
+
+	void SetKey(ImGuiKey key, bool shift, bool ctrl);
+
+	inline ImGuiKey Key() const { return key; }
+	inline bool ModShift() const { return bShift; }
+	inline bool ModCtrl() const { return bCtrl; }
+
+private:
+	void _SetString();
+
+public:
+	static void SaveConfig();
+	static void LoadConfig();
+	static TArray<FEditorShortcut*>& GetShortcuts();
+
+	//static TArray<FEditorShortcut*> shortcuts;
+
+	FString name;
+	FString context;
+
+	FString friendlyName;
+
+private:
+	bool bShift : 1;
+	bool bCtrl : 1;
+	ImGuiKey key;
+
+	FString asString;
+};
 
 class SDK_API CEditorEngine : public CEngine
 {
@@ -45,6 +95,8 @@ public:
 	bool LoadProject(const FString& path) override;
 
 public:
+	inline static FString GetEditorConfigPath() { return OSGetDataPath() + "/ThoriumEngine/EditorConfig"; }
+
 	void LoadEditorConfig();
 	void SaveEditorConfig();
 
@@ -72,6 +124,9 @@ public:
 
 	void RegisterMenu(CEditorMenu* menu, const FString& path = FString());
 	CEditorMenu* GetMenu(const FString& path);
+
+	inline ESelectMode SelectMode() const { return selectMode; }
+	void SetSelectMode(ESelectMode mode);
 
 private:
 	void InitEditorData();
@@ -115,6 +170,16 @@ private:
 
 	void DrawMenu(CEditorMenu* m);
 
+	void UpdateGizmos();
+
+	void UpdateGizmoEntity();
+	void UpdateGizmoSkeleton();
+	//void UpdateGizmoVertex();
+	//void UpdateGizmoFace();
+	//void UpdateGizmoEdge();
+
+	void DrawSelectedSkeleton();
+
 public:
 	IFrameBuffer* sceneFrameBuffer;
 	//IDepthBuffer* sceneDepthBuffer;
@@ -128,6 +193,34 @@ public:
 
 	TArray<TObjectPtr<CEntity>> selectedEntities;
 	TObjectPtr<CObject> selectedObject;
+
+	union
+	{
+		int selectedBone = -1;
+		int selectedVertex;
+		int selectedFace;
+		int selectedEdge;
+	};
+
+	// the component that the selected bone is from
+	TObjectPtr<CModelComponent> boneComponent;
+
+	bool bGizmoActive = false;
+	FMatrix manipulationMatrix;
+
+	ESelectMode selectMode = ESelectMode_Object;
+
+	bool bGizmoLocal = false;
+	int gizmoMode = 0;
+
+	float translateSnap = 1.f;
+	float rotationSnap = 45.f;
+	float scaleSnap = 1.f;
+	bool bSnapTranslate = 0;
+	bool bSnapRotation = 0;
+	bool bSnapScale = 0;
+
+	bool bViewportHasFocus = false;
 
 	CEditorMenu* rootMenu;
 

@@ -46,6 +46,10 @@ public:
 
 	TArray<FMesh> GetVisibleMeshes(uint8 lodLevel = 0);
 
+	inline const FSkeletonInstance& GetSkeleton() const { return skeleton; }
+
+	FTransform GetBoneModelTransform(int bone) const;
+
 protected:
 	virtual void Load(FMemStream& in) override;
 
@@ -72,7 +76,7 @@ private:
 
 	bool bUpdateSkeleton = false;
 
-	PROPERTY(Editable)
+	PROPERTY()
 	FSkeletonInstance skeleton;
 
 	TArray<FMatrix> boneMatrices; // cache for skeletal animation

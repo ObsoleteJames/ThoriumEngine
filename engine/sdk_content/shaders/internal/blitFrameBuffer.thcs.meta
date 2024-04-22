@@ -7,7 +7,6 @@ Shader
 
 Global
 {
-	#include "common/common.hlsl"
 
 	struct VS_Input
 	{
@@ -25,8 +24,21 @@ PS
 	Texture2D vInFB : TEXTURE : register(t1);
 	SamplerState vSampler : SAMPLER : register(s1);
 
+	cbuffer ScalarData : register(b0)
+	{
+		float viewportX;
+		float viewportY;
+		float viewportWidth;
+		float viewportHeight;
+	}
+
 	float4 Main(PS_Input input) : SV_TARGET
 	{
-		return float4(vInFB.Sample(vSampler, input.vTextureCoords).xyz, 1.f);
+		float2 uv = input.vTextureCoords;
+
+		uv += float2(viewportX, viewportY);
+		uv *= float2(viewportWidth, viewportHeight);
+		
+		return float4(vInFB.Sample(vSampler, uv).xyz, 1.f);
 	}
 }

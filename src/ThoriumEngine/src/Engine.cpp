@@ -48,7 +48,7 @@ bool gIsRunning = 0;
 bool gIsEditor = 0;
 bool gIsMainGaurded = 0;
 
-static CConCmd cmdLoadScene("scene", [](const TArray<FString>& args) { gEngine->LoadWorld(ToWString(args[0])); });
+static CConCmd cmdLoadScene("scene", [](const TArray<FString>& args) { gEngine->LoadWorld(args[0]); });
 
 void CEngine::InitMinimal()
 {
@@ -218,7 +218,7 @@ int CEngine::Run()
 		updateTimer.Stop();
 		updateTime = updateTimer.GetMiliseconds();
 
-		ImGui::ShowDemoWindow();
+		//ImGui::ShowDemoWindow();
 
 		updateTimer.Begin();
 
@@ -229,6 +229,7 @@ int CEngine::Run()
 
 		Events::OnRender.Invoke();
 
+		gWorld->renderScene->SetScreenPercentage(cvRenderScreenPercentage.AsFloat());
 		gWorld->renderScene->SetFrameBuffer(gameWindow->swapChain->GetFrameBuffer());
 		//gWorld->renderScene->SetDepthBuffer(gameWindow->swapChain->GetDepthBuffer());
 
@@ -346,6 +347,8 @@ bool CEngine::LoadProject(const FString& path /*= "."*/)
 		else
 			inputManager->LoadConfig();
 	}
+	else
+		inputManager->LoadConfig();
 
 	bProjectLoaded = true;
 	return true;
@@ -570,7 +573,8 @@ void CEngine::InitImGui()
 		//cfg.PixelSnapH = true;
 		cfg.FontDataOwnedByAtlas = false;
 
-		ImFont* font = io.Fonts->AddFontFromFileTTF(ToFString(fontFile->FullPath()).c_str(), 14, &cfg);
+		ImFont* font = io.Fonts->AddFontFromFileTTF(fontFile->FullPath().c_str(), 14, &cfg);
+		ImFont* font2 = io.Fonts->AddFontFromFileTTF(fontFile->FullPath().c_str(), 18, &cfg);
 		//font->Scale = 0.6f;
 		io.Fonts->AddFontDefault();
 	}

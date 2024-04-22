@@ -127,6 +127,11 @@ void CEntity::Init()
 	rootComponent = AddComponent<CSceneComponent>("root");
 }
 
+void CEntity::PostInit()
+{
+	rootComponent->UpdateWorldTransform();
+}
+
 void CEntity::OnStart()
 {
 	for (auto& comp : components)

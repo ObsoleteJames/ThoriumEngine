@@ -56,13 +56,13 @@ public:
 
 	virtual bool ShouldCollide(JPH::BroadPhaseLayer inLayer)
 	{
-		if (inLayer.GetValue() == (int)EPhysicsLayer::STATIC && layers & PhysicsLayer_Static)
+		if (inLayer.GetValue() == (int)EPhysicsLayer::STATIC && (layers & PhysicsLayer_Static))
 			return true;
-		if (inLayer.GetValue() == (int)EPhysicsLayer::DYNAMIC && layers & PhysicsLayer_Dynamic)
+		if (inLayer.GetValue() == (int)EPhysicsLayer::DYNAMIC && (layers & PhysicsLayer_Dynamic))
 			return true;
-		if (inLayer.GetValue() == (int)EPhysicsLayer::COMPLEX && layers & PhysicsLayer_Complex)
+		if (inLayer.GetValue() == (int)EPhysicsLayer::COMPLEX && (layers & PhysicsLayer_Complex))
 			return true;
-		if (inLayer.GetValue() == (int)EPhysicsLayer::TRIGGER && layers & PhysicsLayer_Trigger)
+		if (inLayer.GetValue() == (int)EPhysicsLayer::TRIGGER && (layers & PhysicsLayer_Trigger))
 			return true;
 
 		return false;
@@ -126,7 +126,7 @@ bool CJoltPhysicsWorld::CastBox(const FVector& center, const FVector& size, cons
 
 	FMatrix transform = FTransform(center, rotation).ToMatrix();
 
-	JPH::RShapeCast cast((const JPH::Shape*)shape, JPH::Vec3Arg(), *(JPH::Mat44*)&transform, FVECTOR_TO_JPH(direction));
+	JPH::RShapeCast cast((const JPH::Shape*)shape, JPH::Vec3Arg(1, 1, 1), *(JPH::Mat44*)&transform, FVECTOR_TO_JPH(direction));
 	FJoltCastShapeCollector collector(this);
 
 	query.CastShape(cast, JPH::ShapeCastSettings(), JPH::Vec3(), collector, FJoltBroadPhaseFilter(physicsLayer));
@@ -136,8 +136,17 @@ bool CJoltPhysicsWorld::CastBox(const FVector& center, const FVector& size, cons
 	if (collector.hits.Size() == 0)
 		return false;
 
+	FBounds shapeBounds(center, size / 2.f);
+
+	//for (auto& hit : collector.hits)
+	//	hit.distance = FVector::Distance(hit.position, shapeBounds.Clamp(hit.position));
+
 	outHit = collector.hits[0];
-	outHit.distance = FVector::Distance(center, outHit.position);
+	outHit.distance = FVector::Distance(outHit.position, shapeBounds.Clamp(outHit.position));
+	//for (auto& hit : collector.hits)
+	//	if (hit.distance < outHit.distance)
+	//		outHit = hit;
+
 	return true;
 }
 
@@ -149,7 +158,7 @@ bool CJoltPhysicsWorld::CastSphere(const FVector& center, float radius, const FV
 
 	FMatrix transform = FTransform(center).ToMatrix();
 
-	JPH::RShapeCast cast((const JPH::Shape*)shape, JPH::Vec3Arg(), *(JPH::Mat44*)&transform, FVECTOR_TO_JPH(direction));
+	JPH::RShapeCast cast((const JPH::Shape*)shape, JPH::Vec3Arg(1, 1, 1), *(JPH::Mat44*)&transform, FVECTOR_TO_JPH(direction));
 	FJoltCastShapeCollector collector(this);
 
 	query.CastShape(cast, JPH::ShapeCastSettings(), JPH::Vec3(), collector, FJoltBroadPhaseFilter(physicsLayer));
@@ -159,8 +168,14 @@ bool CJoltPhysicsWorld::CastSphere(const FVector& center, float radius, const FV
 	if (collector.hits.Size() == 0)
 		return false;
 
+	for (auto& hit : collector.hits)
+		hit.distance = FVector::Distance(center, hit.position) - radius;
+
 	outHit = collector.hits[0];
-	outHit.distance = FVector::Distance(center, outHit.position);
+	for (auto& hit : collector.hits)
+		if (hit.distance < outHit.distance)
+			outHit = hit;
+
 	return true;
 }
 
@@ -172,7 +187,7 @@ bool CJoltPhysicsWorld::CastCapsule(const FVector& center, float radius, float h
 
 	FMatrix transform = FTransform(center, rotation).ToMatrix();
 
-	JPH::RShapeCast cast((const JPH::Shape*)shape, JPH::Vec3Arg(), *(JPH::Mat44*)&transform, FVECTOR_TO_JPH(direction));
+	JPH::RShapeCast cast((const JPH::Shape*)shape, JPH::Vec3Arg(1, 1, 1), *(JPH::Mat44*)&transform, FVECTOR_TO_JPH(direction));
 	FJoltCastShapeCollector collector(this);
 
 	query.CastShape(cast, JPH::ShapeCastSettings(), JPH::Vec3(), collector, FJoltBroadPhaseFilter(physicsLayer));

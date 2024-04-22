@@ -5,6 +5,7 @@
 #include <DirectXMath.h>
 
 #include <glm/gtx/matrix_decompose.hpp>
+#include "glm/gtx/projection.hpp"
 
 float FVector2::Distance(const FVector2& a, const FVector2& b)
 {
@@ -14,6 +15,11 @@ float FVector2::Distance(const FVector2& a, const FVector2& b)
 float FVector2::Dot(const FVector2& a, const FVector2& b)
 {
 	return a.x * b.x + a.y * b.y;
+}
+
+FVector2 FVector2::Lerp(const FVector2& a, const FVector2& b, float t)
+{
+	return FVector2(FMath::Lerp(a.x, b.x, t), FMath::Lerp(a.y, b.y, t));
 }
 
 FVector2 FVector2::Rotate(float degrees) const
@@ -106,6 +112,30 @@ FVector FVector::Cross(const FVector& a, const FVector& b)
 	return r;
 }
 
+FVector FVector::Lerp(const FVector& a, const FVector& b, float t)
+{
+	return FVector(FMath::Lerp(a.x, b.x, t), FMath::Lerp(a.y, b.y, t), FMath::Lerp(a.z, b.z, t));
+}
+
+FVector FVector::Slerp(const FVector& a, const FVector& b, float t)
+{
+	float dot = FVector::Dot(a, b);
+
+	float theta = FMath::Acos(dot) * t;
+	FVector relativeVec = b - a * dot;
+	relativeVec = relativeVec.Normalize();
+
+	return (a * FMath::Cos(theta)) + (relativeVec * FMath::Sin(theta));
+}
+
+FVector FVector::ProjectOnPlane(const FVector& vec, const FVector& normal)
+{
+	//return glm::proj((glm::vec3)vec, (glm::vec3)normal);
+
+	float dot = Dot(vec, normal);
+	return FVector(vec.x - normal.x * dot, vec.y - normal.y * dot, vec.z - normal.z * dot);
+}
+
 FVector& FVector::operator-=(const FVector& right)
 {
 	x -= right.x;
@@ -194,6 +224,11 @@ FQuaternion FQuaternion::LookRotation(const FVector& dir, const FVector& up)
 	r.y = (dir.x - right.z) * w4;
 	r.z = (right.y - up.x) * w4;
 	return r;
+}
+
+FQuaternion FQuaternion::Slerp(const FQuaternion& a, const FQuaternion& b, float t)
+{
+	return glm::slerp(*(glm::quat*)&a, *(glm::quat*)&b, t);
 }
 
 FQuaternion& FQuaternion::operator+=(const FQuaternion& right)

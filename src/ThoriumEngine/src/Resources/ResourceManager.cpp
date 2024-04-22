@@ -45,7 +45,7 @@ int CResourceManager::ScanDir(FDirectory* dir)
 	for (auto f : dir->files)
 	{
 		const FString& ext = f->Extension();
-		FAssetClass* type = GetClassFromExt(ToFString(ext));
+		FAssetClass* type = GetClassFromExt(ext);
 		if (type == nullptr)
 			continue;
 
@@ -177,7 +177,7 @@ void CResourceManager::ScanMod(FMod* mod)
 {
 	int numFiles = ScanDir(&mod->root);
 
-	CONSOLE_LogInfo("CResourceManager", FString("Found ") + std::to_string(numFiles) + " assets in '" + ToFString(mod->Name()) + "'");
+	CONSOLE_LogInfo("CResourceManager", FString("Found ") + std::to_string(numFiles) + " assets in '" + mod->Name() + "'");
 
 	for (auto& it : availableResources)
 	{
@@ -190,7 +190,7 @@ void CResourceManager::ScanMod(FMod* mod)
 			{
 				CAsset* asset = AllocateResource(Class, it.first);
 				asset->file = it.second.file;
-				asset->SetName(ToFString(asset->file->Name() + asset->file->Extension()));
+				asset->SetName(asset->file->Name() + asset->file->Extension());
 				asset->Init();
 			}
 		}
@@ -217,7 +217,7 @@ void CResourceManager::DeleteResourcesFromMod(FMod* mod)
 void CResourceManager::RegisterNewFile(FFile* file)
 {
 	const FString& ext = file->Extension();
-	FAssetClass* type = GetClassFromExt(ToFString(ext));
+	FAssetClass* type = GetClassFromExt(ext);
 	if (type == nullptr)
 		return;
 
@@ -236,19 +236,19 @@ TObjectPtr<CAsset> CResourceManager::GetResource(FAssetClass* type, const FStrin
 		auto file = availableResources.find(path);
 		if (file == availableResources.end())
 		{
-			CONSOLE_LogError("CResourceManager", "Failed to get resource '" + ToFString(path) + "', resource doesn't exist!");
+			CONSOLE_LogError("CResourceManager", "Failed to get resource '" + path + "', resource doesn't exist!");
 			return nullptr;
 		}
 
 		if (type && file->second.type != type)
 		{
-			CONSOLE_LogError("CResourceManager", "Failed to get resource '" + ToFString(path) + "', Invalid Type! expected " + type->GetName());
+			CONSOLE_LogError("CResourceManager", "Failed to get resource '" + path + "', Invalid Type! expected " + type->GetName());
 			return nullptr;
 		}
 
 		asset = AllocateResource(file->second.type, path);
 		asset->file = file->second.file;
-		asset->SetName(ToFString(asset->file->Name() + asset->file->Extension()));
+		asset->SetName(asset->file->Name() + asset->file->Extension());
 		asset->Init();
 	}
 	else
@@ -256,7 +256,7 @@ TObjectPtr<CAsset> CResourceManager::GetResource(FAssetClass* type, const FStrin
 		asset = it->second;
 		if ((FAssetClass*)asset->GetClass() != type)
 		{
-			CONSOLE_LogError("CResourceManager", "Failed to get resource '" + ToFString(path) + "', Invalid Type! expected " + type->GetName());
+			CONSOLE_LogError("CResourceManager", "Failed to get resource '" + path + "', Invalid Type! expected " + type->GetName());
 			return nullptr;
 		}
 	}
@@ -278,7 +278,7 @@ TObjectPtr<CAsset> CResourceManager::CreateResource(FAssetClass* type, const FSt
 			path.Erase(path.begin(), path.begin() + i + 2);
 		}
 		else
-			modPath = ToWString(gEngine->GetProjectConfig().name);
+			modPath = gEngine->GetProjectConfig().name;
 	}
 	FMod* mod = CFileSystem::FindMod(modPath);
 	
@@ -289,7 +289,7 @@ TObjectPtr<CAsset> CResourceManager::CreateResource(FAssetClass* type, const FSt
 		path.Erase(path.begin() + i, path.end());
 
 	FString fileNoExt = path;
-	FString ext = ToWString(type->GetExtension());
+	FString ext = type->GetExtension();
 	path = path + ext;
 
 	int numCopies = 0;
@@ -305,7 +305,7 @@ TObjectPtr<CAsset> CResourceManager::CreateResource(FAssetClass* type, const FSt
 	
 	CAsset* asset = AllocateResource(type, path);
 	asset->file = file;
-	asset->SetName(ToFString(asset->file->Name() + asset->file->Extension()));
+	asset->SetName(asset->file->Name() + asset->file->Extension());
 	//asset->Init();
 	return asset;
 }
@@ -321,7 +321,7 @@ void CResourceManager::LoadResources(FAssetClass* type)
 			{
 				CAsset* asset = AllocateResource(type, it.second.file->Path());
 				asset->file = it.second.file;
-				asset->SetName(ToFString(asset->file->Name() + asset->file->Extension()));
+				asset->SetName(asset->file->Name() + asset->file->Extension());
 				asset->Init();
 			}
 		}
@@ -348,7 +348,7 @@ bool CResourceManager::RegisterNewResource(CAsset* resource, const FString& p, c
 			path.Erase(path.begin(), path.begin() + i + 2);
 		}
 		else
-			modPath = ToWString(gEngine->GetProjectConfig().name);
+			modPath = gEngine->GetProjectConfig().name;
 	}
 	FMod* mod = CFileSystem::FindMod(modPath);
 
@@ -357,7 +357,7 @@ bool CResourceManager::RegisterNewResource(CAsset* resource, const FString& p, c
 
 	if (SizeType i = path.FindLastOf('.'); i != -1)
 		path.Erase(path.begin() + i, path.end());
-	path += ToWString(((FAssetClass*)resource->GetClass())->GetExtension());
+	path += ((FAssetClass*)resource->GetClass())->GetExtension();
 
 	FFile* file = mod->CreateFile(path);
 	availableResources[path] = { file, (FAssetClass*)resource->GetClass() };

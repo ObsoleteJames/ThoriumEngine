@@ -162,6 +162,8 @@ void CModelComponent::CalculateSkeletonMatrix()
 	for (SizeType i = 0; i < sk.bones.Size(); i++)
 	{
 		local[i] = (FMatrix(1.f).Translate(sk.bones[i].position) * sk.bones[i].rotation) * skeleton.bones[i].ToMatrix();
+		//FTransform localTransform(sk.bones[i].position + skeleton.bones[i].position, sk.bones[i].rotation * skeleton.bones[i].rotation);
+		//local[i] = localTransform.ToMatrix();
 	}
 
 	model[0] = local[0];
@@ -313,6 +315,24 @@ TArray<FMesh> CModelComponent::GetVisibleMeshes(uint8 lodLevel /*= 0*/)
 	return meshes;
 }
 
+FTransform CModelComponent::GetBoneModelTransform(int bone) const
+{
+	if (!model)
+		return FTransform();
+
+	FTransform r = skeleton.bones[bone] * FTransform(model->GetSkeleton().bones[bone].position, model->GetSkeleton().bones[bone].rotation);
+
+	int pIndex = model->GetSkeleton().bones[bone].parent;
+	if (pIndex != -1)
+	{
+		//FTransform parent = GetBoneModelTransform(skeleton.bones[bone].parent);
+		FTransform parent = GetBoneModelTransform(pIndex);
+		r = r * parent;
+	}
+
+	return r;
+}
+
 void CModelComponent::Load(FMemStream& in)
 {
 	BaseClass::Load(in);
@@ -337,9 +357,12 @@ void CModelComponent::SetupPhysics()
 			FPhysicsBodySettings bodySettings{};
 			bodySettings.component = this;
 			bodySettings.entity = GetEntity();
-			bodySettings.moveType = GetEntity()->type == ENTITY_STATIC ? PHBM_STATIC : (bStaticBody ? PHBM_KINEMATIC : PHBM_DYNAMIC);
+			bodySettings.motionType = GetEntity()->type == ENTITY_STATIC ? PHBM_STATIC : (bStaticBody ? PHBM_KINEMATIC : PHBM_DYNAMIC);
+			if (bIsTrigger)
+				bodySettings.motionType = PHBM_STATIC;
+
 			// :P
-			bodySettings.physicsLayer = bIsTrigger ? EPhysicsLayer::TRIGGER : (coll.bComplex ? EPhysicsLayer::COMPLEX : (bodySettings.moveType == PHBM_DYNAMIC ? EPhysicsLayer::DYNAMIC : EPhysicsLayer::STATIC));
+			bodySettings.physicsLayer = bIsTrigger ? EPhysicsLayer::TRIGGER : (coll.bComplex ? EPhysicsLayer::COMPLEX : (bodySettings.motionType == PHBM_DYNAMIC ? EPhysicsLayer::DYNAMIC : EPhysicsLayer::STATIC));
 
 			bodySettings.shapeData = (void*)coll.shape;
 			bodySettings.shapeType = coll.shapeType;
@@ -370,7 +393,7 @@ void CModelComponent::SetupPhysics()
 				}
 				else
 				{
-					// Detach from the root component.
+					// Detach from the parent.
 					Detach();
 				}
 			}
@@ -380,5 +403,7 @@ void CModelComponent::SetupPhysics()
 				//physWorld->CreateConstraint(EConstraint::FIXED, body, physicsBody);
 			}
 		}
+
+		EnableCollision(CollisionEnabled());
 	}
 }

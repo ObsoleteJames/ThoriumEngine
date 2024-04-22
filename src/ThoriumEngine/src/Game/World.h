@@ -96,7 +96,7 @@ public:
 	};
 
 public:
-	inline CWorld() : bInitialized(0), bActive(0), time(0.f) { bIndestructible = true; }
+	CWorld();
 	
 	//static FSceneLoadResult LoadScene(const FString& name);
 	//static void LoadSceneAsync(const FString& name, std::function<void(FSceneLoadResult)> onComplete);
@@ -221,6 +221,7 @@ protected:
 	double time;
 	bool bStreaming : 1; // Wether we're currently streaming in a scene.
 	bool bLoaded : 1; // Wether all entities have been loaded.
+	bool bLoading : 1;
 	bool bInitialized : 1;
 	bool bActive : 1; // Is the world currently active and running.
 

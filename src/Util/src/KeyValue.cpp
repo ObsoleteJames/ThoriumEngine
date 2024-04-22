@@ -569,6 +569,36 @@ void KVCategory::_save(std::ofstream& stream, int& tabs) const
 		stream.write(vs.Data(), vs.Size());
 	}
 
+	if (arrays.Size() > 0)
+	{
+		kv1 = "\n";
+		stream.write(kv1.Data(), kv1.Size());
+	}
+
+	for (auto& arr : arrays)
+	{
+		WRITE_TABS()
+		FString vs = arr.Key + "\n";
+		stream.write(vs.Data(), vs.Size());
+		WRITE_TABS()
+		vs = "[\n";
+		stream.write(vs.Data(), vs.Size());
+
+		tabs++;
+		for (auto& v : arr.Value)
+		{
+			WRITE_TABS()
+
+			vs = "\"" + v + "\",\n";
+			stream.write(vs.Data(), vs.Size());
+		}
+		tabs--;
+
+		WRITE_TABS()
+		vs = "]\n";
+		stream.write(vs.Data(), vs.Size());
+	}
+
 	if (Categories.Size() > 0)
 	{
 		kv1 = "\n";

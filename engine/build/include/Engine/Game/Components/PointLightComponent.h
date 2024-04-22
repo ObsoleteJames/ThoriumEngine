@@ -8,7 +8,7 @@
 class CPrimitiveProxy;
 class CLightProxy;
 
-CLASS()
+CLASS(Name = "Point Light")
 class ENGINE_API CPointLightComponent : public CSceneComponent
 {
 	GENERATED_BODY()

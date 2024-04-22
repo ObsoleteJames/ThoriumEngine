@@ -1,6 +1,6 @@
 
 #include "AssetBrowserWidget.h"
-#include "Resources/Texture.h"
+#include "Resources/TextureAsset.h"
 #include "Console.h"
 
 class FTextureImportAction : public FAssetBrowserAction
@@ -20,6 +20,9 @@ public:
 		THORIUM_ASSERT(CResourceManager::RegisterNewResource(tex, data->outPath, data->outMod), "Failed to register CTexture asset!");
 
 		if (!tex->Import(ToFString(data->sourceFile)))
+		{
 			CONSOLE_LogError("CTexture", "Failed to import Texture asset!");
+			data->file->Mod()->DeleteFile(data->outPath);
+		}
 	}
 } static FTextureImportAction_instance;

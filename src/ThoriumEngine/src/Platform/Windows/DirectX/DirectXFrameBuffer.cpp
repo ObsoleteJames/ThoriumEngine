@@ -5,6 +5,8 @@
 
 DirectXFrameBuffer::DirectXFrameBuffer(ID3D11Texture2D* fromTexture, int w, int h)
 {
+	type = TextureType_Framebuffer;
+
 	width = w;
 	height = h;
 
@@ -14,8 +16,9 @@ DirectXFrameBuffer::DirectXFrameBuffer(ID3D11Texture2D* fromTexture, int w, int 
 	IRenderer::UnlockGPU();
 }
 
-DirectXFrameBuffer::DirectXFrameBuffer(int w, int h, ETextureFormat f)
+DirectXFrameBuffer::DirectXFrameBuffer(int w, int h, ETextureFormat f, ETextureFilter _filter) : filter(_filter)
 {
+	type = TextureType_Framebuffer;
 	Generate(w, h, f);
 }
 
@@ -86,7 +89,7 @@ void DirectXFrameBuffer::Generate(int w, int h, ETextureFormat f)
 	}
 
 	D3D11_SAMPLER_DESC samplerDesc{};
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.Filter = filter == THTX_FILTER_LINEAR ? D3D11_FILTER_MIN_MAG_MIP_LINEAR : D3D11_FILTER_MIN_MAG_MIP_POINT;
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
 	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
 	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;

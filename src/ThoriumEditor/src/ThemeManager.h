@@ -33,6 +33,7 @@ namespace ThoriumEditor
 	ITexture2D* GetResourceIcon(FClass* type);
 	ITexture2D* GetThemeIcon(const FString& iconName);
 
+	void ClearThemeIcons();
 	void LoadThemes();
 
 	void SetTheme(const FString& theme);

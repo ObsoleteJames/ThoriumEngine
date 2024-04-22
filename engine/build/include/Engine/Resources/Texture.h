@@ -79,11 +79,11 @@ private:
 
 	ETextureAssetFormat format;
 	ETextureFilter filteringType = THTX_FILTER_ANISOTROPIC;
-	SizeType dataSize;
-	uint8 numMipmaps;
+	SizeType dataSize = 0;
+	uint8 numMipmaps = 0;
 
-	uint8 curMipMapLevel;
-	uint8 bLoading;
+	uint8 curMipMapLevel = 0;
+	uint8 bLoading = false;
 
 	int width, height;
 

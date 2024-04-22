@@ -153,7 +153,12 @@ public:
 	virtual void Load(FMemStream& in);
 
 protected:
+	// Called when entity is created.
 	virtual void Init();
+
+	// Called after the entity has been loaded/Initialized.
+	virtual void PostInit();
+
 	virtual void OnStart();
 	virtual void OnStop();
 	virtual void Update(double dt);

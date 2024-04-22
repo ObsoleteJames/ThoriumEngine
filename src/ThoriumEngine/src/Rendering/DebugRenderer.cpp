@@ -16,6 +16,9 @@ CDebugRenderer::CDebugRenderer()
 
 	cube = CResourceManager::GetResource<CModelAsset>("models/Cube.thmdl");
 	sphere = CResourceManager::GetResource<CModelAsset>("models/Sphere.thmdl");
+
+	cube->Load(0);
+	sphere->Load(0);
 }
 
 void CDebugRenderer::DrawLine(const FVector& begin, const FVector& end, const FColor& color, float time /*= 0.f*/, bool bOverlay /*= false*/)
@@ -23,7 +26,7 @@ void CDebugRenderer::DrawLine(const FVector& begin, const FVector& end, const FC
 	FTransform t;
 	t.position = begin;
 	FVector dir = (end - begin).Normalize();
-	t.rotation = FQuaternion::LookRotation(dir, dir == FVector::up ? FVector::forward : FVector::up);
+	t.rotation = FQuaternion::LookRotation(dir, FVector::Dot(dir, FVector::up) > 0.95f ? FVector::right : FVector::up);
 	t.scale = (end - begin).Magnitude();
 
 	CMaterial* mat = CreateObject<CMaterial>();

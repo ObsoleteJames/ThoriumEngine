@@ -88,7 +88,7 @@ void CGameMode::FindPlayerSpawnPoint(CPlayer* player, CPawn* pawn, FVector& outP
 	if (spawnPoints.Size() == 0)
 		return;
 
-	int rng = FMath::Random(spawnPoints.Size());
+	int rng = FMath::Random((uint)spawnPoints.Size());
 
 	outPosition = spawnPoints[rng]->GetWorldPosition();
 	outRotation = spawnPoints[rng]->GetWorldRotation();

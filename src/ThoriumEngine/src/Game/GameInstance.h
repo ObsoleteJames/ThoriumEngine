@@ -21,6 +21,11 @@ public:
 	virtual void Start();
 	virtual void Stop();
 	virtual void SpawnLocalPlayers();
+	
+	static CGameInstance* Get();
+
+	template<class T>
+	inline static T* Get() { return Cast<T>(Get()); }
 
 public:
 	inline const TArray<TObjectPtr<CPlayer>>& GetPlayers() const { return players; }

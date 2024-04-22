@@ -41,16 +41,16 @@ public:
 
 	// ------------- Exposure -------------
 	PROPERTY(Category = "Exposure")
-	EExposureType exposureType;
+	EExposureType exposureType = ExposureType_Constant;
 
 	PROPERTY(Name = "Exposure", Category = "Exposure")
 	float exposureIntensity = 1.f;
 
 	PROPERTY(Name = "Dynamic Min", Category = "Exposure")
-	float exposureDynamicMin;
+	float exposureDynamicMin = 1.f;
 
 	PROPERTY(Name = "Dynamic Max", Category = "Exposure")
-	float exposureDynamicMax;
+	float exposureDynamicMax = 8.f;
 
 	// ------------- Color Grading/Correction -------------
 	PROPERTY(Category = "Color Grading")
@@ -83,15 +83,19 @@ public:
 	bool IsCameraInsideVolume(CCameraProxy* camera) const;
 	float GetInfluence(CCameraProxy* camera) const;
 
+	int GetPriority() const { return priority; }
+
 protected:
 	// if set, this volume will apply this material to the screen, instead of the default Post Processing features.
 	TObjectPtr<CMaterial> postProcessMaterial = nullptr;
 
 	FPostProcessSettings ppSettings;
 
-	bool bGlobal;
-	bool bEnabled;
-	float fade;
+	bool bGlobal = false;
+	bool bEnabled = true;
+	float fade = 0.f;
+
+	int priority = 0;
 
 	FQuaternion rotation;
 	FBounds bounds; // object oriented bounds.

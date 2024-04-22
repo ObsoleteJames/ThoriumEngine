@@ -108,11 +108,11 @@ int main(int argc, char** argv)
 
 	// Preload EngineDll
 #if _WIN32
-	HMODULE EngineLib = LoadLibrary(".\\bin\\win64\\Engine.dll");
+	HMODULE EngineLib = LoadLibrary("core\\bin\\win64\\Engine.dll");
 #else
-	void* EngineLib = dlopen("./bin/linux/Engine.dll", RTLD_NOW);
+	void* EngineLib = dlopen("core/bin/linux/Engine.dll", RTLD_NOW);
 #endif
-	FString enginePath = ".";
+	FString enginePath = "core";
 	if (!EngineLib && !bForceLocalEngine)
 	{
 		FString engineVersion;

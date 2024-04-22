@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Asset.h"
-#include "Texture.generated.h"
+#include "TextureAsset.generated.h"
 
-class ITexture2D;
+class IBaseTexture;
 enum ETextureFormat;
 
 ENUM()
@@ -68,25 +68,25 @@ public:
 
 	inline SizeType DataSize() const { return dataSize; }
 
-	inline ITexture2D* GetTextureObject() const { return tex; }
+	inline IBaseTexture* GetTextureObject() const { return tex; }
 
 	static ETextureFormat ToTextureFormat(ETextureAssetFormat format);
 
 	static CTexture* CreateFromImage(const FString& file);
 
-private:
+protected:
 	uint16 version;
 
 	ETextureAssetFormat format;
 	ETextureFilter filteringType = THTX_FILTER_ANISOTROPIC;
-	SizeType dataSize;
-	uint8 numMipmaps;
+	SizeType dataSize = 0;
+	uint8 numMipmaps = 0;
 
-	uint8 curMipMapLevel;
-	uint8 bLoading;
+	uint8 curMipMapLevel = 0;
+	uint8 bLoading = false;
 
 	int width, height;
 
-	ITexture2D* tex = nullptr;
+	IBaseTexture* tex = nullptr;
 
 };

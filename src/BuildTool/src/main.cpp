@@ -177,7 +177,7 @@ int main(int argc, char** argv)
 			cfg.engineVersion = engineVersion;
 			cfg.path = std::filesystem::absolute(sourcePath.c_str()).generic_string().c_str();
 
-			int i = CompileSource(cfg);
+			int i = GenerateCMakeProject(cfg);
 			if (i != 0)
 				std::cin.get();
 			return i;

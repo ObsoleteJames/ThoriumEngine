@@ -6,7 +6,7 @@
 class ENGINE_API DirectXShader : public IShader
 {
 public:
-	DirectXShader(CShaderSource* shader, int type);
+	DirectXShader(CShaderSource* shader, int type, FString path);
 	virtual ~DirectXShader();
 
 public:
@@ -17,7 +17,7 @@ public:
 class ENGINE_API DirectXVertexShader : public IShader
 {
 public:
-	DirectXVertexShader(CShaderSource* shader);
+	DirectXVertexShader(CShaderSource* shader, FString path);
 	virtual ~DirectXVertexShader();
 
 public:

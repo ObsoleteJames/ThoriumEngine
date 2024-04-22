@@ -13,6 +13,9 @@ public:
 	void RenderAudioSettings();
 	void RenderInputSettings();
 	void RenderPhysicsSettings();
+	void RenderRenderSettings();
+
+	bool QualitySetting(const char* label, int* value, int min, int max);
 
 private:
 	int curMenu = 0;

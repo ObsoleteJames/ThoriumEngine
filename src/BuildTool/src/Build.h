@@ -50,7 +50,7 @@ struct FCompileConfig
 	FString engineVersion;
 };
 
-int CompileSource(const FCompileConfig& config);
+int GenerateCMakeProject(const FCompileConfig& config);
 
 void CopyHeaders(FKeyValue& buildCfg, const FString& source, const FString& out);
 //void CopyBinaries(const FCompileConfig& config);

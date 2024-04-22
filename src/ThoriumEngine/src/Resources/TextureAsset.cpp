@@ -1,5 +1,5 @@
 
-#include "Texture.h"
+#include "TextureAsset.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Texture.h"
 #include "Console.h"
@@ -24,7 +24,7 @@ public:
 	CTextureStreamingProxy(CTexture* t, uint8 mipMap)
 	{
 		tex = t;
-		targetTex = tex->tex;
+		targetTex = (ITexture2D*)tex->tex;
 		targetMipMap = mipMap;
 		currentMipMap = t->numMipmaps;
 		stream = t->File()->GetStream("rb");
@@ -352,8 +352,9 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 	{
 		delete tex;
 		tex = nullptr;
-		curMipMapLevel = numMipmaps;
 	}
+
+	curMipMapLevel = numMipmaps;
 
 	FFile* texFile = this->file;
 	TUniquePtr<IBaseFStream> stream = texFile->GetStream("wb");
@@ -393,7 +394,9 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 		sdkStream << file;
 		sdkStream.Close();
 	}
-	
+
+	bLoading = false;
+	bInitialized = true;
 	return true;
 }
 

@@ -55,6 +55,7 @@ class ENGINE_API CModelAsset : public CAsset
 	GENERATED_BODY()
 
 	friend class CModelEditor;
+	friend class CModelCompiler;
 
 public:
 	CModelAsset() = default;
@@ -81,6 +82,8 @@ public:
 	FBone* GetBone(const FString& name);
 	SizeType GetBoneIndex(const FString& name);
 
+	FTransform GetBoneModelTransform(int bone) const;
+
 public:
 	int GetLodFromDistance(float distance);
 
@@ -102,6 +105,8 @@ private:
 	void ClearMeshes();
 
 	void UpdateBoneMatrices();
+
+	inline void _SetLod(uint8 lod) { SetLodLevel(lod, true); }
 
 protected:
 	bool bAllowInstancing;

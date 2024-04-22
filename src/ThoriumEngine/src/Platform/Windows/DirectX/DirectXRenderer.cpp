@@ -147,6 +147,43 @@ void DirectXRenderer::Init()
 		device->CreateBlendState(&blendDesc, &blendAdditive);
 	}
 
+	// Blend State Additive Color
+	{
+		D3D11_BLEND_DESC blendDesc{};
+
+		D3D11_RENDER_TARGET_BLEND_DESC rtbd{};
+
+		rtbd.BlendEnable = true;
+		rtbd.SrcBlend = D3D11_BLEND_ONE;
+		rtbd.DestBlend = D3D11_BLEND_ONE;
+		rtbd.BlendOp = D3D11_BLEND_OP_ADD;
+		rtbd.SrcBlendAlpha = D3D11_BLEND_ONE;
+		rtbd.DestBlendAlpha = D3D11_BLEND_ZERO;
+		rtbd.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+		rtbd.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+		blendDesc.RenderTarget[0] = rtbd;
+
+		device->CreateBlendState(&blendDesc, &blendAdditiveColor);
+	}
+
+	// Rasterizer state
+	{
+		D3D11_RASTERIZER_DESC desc{};
+		desc.FillMode = D3D11_FILL_SOLID;
+		desc.CullMode = D3D11_CULL_BACK;
+		desc.FrontCounterClockwise = true;
+		desc.DepthBias = false;
+		desc.DepthBiasClamp = 0;
+		desc.SlopeScaledDepthBias = 0;
+		desc.DepthClipEnable = true;
+		desc.ScissorEnable = false;
+		desc.MultisampleEnable = false;
+		desc.AntialiasedLineEnable = false;
+
+		device->CreateRasterizerState(&desc, &rasterCullOff);
+	}
+
 	IRenderer::Init();
 }
 
@@ -263,36 +300,17 @@ void DirectXRenderer::CompileShader(const FString& source, IShader::EType shader
 	outCode->Release();
 }
 
-IShader* DirectXRenderer::GetVsShader(CShaderSource* shader)
+IShader* DirectXRenderer::LoadShader(CShaderSource* source, EShaderType type, FString file)
 {
-	if (!shader)
+	if (!source)
 		return nullptr;
 
-	if (shader->vsShader)
-		return shader->vsShader;
-
-	if (shader->bHasVS)
-	{
-		shader->vsShader = new DirectXVertexShader(shader);
-		return shader->vsShader;
-	}
-
-	return nullptr;
-}
-
-IShader* DirectXRenderer::GetPsShader(CShaderSource* target)
-{
-	if (!target)
-		return nullptr;
-
-	if (target->psShader)
-		return target->psShader;
-
-	if (target->bHasPS)
-	{
-		target->psShader = new DirectXShader(target, 1);
-		return target->psShader;
-	}
+	if (type & ShaderType_Vertex)
+		return new DirectXVertexShader(source, file);
+	if (type & ShaderType_Fragment)
+		return new DirectXShader(source, 1, file);
+	if (type & ShaderType_Geometry)
+		return new DirectXShader(source, 2, file);
 
 	return nullptr;
 }
@@ -322,9 +340,9 @@ IDepthBuffer* DirectXRenderer::CreateDepthBuffer(FDepthBufferInfo depthInfo)
 	return new DirectXDepthBuffer(depthInfo);
 }
 
-IFrameBuffer* DirectXRenderer::CreateFrameBuffer(int width, int height, ETextureFormat format)
+IFrameBuffer* DirectXRenderer::CreateFrameBuffer(int width, int height, ETextureFormat format, ETextureFilter filter)
 {
-	return new DirectXFrameBuffer(width, height, format);
+	return new DirectXFrameBuffer(width, height, format, filter);
 }
 
 ITexture2D* DirectXRenderer::CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter)
@@ -347,6 +365,46 @@ ITexture2D* DirectXRenderer::CreateTexture2D(void** data, int numMipMaps, int wi
 		return nullptr;
 	}
 	return t;
+}
+
+void DirectXRenderer::CopyResource(ITexture2D* source, ITexture2D* destination)
+{
+	DirectXTexture2D* s = (DirectXTexture2D*)source;
+	DirectXTexture2D* d = (DirectXTexture2D*)destination;
+
+	deviceContext->CopyResource(d->tex, s->tex);
+}
+
+void DirectXRenderer::CopyResource(IFrameBuffer* source, ITexture2D* destination)
+{
+	DirectXFrameBuffer* s = (DirectXFrameBuffer*)source;
+	DirectXTexture2D* d = (DirectXTexture2D*)destination;
+
+	deviceContext->CopyResource(d->tex, s->buffer);
+}
+
+void DirectXRenderer::CopyResource(IFrameBuffer* source, IFrameBuffer* destination)
+{
+	DirectXFrameBuffer* s = (DirectXFrameBuffer*)source;
+	DirectXFrameBuffer* d = (DirectXFrameBuffer*)destination;
+
+	deviceContext->CopyResource(d->buffer, s->buffer);
+}
+
+void DirectXRenderer::CopyResource(IDepthBuffer* source, ITexture2D* destination)
+{
+	DirectXDepthBuffer* s = (DirectXDepthBuffer*)source;
+	DirectXTexture2D* d = (DirectXTexture2D*)destination;
+
+	deviceContext->CopyResource(d->tex, s->depthBuffer);
+}
+
+void DirectXRenderer::CopyResource(IDepthBuffer* source, IFrameBuffer* destination)
+{
+	DirectXDepthBuffer* s = (DirectXDepthBuffer*)source;
+	DirectXFrameBuffer* d = (DirectXFrameBuffer*)destination;
+
+	deviceContext->CopyResource(d->buffer, s->depthBuffer);
 }
 
 //void DirectXRenderer::BindGlobalData()
@@ -385,7 +443,7 @@ void DirectXRenderer::DrawMesh(FDrawMeshCmd* info)
 	FMesh* mesh = info->mesh;
 	info->material->UpdateGpuBuffer();
 
-	deviceContext->IASetInputLayout(((DirectXVertexShader*)info->material->GetVsShader())->inputLayout);
+	deviceContext->IASetInputLayout(((DirectXVertexShader*)info->material->GetVsShader(0))->inputLayout);
 
 	uint vertexData[2] = { sizeof(FVertex), 0 };
 	if (mesh->vertexBuffer)
@@ -450,7 +508,7 @@ void DirectXRenderer::DrawMesh(FMeshBuilder::FRenderMesh* data)
 	FMesh* mesh = &data->mesh;
 	data->mat->UpdateGpuBuffer();
 
-	deviceContext->IASetInputLayout(((DirectXVertexShader*)data->mat->GetVsShader())->inputLayout);
+	deviceContext->IASetInputLayout(((DirectXVertexShader*)data->mat->GetVsShader(0))->inputLayout);
 
 	uint vertexData[2] = { sizeof(FVertex), 0 };
 	if (mesh->vertexBuffer)
@@ -499,6 +557,29 @@ void DirectXRenderer::DrawMesh(FMeshBuilder::FRenderMesh* data)
 	gRenderStats.numDrawCalls++;
 }
 
+void DirectXRenderer::SetMaterial(CMaterial* mat)
+{
+	mat->UpdateGpuBuffer();
+
+	DirectXShaderBuffer* matBuff = (DirectXShaderBuffer*)mat->GetGpuBuffer();
+	deviceContext->VSSetConstantBuffers(6, 1, &matBuff->buffer);
+	deviceContext->PSSetConstantBuffers(6, 1, &matBuff->buffer);
+	deviceContext->GSSetConstantBuffers(6, 1, &matBuff->buffer);
+
+	for (auto& t : mat->GetTextures())
+	{
+		if (!t.tex)
+			continue;
+
+		DirectXTexture2D* tex = (DirectXTexture2D*)t.tex->GetTextureObject();
+		if (tex)
+		{
+			deviceContext->PSSetShaderResources(t.registerId, 1, &tex->view);
+			deviceContext->PSSetSamplers(t.registerId, 1, &tex->sampler);
+		}
+	}
+}
+
 void DirectXRenderer::SetVsShader(IShader* shader)
 {
 	deviceContext->VSSetShader(shader != nullptr ? (ID3D11VertexShader*)((DirectXShader*)shader)->shader : nullptr, nullptr, 0);
@@ -516,11 +597,26 @@ void DirectXRenderer::SetShaderBuffer(IShaderBuffer* buffer, int _register)
 	deviceContext->GSSetConstantBuffers(_register, 1, &((DirectXShaderBuffer*)&*buffer)->buffer);
 }
 
-void DirectXRenderer::SetShaderResource(ITexture2D* texture, int _register)
+void DirectXRenderer::SetShaderResource(IBaseTexture* texture, int _register)
 {
-	DirectXTexture2D* tex = (DirectXTexture2D*)texture;
-	deviceContext->PSSetShaderResources(_register, 1, &tex->view);
-	deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
+	if (texture->Type() == TextureType_2D)
+	{
+		DirectXTexture2D* tex = (DirectXTexture2D*)texture;
+		deviceContext->PSSetShaderResources(_register, 1, &tex->view);
+		deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
+	}
+	else if (texture->Type() == TextureType_Cube)
+	{
+		DirectXTextureCube* tex = (DirectXTextureCube*)texture;
+		deviceContext->PSSetShaderResources(_register, 1, &tex->view);
+		deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
+	}
+	else if (texture->Type() == TextureType_Framebuffer)
+	{
+		DirectXFrameBuffer* tex = (DirectXFrameBuffer*)texture;
+		deviceContext->PSSetShaderResources(_register, 1, &tex->view);
+		deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
+	}
 }
 
 void DirectXRenderer::SetShaderResource(IDepthBuffer* depthTex, int _register)
@@ -530,12 +626,12 @@ void DirectXRenderer::SetShaderResource(IDepthBuffer* depthTex, int _register)
 	deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
 }
 
-void DirectXRenderer::SetShaderResource(IFrameBuffer* fb, int _register)
-{
-	DirectXFrameBuffer* tex = (DirectXFrameBuffer*)fb;
-	deviceContext->PSSetShaderResources(_register, 1, &tex->view);
-	deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
-}
+//void DirectXRenderer::SetShaderResource(IFrameBuffer* fb, int _register)
+//{
+//	DirectXFrameBuffer* tex = (DirectXFrameBuffer*)fb;
+//	deviceContext->PSSetShaderResources(_register, 1, &tex->view);
+//	deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
+//}
 
 void DirectXRenderer::SetFrameBuffer(IFrameBuffer* framebuffer, IDepthBuffer* depth)
 {
@@ -570,6 +666,16 @@ void DirectXRenderer::SetBlendMode(EBlendMode mode)
 		deviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 	else if (mode == EBlendMode::BLEND_ADDITIVE)
 		deviceContext->OMSetBlendState(blendAdditive, nullptr, 0xFFFFFFFF);
+	else if (mode == EBlendMode::BLEND_ADDITIVE_COLOR)
+		deviceContext->OMSetBlendState(blendAdditiveColor, nullptr, 0xFFFFFFFF);
+}
+
+void DirectXRenderer::SetFaceCulling(bool bEnabled)
+{
+	if (bEnabled)
+		deviceContext->RSSetState(nullptr);
+	else
+		deviceContext->RSSetState(rasterCullOff);
 }
 
 void DirectXRenderer::BindGBuffer()
@@ -595,7 +701,8 @@ TPair<DXGI_FORMAT, int> DirectXRenderer::GetDXTextureFormat(ETextureFormat forma
 		DXGI_FORMAT_R16G16B16A16_FLOAT,
 		DXGI_FORMAT_R32G32B32A32_FLOAT,
 		DXGI_FORMAT_BC1_UNORM,
-		DXGI_FORMAT_BC3_UNORM
+		DXGI_FORMAT_BC3_UNORM,
+		DXGI_FORMAT_R24_UNORM_X8_TYPELESS
 	};
 
 	static constexpr int formatSizes[] = {
@@ -609,6 +716,7 @@ TPair<DXGI_FORMAT, int> DirectXRenderer::GetDXTextureFormat(ETextureFormat forma
 		8,
 		16,
 		2,
+		4,
 		4
 	};
 

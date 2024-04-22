@@ -50,11 +50,21 @@
 #include "ImGui/imgui_internal.h"
 #include "ImGui/imgui_thorium.h"
 
+#include "ImGuizmo.h"
+
 #include "ThemeManager.h"
 
 #define TEX_VIEW(tex) ((DirectXTexture2D*)tex)->view
 
 FEditorLog gBuildLog("Build");
+
+FEditorShortcut scSaveScene("Save Scene", "Editor", ImGuiKey_S, 0, 1);
+FEditorShortcut scSaveSceneAs("Save Scene As", "Editor", ImGuiKey_S, 1, 1);
+FEditorShortcut scNewScene("New Scene", "Editor", ImGuiKey_N, 0, 1);
+FEditorShortcut scOpenScene("Open Scene", "Editor", ImGuiKey_O, 0, 1);
+
+FEditorShortcut scNewProject("New Project", "Project", ImGuiKey_N, 1, 1);
+FEditorShortcut scOpenProject("Open Project", "Project", ImGuiKey_O, 1, 1);
 
 void CEditorEngine::Init()
 {
@@ -133,6 +143,9 @@ void CEditorEngine::Init()
 	memcpy((char*)io.IniFilename, dataPath.Data(), dataPath.Size() + 1);
 	ImGui::LoadIniSettingsFromDisk(io.IniFilename);
 
+	ImGuizmo::SetImGuiContext(ImGui::GetCurrentContext());
+	gizmoMode = ImGuizmo::TRANSLATE;
+
 	ThoriumEditor::LoadThemes();
 	ThoriumEditor::SetTheme("Default");
 
@@ -171,6 +184,7 @@ int CEditorEngine::Run()
 		CObjectManager::Update();
 
 		gRenderer->ImGuiBeginFrame();
+		ImGuizmo::BeginFrame();
 
 		if (!nextSceneName.IsEmpty())
 		{
@@ -215,6 +229,7 @@ int CEditorEngine::Run()
 			if (w != viewportWidth || h != viewportHeight)
 			{
 				sceneFrameBuffer->Resize(viewportWidth, viewportHeight);
+				//gWorld->renderScene->
 				//sceneDepthBuffer->Resize(viewportWidth, viewportHeight);
 			}
 		}
@@ -229,6 +244,7 @@ int CEditorEngine::Run()
 
 		Events::OnRender.Invoke();
 
+		gWorld->renderScene->SetScreenPercentage(cvRenderScreenPercentage.AsFloat());
 		gWorld->renderScene->SetFrameBuffer(sceneFrameBuffer);
 		//gWorld->renderScene->SetDepthBuffer(sceneDepthBuffer);
 
@@ -286,6 +302,8 @@ void CEditorEngine::OnExit()
 	CONSOLE_LogInfo("CEngine", "Shutting down...");
 
 	SaveEditorConfig();
+
+	ThoriumEditor::ClearThemeIcons();
 
 	delete assetBrowser;
 	gWorld->Delete();
@@ -346,98 +364,7 @@ void CEditorEngine::UpdateEditor()
 	
 	if (ImGui::BeginMenuBar())
 	{
-		//for (auto& c : rootMenu->children)
-		//	DrawMenu(c);
-
 		rootMenu->Render();
-
-		//if (ImGui::BeginMenu("File"))
-		//{
-		//	if (ImGui::MenuItem("New Scene", "Ctrl+N"))
-		//		menuAction = MenuAction_NewScene;
-		//	if (ImGui::MenuItem("Open Scene", "Ctrl+O"))
-		//		menuAction = MenuAction_OpenScene;
-		//	if (ImGui::MenuItem("Save", "Ctrl+S"))
-		//		menuAction = MenuAction_SaveScene;
-		//	if (ImGui::MenuItem("Save As"))
-		//		menuAction = MenuAction_SaveSceneAs;
-
-		//	if (!bProjectLoaded)
-		//	{
-		//		ImGui::Separator();
-
-		//		if (ImGui::MenuItem("Open Project"))
-		//			bOpenProj = true;
-		//	}
-
-		//	ImGui::Separator();
-
-		//	ImGui::MenuItem("Build All");
-		//	ImGui::MenuItem("Build Lighting");
-		//	ImGui::MenuItem("Build Cubemaps");
-		//	ImGui::MenuItem("Package Engine Content");
-
-		//	ImGui::Separator();
-
-		//	if (ImGui::MenuItem("Quit"))
-		//		Exit();
-
-		//	ImGui::EndMenu();
-		//}
-
-		//if (ImGui::BeginMenu("Edit"))
-		//{
-		//	ImGui::MenuItem("Undo");
-		//	ImGui::MenuItem("Redo");
-		//	ImGui::MenuItem("Copy");
-		//	ImGui::MenuItem("Paste");
-
-		//	ImGui::Separator();
-
-		//	if (ImGui::MenuItem("Generate Build Data"))
-		//		GenerateBuildData();
-
-		//	ImGui::Separator();
-
-		//	ImGui::MenuItem("Project Settings", 0, &projSettingsWidget->bEnabled);
-		//	ImGui::MenuItem("Editor Settings", 0, &editorSettings->bEnabled);
-		//	ImGui::MenuItem("Addons", 0, &addonsWindow->bEnabled);
-
-		//	ImGui::EndMenu();
-		//}
-
-		//if (ImGui::BeginMenu("Tools"))
-		//{
-		//	ImGui::MenuItem("Data Asset Editor");
-		//	if (ImGui::MenuItem("Model Editor"))
-		//		AddLayer<CModelEditor>();
-		//	if (ImGui::MenuItem("Material Editor"))
-		//		AddLayer<CMaterialEditor>();
-
-		//	ImGui::EndMenu();
-		//}
-
-		//if (ImGui::BeginMenu("View"))
-		//{
-		//	ImGui::MenuItem("Scene Outliner", nullptr, &bViewOutliner);
-		//	ImGui::MenuItem("Asset Browser", nullptr, &bViewAssetBrowser);
-		//	ImGui::MenuItem("Properties", nullptr, &propertyEditor->bEnabled);
-		//	ImGui::MenuItem("Entity IO", nullptr, &ioWidget->bEnabled);
-		//	ImGui::MenuItem("Console", nullptr, &consoleWidget->bEnabled);
-		//	ImGui::MenuItem("Log", nullptr, &logWnd->bEnabled);
-
-
-		//	ImGui::EndMenu();
-		//}
-
-		//if (ImGui::BeginMenu("Debug"))
-		//{
-		//	ImGui::MenuItem("ImGui Demo", nullptr, &bImGuiDemo);
-		//	ImGui::MenuItem("Statistics", nullptr, &bViewStats);
-		//	ImGui::MenuItem("Object Debugger", nullptr, &objectDebuggerWidget->bEnabled);
-
-		//	ImGui::EndMenu();
-		//}
 
 		ImGui::EndMenuBar();
 	}
@@ -449,17 +376,20 @@ void CEditorEngine::UpdateEditor()
 
 	menuCloseProject->SetEnabled(bProjectLoaded);
 
-	if (menuAction == MenuAction_SaveScene || (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_S)))
-		SaveScene();
-	if (menuAction == MenuAction_NewScene || (ImGui::IsKeyDown(ImGuiKey_ModCtrl) && ImGui::IsKeyPressed(ImGuiKey_N)))
-		NewScene();
-	if (menuAction == MenuAction_OpenScene)
-		ThoriumEditor::OpenFile("openEditorScene", (FAssetClass*)CScene::StaticClass());
+	if (!bIsPlaying)
+	{
+		if (menuAction == MenuAction_SaveScene || (scSaveScene && bViewportHasFocus))
+			SaveScene();
+		if (menuAction == MenuAction_NewScene || (scNewScene && bViewportHasFocus))
+			NewScene();
+		if (menuAction == MenuAction_OpenScene)
+			ThoriumEditor::OpenFile("openEditorScene", (FAssetClass*)CScene::StaticClass());
 
-	if (menuAction == MenuAction_OpenProject)
-		CProjectManager::Open(0);
-	if (menuAction == MenuAction_NewProject)
-		CProjectManager::Open(1);
+		if (menuAction == MenuAction_OpenProject || scOpenProject)
+			CProjectManager::Open(0);
+		if (menuAction == MenuAction_NewProject || scNewProject)
+			CProjectManager::Open(1);
+	}
 
 	if (menuAction != 0)
 		menuAction = 0;
@@ -472,44 +402,6 @@ void CEditorEngine::UpdateEditor()
 
 	ImGui::SetNextWindowSize(ImVec2(785, 510), ImGuiCond_FirstUseEver);
 
-	// Project Selection
-	//if (ImGui::BeginPopupModal("Open Project", &bOpenProj))
-	//{
-	//	ImGui::Text("Projects");
-
-	//	ImGui::BeginChild("projects_list");
-
-	//	float panelWidth = ImGui::GetContentRegionAvail().x;
-	//	int columnCount = FMath::Max((int)(panelWidth / 128.f), 1);
-
-	//	if (ImGui::BeginTable("projects_table", columnCount))
-	//	{
-	//		for (auto& p : availableProjects)
-	//		{
-	//			ImGui::TableNextColumn();
-
-	//			if (ImGui::Button(("##_project" + p.name).c_str(), ImVec2(112, 112)))
-	//			{
-	//				LoadProject(p.dir);
-	//				// Since the input manager gets reinstantiated, we have to make sure we set it up correctly.
-	//				//inputManager->SetInputWindow(gameWindow);
-	//				//inputManager->SetShowCursor(true);
-
-	//				assetBrowser->SetDir(activeGame.mod->Name(), FString());
-
-	//				LoadWorld(activeGame.startupScene);
-	//				ImGui::CloseCurrentPopup();
-	//			}
-	//			ImGui::Text(p.displayName.c_str());
-	//		}
-
-	//		ImGui::EndTable();
-	//	}
-
-	//	ImGui::EndChild();
-	//	ImGui::EndPopup();
-	//}
-
 	for (auto& l : layers)
 		if (l->bEnabled)
 			l->OnUIRender();
@@ -521,6 +413,10 @@ void CEditorEngine::UpdateEditor()
 	{
 		auto wndSize = ImGui::GetContentRegionAvail();
 		auto cursorPos = ImGui::GetCursorScreenPos();
+
+		ImGuizmo::SetDrawlist();
+
+		bViewportHasFocus = ImGui::IsWindowFocused();
 
 		ImGui::PopStyleVar(2);
 
@@ -545,6 +441,11 @@ void CEditorEngine::UpdateEditor()
 				DrawObjectCreateMenu();
 				ImGui::EndPopup();
 			}
+
+			ImGui::SameLine(); ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical, 2);
+			ImGui::SameLine(); ImGui::Text("Select Mode:");
+			ImGui::SameLine(); if (ImGui::Button("Object##selectMode")) SetSelectMode(ESelectMode_Object);
+			ImGui::SameLine(); if (ImGui::Button("Skeleton##selectMode")) SetSelectMode(ESelectMode_Skeleton);
 
 			ImGui::SetCursorScreenPos(cursorPos + ImVec2(wndSize.x / 2 - 100, 4));
 			ITexture2D* btnPlay = ThoriumEditor::GetThemeIcon("btn-play");
@@ -625,6 +526,16 @@ void CEditorEngine::UpdateEditor()
 		camController->Update(deltaTime);
 		DoEntRightClick();
 
+		if (!ImGui::IsMouseDown(ImGuiMouseButton_Right) && bViewportHasFocus)
+		{
+			if (ImGui::IsKeyPressed(ImGuiKey_W))
+				gizmoMode = ImGuizmo::TRANSLATE;
+			if (ImGui::IsKeyPressed(ImGuiKey_E))
+				gizmoMode = ImGuizmo::SCALE;
+			if (ImGui::IsKeyPressed(ImGuiKey_R))
+				gizmoMode = ImGuizmo::ROTATE;
+		}
+
 		if (ImGui::IsItemClicked() && inputManager && !inputManager->InputEnabled() && bIsPlaying && !bPaused)
 			ToggleGameInput();
 
@@ -649,6 +560,17 @@ void CEditorEngine::UpdateEditor()
 			ImGui::DragFloat("Near Clip", &editorCamera->nearPlane, 0.1f, 0.001f, 10000.f);
 			ImGui::DragFloat("Far Clip", &editorCamera->farPlane, 0.1f, 0.001f, 10000.f);
 			ImGui::DragInt("Camera Speed", &camController->cameraSpeed, 0.1f, camController->minCamSpeed, camController->maxCamSpeed);
+
+			float screenPercentage = cvRenderScreenPercentage.AsFloat();
+			if (ImGui::DragFloat("Screen Percentage", &screenPercentage))
+			{
+				int w = gWorld->renderScene->GetFrameBufferWidth();
+				int h = gWorld->renderScene->GetFrameBufferHeight();
+				gWorld->renderScene->ResizeBuffers(w, h);
+			}
+			cvRenderScreenPercentage.SetValue(screenPercentage);
+
+			ImGui::Checkbox("VSync", &userConfig.bVSync);
 
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1);
 			ImGui::EndPopup();
@@ -744,8 +666,23 @@ void CEditorEngine::UpdateEditor()
 	{
 		if (ImGui::Begin("Statistics##_editorStats", &menuStatistics->bChecked))
 		{
+			static float frameTimeSlow = 0.2f;
+			static float frameTimeAccum = 0;
+			static int _accum = 0;
+
+			frameTimeAccum += deltaTime;
+			_accum++;
+
+			if (_accum > 16)
+			{
+				frameTimeSlow = frameTimeAccum / 16.f;
+				frameTimeAccum = 0;
+				_accum = 0;
+			}
+
 			// Time
-			ImGui::Text("frame time: %.2f(ms)", deltaTime * 1000.f);
+			ImGui::Text("FPS: %.1f", 1.f / frameTimeSlow);
+			ImGui::Text("frame time: %.2f(ms)", frameTimeSlow * 1000.f);
 			ImGui::Text("update: %.2f(ms)", updateTime);
 			ImGui::Text("render: %.2f(ms)", renderTime);
 			ImGui::Text("editor update: %.2f(ms)", editorUpdateTime);
@@ -789,11 +726,6 @@ void CEditorEngine::UpdateEditor()
 					values2_offset = (values2_offset + 1) % IM_ARRAYSIZE(values2);
 				}
 				
-				//highestValue = 0.f;
-				//for (int i = 0; i < IM_ARRAYSIZE(values2); i++)
-				//	if (values2[i] > highestValue)
-				//		highestValue = values2[i];
-
 				ImGui::Text("Update Time");
 				ImGui::SameLine();
 				if (ImGui::SmallButton("Update"))
@@ -811,7 +743,6 @@ void CEditorEngine::UpdateEditor()
 			ImGui::Separator();
 
 			ImGui::Text("object count: %d", CObjectManager::GetAllObjects().size());
-			//ImGui::Text("objects to be deleted: %d", CObjectManager::)
 			if (gWorld)
 				ImGui::Text("entities count: %d", gWorld->GetEntities().size());
 
@@ -823,6 +754,8 @@ void CEditorEngine::UpdateEditor()
 		}
 		ImGui::End();
 	}
+
+	UpdateGizmos();
 }
 
 bool CEditorEngine::LoadProject(const FString& path)
@@ -835,7 +768,7 @@ bool CEditorEngine::LoadProject(const FString& path)
 
 void CEditorEngine::LoadEditorConfig()
 {
-	FKeyValue kv(OSGetDataPath() + "/ThoriumEngine/EditorConfig/Editor.cfg");
+	FKeyValue kv(GetEditorConfigPath() + "/Editor.cfg");
 	if (!kv.IsOpen())
 	{
 		CONSOLE_LogWarning("CEditorEngine", "Failed to load editor config, unable to find config file!");
@@ -867,11 +800,13 @@ void CEditorEngine::LoadEditorConfig()
 		if (LoadProjectConfig(proj.dir, proj))
 			RegisterProject(proj);
 	}
+
+	FEditorShortcut::LoadConfig();
 }
 
 void CEditorEngine::SaveEditorConfig()
 {
-	FKeyValue kv(OSGetDataPath() + "/ThoriumEngine/EditorConfig/Editor.cfg");
+	FKeyValue kv(GetEditorConfigPath() + "/Editor.cfg");
 
 	gameWindow->UpdateWindowRect();
 	gameWindow->GetSize(editorCfg.wndWidth, editorCfg.wndHeight);
@@ -896,6 +831,8 @@ void CEditorEngine::SaveEditorConfig()
 		projs->SetValue(p.name, p.dir);
 
 	kv.Save();
+
+	FEditorShortcut::SaveConfig();
 }
 
 void CEditorEngine::CompileProjectCode(int config)
@@ -1249,6 +1186,12 @@ void CEditorEngine::DoMousePick()
 	if (!gWorld)
 		return;
 
+	if (ImGuizmo::IsOver())
+		return;
+
+	if (selectMode != ESelectMode_Object && selectedEntities.Size() != 0)
+		return;
+
 	FRay ray = FRay::MouseToRay(editorCamera, InputManager()->GetMousePos() - FVector2(viewportX, viewportY), { (float)viewportWidth, (float)viewportHeight });
 	ray.direction = ray.direction.Normalize();
 
@@ -1425,7 +1368,7 @@ void CEditorEngine::OnLevelChange()
 	{
 		gWorld->SetPrimaryCamera(editorCamera);
 
-		if (gWorld->GetScene()->File())
+		if (gWorld->GetScene() && gWorld->GetScene()->File())
 		{
 			CFStream sdkStream = gWorld->GetScene()->File()->GetSdkStream("rb");
 			if (sdkStream.IsOpen())
@@ -1501,7 +1444,33 @@ void CEditorEngine::KeyEventA(EKeyCode key, EInputAction action, EInputMod mod)
 
 void CEditorEngine::SaveProjectConfig()
 {
+	FKeyValue kv(projectConfig.dir + "/config/project.cfg");
 
+	kv.SetValue("name", projectConfig.name);
+	kv.SetValue("displayName", projectConfig.displayName);
+	kv.SetValue("author", projectConfig.author);
+	kv.SetValue("game", projectConfig.game);
+	kv.SetValue("hasSdk", projectConfig.bIncludesSdk ? "true" : "false");
+	kv.SetValue("hasEngineContent", projectConfig.bHasEngineContent ? "true" : "false");
+	
+	auto* addons = kv.GetArray("addons", true);
+	*addons = projectConfig.addons;
+
+	kv.Save();
+
+	FKeyValue phys(projectConfig.dir + "/config/physics.cfg");
+	phys.SetValue("api", physicsSettings.api.Get() ? physicsSettings.api.Get()->cppName : "CJoltPhysicsApi");
+	phys.Save();
+
+	FKeyValue kvGame(projectConfig.game + "/config/gameinfo.cfg");
+
+	kvGame.SetValue("title", activeGame.title);
+	kvGame.SetValue("version", activeGame.version);
+	kvGame.SetValue("scene", activeGame.startupScene);
+	kvGame.SetValue("gameinstance", activeGame.gameInstanceClass.Get() ? activeGame.gameInstanceClass.Get()->cppName : "CGameInstance");
+	kvGame.SetValue("inputmanager", activeGame.inputManagerClass.Get() ? activeGame.inputManagerClass.Get()->cppName : "CInputManager");
+
+	kvGame.Save();
 }
 
 void CEditorEngine::RegisterMenu(CEditorMenu* menu, const FString& path /*= FString()*/)
@@ -1547,6 +1516,13 @@ CEditorMenu* CEditorEngine::GetMenu(const FString& path)
 		return nullptr;
 
 	return curMenu;
+}
+
+void CEditorEngine::SetSelectMode(ESelectMode mode)
+{
+	selectMode = mode;
+	selectedBone = -1; 
+	boneComponent = nullptr;
 }
 
 void CEditorEngine::RegisterProject(const FProject& proj)
@@ -1905,3 +1881,413 @@ void CEditorEngine::DrawMenu(CEditorMenu* m)
 		}
 	}
 }
+
+void CEditorEngine::UpdateGizmos()
+{
+	if (selectMode == ESelectMode_Object)
+		UpdateGizmoEntity();
+	else if (selectMode == ESelectMode_Skeleton)
+		UpdateGizmoSkeleton();
+}
+
+void CEditorEngine::UpdateGizmoEntity()
+{
+	if (selectedEntities.Size() == 0)
+		return;
+
+	float delta[16];
+
+	FVector centerPos;
+	for (int i = 0; i < (bGizmoLocal ? 1 : (int)selectedEntities.Size()); i++)
+		centerPos += selectedEntities[i]->RootComponent()->GetPosition();
+
+	centerPos /= (float)selectedEntities.Size();
+
+	bool bUseLocal = bGizmoLocal && selectedEntities.Size() == 1;
+
+	if (!ImGuizmo::IsUsing())
+	{
+		manipulationMatrix = FMatrix(1.f).Translate(centerPos);
+		if (bUseLocal)
+		{
+			manipulationMatrix *= selectedEntities[0]->RootComponent()->GetRotation();
+			manipulationMatrix = manipulationMatrix.Scale(selectedEntities[0]->RootComponent()->GetScale());
+		}
+	}
+
+	int wndX, wndY;
+	gameWindow->GetWindowPos(&wndX, &wndY);
+
+	ImGuizmo::SetRect(viewportX + (float)wndX, viewportY + (float)wndY, viewportWidth, viewportHeight);
+	bool r = ImGuizmo::Manipulate(editorCamera->view.v, editorCamera->projection.v, (ImGuizmo::OPERATION)gizmoMode, bUseLocal ? ImGuizmo::LOCAL : ImGuizmo::WORLD, manipulationMatrix.v, delta);
+
+	FTransform deltaTranform;
+	float _temp[3];
+	(*(FMatrix*)delta).Decompose(deltaTranform.position, deltaTranform.scale, deltaTranform.rotation);
+	ImGuizmo::DecomposeMatrixToComponents(delta, &deltaTranform.position.x, _temp, &deltaTranform.scale.x);
+
+	if (r)
+	{
+		for (int i = 0; i < selectedEntities.Size(); i++)
+		{
+			CSceneComponent* root = selectedEntities[i]->RootComponent();
+			if ((gizmoMode & ImGuizmo::TRANSLATE) != 0)
+				root->SetPosition(root->GetPosition() + deltaTranform.position);
+			if ((gizmoMode & ImGuizmo::ROTATE) != 0)
+			{
+				if (bUseLocal)
+					root->SetRotation(root->GetRotation() * deltaTranform.rotation);
+				else
+					root->SetRotation(deltaTranform.rotation * root->GetRotation());
+			}
+			if ((gizmoMode & ImGuizmo::SCALE) != 0)
+				root->SetScale(root->GetScale() * deltaTranform.scale);
+		}
+	}
+}
+
+void CEditorEngine::UpdateGizmoSkeleton()
+{
+	DrawSelectedSkeleton();
+
+	if (selectedBone != -1 && boneComponent)
+	{
+		auto& skel = *(FSkeletonInstance*)&boneComponent->GetSkeleton();
+
+		CModelAsset* model = boneComponent->GetModel();
+		if (!model)
+			return;
+
+		int i = selectedBone;
+		const FBone& bone = model->GetSkeleton().bones[i];
+		const FBone* parent = bone.parent != -1 ? &model->GetSkeleton().bones[bone.parent] : nullptr;
+
+		FTransform boneTransform = boneComponent->GetBoneModelTransform(i) * boneComponent->GetWorldTransform();
+
+		if (!ImGuizmo::IsUsing())
+		{
+			manipulationMatrix = FMatrix(1.f).Translate(boneTransform.position);
+			//if (bGizmoLocal)
+				manipulationMatrix *= boneTransform.rotation;
+		}
+
+		int wndX, wndY;
+		gameWindow->GetWindowPos(&wndX, &wndY);
+
+		float delta[16];
+
+		ImGuizmo::SetRect(viewportX + (float)wndX, viewportY + (float)wndY, viewportWidth, viewportHeight);
+		bool r = ImGuizmo::Manipulate(editorCamera->view.v, editorCamera->projection.v, (ImGuizmo::OPERATION)gizmoMode, bGizmoLocal ? ImGuizmo::LOCAL : ImGuizmo::WORLD, manipulationMatrix.v, delta);
+
+		FTransform deltaTranform;
+		float _temp[3];
+		(*(FMatrix*)delta).Decompose(deltaTranform.position, deltaTranform.scale, deltaTranform.rotation);
+		ImGuizmo::DecomposeMatrixToComponents(delta, &deltaTranform.position.x, _temp, &deltaTranform.scale.x);
+
+		if (r)
+		{
+			if (gizmoMode == ImGuizmo::TRANSLATE)
+				skel.bones[i].position += boneTransform.rotation.Invert().Rotate(deltaTranform.position);
+			if (gizmoMode == ImGuizmo::ROTATE)
+			{
+				if (bGizmoLocal)
+					skel.bones[i].rotation *= deltaTranform.rotation;
+				else
+					skel.bones[i].rotation = (deltaTranform.rotation * (skel.bones[i].rotation * boneComponent->GetWorldRotation())) * boneComponent->GetWorldRotation().Invert();
+			}
+
+			boneComponent->UpdateSkeletonMatrix();
+		}
+	}
+}
+
+void CEditorEngine::DrawSelectedSkeleton()
+{
+	for (auto& ent : selectedEntities)
+	{
+		for (auto& comp : ent->GetAllComponents())
+		{
+			auto mdlComp = CastChecked<CModelComponent>(comp.second);
+			if (mdlComp == nullptr)
+				continue;
+
+			CModelAsset* model = mdlComp->GetModel();
+			if (!model)
+				continue;
+
+			auto& skel = mdlComp->GetSkeleton();
+
+			int hovered = -1;
+
+			for (int i = 0; i < (int)model->GetSkeleton().bones.Size(); i++)
+			{
+				const FBone& bone = model->GetSkeleton().bones[i];
+				const FBone* parent = bone.parent != -1 ? &model->GetSkeleton().bones[bone.parent] : nullptr;
+
+				FTransform boneTransform = mdlComp->GetBoneModelTransform(i) * mdlComp->GetWorldTransform();
+
+				/*FVector bonePos = skel.bones[i].position + bone.position;
+				if (parent)
+					bonePos = skel.bones[bone.parent].rotation.Rotate(bonePos) + skel.bones[bone.parent].position;
+				bonePos = mdlComp->GetWorldRotation().Rotate(bonePos * mdlComp->GetWorldScale()) + mdlComp->GetWorldPosition();
+
+				FQuaternion boneRot = bone.rotation * skel.bones[i].rotation;
+				if (parent)
+					boneRot *= skel.bones[bone.parent].rotation;
+				boneRot *= mdlComp->GetWorldRotation();*/
+
+				bool bHover = (selectedBone == i && mdlComp == boneComponent);
+				if (!bHover && hovered == -1 && !ImGuizmo::IsOver())
+				{
+					FRay ray = FRay::MouseToRay(editorCamera, InputManager()->GetMousePos() - FVector2(viewportX, viewportY), { (float)viewportWidth, (float)viewportHeight });
+					ray.direction = ray.direction.Normalize();
+					bHover = FMath::RayBox(FBounds(boneTransform.position, FVector(0.05f)), boneTransform.rotation, ray);
+					if (bHover)
+						hovered = i;
+				}
+
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && bHover)
+				{
+					boneComponent = mdlComp;
+					selectedBone = i;
+				}
+
+				gDebugRenderer->DrawBox(FTransform(boneTransform.position, boneTransform.rotation, FVector(0.1f)), bHover ? FColor::lime : FColor::blue.WithAlpha(0.5f), DebugDrawType_Solid | DebugDrawType_Overlay);
+			}
+		}
+	}
+}
+
+FEditorShortcut::FEditorShortcut(const FString& n, const FString& c, ImGuiKey k, bool shift /*= false*/, bool ctrl /*= false*/) : name(n), context(c), key(k), bShift(shift), bCtrl(ctrl)
+{
+	GetShortcuts().Add(this);
+	_SetString();
+
+	friendlyName = n;
+	friendlyName.ReplaceAll(' ', '_');
+}
+
+FEditorShortcut::operator bool()
+{
+	if ((bShift == ImGui::IsKeyDown(ImGuiKey_LeftShift)) && (bCtrl == ImGui::IsKeyDown(ImGuiKey_LeftCtrl)) && ImGui::IsKeyPressed(key))
+		return true;
+	return false;
+}
+
+void FEditorShortcut::SetKey(ImGuiKey k, bool shift, bool ctrl)
+{
+	if (k == 0 || (k > ImGuiKey_Tab && k < ImGuiKey_GamepadStart))
+	{
+		key = k;
+		bShift = shift;
+		bCtrl = ctrl;
+		_SetString();
+	}
+}
+
+static const char* ImGuiKeyNames[] = {
+	"None"
+	"Tab",
+	"Left Arrow",
+	"Right Arrow",
+	"Up Arrow",
+	"Down Arrow",
+	"Page Up",
+	"Page Down",
+	"Home",
+	"End",
+	"Insert",
+	"Delete",
+	"Backspace",
+	"Space",
+	"Enter",
+	"Escape",
+	nullptr,
+	nullptr,
+	nullptr,
+	nullptr,
+	nullptr,
+	nullptr,
+	nullptr,
+	nullptr,
+	"Menu",
+	"0",
+	"1",
+	"2",
+	"3",
+	"4",
+	"5",
+	"6",
+	"7",
+	"8",
+	"9",
+	"A",
+	"B",
+	"C",
+	"D",
+	"E",
+	"F",
+	"G",
+	"H",
+	"I",
+	"J",
+	"K",
+	"L",
+	"M",
+	"N",
+	"O",
+	"P",
+	"Q",
+	"R",
+	"S",
+	"T",
+	"U",
+	"V",
+	"W",
+	"X",
+	"Y",
+	"Z",
+	"F1",
+	"F2",
+	"F3",
+	"F4",
+	"F5",
+	"F6",
+	"F7",
+	"F8",
+	"F9",
+	"F10",
+	"F11",
+	"F12",
+	"Apostrophe",        // '
+	"Comma",             // ,
+	"Minus",             // -
+	"Period",            // .
+	"Slash",             // /
+	"Semicolon",         // ;
+	"Equal",             // =
+	"Left Bracket",      // [
+	"Backslash",         // \ (this text inhibit multiline comment caused by backslash)
+	"Right Bracket",     // ]
+	"Grave Accent",
+	"Caps Lock",
+	"Scroll Lock",
+	"NumLock",
+	"Print Screen",
+	"Pause",
+	"Keypad 0", "Keypad 1", "Keypad 2", "Keypad 3", "Keypad 4",
+	"Keypad 5", "Keypad 6", "Keypad 7", "Keypad 8", "Keypad 9",
+	"Keypad Decimal",
+	"Keypad Divide",
+	"Keypad Multiply",
+	"Keypad Subtract",
+	"Keypad Add",
+	"Keypad Enter",
+	"Keypad Equal",
+};
+
+static constexpr SizeType ImGuiKeyNamesCount = IM_ARRAYSIZE(ImGuiKeyNames);
+
+void FEditorShortcut::_SetString()
+{
+	if (key == ImGuiKey_None)
+	{
+		asString = "None";
+		return;
+	}
+
+	const char* txt = ImGuiKeyNames[(int)key - (int)ImGuiKey_Tab];
+	if (!txt)
+	{
+		key = ImGuiKey_None;
+		asString = "None";
+		return;
+	}
+
+	asString.Clear();
+
+	if (bCtrl && bShift)
+		asString = "Ctrl+Shift+";
+	else if (bCtrl && !bShift)
+		asString = "Ctrl+";
+	else if (!bCtrl && bShift)
+		asString = "Shift+";
+
+	asString += txt;
+}
+
+void FEditorShortcut::SaveConfig()
+{
+	FKeyValue kv(CEditorEngine::GetEditorConfigPath() + "/Shortcuts.cfg");
+
+	for (auto& sc : GetShortcuts())
+		kv.SetValue(sc->context + "." + sc->friendlyName, sc->ToString());
+	
+	kv.Save();
+}
+
+void FEditorShortcut::LoadConfig()
+{
+	FKeyValue kv(CEditorEngine::GetEditorConfigPath() + "/Shortcuts.cfg");
+	if (!kv.IsOpen())
+		return;
+
+	for (auto& v : kv.GetValues())
+	{
+		FString context;
+		FString name;
+
+		context = v.Key;
+		name = v.Key;
+
+		SizeType dotI = context.FindFirstOf('.');
+		if (dotI == -1)
+			continue;
+
+		context.Erase(context.begin() + dotI, context.end());
+		name.Erase(name.begin(), name.begin() + dotI + 1);
+
+		for (auto* sc : GetShortcuts())
+		{
+			if (sc->friendlyName == name && sc->context == context)
+			{
+				ImGuiKey key = ImGuiKey_None;
+				bool shift = false;
+				bool ctrl = false;
+
+				FString keyName = v.Value;
+				if (keyName.Find("Ctrl") != -1)
+					ctrl = true;
+				if (keyName.Find("Shift") != -1)
+					shift = true;
+				if (auto i = keyName.FindLastOf('+'); i != -1)
+					keyName.Erase(keyName.begin(), keyName.begin() + i + 1);
+
+				for (int i = 0; i < ImGuiKeyNamesCount; i++)
+				{
+					if (ImGuiKeyNames[i] == nullptr)
+						continue;
+
+					if (keyName == ImGuiKeyNames[i])
+					{
+						key = (ImGuiKey)(i + ImGuiKey_Tab);
+						break;
+					}
+				}
+
+				if (key != ImGuiKey_None)
+					sc->SetKey(key, shift, ctrl);
+
+				break;
+			}
+		}
+	}
+}
+
+TArray<FEditorShortcut*>& FEditorShortcut::GetShortcuts()
+{
+	static TArray<FEditorShortcut*> shortcuts;
+	return shortcuts;
+}
+
+//TArray<FEditorShortcut*> FEditorShortcut::shortcuts;

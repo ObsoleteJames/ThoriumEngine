@@ -11,7 +11,7 @@ bool CJoltPhysicsBody::Init(const FPhysicsBodySettings& settings, CJoltPhysicsWo
 	
 	JPH::Vec3 position = JPH::Vec3(settings.transform.position.x, settings.transform.position.y, settings.transform.position.z);
 	JPH::Quat rotation = JPH::Quat(settings.transform.rotation.x, settings.transform.rotation.y, settings.transform.rotation.z, settings.transform.rotation.w);
-	JPH::EMotionType motion = settings.moveType == PHBM_STATIC ? JPH::EMotionType::Static : (settings.moveType == PHBM_DYNAMIC ? JPH::EMotionType::Dynamic : JPH::EMotionType::Kinematic);
+	JPH::EMotionType motion = settings.motionType == PHBM_STATIC ? JPH::EMotionType::Static : (settings.motionType == PHBM_DYNAMIC ? JPH::EMotionType::Dynamic : JPH::EMotionType::Kinematic);
 
 	component = settings.component;
 	if (settings.entity)
@@ -90,10 +90,13 @@ bool CJoltPhysicsBody::Init(const FPhysicsBodySettings& settings, CJoltPhysicsWo
 		break;
 	}
 
+	jSettings.mIsSensor = settings.physicsLayer == EPhysicsLayer::TRIGGER;
+
 	body = world->bodyInterface->CreateBody(jSettings);
 	body->SetUserData((SizeType)this);
 	bodyId = body->GetID();
 	world->bodyInterface->AddBody(body->GetID(), motion == JPH::EMotionType::Dynamic ? JPH::EActivation::Activate : JPH::EActivation::DontActivate);
+	bBodyEnabled = true;
 	return true;
 }
 
@@ -167,6 +170,37 @@ FVector CJoltPhysicsBody::GetAngularVelocity()
 {
 	auto p = body->GetAngularVelocity();
 	return FVector(p.GetX(), p.GetY(), p.GetZ());
+}
+
+void CJoltPhysicsBody::MoveTo(const FVector& p, const FQuaternion& r)
+{
+	JPH::RVec3 pos(p.x, p.y, p.z);
+	JPH::Quat rot(r.x, r.y, r.z, r.w);
+	world->bodyInterface->MoveKinematic(bodyId, pos, rot, 0.f);
+}
+
+void CJoltPhysicsBody::SetMotionType(EPhysicsBodyMotion type)
+{
+	JPH::EMotionType motion = type == PHBM_STATIC ? JPH::EMotionType::Static : (type == PHBM_DYNAMIC ? JPH::EMotionType::Dynamic : JPH::EMotionType::Kinematic);
+	if (world->bodyInterface->GetMotionType(bodyId) == JPH::EMotionType::Static)
+		return;
+
+	world->bodyInterface->SetMotionType(bodyId, motion, JPH::EActivation::Activate);
+}
+
+void CJoltPhysicsBody::SetEnabled(bool bEnabled)
+{
+	if (bEnabled && !bBodyEnabled)
+		world->bodyInterface->AddBody(bodyId, JPH::EActivation::Activate);
+	else if (!bEnabled && bBodyEnabled)
+		world->bodyInterface->RemoveBody(bodyId);
+
+	bBodyEnabled = bEnabled;
+}
+
+bool CJoltPhysicsBody::IsEnabled() const
+{
+	return bBodyEnabled;
 }
 
 bool CJoltPhysicsBody::IsAwake()

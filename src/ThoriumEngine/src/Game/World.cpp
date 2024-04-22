@@ -23,6 +23,11 @@ static int bInWorldUpdate = 0;
 
 CWorld* gWorld = nullptr;
 
+CWorld::CWorld() : bInitialized(0), bActive(0), time(0.f), bLoaded(false), bLoading(false), bStreaming(false)
+{
+	bIndestructible = true;
+}
+
 /*
 	- Scene Binary format -
 
@@ -82,6 +87,8 @@ void CWorld::LoadScene(CScene* ptr)
 	if (bLoaded)
 		return;
 
+	bLoading = true;
+
 	scene = ptr;
 	if (!scene->File())
 		return;
@@ -89,7 +96,7 @@ void CWorld::LoadScene(CScene* ptr)
 	TUniquePtr<IBaseFStream> stream = scene->File()->GetStream("rb");
 	if (!stream || !stream->IsOpen())
 	{
-		CONSOLE_LogError("CWorld", FString("Failed to create file stream for '") + ToFString(scene->File()->Path()) + "'");
+		CONSOLE_LogError("CWorld", FString("Failed to create file stream for '") + scene->File()->Path() + "'");
 		return;
 	}
 
@@ -100,7 +107,7 @@ void CWorld::LoadScene(CScene* ptr)
 
 	if (sig != CSCENE_SIGNITURE || version != CSCENE_VERSION)
 	{
-		CONSOLE_LogError("CWorld", "Invalid scene file '" + ToFString(scene->File()->Path()) + "'");
+		CONSOLE_LogError("CWorld", "Invalid scene file '" + scene->File()->Path() + "'");
 		return;
 	}
 
@@ -154,6 +161,10 @@ void CWorld::LoadScene(CScene* ptr)
 			d.Key->Delete();
 	}
 
+	for (auto ent : entities)
+		ent.second->PostInit();
+	
+	bLoading = false;
 	bLoaded = true;
 }
 
@@ -185,6 +196,9 @@ CEntity* CWorld::CreateEntity(FClass* classType, const FString& name)
 	entities[r->EntityId()] = r;
 
 	OnEntityCreated.Invoke(r);
+	if (!bLoading)
+		r->PostInit();
+
 	return r;
 }
 
@@ -428,7 +442,7 @@ void CEntityIOManager::FireEvent(CEntity* caller, SizeType outputIndex)
 {
 	const FOutputBinding& binding = caller->GetOutput(outputIndex);
 
-	FEntityOutputEvent e = { caller, outputIndex, binding.delay + world->CurTime() };
+	FEntityOutputEvent e = { caller, outputIndex, binding.delay + (float)world->CurTime() };
 	if (binding.delay > 0.f)
 	{
 		delayedEvents.Add(e);
@@ -449,7 +463,7 @@ void CEntityIOManager::_Fire(FEntityOutputEvent* event)
 
 	CEntity* target = binding.targetObject.GetAs<CEntity>();
 	const FFunction* func = nullptr;
-	FStack funcStack(FMath::Max(binding.arguments.Size(), 1ull));
+	FStack funcStack(FMath::Max((uint32)binding.arguments.Size(), 1u));
 
 	if (!target)
 	{

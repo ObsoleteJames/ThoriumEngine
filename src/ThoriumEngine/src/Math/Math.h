@@ -19,11 +19,16 @@ public:
 	static uint Random(uint min, uint max);
 
 	template<typename T>
+	static inline T Lerp(T a, T b, T t) { return ((T)1.0 - t) * a + t * b; }
+
+	template<typename T>
 	static inline T Cos(T f) { return std::cos(f); }
 	template<typename T>
 	static inline T Sin(T f) { return std::sin(f); }
 	template<typename T>
 	static inline T Tan(T f) { return std::tan(f); }
+	template<typename T>
+	static inline T Acos(T f) { return std::acos(f); }
 	template<typename T>
 	static inline T Abs(T f) { return std::abs(f); }
 

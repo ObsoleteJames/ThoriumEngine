@@ -3,15 +3,15 @@
 #include "Console.h"
 #include <d3dcompiler.h>
 
-DirectXShader::DirectXShader(CShaderSource* in, int type)
+DirectXShader::DirectXShader(CShaderSource* in, int type, FString path)
 {
 	bValid = false;
 	shaderSource = in;
 	this->type = (int8)type;
 
-	FString typeStr = (type == 0) ? ".vs.thcs" : (type == 1) ? ".thcs.ps" : ".thcs.gs";
-	FString shaderPath = in->File()->Mod()->Path() + "/" + in->File()->Dir()->GetPath() + "/vfx/" + in->File()->Name() + typeStr;
-	CFStream stream(ToFString(shaderPath), "rb");
+	//FString typeStr = (type == 0) ? ".vs.thcs" : (type == 1) ? ".thcs.ps" : ".thcs.gs";
+	//FString shaderPath = in->File()->Mod()->Path() + "/" + in->File()->Dir()->GetPath() + "/vfx/" + in->File()->Name() + typeStr;
+	CFStream stream(ToFString(path), "rb");
 	if (!stream.IsOpen())
 	{
 		CONSOLE_LogError("IShader", FString("Failed to create shader for '") + in->shaderName + "'!");
@@ -47,7 +47,7 @@ DirectXShader::~DirectXShader()
 	shader->Release();
 }
 
-DirectXVertexShader::DirectXVertexShader(CShaderSource* in)
+DirectXVertexShader::DirectXVertexShader(CShaderSource* in, FString path)
 {
 	bValid = false;
 	shaderSource = in;
@@ -70,7 +70,7 @@ DirectXVertexShader::DirectXVertexShader(CShaderSource* in)
 
 	ID3D10Blob* buff;
 
-	FString path = in->File()->Mod()->Path() + "/" + in->File()->Dir()->GetPath() + "/vfx/" + in->File()->Name() + ".thcs.vs";
+	//FString path = in->File()->Mod()->Path() + "/" + in->File()->Dir()->GetPath() + "/vfx/" + in->File()->Name() + ".thcs.vs";
 	wchar_t p[MAX_PATH];
 	mbstowcs(p, path.c_str(), path.Size() + 1);
 

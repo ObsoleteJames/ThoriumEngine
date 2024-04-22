@@ -7,6 +7,7 @@
 #include "Game/Components/CameraComponent.h"
 
 class ILightComponent;
+class ITexture2D;
 class CCameraComponent;
 class CPrimitiveProxy;
 class CCameraProxy;
@@ -74,12 +75,14 @@ public:
 	inline const TArray<CCubeMapProxy*>& GetCubeMaps() const { return cubemaps; }
 	inline void SetCubeMaps(const TArray<CCubeMapProxy*>& arr) { cubemaps = arr; }
 
+	inline void SetScreenPercentage(float f) { screenPercentage = f; }
+	inline float ScreenPercentage() const { return screenPercentage; }
+
 	bool RayCast(const FVector& pos, const FVector& dir, FPrimitiveHitInfo* outHit, float maxDistance = 0.f);
 	bool RayCastBounds(const FRay& ray, FPrimitiveHitInfo* outHit, float maxDistance = 0.f);
 
 	void GeneratePrimitiveGraph();
 
-private:
 	void ResizeBuffers(int width, int height);
 
 private:
@@ -101,10 +104,12 @@ private:
 
 	float time;
 
+	float screenPercentage = 100.f;
+
 	int bufferWidth, bufferHeight;
 	IFrameBuffer* colorBuffer; // float16 output buffer
 	IFrameBuffer* GBufferA; // Normal
-	IFrameBuffer* GBufferB; // Material (red = metallic, green = roughness, blue = metallic, alpha = specular)
+	IFrameBuffer* GBufferB; // Material (red = metallic, green = roughness, blue = ao, alpha = specular)
 	IFrameBuffer* GBufferC; // Albedo
 	IFrameBuffer* GBufferD; // ?? maybe material type
 
@@ -113,6 +118,8 @@ private:
 
 	// Ambient occlusion buffer.
 	IFrameBuffer* aoBuffer;
+
+	ITexture2D* depthTex;
 
 	IDepthBuffer* depth;
 

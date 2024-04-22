@@ -3,6 +3,7 @@
 #include "PropertyEditor.h"
 #include "Game/Entity.h"
 #include "EditorEngine.h"
+#include "Game/Components/SceneComponent.h"
 
 #include "Math/Color.h"
 
@@ -31,16 +32,73 @@ void CPropertyEditor::OnUIRender()
 		else
 			editName[0] = '\0';
 
-		if (ImGui::InputText("Name##_editorPropertyEditor", editName, 64, selectedEntities.Size() == 1 ? 0 : ImGuiInputTextFlags_ReadOnly))
+		ImVec2 cursor = ImGui::GetCursorScreenPos();
+		ImVec2 region = ImGui::GetContentRegionAvail();
+
+		ImGui::BeginDisabled(selectedEntities.Size() == 0);
+
+		if (ImGui::InputText("Name##_editorPropertyEditor", editName, 64))
 		{
 			selectedEntities[0]->SetName(editName);
 		}
 
+		ImGui::SetCursorScreenPos(cursor + ImVec2(region.x - 38, 0));
+		ImGui::ButtonClear("Add", ImVec2(32, 32));
+		
+		if (ImGui::BeginPopupContextItem("addCompBtn", ImGuiPopupFlags_MouseButtonLeft))
+		{
+			// the class to add.
+			FString c;
+
+			if (ImGui::BeginMenu("Lights"))
+			{
+				if (ImGui::MenuItem("Point Light"))
+					c = "CPointLightComponent";
+				if (ImGui::MenuItem("Spot Light"));
+				if (ImGui::MenuItem("Sun Light"))
+					c = "CSunLightComponent";
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Volumes"))
+			{
+				if (ImGui::MenuItem("Post Process Volume"))
+					c = "CPostProcessVolumeComp";
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::MenuItem("Scene Component"))
+				c = "CSceneComponent";
+			if (ImGui::MenuItem("Model"))
+				c = "CModelComponent";
+			if (ImGui::MenuItem("Camera"))
+				c = "CCameraComponent";
+
+			ImGui::Separator();
+
+			if (ImGui::MenuItem("Select Class..."));
+
+			ImGui::EndPopup();
+
+			FClass* _class = c.IsEmpty() ? nullptr : CModuleManager::FindClass(c);
+			if (_class)
+			{
+				TObjectPtr<CEntityComponent> comp = selectedEntities[0]->AddComponent(_class, _class->GetName());
+
+				// :P
+				bool* bUserCreated = (bool*)&*comp + CEntityComponent::__private_bUserCreated_offset();
+				*bUserCreated = true;
+
+				if (auto scene = CastChecked<CSceneComponent>(comp); scene)
+					scene->AttachTo(selectedEntities[0]->RootComponent());
+			}
+		}
+
+		ImGui::EndDisabled();
+
 		if (selectedEntities.Size() == 1)
 		{
-			if (prevEnt == nullptr)
-				prevEnt = selectedEntities[0];
-			else if (selectedEntities[0] != prevEnt)
+			if (selectedEntities[0] != prevEnt)
 			{
 				prevEnt = selectedEntities[0];
 				rotCache = prevEnt->RootComponent()->GetRotation().ToEuler().Degrees();
@@ -113,6 +171,16 @@ void CPropertyEditor::OnUIRender()
 						{
 							ImGui::SetDragDropPayload("ENTITY_COMPONENT_PAYLOAD", &comp, sizeof(void*));
 							ImGui::EndDragDropSource();
+						}
+
+						if (comp->IsUserCreated() && ImGui::BeginPopupContextItem())
+						{
+							if (ImGui::MenuItem("Delete"))
+							{
+								comp->GetEntity()->RemoveComponent(comp);
+							}
+
+							ImGui::EndPopup();
 						}
 
 						if (ImGui::BeginDragDropTarget())
@@ -816,21 +884,25 @@ void CPropertyEditor::RenderTransformEdit()
 
 			CEntityComponent* _c = selectedComp;
 			selectedComp = scene;
-			RenderVectorProperty((SizeType)p - (SizeType)scene, false);
+			if (RenderVectorProperty((SizeType)p - (SizeType)scene, false))
+				scene->SetPosition(*p);
 
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			ImGui::SetCursorScreenPos(ImGui::GetCursorScreenPos() + ImVec2(0, 4));
 			ImGui::Text("Rotation");
 			ImGui::TableNextColumn();
-			RenderQuatProperty((SizeType)r - (SizeType)scene, false);
+			if (RenderQuatProperty((SizeType)r - (SizeType)scene, false))
+				scene->SetPosition(*p); // Doesn't matter what we set, we just need the transform to be updated
 			
 			ImGui::TableNextRow();
 			ImGui::TableNextColumn();
 			ImGui::SetCursorScreenPos(ImGui::GetCursorScreenPos() + ImVec2(0, 4));
 			ImGui::Text("Scale");
 			ImGui::TableNextColumn();
-			RenderVectorProperty((SizeType)s - (SizeType)scene, false);
+			if (RenderVectorProperty((SizeType)s - (SizeType)scene, false))
+				scene->SetPosition(*p);
+
 			selectedComp = _c;
 		}
 
@@ -838,13 +910,15 @@ void CPropertyEditor::RenderTransformEdit()
 	}
 }
 
-void CPropertyEditor::RenderVectorProperty(SizeType offset, bool bReadOnly)
+bool CPropertyEditor::RenderVectorProperty(SizeType offset, bool bReadOnly)
 {
 	auto& selectedEntities = gEditorEngine()->selectedEntities;
 	void* obj = selectedComp != nullptr ? (void*)selectedComp : (void*)&*selectedEntities[0];
 
 	auto areaSize = ImGui::GetContentRegionAvail();
 	float tWidth = areaSize.x / 3 - 5.f;
+
+	bool r = false;
 
 	if (selectedEntities.Size() > 1)
 	{
@@ -878,6 +952,7 @@ void CPropertyEditor::RenderVectorProperty(SizeType offset, bool bReadOnly)
 				FVector& _v = *(FVector*)(((SizeType) & *t) + offset);
 				_v.x = v->x;
 			}
+			r = true;
 		}
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(tWidth);
@@ -888,6 +963,7 @@ void CPropertyEditor::RenderVectorProperty(SizeType offset, bool bReadOnly)
 				FVector& _v = *(FVector*)(((SizeType) & *t) + offset);
 				_v.y = v->y;
 			}
+			r = true;
 		}
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(tWidth);
@@ -898,29 +974,33 @@ void CPropertyEditor::RenderVectorProperty(SizeType offset, bool bReadOnly)
 				FVector& _v = *(FVector*)(((SizeType) & *t) + offset);
 				_v.z = v->z;
 			}
+			r = true;
 		}
 	}
 	else
 	{
 		FVector* v = (FVector*)(((SizeType)obj) + offset);
 		ImGui::SetNextItemWidth(tWidth);
-		ImGui::DragFloat(("##_vectorInputX" + FString::ToString(offset + (SizeType)v)).c_str(), &v->x, 0.1f, 0, 0, "X:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0);
+		r = ImGui::DragFloat(("##_vectorInputX" + FString::ToString(offset + (SizeType)v)).c_str(), &v->x, 0.1f, 0, 0, "X:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0) || r;
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(tWidth);
-		ImGui::DragFloat(("##_vectorInputY" + FString::ToString(offset + (SizeType)v)).c_str(), &v->y, 0.1f, 0, 0, "Y:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0);
+		r = ImGui::DragFloat(("##_vectorInputY" + FString::ToString(offset + (SizeType)v)).c_str(), &v->y, 0.1f, 0, 0, "Y:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0) || r;
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(tWidth);
-		ImGui::DragFloat(("##_vectorInputZ" + FString::ToString(offset + (SizeType)v)).c_str(), &v->z, 0.1f, 0, 0, "Z:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0);
+		r = ImGui::DragFloat(("##_vectorInputZ" + FString::ToString(offset + (SizeType)v)).c_str(), &v->z, 0.1f, 0, 0, "Z:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0) || r;
 	}
+	return r;
 }
 
-void CPropertyEditor::RenderColorProperty(SizeType offset, bool bReadOnly)
+bool CPropertyEditor::RenderColorProperty(SizeType offset, bool bReadOnly)
 {
 	auto& selectedEntities = gEditorEngine()->selectedEntities;
 	void* obj = selectedComp != nullptr ? (void*)selectedComp : (void*)&*selectedEntities[0];
 
 	//auto areaSize = ImGui::GetContentRegionAvail();
 	//float tWidth = areaSize.x / 3 - 5.f;
+
+	bool r = false;
 
 	if (selectedEntities.Size() > 1)
 	{
@@ -929,17 +1009,21 @@ void CPropertyEditor::RenderColorProperty(SizeType offset, bool bReadOnly)
 	else
 	{
 		FColor* v = (FColor*)(((SizeType)obj) + offset);
-		ImGui::ColorEdit4(("##_colorEdit" + FString::ToString(offset + (SizeType)v)).c_str(), (float*)v);
+		if (ImGui::ColorEdit4(("##_colorEdit" + FString::ToString(offset + (SizeType)v)).c_str(), (float*)v))
+			r = true;
 	}
+	return r;
 }
 
-void CPropertyEditor::RenderQuatProperty(SizeType offset, bool bReadOnly)
+bool CPropertyEditor::RenderQuatProperty(SizeType offset, bool bReadOnly)
 {
 	auto& selectedEntities = gEditorEngine()->selectedEntities;
 	void* obj = selectedComp != nullptr ? (void*)selectedComp : (void*)&*selectedEntities[0];
 
 	auto areaSize = ImGui::GetContentRegionAvail();
 	float tWidth = areaSize.x / 3 - 5.f;
+
+	bool r;
 
 	if (selectedEntities.Size() > 1)
 	{
@@ -949,21 +1033,43 @@ void CPropertyEditor::RenderQuatProperty(SizeType offset, bool bReadOnly)
 	{
 		FQuaternion* v = (FQuaternion*)(((SizeType)obj) + offset);
 		FVector euler = v->ToEuler().Degrees();
+		FVector prev = euler;
 
 		bool bUpdate = false;
+		int axis = 0;
 
 		ImGui::SetNextItemWidth(tWidth);
-		bUpdate = ImGui::DragFloat(("##_vectorInputX" + FString::ToString(offset + (SizeType)v)).c_str(), &rotCache.x, 0.1f, 0, 0, "X:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0);
+		if (ImGui::DragFloat(("##_vectorInputX" + FString::ToString(offset + (SizeType)v)).c_str(), &euler.x, 0.1f, 0, 0, "X:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0))
+		{
+			axis = 0;
+			bUpdate = true;
+		}
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(tWidth);
-		bUpdate = ImGui::DragFloat(("##_vectorInputY" + FString::ToString(offset + (SizeType)v)).c_str(), &rotCache.y, 0.1f, 0, 0, "Y:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0) || bUpdate;
+		if (ImGui::DragFloat(("##_vectorInputY" + FString::ToString(offset + (SizeType)v)).c_str(), &euler.y, 0.1f, 0, 0, "Y:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0))
+		{
+			axis = 1;
+			bUpdate = true;
+		}
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(tWidth);
-		bUpdate = ImGui::DragFloat(("##_vectorInputZ" + FString::ToString(offset + (SizeType)v)).c_str(), &rotCache.z, 0.1f, 0, 0, "Z:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0) || bUpdate;
+		if (ImGui::DragFloat(("##_vectorInputZ" + FString::ToString(offset + (SizeType)v)).c_str(), &euler.z, 0.1f, 0, 0, "Z:%.3f", bReadOnly ? ImGuiSliderFlags_ReadOnly : 0))
+		{
+			axis = 2;
+			bUpdate = true;
+		}
 
 		if (bUpdate)
 		{
-			*v = FQuaternion::EulerAngles(rotCache.Radians());
+			FVector deltaAngle = euler - prev;
+
+			if (axis == 1)
+				*v = FQuaternion::EulerAngles(deltaAngle.Radians()) * (*v);
+			else
+				*v *= FQuaternion::EulerAngles(deltaAngle.Radians());
 		}
+		r = bUpdate;
 	}
+
+	return r;
 }

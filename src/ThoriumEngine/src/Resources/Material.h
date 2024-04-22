@@ -3,12 +3,19 @@
 #include "Asset.h"
 #include "Math/Vectors.h"
 #include "Rendering/Shader.h"
-#include "Texture.h"
+#include "TextureAsset.h"
 #include "Rendering/Renderer.h"
 #include "Material.generated.h"
 
 class IShaderBuffer;
 struct FColor;
+
+enum EPreferredRenderPass
+{
+	PRP_DEFERRED,
+	PRP_OPAQUE_DEFERRED_TRANSPARENT_FORWARD, // Uses deferred shading if opaque, uses forward shading if transparent.
+	PRP_FORWARD
+};
 
 ASSET(Extension = ".thmat")
 class ENGINE_API CMaterial : public CAsset
@@ -84,9 +91,9 @@ public:
 	void Validate();
 
 	inline CShaderSource* GetShaderSource() const { return shader; }
-	inline IShader* GetVsShader() { return shader->vsShader; }
-	inline IShader* GetPsShader() { return shader->psShader; }
-	inline IShader* GetGeoShader() { return shader->geoShader; }
+	inline IShader* GetVsShader(EShaderType_ pass) { return shader->GetShader(ShaderType_Vertex | pass); }
+	inline IShader* GetPsShader(EShaderType_ pass) { return shader->GetShader(ShaderType_Fragment | pass); }
+	inline IShader* GetGeoShader(EShaderType_ pass) { return shader->GetShader(ShaderType_Geometry | pass); }
 
 	inline IShaderBuffer* GetGpuBuffer() const { return gpuBuffer; }
 
@@ -103,11 +110,20 @@ private:
 	FVector GetVec3FromString(const FString& str);
 	void GetVec4FromString(const FString& str, float* out);
 
+public:
+	int preferredRenderPass = PRP_OPAQUE_DEFERRED_TRANSPARENT_FORWARD;
+
+	// Forces this object to be rendered in the transparent pass, useful if the basecolor has transparency.
+	bool bForceTransparentPass = false;
+
+	bool bReceiveShadows = true;
+	bool bCastShadows = true;
+
+	bool bDepthTest = true;
+
 protected:
 	TArray<MatTexture> textures;
 	TArray<MatProperty> properties;
-
-	bool bDepthTest = true;
 
 	TObjectPtr<CShaderSource> shader;
 

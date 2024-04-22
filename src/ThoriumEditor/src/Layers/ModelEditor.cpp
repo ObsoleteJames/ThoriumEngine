@@ -5,6 +5,7 @@
 #include "Game/Entities/ModelEntity.h"
 #include "Game/Components/SkyboxComponent.h"
 #include "Game/Components/PointLightComponent.h"
+#include "Game/Input/InputManager.h"
 #include "Rendering/RenderScene.h"
 #include "Rendering/DebugRenderer.h"
 #include "AssetBrowserWidget.h"
@@ -16,6 +17,7 @@
 #include <assimp/postprocess.h>
 
 #include "EditorEngine.h"
+#include "CameraController.h"
 
 #include "Platform/Windows/DirectX/DirectXFrameBuffer.h"
 
@@ -61,6 +63,9 @@ CModelEditor::CModelEditor()
 	camera->position = { 0, 0, -1.5f };
 	camera->fov = 90.f;
 
+	camController = new CCameraController();
+	camController->SetCamera(camera);
+
 	//scene->SetPrimaryCamera(camera);
 
 	light1 = modelEnt->AddComponent<CPointLightComponent>("Light1");
@@ -81,6 +86,7 @@ void CModelEditor::SetModel(CModelAsset* mdl)
 	meshFiles.Clear();
 	this->mdl = mdl;
 	modelEnt->SetModel(mdl);
+	compiler.SetModel(mdl);
 
 	camera->position = mdl->bounds.position - camera->GetForwardVector() * FMath::Max(mdl->bounds.extents.Magnitude() * 1.5f, 1.f);
 
@@ -247,6 +253,13 @@ void CModelEditor::OnUIRender()
 		{
 			auto wndSize = ImGui::GetContentRegionAvail();
 
+			int wndX, wndY;
+			gEngine->GetGameWindow()->GetWindowPos(&wndX, &wndY);
+
+			auto cursorPos = ImGui::GetCursorScreenPos();
+			viewportX = cursorPos.x - (float)wndX;
+			viewportY = cursorPos.y - (float)wndY;
+
 			DirectXFrameBuffer* fb = (DirectXFrameBuffer*)framebuffer;
 			ImGui::Image(fb->view, { wndSize.x, wndSize.y });
 
@@ -263,6 +276,8 @@ void CModelEditor::OnUIRender()
 				}
 				ImGui::EndDragDropTarget();
 			}
+
+			camController->Update(gEngine->DeltaTime());
 
 			viewportWidth = FMath::Max((int)wndSize.x, 32);
 			viewportHeight = FMath::Max((int)wndSize.y, 32);
@@ -324,7 +339,10 @@ void CModelEditor::OnUIRender()
 							remove = i;
 						ImGui::SameLine();
 						if (ImGui::Button("Reload"))
+						{
 							LoadMeshFile(mesh);
+							bCompiled = false;
+						}
 						ImGui::PopStyleColor();
 
 						if (bOpen)
@@ -337,13 +355,14 @@ void CModelEditor::OnUIRender()
 							if (ImGui::InputText(("##meshFile" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.file, ImGuiInputTextFlags_EnterReturnsTrue))
 							{
 								LoadMeshFile(mesh);
+								bCompiled = false;
 							}
 
 							ImGui::SameLine();
 
 							if (ImGui::Button(("Browse##browseMesh" + FString::ToString(i)).c_str()))
 							{
-								const char* f = "FBX (.fbx)\0*.fbx\0Wavefront (.obj)\0*.obj\0glTF (.gltf .glb)\0*.gltf;*.glb\0All Files (*)\0*.*\0\0";
+								const char* f = "All Files (*)\0*.*\0FBX (.fbx)\0*.fbx\0Wavefront (.obj)\0*.obj\0glTF (.gltf .glb)\0*.gltf;*.glb\0\0";
 								FString filter;
 								filter.Resize(90);
 								memcpy(filter.Data(), f, 90);
@@ -353,6 +372,7 @@ void CModelEditor::OnUIRender()
 								{
 									mesh.file = file;
 									LoadMeshFile(mesh);
+									bCompiled = false;
 								}
 							}
 
@@ -362,17 +382,19 @@ void CModelEditor::OnUIRender()
 								ImGui::Text("Position");
 								ImGui::TableNextColumn();
 
-								auto areaSize = ImGui::GetContentRegionAvail();
-								float tWidth = areaSize.x / 3 - 5.f;
+								//auto areaSize = ImGui::GetContentRegionAvail();
+								//float tWidth = areaSize.x / 3 - 5.f;
 
-								ImGui::SetNextItemWidth(tWidth);
+								/*ImGui::SetNextItemWidth(tWidth);
 								ImGui::DragFloat(("##_posInputX" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.position.x, 0.1f);
 								ImGui::SameLine();
 								ImGui::SetNextItemWidth(tWidth);
 								ImGui::DragFloat(("##_posInputY" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.position.y, 0.1f);
 								ImGui::SameLine();
 								ImGui::SetNextItemWidth(tWidth);
-								ImGui::DragFloat(("##_posInputZ" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.position.z, 0.1f);
+								ImGui::DragFloat(("##_posInputZ" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.position.z, 0.1f);*/
+
+								ImGui::DragVector(("##_posinput" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.position, 0.1f);
 							}
 							{
 								ImGui::TableNextRow();
@@ -380,7 +402,7 @@ void CModelEditor::OnUIRender()
 								ImGui::Text("Rotation");
 								ImGui::TableNextColumn();
 
-								auto areaSize = ImGui::GetContentRegionAvail();
+								/*auto areaSize = ImGui::GetContentRegionAvail();
 								float tWidth = areaSize.x / 3 - 5.f;
 
 								ImGui::SetNextItemWidth(tWidth);
@@ -393,6 +415,9 @@ void CModelEditor::OnUIRender()
 								ImGui::SameLine();
 								ImGui::SetNextItemWidth(tWidth);
 								if (ImGui::DragFloat(("##_rotInputZ" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.rotation.z, 0.1f))
+									mesh.transform.rotation = FQuaternion::EulerAngles(mesh.rotation);*/
+
+								if (ImGui::DragVector(("##_rotinput" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.rotation, 0.1f))
 									mesh.transform.rotation = FQuaternion::EulerAngles(mesh.rotation);
 							}
 							{
@@ -404,14 +429,16 @@ void CModelEditor::OnUIRender()
 								auto areaSize = ImGui::GetContentRegionAvail();
 								float tWidth = areaSize.x / 3 - 5.f;
 
-								ImGui::SetNextItemWidth(tWidth);
+								/*ImGui::SetNextItemWidth(tWidth);
 								ImGui::DragFloat(("##_sclInputX" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.scale.x, 0.1f);
 								ImGui::SameLine();
 								ImGui::SetNextItemWidth(tWidth);
 								ImGui::DragFloat(("##_sclInputY" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.scale.y, 0.1f);
 								ImGui::SameLine();
 								ImGui::SetNextItemWidth(tWidth);
-								ImGui::DragFloat(("##_sclInputZ" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.scale.z, 0.1f);
+								ImGui::DragFloat(("##_sclInputZ" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.scale.z, 0.1f);*/
+
+								ImGui::DragVector(("##_scaleinput" + FString::ToString((SizeType)&mesh)).c_str(), &mesh.transform.scale, 0.1f);
 							}
 
 							/*if (ImGui::TableTreeHeader(("Import##" + FString::ToString((SizeType)&mesh)).c_str(), 0, true))
@@ -708,7 +735,7 @@ void CModelEditor::OnUIRender()
 					ImGui::TableNextColumn();
 					ImGui::Text("%d", (int)mdl->skeleton.bones.Size());
 
-					RenderSkeleton();
+					int highlight = -1;
 
 					for (SizeType i = 0; i < mdl->skeleton.bones.Size(); i++)
 					{
@@ -731,8 +758,12 @@ void CModelEditor::OnUIRender()
 
 							ImGui::TreePop();
 						}
+
+						if (ImGui::IsItemHovered())
+							highlight = i;
 					}
 
+					RenderSkeleton(highlight);
 					ImGui::TreePop();
 				}
 
@@ -744,6 +775,10 @@ void CModelEditor::OnUIRender()
 		ImGui::End();
 	}
 	ImGui::End();
+
+	// Update MouseRay
+	mouseRay = FRay::MouseToRay(camera, gEngine->InputManager()->GetMousePos() - FVector2(viewportX, viewportY), { (float)viewportWidth, (float)viewportHeight });
+	mouseRay.direction = mouseRay.direction.Normalize();
 
 	if (openPopup == 1)
 	{
@@ -837,7 +872,7 @@ void CModelEditor::OnDetach()
 	delete camera;
 }
 
-void CModelEditor::LoadMeshFile(FMeshFile& m)
+void LoadMeshFile(FMeshFile& m)
 {
 	unsigned int flags = aiProcess_Triangulate | aiProcess_MakeLeftHanded | aiProcess_OptimizeMeshes | aiProcess_FlipUVs | aiProcess_PopulateArmatureData;
 
@@ -852,150 +887,153 @@ void CModelEditor::LoadMeshFile(FMeshFile& m)
 	
 	if (auto i = m.name.FindLastOf("/\\"); i != -1)
 		m.name.Erase(m.name.begin(), m.name.begin() + i + 1);
-
-	bCompiled = false;
 }
 
 void CModelEditor::Compile()
 {
-	TArray<FMaterial> oldMats = mdl->materials;
+	//TArray<FMaterial> oldMats = mdl->materials;
 
-	mdl->ClearMeshData();
-	mdl->meshes.Clear();
-	mdl->materials.Clear();
-	mdl->skeleton.bones.Clear();
+	//mdl->ClearMeshData();
+	//mdl->meshes.Clear();
+	//mdl->materials.Clear();
+	//mdl->skeleton.bones.Clear();
 
-	SizeType meshesOffset = 0;
-	SizeType materialsOffset = 0;
-	SizeType boneOffset = 0;
+	//SizeType meshesOffset = 0;
+	//SizeType materialsOffset = 0;
+	//SizeType boneOffset = 0;
 
-	for (auto& file : meshFiles)
+	//for (auto& file : meshFiles)
+	//{
+	//	if (!file.scene)
+	//		LoadMeshFile(file);
+
+	//	if (file.scene)
+	//	{
+	//		auto* scene = file.scene;
+	//		auto* root = scene->mRootNode;
+
+	//		for (uint i = 0; i < scene->mNumMaterials; i++)
+	//		{
+	//			aiMaterial* sMat = scene->mMaterials[i];
+
+	//			FMaterial mat;
+	//			mat.name = sMat->GetName().C_Str();
+
+	//			mdl->materials.Add(mat);
+	//		}
+
+	//		/*for (uint i = 0; i < scene->mNumSkeletons; i++)
+	//		{
+	//			aiSkeleton* skeleton = scene->mSkeletons[i];
+
+	//			for (int ii = 0; ii < skeleton->mNumBones; ii++)
+	//			{
+	//				aiSkeletonBone* bone = skeleton->mBones[ii];
+	//				aiMatrix4x4& mat = bone->mLocalMatrix;
+
+	//				aiVector3D scale;
+	//				aiVector3D pos;
+	//				aiQuaternion rot;
+
+	//				mat.Decompose(scale, rot, pos);
+
+	//				FBone b;
+	//				b.name = bone->mNode ? bone->mNode->mName.C_Str() : "BONE";
+	//				b.position = { pos.x, pos.y, pos.z };
+	//				b.rotation = { rot.x, rot.y, rot.z, rot.w };
+
+	//				b.parent = bone->mParent == -1 ? -1 : bone->mParent + (int)boneOffset;
+
+	//				mdl->skeleton.bones.Add(b);
+	//			}
+	//		}*/
+
+	//		TArray<TPair<int, aiBone*>> bones;
+
+	//		CompileNode(file, scene, root, meshesOffset, materialsOffset, bones);
+
+	//		for (auto& b : bones)
+	//		{
+	//			FBone newBone;
+	//			newBone.name = b.Value->mName.C_Str();
+
+	//			aiVector3D scale;
+	//			aiVector3D pos;
+	//			aiQuaternion rot;
+
+	//			b.Value->mNode->mTransformation.Decompose(scale, rot, pos);
+	//			newBone.position = { pos.x, pos.y, pos.z };
+	//			newBone.rotation = { rot.x, rot.y, rot.z, rot.w };
+
+	//			auto& mesh = mdl->meshes[b.Key];
+
+	//			for (int i = 0; i < b.Value->mNumWeights; i++)
+	//			{
+	//				if (!mesh.vertexData)
+	//					continue;
+
+	//				auto& weight = b.Value->mWeights[i];
+	//				if (weight.mVertexId >= mesh.numVertexData)
+	//					continue;
+
+	//				FVertex& vertex = mesh.vertexData[weight.mVertexId];
+
+	//				for (int x = 0; x < 4; x++)
+	//				{
+	//					if (vertex.bones[x] == -1)
+	//					{
+	//						vertex.bones[x] = (int)mdl->skeleton.bones.Size();
+	//						vertex.boneInfluence[x] = weight.mWeight;
+	//						break;
+	//					}
+	//				}
+	//			}
+
+	//			mdl->skeleton.bones.Add(newBone);
+	//		}
+
+	//		// Resolve bone parents
+	//		for (int i = 0; i < bones.Size(); i++)
+	//		{
+	//			aiNode* parent = bones[i].Value->mNode->mParent;
+	//			mdl->skeleton.bones[i].parent = mdl->GetBoneIndex(parent->mName.C_Str());
+	//		}
+
+	//		for (int i = 0; i < mdl->meshes.Size(); i++)
+	//		{
+	//			if (mdl->meshes[i].meshName.IsEmpty())
+	//				mdl->meshes[i].meshName = "Mesh " + FString::ToString(i);
+	//		}
+
+	//		materialsOffset = mdl->materials.Size();
+	//		meshesOffset = mdl->meshes.Size();
+	//		boneOffset = mdl->skeleton.bones.Size();
+	//	}
+	//}
+
+	//for (auto& mat : mdl->materials)
+	//{
+	//	for (auto& m : oldMats)
+	//	{
+	//		if (mat.name == m.name)
+	//		{
+	//			mat.obj = m.obj;
+	//			mat.path = m.path;
+	//			break;
+	//		}
+	//	}
+	//}
+
+	//mdl->CalculateBounds();
+	//mdl->UpdateBoneMatrices();
+
+	if (compiler.Compile(mdl, meshFiles.Data(), meshFiles.Size()))
 	{
-		if (!file.scene)
-			LoadMeshFile(file);
-
-		if (file.scene)
-		{
-			auto* scene = file.scene;
-			auto* root = scene->mRootNode;
-
-			for (uint i = 0; i < scene->mNumMaterials; i++)
-			{
-				aiMaterial* sMat = scene->mMaterials[i];
-
-				FMaterial mat;
-				mat.name = sMat->GetName().C_Str();
-
-				mdl->materials.Add(mat);
-			}
-
-			/*for (uint i = 0; i < scene->mNumSkeletons; i++)
-			{
-				aiSkeleton* skeleton = scene->mSkeletons[i];
-
-				for (int ii = 0; ii < skeleton->mNumBones; ii++)
-				{
-					aiSkeletonBone* bone = skeleton->mBones[ii];
-					aiMatrix4x4& mat = bone->mLocalMatrix;
-
-					aiVector3D scale;
-					aiVector3D pos;
-					aiQuaternion rot;
-
-					mat.Decompose(scale, rot, pos);
-
-					FBone b;
-					b.name = bone->mNode ? bone->mNode->mName.C_Str() : "BONE";
-					b.position = { pos.x, pos.y, pos.z };
-					b.rotation = { rot.x, rot.y, rot.z, rot.w };
-
-					b.parent = bone->mParent == -1 ? -1 : bone->mParent + (int)boneOffset;
-
-					mdl->skeleton.bones.Add(b);
-				}
-			}*/
-
-			TArray<TPair<int, aiBone*>> bones;
-
-			CompileNode(file, scene, root, meshesOffset, materialsOffset, bones);
-
-			for (auto& b : bones)
-			{
-				FBone newBone;
-				newBone.name = b.Value->mName.C_Str();
-
-				aiVector3D scale;
-				aiVector3D pos;
-				aiQuaternion rot;
-
-				b.Value->mOffsetMatrix.Decompose(scale, rot, pos);
-				newBone.position = { pos.x, pos.y, pos.z };
-				newBone.rotation = { rot.x, rot.y, rot.z, rot.w };
-
-				auto& mesh = mdl->meshes[b.Key];
-
-				for (int i = 0; i < b.Value->mNumWeights; i++)
-				{
-					if (!mesh.vertexData)
-						continue;
-
-					auto& weight = b.Value->mWeights[i];
-					if (weight.mVertexId >= mesh.numVertexData)
-						continue;
-
-					FVertex& vertex = mesh.vertexData[weight.mVertexId];
-
-					for (int x = 0; x < 4; x++)
-					{
-						if (vertex.bones[x] == -1)
-						{
-							vertex.bones[x] = (int)mdl->skeleton.bones.Size();
-							vertex.boneInfluence[x] = weight.mWeight;
-							break;
-						}
-					}
-				}
-
-				mdl->skeleton.bones.Add(newBone);
-			}
-
-			// Resolve bone parents
-			for (int i = 0; i < bones.Size(); i++)
-			{
-				aiNode* parent = bones[i].Value->mNode->mParent;
-				mdl->skeleton.bones[i].parent = mdl->GetBoneIndex(parent->mName.C_Str());
-			}
-
-			for (int i = 0; i < mdl->meshes.Size(); i++)
-			{
-				if (mdl->meshes[i].meshName.IsEmpty())
-					mdl->meshes[i].meshName = "Mesh " + FString::ToString(i);
-			}
-
-			materialsOffset = mdl->materials.Size();
-			meshesOffset = mdl->meshes.Size();
-			boneOffset = mdl->skeleton.bones.Size();
-		}
+		bCompiled = true;
+		modelEnt->SetModel(mdl);
 	}
-
-	for (auto& mat : mdl->materials)
-	{
-		for (auto& m : oldMats)
-		{
-			if (mat.name == m.name)
-			{
-				mat.obj = m.obj;
-				mat.path = m.path;
-				break;
-			}
-		}
-	}
-
-	mdl->CalculateBounds();
-	mdl->UpdateBoneMatrices();
-
-	bCompiled = true;
-	modelEnt->SetModel(mdl);
+	else
+		bCompiled = false;
 }
 
 aiMatrix4x4 GetNodeWorldTransform(aiNode* node)
@@ -1006,7 +1044,7 @@ aiMatrix4x4 GetNodeWorldTransform(aiNode* node)
 	return node->mTransformation;
 }
 
-void CModelEditor::CompileNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, TArray<TPair<int, aiBone*>>& outBones)
+void CModelCompiler::CompileNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, TArray<TPair<int, aiBone*>>& outBones)
 {
 	//for (uint i = 0; i < node->mNumMeshes; i++)
 	//{
@@ -1049,6 +1087,10 @@ void CModelEditor::CompileNode(FMeshFile& file, const aiScene* scene, aiNode* no
 			v.bones[1] = -1;
 			v.bones[2] = -1;
 			v.bones[3] = -1;
+			v.boneInfluence[0] = 0.f;
+			v.boneInfluence[1] = 0.f;
+			v.boneInfluence[2] = 0.f;
+			v.boneInfluence[3] = 0.f;
 
 			auto vPos = mesh->mVertices[i];
 			auto vNormal = mesh->mNormals ? mesh->mNormals[i] : aiVector3D(0, 1, 0);
@@ -1139,8 +1181,8 @@ void CModelEditor::CompileNode(FMeshFile& file, const aiScene* scene, aiNode* no
 		fmesh.numVertices = vertices.Size();
 		fmesh.numIndices = indices.Size();
 
-		fmesh.vertexBuffer = gRenderer->CreateVertexBuffer(vertices);
-		fmesh.indexBuffer = gRenderer->CreateIndexBuffer(indices);
+		//fmesh.vertexBuffer = gRenderer->CreateVertexBuffer(vertices);
+		//fmesh.indexBuffer = gRenderer->CreateIndexBuffer(indices);
 
 		fmesh.CalculateBounds();
 
@@ -1178,6 +1220,9 @@ void CModelEditor::DrawMeshResources(FMeshFile& m)
 
 	if (scene->mRootNode)
 		DrawAiNode(scene, scene->mRootNode);
+
+	if (scene->mNumAnimations > 0)
+		DrawAnimations(scene);
 }
 
 void CModelEditor::DrawAiNode(const aiScene* scene, aiNode* node)
@@ -1254,6 +1299,52 @@ void CModelEditor::DrawAiNode(const aiScene* scene, aiNode* node)
 	}
 }
 
+void CModelEditor::DrawAnimations(const aiScene* scene)
+{
+	if (ImGui::TableTreeHeader("Animations", 0, true))
+	{
+		for (int i = 0; i < scene->mNumAnimations; i++)
+		{
+			aiAnimation* anim = scene->mAnimations[i];
+
+			if (ImGui::TableTreeHeader(anim->mName.C_Str(), 0, true))
+			{
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				if (ImGui::Button("Export"))
+				{
+					// TODO: export animation
+				}
+				
+				ImGui::SameLine(); ImGui::TextDisabled("(?)");
+				if (ImGui::BeginItemTooltip())
+				{
+					ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+					ImGui::TextUnformatted("Animations are stored in a seperate file\nto use animations it must be exported from the model and into its own file.");
+					ImGui::PopTextWrapPos();
+					ImGui::EndTooltip();
+				}
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::Text("Duration");
+				ImGui::TableNextColumn();
+				ImGui::Text("%0.3fs", (float)anim->mDuration / (float)anim->mTicksPerSecond);
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::Text("Frame Rate");
+				ImGui::TableNextColumn();
+				ImGui::Text("%0.1f", (float)anim->mTicksPerSecond);
+
+				ImGui::TreePop();
+			}
+		}
+
+		ImGui::TreePop();
+	}
+}
+
 void CModelEditor::OnSaveNewModel(int r)
 {
 	if (r != 0)
@@ -1287,8 +1378,270 @@ void CModelEditor::SaveMdl()
 		return;
 	}
 
+	compiler.SaveModel(meshFiles.Data(), meshFiles.Size());
+	bSaved = true;
+}
+
+void CModelEditor::Revert()
+{
+	// ??
+	bSaved = true;
+}
+
+void CModelEditor::RenderSkeleton(int highlight)
+{
+	gDebugRenderer->SetScene(scene->GetRenderScene());
+	
+	for (int i = 0; i < mdl->skeleton.bones.Size(); i++)
+	{
+		FBone& bone = mdl->skeleton.bones[i];
+		FBone* parent = bone.parent == -1 ? nullptr : &mdl->skeleton.bones[bone.parent];
+
+		FTransform boneTransform = mdl->GetBoneModelTransform(i);
+
+		if (FMath::RayBox(FBounds(boneTransform.position, FVector(0.05f)), FQuaternion(), mouseRay))
+			highlight = i;
+		
+		gDebugRenderer->DrawBox(FTransform(boneTransform.position, FQuaternion(), FVector(0.1f)), highlight == i ? FColor::lime : FColor::blue.WithAlpha(0.5f), DebugDrawType_Solid | DebugDrawType_Overlay);
+
+		if (!parent || bone.parent == 0)
+			continue;
+
+		FTransform parentTransform = mdl->GetBoneModelTransform(bone.parent);
+
+		gDebugRenderer->DrawLine(boneTransform.position, parentTransform.position, FColor::orange, 0, true);
+	}
+
+	gDebugRenderer->SetScene(nullptr);
+}
+
+bool CModelCompiler::Compile(CModelAsset* _mdl, FMeshFile* meshFiles, int numMeshFiles, const FModelCompileSettings& settings)
+{
+	mdl = _mdl;
+
+	TArray<FMaterial> oldMats = mdl->materials;
+
+	mdl->ClearMeshData();
+	mdl->meshes.Clear();
+	//mdl->ClearMeshes();
+	mdl->materials.Clear();
+	mdl->skeleton.bones.Clear();
+
+	SizeType meshesOffset = 0;
+	SizeType materialsOffset = 0;
+	SizeType boneOffset = 0;
+
+	for (int i = 0; i < numMeshFiles; i++)
+	{
+		auto& file = meshFiles[i];
+
+		if (!file.scene)
+			LoadMeshFile(file);
+
+		if (file.scene)
+		{
+			auto* scene = file.scene;
+			auto* root = scene->mRootNode;
+
+			for (uint i = 0; i < scene->mNumMaterials; i++)
+			{
+				aiMaterial* sMat = scene->mMaterials[i];
+
+				FMaterial mat;
+				mat.name = sMat->GetName().C_Str();
+
+				if (settings.bCreateMaterials)
+				{
+					
+				}
+
+				mdl->materials.Add(mat);
+			}
+
+			/*for (uint i = 0; i < scene->mNumSkeletons; i++)
+			{
+				aiSkeleton* skeleton = scene->mSkeletons[i];
+
+				for (int ii = 0; ii < skeleton->mNumBones; ii++)
+				{
+					aiSkeletonBone* bone = skeleton->mBones[ii];
+					aiMatrix4x4& mat = bone->mLocalMatrix;
+
+					aiVector3D scale;
+					aiVector3D pos;
+					aiQuaternion rot;
+
+					mat.Decompose(scale, rot, pos);
+
+					FBone b;
+					b.name = bone->mNode ? bone->mNode->mName.C_Str() : "BONE";
+					b.position = { pos.x, pos.y, pos.z };
+					b.rotation = { rot.x, rot.y, rot.z, rot.w };
+
+					b.parent = bone->mParent == -1 ? -1 : bone->mParent + (int)boneOffset;
+
+					mdl->skeleton.bones.Add(b);
+				}
+			}*/
+
+			TArray<TPair<int, aiBone*>> bones;
+
+			CompileNode(file, scene, root, meshesOffset, materialsOffset, bones);
+
+			for (auto& b : bones)
+			{
+				FBone newBone;
+				newBone.name = b.Value->mName.C_Str();
+
+				aiVector3D scale;
+				aiVector3D pos;
+				aiQuaternion rot;
+
+				b.Value->mNode->mTransformation.Decompose(scale, rot, pos);
+				newBone.position = { pos.x, pos.y, pos.z };
+				newBone.rotation = { rot.x, rot.y, rot.z, rot.w };
+
+				auto& mesh = mdl->meshes[b.Key];
+
+				for (int i = 0; i < b.Value->mNumWeights; i++)
+				{
+					if (!mesh.vertexData)
+						continue;
+
+					auto& weight = b.Value->mWeights[i];
+					if (weight.mVertexId >= mesh.numVertexData)
+						continue;
+
+					FVertex& vertex = mesh.vertexData[weight.mVertexId];
+
+					for (int x = 0; x < 4; x++)
+					{
+						if (vertex.bones[x] == -1)
+						{
+							vertex.bones[x] = (int)mdl->skeleton.bones.Size();
+							vertex.boneInfluence[x] = weight.mWeight;
+							break;
+						}
+					}
+				}
+
+				mdl->skeleton.bones.Add(newBone);
+			}
+
+			// Resolve bone parents
+			for (int i = 0; i < bones.Size(); i++)
+			{
+				aiNode* parent = bones[i].Value->mNode->mParent;
+				mdl->skeleton.bones[i].parent = mdl->GetBoneIndex(parent->mName.C_Str());
+			}
+
+			for (int i = 0; i < mdl->meshes.Size(); i++)
+			{
+				if (mdl->meshes[i].meshName.IsEmpty())
+					mdl->meshes[i].meshName = "Mesh " + FString::ToString(i);
+
+				// Create render buffers for meshes
+				struct ImSorry
+				{
+					void* data;
+					SizeType size;
+					SizeType capacity;
+				};
+				ImSorry vertexData{ mdl->meshes[i].vertexData, mdl->meshes[i].numVertexData, mdl->meshes[i].numVertexData };
+				mdl->meshes[i].vertexBuffer = gRenderer->CreateVertexBuffer(*(TArray<FVertex>*)&vertexData);
+
+				ImSorry indexData{ mdl->meshes[i].indexData, mdl->meshes[i].numIndexData, mdl->meshes[i].numIndexData };
+				mdl->meshes[i].indexBuffer = gRenderer->CreateIndexBuffer(*(TArray<uint>*)&indexData);
+			}
+
+			mdl->_SetLod(0);
+
+			materialsOffset = mdl->materials.Size();
+			meshesOffset = mdl->meshes.Size();
+			boneOffset = mdl->skeleton.bones.Size();
+		}
+		else
+			return false;
+	}
+
+	for (auto& mat : mdl->materials)
+	{
+		for (auto& m : oldMats)
+		{
+			if (mat.name == m.name)
+			{
+				mat.obj = m.obj;
+				mat.path = m.path;
+				break;
+			}
+		}
+	}
+
+	mdl->CalculateBounds();
+	mdl->UpdateBoneMatrices();
+
+	return true;
+}
+
+bool CModelCompiler::GenerateLODGroups(FString suffix /*= "_LOD"*/)
+{
+	// Meshes without suffix
+	TArray<FMesh*> unkownMeshes;
+
+	int meshesAdded = 0;
+	int meshIndex = 0;
+	for (auto& mesh : mdl->meshes)
+	{
+		meshIndex++;
+		SizeType i = mesh.meshName.Find(suffix);
+		if (i == -1)
+		{
+			unkownMeshes.Add(&mesh);
+			continue;
+		}
+
+		FString index = mesh.meshName;
+		index.Erase(index.begin(), index.begin() + i + suffix.Size());
+
+		int lodIndex = -1;
+		try
+		{
+			lodIndex = FMath::Clamp(index.ToInt(), 0, 5);
+		}
+		catch (std::exception& e) {}
+
+		if (lodIndex == -1)
+		{
+			unkownMeshes.Add(&mesh);
+			continue;
+		}
+
+		mdl->numLODs = lodIndex + 1;
+		mdl->LODs[lodIndex].meshIndices.Add(meshIndex - 1);
+		meshesAdded++;
+	}
+
+	if (meshesAdded > 0)
+	{
+		FBounds bounds = mdl->GetBounds();
+		for (int i = 0; i < mdl->numLODs; i++)
+		{
+			mdl->LODs[i].distanceBias = bounds.Size().Magnitude() * 2 * i;
+		}
+	}
+
+	return meshesAdded > 0;
+}
+
+bool CModelCompiler::GenerateConvexCollision()
+{
+	return false;
+}
+
+void CModelCompiler::SaveModel(FMeshFile* meshFiles, int numMeshFiles)
+{
 	FKeyValue kv(mdl->File()->GetSdkPath());
-	for (int i = 0; i < meshFiles.Size(); i++)
+	for (int i = 0; i < numMeshFiles; i++)
 	{
 		auto* cat = kv.GetCategory(meshFiles[i].name + "_" + FString::ToString(i), true);
 
@@ -1305,31 +1658,9 @@ void CModelEditor::SaveMdl()
 	kv.Save();
 
 	mdl->Save();
-	bSaved = true;
 }
 
-void CModelEditor::Revert()
+bool CModelCompiler::ImportAnimations(FMeshFile* meshFiles, int numMeshFiles, const FAnimationImportSettings& settings)
 {
-	// ??
-	bSaved = true;
-}
-
-void CModelEditor::RenderSkeleton()
-{
-	gDebugRenderer->SetScene(scene->GetRenderScene());
-	
-	for (int i = 0; i < mdl->skeleton.bones.Size(); i++)
-	{
-		FBone& bone = mdl->skeleton.bones[i];
-		FBone* parent = bone.parent == -1 ? nullptr : &mdl->skeleton.bones[bone.parent];
-
-		//gDebugRenderer->DrawBox(FTransform(bone.position, FQuaternion(), FVector(0.1f)), FColor::blue, DebugDrawType_Solid);
-
-		if (!parent || bone.parent == 0)
-			continue;
-		
-		gDebugRenderer->DrawLine(bone.position, parent->position, FColor::orange, 0, true);
-	}
-
-	gDebugRenderer->SetScene(nullptr);
+	return false;
 }

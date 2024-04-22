@@ -8,6 +8,7 @@
 class CRenderScene;
 class CCameraProxy;
 class CMaterial;
+class IFrameBuffer;
 
 class ENGINE_API CCameraProxy
 {
@@ -31,6 +32,9 @@ public:
 	inline FVector GetUpVector() const { return rotation.Rotate({ 0.f, 1.f, 0.f }); }
 
 public:
+	// the cameras render target, if null the scene's render target will be used.
+	IFrameBuffer* renderTarget = nullptr;
+
 	FVector position;
 	FQuaternion rotation;
 	FMatrix view;
@@ -160,7 +164,7 @@ public:
 
 public:
 	EType type;
-	EBakeMode bakingMode;
+	EBakeMode bakingMode = BAKE_NONE;
 
 	FVector position;
 	FVector direction;

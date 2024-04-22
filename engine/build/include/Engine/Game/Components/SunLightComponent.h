@@ -7,7 +7,7 @@
 
 class CLightProxy;
 
-CLASS()
+CLASS(Name = "Sun Light")
 class ENGINE_API CSunLightComponent : public CSceneComponent
 {
 	GENERATED_BODY()

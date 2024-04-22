@@ -17,8 +17,8 @@ public:
 	void SetPosition(const FVector& p) final;
 	FVector GetPosition() final;
 
-	FVector GetScale() final;
 	void SetScale(const FVector& s) final;
+	FVector GetScale() final;
 
 	void SetRotation(const FQuaternion& r) final;
 	FQuaternion GetRotation() final;
@@ -29,6 +29,13 @@ public:
 
 	void SetAngularVelocity(const FVector& v) final;
 	FVector GetAngularVelocity() final;
+
+	void MoveTo(const FVector& position, const FQuaternion& rotation) final;
+
+	void SetMotionType(EPhysicsBodyMotion type) final;
+
+	void SetEnabled(bool bEnabled) final;
+	bool IsEnabled() const final;
 
 	bool IsAwake() final;
 	void Wake() final;
@@ -43,5 +50,7 @@ public:
 
 	JPH::Body* body;
 	JPH::BodyID bodyId;
+
+	bool bBodyEnabled = false;
 
 };

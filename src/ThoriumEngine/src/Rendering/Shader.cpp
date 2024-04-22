@@ -6,7 +6,8 @@
 #include <Util/FStream.h>
 
 #define THCS_VERSION_06 6
-#define THCS_VERSION 7
+#define THCS_VERSION_07 7
+#define THCS_VERSION 8
 
 #define THCS_MAGIC_SIZE 28
 static const char* thcsMagicStr = "\0\0ThoriumEngine Shader File\0";
@@ -17,7 +18,7 @@ static CConCmd cmdDebugShader("shader.printinfo", [](const TArray<FString>& args
 	if (args.Size() == 0)
 		return;
 	
-	CShaderSource* shader = CShaderSource::GetShader(args[0]);
+	CShaderSource* shader = CShaderSource::GetShaderSource(args[0]);
 	if (!shader)
 	{
 		CONSOLE_LogWarning("CShaderSource", "Unknown shader: " + args[0]);
@@ -56,9 +57,9 @@ static CConCmd cmdDebugShader("shader.printinfo", [](const TArray<FString>& args
 
 CShaderSource::~CShaderSource()
 {
-	delete vsShader;
-	delete psShader;
-	delete geoShader;
+	for (auto& sh : shaders)
+		delete sh.Value;
+	shaders.Clear();
 }
 
 void CShaderSource::Init()
@@ -99,10 +100,9 @@ void CShaderSource::Init()
 
 	bCompiled = true;
 
-	uint16 version;
 	*stream >> &version;
 	
-	if (version != THCS_VERSION && version != THCS_VERSION_06)
+	if (version != THCS_VERSION && version != THCS_VERSION_06 && version != THCS_VERSION_07)
 	{
 		if (version == 5)
 		{
@@ -118,7 +118,31 @@ void CShaderSource::Init()
 	*stream >> &type;
 	*stream >> &bufferSize;
 
-	*stream >> &bHasVS >> &bHasPS >> &bHasGEO;
+	if (version > THCS_VERSION_07)
+	{
+		uint8 numShaders;
+		*stream >> &numShaders;
+
+		for (uint8 i = 0; i < numShaders; i++)
+		{
+			// Shader type
+			shaders.Add();
+			*stream >> &shaders.last()->Key;
+			shaders.last()->Value = nullptr;
+		}
+	}
+
+	if (version <= THCS_VERSION_07)
+	{
+		*stream >> &bHasVS >> &bHasPS >> &bHasGEO;
+
+		if (bHasVS)
+			shaders.Add({ ShaderType_Vertex | ShaderType_ForwardPass | ShaderType_DeferredPass, nullptr });
+		if (bHasPS)
+			shaders.Add({ ShaderType_Fragment | ShaderType_ForwardPass | ShaderType_DeferredPass, nullptr });
+		if (bHasGEO)
+			shaders.Add({ ShaderType_Geometry | ShaderType_ForwardPass | ShaderType_DeferredPass, nullptr });
+	}
 
 	uint32 numProperties = 0;
 	*stream >> &numProperties;
@@ -178,7 +202,14 @@ void CShaderSource::Save()
 	*stream << (int8*)&type;
 	*stream << &bufferSize;
 
-	*stream << &bHasVS << &bHasPS << &bHasGEO;
+	uint8 numShaders = (uint8)shaders.Size();
+	*stream << &numShaders;
+
+	for (uint8 i = 0; i < numShaders; i++)
+	{
+		// Shader type
+		*stream << &shaders[i].Key;
+	}
 
 	uint32 numProperties = (uint32)properties.Size() + (uint32)textures.Size();
 	*stream << &numProperties;
@@ -232,8 +263,38 @@ bool CShaderSource::Compile()
 	bHasGEO = 0;
 
 	CFStream stream;
+
+	shaders.Clear();
 	
-	if (!shader.vertexShader.IsEmpty())
+	for (auto& sh : shader.shaders)
+	{
+		void* data;
+		SizeType size;
+
+		if (sh.Key & ShaderType_Vertex)
+			gRenderer->CompileShader(shader.global + sh.Value, IShader::VFX_VS, &data, &size);
+		if (sh.Key & ShaderType_Fragment)
+			gRenderer->CompileShader(shader.global + sh.Value, IShader::VFX_PS, &data, &size);
+		if (sh.Key & ShaderType_Geometry)
+			gRenderer->CompileShader(shader.global + sh.Value, IShader::VFX_GEO, &data, &size);
+
+		THORIUM_ASSERT(data, "Failed to compile shader!");
+
+		if (data)
+		{
+			FString shaderName = GetShaderName((EShaderType)sh.Key);
+			FString p = file->Dir()->GetPath() + "/vfx/" + file->Name() + ".thcs." + shaderName;
+			file->Mod()->CreateFile(p);
+			stream.Open(ToFString(file->Mod()->Path() + "/" + p), "wb");
+			if (stream.IsOpen())
+				stream.Write(data, size);
+			stream.Close();
+
+			shaders.Add({ sh.Key, nullptr });
+		}
+	}
+
+	/*if (!shader.vertexShader.IsEmpty())
 	{
 		void* vsData;
 		SizeType size;
@@ -286,7 +347,7 @@ bool CShaderSource::Compile()
 		if (stream.IsOpen())
 			stream.Write(vsData, size);
 		stream.Close();
-	}
+	}*/
 
 	shaderName = shader.name;
 	description = shader.description;
@@ -316,11 +377,13 @@ bool CShaderSource::Compile()
 	CONSOLE_LogInfo("CShaderSource", FString("Compiled shader '") + ToFString(file->Name()) + "'!");
 	bCompiled = true;
 
-	delete vsShader;
-	delete psShader;
+	//delete vsShader;
+	//delete psShader;
+	//delete geoShader;
 
-	vsShader = nullptr;
-	psShader = nullptr;
+	//vsShader = nullptr;
+	//psShader = nullptr;
+	//geoShader = nullptr;
 
 	LoadShaderObjects();
 	return true;
@@ -331,19 +394,58 @@ void CShaderSource::LoadShaderObjects()
 	if (!gRenderer || !bCompiled)
 		return;
 
-	if (bHasVS && !vsShader)
-		gRenderer->GetVsShader(this);
-	if (bHasPS && !psShader)
-		gRenderer->GetPsShader(this);
+	//if (bHasVS && !vsShader)
+	//	gRenderer->GetVsShader(this);
+	//if (bHasPS && !psShader)
+	//	gRenderer->GetPsShader(this);
+
+	for (auto& sh : shaders)
+	{
+		FString shaderName = GetShaderName((EShaderType)sh.Key);
+		FString p = file->Mod()->Path() + "/"  + file->Dir()->GetPath() + "/vfx/" + file->Name() + ".thcs." + shaderName;
+		sh.Value = gRenderer->LoadShader(this, (EShaderType)sh.Key, p);
+	}
 }
 
-CShaderSource* CShaderSource::GetShader(const FString& name)
+CShaderSource* CShaderSource::GetShaderSource(const FString& name)
 {
 	for (auto& it : _shaders)
 		if (it->shaderName == name)
 			return it;
 
 	return nullptr;
+}
+
+IShader* CShaderSource::GetShader(EShaderType_ in)
+{
+	int pass = (int)in & (ShaderType_DeferredPass | ShaderType_ForwardPass);
+	int type = (int)in & (ShaderType_Fragment | ShaderType_Vertex | ShaderType_Geometry);
+
+	for (auto& sh : shaders)
+	{
+		if ((sh.Key & type) != 0 && ((pass != 0 && (sh.Key & pass)) || pass == 0))
+			return sh.Value;
+	}
+	return nullptr;
+}
+
+FString CShaderSource::GetShaderName(EShaderType_ type)
+{
+	FString shaderName;
+
+	if (type & ShaderType_Vertex)
+		shaderName = "vs";
+	if (type & ShaderType_Fragment)
+		shaderName = "ps";
+	if (type & ShaderType_Geometry)
+		shaderName = "geo";
+
+	if ((type & ShaderType_DeferredPass) && (type & ShaderType_ForwardPass) == 0)
+		shaderName += ".df";
+	if ((type & ShaderType_DeferredPass) == 0 && (type & ShaderType_ForwardPass))
+		shaderName += ".fwd";
+
+	return shaderName;
 }
 
 const TArray<TObjectPtr<CShaderSource>>& CShaderSource::GetAllShaders()

@@ -2,11 +2,11 @@
 #include "Bounds.h"
 #include "Math/Transform.h"
 
-FBounds::FBounds(const FVector& pos, FVector& ext) : position(pos), extents(ext)
+FBounds::FBounds(const FVector& pos, const FVector& ext) : position(pos), extents(ext)
 {
 }
 
-FBounds FBounds::FromMinMax(FVector min, FVector max)
+FBounds FBounds::FromMinMax(const FVector& min, const FVector& max)
 {
 	FVector center = (min + max) / 2;
 	FVector extent = (max - min) / 2;

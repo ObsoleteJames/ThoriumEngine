@@ -12,9 +12,9 @@ struct ENGINE_API FBounds
 public:
 	FBounds() = default;
 	FBounds(const FBounds&) = default;
-	FBounds(const FVector& pos, FVector& ext);
+	FBounds(const FVector& pos, const FVector& ext);
 
-	static FBounds FromMinMax(FVector min, FVector max);
+	static FBounds FromMinMax(const FVector& min, const FVector& max);
 
 	inline FVector Min() const { return position - extents; }
 	inline FVector Max() const { return position + extents; }

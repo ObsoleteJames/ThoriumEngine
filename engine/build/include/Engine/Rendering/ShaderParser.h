@@ -28,9 +28,11 @@ public:
 	SizeType bufferSize;
 
 	FString global;
-	FString vertexShader;
-	FString pixelShader;
-	FString geoShader;
+	//FString vertexShader;
+	//FString pixelShader;
+	//FString geoShader;
+
+	TArray<TPair<uint8, FString>> shaders;
 };
 
 extern bool ENGINE_API ParseShaderSourceFile(const FString& file, FShaderSourceFile& out);

@@ -45,7 +45,10 @@ void CAddonsWindow::OnUIRender()
 						ImGui::TableNextRow();
 						ImGui::TableNextColumn();
 
+						ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
 						ImGui::Text(addon.name.c_str());
+						ImGui::PopFont();
+
 						ImGui::TextWrapped(addon.description.c_str());
 
 						ImGui::Spacing();
@@ -75,6 +78,8 @@ void CAddonsWindow::OnUIRender()
 							{
 								addons.Add("core:" + addon.identity);
 							}
+
+							gEditorEngine()->SaveProjectConfig();
 						}
 
 						ImGui::SetCursorScreenPos(pos + ImVec2(ImGui::GetContentRegionAvail().x - 30, 0));

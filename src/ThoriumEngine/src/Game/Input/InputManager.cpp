@@ -262,6 +262,8 @@ void CInputManager::CopyState(CInputManager* other)
 	actions = other->actions;
 	axis = other->axis;
 
+	SetInputMode(inputMode);
+
 	CONSOLE_LogInfo("CInputManager", "Input manager copied state");
 }
 

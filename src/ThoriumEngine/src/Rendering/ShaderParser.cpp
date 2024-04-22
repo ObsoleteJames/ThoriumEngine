@@ -86,6 +86,23 @@ bool ParseShaderSourceFile(const FString& file, FShaderSourceFile& out)
 				if (prevValue == "VS")
 				{
 					curBlock = EShaderBlock_VERTEX;
+					out.shaders.Add({ ShaderType_Vertex | ShaderType_DeferredPass | ShaderType_ForwardPass });
+					curMode = 0;
+					value.Clear();
+					continue;
+				}
+				if (prevValue == "VS_FORWARD")
+				{
+					curBlock = EShaderBlock_VERTEX;
+					out.shaders.Add({ ShaderType_Vertex | ShaderType_ForwardPass });
+					curMode = 0;
+					value.Clear();
+					continue;
+				}
+				if (prevValue == "VS_DEFERRED")
+				{
+					curBlock = EShaderBlock_VERTEX;
+					out.shaders.Add({ ShaderType_Vertex | ShaderType_DeferredPass });
 					curMode = 0;
 					value.Clear();
 					continue;
@@ -93,6 +110,23 @@ bool ParseShaderSourceFile(const FString& file, FShaderSourceFile& out)
 				if (prevValue == "PS")
 				{
 					curBlock = EShaderBlock_PIXEL;
+					out.shaders.Add({ ShaderType_Fragment | ShaderType_DeferredPass | ShaderType_ForwardPass });
+					curMode = 0;
+					value.Clear();
+					continue;
+				}
+				if (prevValue == "PS_FORWARD")
+				{
+					curBlock = EShaderBlock_PIXEL;
+					out.shaders.Add({ ShaderType_Fragment | ShaderType_ForwardPass });
+					curMode = 0;
+					value.Clear();
+					continue;
+				}
+				if (prevValue == "PS_DEFERRED")
+				{
+					curBlock = EShaderBlock_PIXEL;
+					out.shaders.Add({ ShaderType_Fragment | ShaderType_DeferredPass });
 					curMode = 0;
 					value.Clear();
 					continue;
@@ -100,6 +134,23 @@ bool ParseShaderSourceFile(const FString& file, FShaderSourceFile& out)
 				if (prevValue == "GEO")
 				{
 					curBlock = EShaderBlock_GEO;
+					out.shaders.Add({ ShaderType_Geometry | ShaderType_DeferredPass | ShaderType_ForwardPass });
+					curMode = 0;
+					value.Clear();
+					continue;
+				}
+				if (prevValue == "GEO_FORWARD")
+				{
+					curBlock = EShaderBlock_GEO;
+					out.shaders.Add({ ShaderType_Geometry | ShaderType_ForwardPass });
+					curMode = 0;
+					value.Clear();
+					continue;
+				}
+				if (prevValue == "GEO_DEFERRED")
+				{
+					curBlock = EShaderBlock_GEO;
+					out.shaders.Add({ ShaderType_Geometry | ShaderType_DeferredPass });
 					curMode = 0;
 					value.Clear();
 					continue;
@@ -128,6 +179,8 @@ bool ParseShaderSourceFile(const FString& file, FShaderSourceFile& out)
 							out.type = CShaderSource::ST_POSTPROCESS;
 						else if (value == "SHADER_DEBUG")
 							out.type = CShaderSource::ST_DEBUG;
+						else if (value == "SHADER_FORWARD_DEFERRED")
+							out.type = CShaderSource::ST_FORWARD_DEFERRED;
 						else
 							out.type = CShaderSource::ST_UNKNOWN;
 					}
@@ -223,7 +276,7 @@ bool ParseShaderSourceFile(const FString& file, FShaderSourceFile& out)
 			bPrevSpace = false;
 		}
 
-		if (curBlock == EShaderBlock_VERTEX)
+		/*if (curBlock == EShaderBlock_VERTEX)
 		{
 			out.vertexShader += _l + "\n";
 		}
@@ -234,7 +287,10 @@ bool ParseShaderSourceFile(const FString& file, FShaderSourceFile& out)
 		if (curBlock == EShaderBlock_GEO)
 		{
 			out.geoShader += _l + "\n";
-		}
+		}*/
+
+		if (curBlock > EShaderBlock_GLOBAL)
+			out.shaders.last()->Value += _l + "\n";
 
 		if (curBlock == EShaderBlock_GLOBAL && curMode == 0)
 			out.global += _l + "\n";
@@ -242,12 +298,18 @@ bool ParseShaderSourceFile(const FString& file, FShaderSourceFile& out)
 
 	if (!out.global.IsEmpty())
 		out.global.Erase(out.global.begin());
-	if (!out.vertexShader.IsEmpty())
-		out.vertexShader.Erase(out.vertexShader.begin());
-	if (!out.pixelShader.IsEmpty())
-		out.pixelShader.Erase(out.pixelShader.begin());
-	if (!out.geoShader.IsEmpty())
-		out.geoShader.Erase(out.geoShader.begin());
+	//if (!out.vertexShader.IsEmpty())
+	//	out.vertexShader.Erase(out.vertexShader.begin());
+	//if (!out.pixelShader.IsEmpty())
+	//	out.pixelShader.Erase(out.pixelShader.begin());
+	//if (!out.geoShader.IsEmpty())
+	//	out.geoShader.Erase(out.geoShader.begin());
+
+	for (auto& sh : out.shaders)
+	{
+		if (!sh.Value.IsEmpty())
+			sh.Value.Erase(sh.Value.begin());
+	}
 
 	FString textureCode;
 	FString shaderBuffer = 

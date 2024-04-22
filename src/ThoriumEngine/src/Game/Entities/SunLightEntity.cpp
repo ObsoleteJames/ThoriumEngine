@@ -1,6 +1,6 @@
 
 #include "SunLightEntity.h"
-#include "Resources/Texture.h"
+#include "Resources/TextureAsset.h"
 #include "Game/Components/SunLightComponent.h"
 #include "Game/Components/BillboardComponent.h"
 

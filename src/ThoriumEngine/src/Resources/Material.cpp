@@ -2,11 +2,12 @@
 #include "Material.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Buffers.h"
-#include "Texture.h"
+#include "TextureAsset.h"
 #include "Console.h"
 #include "Math/Math.h"
 
-#define THMAT_VERSION 0x0001
+#define THMAT_VERSION_01 1
+#define THMAT_VERSION 2
 
 #define THMAT_MAGIC_SIZE 30
 static const char* thmatMagicStr = "\0\0ThoriumEngine Material File\0";
@@ -40,7 +41,7 @@ void CMaterial::Init()
 	uint16 version;
 	*stream >> &version;
 
-	if (version != THMAT_VERSION)
+	if (version != THMAT_VERSION && version != THMAT_VERSION_01)
 	{
 		CONSOLE_LogError("CMaterial", FString("Invalid Material file version '") + FString::ToString(version) + "'  expected version '" + FString::ToString(THMAT_VERSION) + "'");
 		delete stream;
@@ -53,7 +54,16 @@ void CMaterial::Init()
 	FString shaderName;
 	*stream >> shaderName;
 
-	shader = CShaderSource::GetShader(shaderName);
+	shader = CShaderSource::GetShaderSource(shaderName);
+
+	if (version > THMAT_VERSION_01)
+	{
+		*stream >> &preferredRenderPass;
+		*stream >> &bForceTransparentPass;
+		*stream >> &bReceiveShadows;
+		*stream >> &bCastShadows;
+		*stream >> &bDepthTest;
+	}
 
 	uint32 numProperties;
 	*stream >> &numProperties;
@@ -142,10 +152,13 @@ void CMaterial::Init()
 		}
 	}
 
-	gpuBuffer = gRenderer->CreateShaderBuffer(nullptr, shader->bufferSize);
+	if (shader)
+	{
+		gpuBuffer = gRenderer->CreateShaderBuffer(nullptr, shader->bufferSize);
 
-	Validate();
-	bInitialized = true;
+		Validate();
+		bInitialized = true;
+	}
 }
 
 void CMaterial::Save()
@@ -166,6 +179,12 @@ void CMaterial::Save()
 	*stream << &version;
 
 	*stream << shader->shaderName;
+
+	*stream << &preferredRenderPass;
+	*stream << &bForceTransparentPass;
+	*stream << &bReceiveShadows;
+	*stream << &bCastShadows;
+	*stream << &bDepthTest;
 
 	uint32 numProperties = (uint32)properties.Size();
 	uint32 numTextures = (uint32)textures.Size();
@@ -241,11 +260,11 @@ TObjectPtr<CMaterial> CMaterial::CreateDynamicInstance()
 
 void CMaterial::SetShader(const FString& shaderName)
 {
-	shader = CShaderSource::GetShader(shaderName);
+	shader = CShaderSource::GetShaderSource(shaderName);
 	if (!shader || shader->type == CShaderSource::ST_INTERNAL)
 	{
 		CONSOLE_LogError("CMaterial", FString("CMaterial::SetShader - Failed to find shader or shader type was invalid : '") + shaderName + "'!");
-		shader = CShaderSource::GetShader("Error");
+		shader = CShaderSource::GetShaderSource("Error");
 	}
 
 	gpuBuffer = gRenderer->CreateShaderBuffer(nullptr, shader->bufferSize);
@@ -353,20 +372,40 @@ float CMaterial::GetAlpha()
 
 ERenderPass CMaterial::GetRenderPass()
 {
-	ERenderPass rp = R_FORWARD_PASS;
 	uint8 matType = GetShaderSource()->type;
 	if (matType == CShaderSource::ST_DEFERRED)
-		rp = R_DEFERRED_PASS;
-	else if (matType == CShaderSource::ST_DEBUG) {
-		if (DoDepthTest())
-			rp = R_DEBUG_PASS;
-		else
-			rp = R_DEBUG_OVERLAY_PASS;
-	}
-	else if (matType == CShaderSource::ST_FORWARD)
-		rp = GetAlpha() < 1.f ? R_TRANSPARENT_PASS : R_FORWARD_PASS;
+		return R_DEFERRED_PASS;
 
-	return rp;
+	if (matType == CShaderSource::ST_FORWARD_DEFERRED)
+	{
+#if ENABLE_DEFERRED_RENDERING == 0
+		// for now just use forward pass until deferred rendering is working.
+		return (GetAlpha() < 1.f || bForceTransparentPass) ? R_TRANSPARENT_PASS : R_FORWARD_PASS;
+#endif
+		if (cvForceForwardRendering.AsBool())
+			return (GetAlpha() < 1.f || bForceTransparentPass) ? R_TRANSPARENT_PASS : R_FORWARD_PASS;
+
+		if (preferredRenderPass == PRP_FORWARD)
+			return (GetAlpha() < 1.f || bForceTransparentPass) ? R_TRANSPARENT_PASS : R_FORWARD_PASS;
+
+		if (preferredRenderPass == PRP_DEFERRED)
+			return R_DEFERRED_PASS;
+
+		if (preferredRenderPass == PRP_OPAQUE_DEFERRED_TRANSPARENT_FORWARD)
+			return (GetAlpha() < 1.f || bForceTransparentPass) ? R_TRANSPARENT_PASS : R_DEFERRED_PASS;
+	}
+
+	if (matType == CShaderSource::ST_DEBUG) {
+		if (DoDepthTest())
+			return R_DEBUG_PASS;
+		else
+			return R_DEBUG_OVERLAY_PASS;
+	}
+	
+	if (matType == CShaderSource::ST_FORWARD)
+		return (GetAlpha() < 1.f || bForceTransparentPass) ? R_TRANSPARENT_PASS : R_FORWARD_PASS;
+
+	return RENDER_PASS_NONE;
 }
 
 void CMaterial::UpdateGpuBuffer()

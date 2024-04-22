@@ -2,7 +2,7 @@
 #include <string>
 #include "ThemeManager.h"
 #include "Resources/Asset.h"
-#include "Resources/Texture.h"
+#include "Resources/TextureAsset.h"
 #include "Math/Math.h"
 #include <Util/KeyValue.h>
 
@@ -189,14 +189,19 @@ static void LoadThemeIcons(const FString& themePath)
 
 	for (auto* file : assetsDir->GetFiles())
 	{
-		if (file->Extension() != ".thtex")
+		bool bPng = file->Extension() == ".png";
+		if (file->Extension() != ".thtex" && !bPng)
 			continue;
 
 		SizeType hash = file->Name().Hash();
 		if (themeIcons.find(hash) != themeIcons.end())
 			continue;
 
-		TObjectPtr<CTexture> tex = CResourceManager::GetResource<CTexture>(file->Path());
+		TObjectPtr<CTexture> tex;
+		if (bPng)
+			tex = CTexture::CreateFromImage(ToFString(file->FullPath()));
+		else
+			tex = CResourceManager::GetResource<CTexture>(file->Path());
 
 		if (tex)
 			resourceIcons[hash] = tex;
@@ -214,12 +219,12 @@ ITexture2D* ThoriumEditor::GetResourceIcon(CAsset* asset)
 		{
 			resourceIcons[pathHash] = (CTexture*)asset;
 			((CTexture*)asset)->Load(0);
-			return ((CTexture*)asset)->GetTextureObject();
+			return (ITexture2D*)((CTexture*)asset)->GetTextureObject();
 		}
 		else
 		{
 			it->second->Load(0);
-			return it->second->GetTextureObject();
+			return (ITexture2D*)it->second->GetTextureObject();
 		}
 	}
 
@@ -233,7 +238,7 @@ ITexture2D* ThoriumEditor::GetResourceIcon(FClass* type)
 		return nullptr;
 
 	it->second->Load(0);
-	return it->second->GetTextureObject();
+	return (ITexture2D*)it->second->GetTextureObject();
 }
 
 ITexture2D* ThoriumEditor::GetThemeIcon(const FString& iconName)
@@ -243,7 +248,13 @@ ITexture2D* ThoriumEditor::GetThemeIcon(const FString& iconName)
 		return nullptr;
 
 	it->second->Load(0);
-	return it->second->GetTextureObject();
+	return (ITexture2D*)it->second->GetTextureObject();
+}
+
+void ThoriumEditor::ClearThemeIcons()
+{
+	themeIcons.clear();
+	resourceIcons.clear();
 }
 
 void ThoriumEditor::LoadThemes()

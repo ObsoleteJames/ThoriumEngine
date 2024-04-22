@@ -6,7 +6,7 @@
 class IPhysicsWorld;
 
 ENUM()
-enum EPhysicsBodyMovement
+enum EPhysicsBodyMotion
 {
 	PHBM_STATIC,
 	PHBM_DYNAMIC,
@@ -22,8 +22,8 @@ public:
 	virtual void SetPosition(const FVector& p) = 0;
 	virtual FVector GetPosition() = 0;
 
-	virtual FVector GetScale() = 0;
 	virtual void SetScale(const FVector& s) = 0;
+	virtual FVector GetScale() = 0;
 
 	virtual void SetRotation(const FQuaternion& r) = 0;
 	virtual FQuaternion GetRotation() = 0;
@@ -35,8 +35,15 @@ public:
 	virtual void SetAngularVelocity(const FVector& v) = 0;
 	virtual FVector GetAngularVelocity() = 0;
 
+	virtual void MoveTo(const FVector& position, const FQuaternion& rotation) = 0;
+
 	virtual bool IsAwake() = 0;
 	virtual void Wake() = 0;
+
+	virtual void SetMotionType(EPhysicsBodyMotion type) = 0;
+
+	virtual void SetEnabled(bool bEnabled) = 0;
+	virtual bool IsEnabled() const = 0;
 
 	virtual void AddForce(const FVector& v, const FVector& point = FVector::zero) = 0;
 	virtual void AddTorque(const FVector& v) = 0;

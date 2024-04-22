@@ -182,7 +182,107 @@ void CMaterialEditor::OnUIRender()
 				ImGui::PopStyleColor();
 			}
 			else
-				DrawProperties();
+			{
+				const auto& shaders = CShaderSource::GetAllShaders();
+
+				if (ImGui::BeginCombo("Shader", mat->GetShaderSource()->shaderName.c_str()))
+				{
+					for (auto& s : shaders)
+					{
+						if (s->type == CShaderSource::ST_INTERNAL)
+							continue;
+
+						bool bSelected = s == mat->GetShaderSource();
+						if (ImGui::Selectable(s->shaderName.c_str(), bSelected))
+						{
+							mat->SetShader(s->shaderName);
+							UpdateCache();
+							bSaved = false;
+						}
+						if (bSelected)
+							ImGui::SetItemDefaultFocus();
+					}
+
+					ImGui::EndCombo();
+				}
+
+				ImGui::BeginTabBar("materialTabBar");
+
+				if (ImGui::BeginTabItem("Properties"))
+				{
+					DrawProperties();
+					ImGui::EndTabItem();
+				}
+				if (ImGui::BeginTabItem("Settings"))
+				{
+					if (ImGui::BeginTable("matPropertiesTable", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_Resizable | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY))
+					{
+						CShaderSource* shader = mat->GetShaderSource();
+
+						ImGui::BeginDisabled(shader->type != CShaderSource::ST_FORWARD_DEFERRED);
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn();
+						ImGui::Text("Preferred Render Pass");
+						ImGui::TableNextColumn();
+						const char* passNames[] = {
+							"Deferred",
+							"Opaque Deferred - Transparent Forward",
+							"Forward"
+						};
+
+						if (ImGui::BeginCombo("##comboPreferredPass", passNames[(int)mat->preferredRenderPass]))
+						{
+							for (int i = 0; i < 3; i++)
+							{
+								if (ImGui::Selectable(passNames[i], i == mat->preferredRenderPass))
+								{
+									mat->preferredRenderPass = i;
+									bSaved = false;
+								}
+							}
+
+							ImGui::EndCombo();
+						}
+
+						ImGui::EndDisabled();
+						
+						ImGui::BeginDisabled(shader->type != CShaderSource::ST_FORWARD && shader->type != CShaderSource::ST_FORWARD_DEFERRED);
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn();
+						ImGui::Text("Force Transparent");
+						ImGui::TableNextColumn();
+						if (ImGui::Checkbox("##forceTransparent", &mat->bForceTransparentPass))
+							bSaved = false;
+						ImGui::EndDisabled();
+
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn();
+						ImGui::Text("Receive Shadows");
+						ImGui::TableNextColumn();
+						if (ImGui::Checkbox("##recieveShadows", &mat->bReceiveShadows))
+							bSaved = false;
+
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn();
+						ImGui::Text("Cast Shadows");
+						ImGui::TableNextColumn();
+						if (ImGui::Checkbox("##castShadows", &mat->bCastShadows))
+							bSaved = false;
+
+						ImGui::TableNextRow();
+						ImGui::TableNextColumn();
+						ImGui::Text("Depth test");
+						ImGui::TableNextColumn();
+						if (ImGui::Checkbox("##depthTest", &mat->bDepthTest))
+							bSaved = false;
+
+						ImGui::EndTable();
+					}
+					ImGui::EndTabItem();
+				}
+
+				ImGui::EndTabBar();
+			}
 		}
 		ImGui::EndChild();
 
@@ -304,25 +404,6 @@ void CMaterialEditor::SaveMat()
 
 void CMaterialEditor::DrawProperties()
 {
-	const auto& shaders = CShaderSource::GetAllShaders();
-
-	if (ImGui::BeginCombo("Shader", mat->GetShaderSource()->shaderName.c_str()))
-	{
-		for (auto& s : shaders)
-		{
-			bool bSelected = s == mat->GetShaderSource();
-			if (ImGui::Selectable(s->shaderName.c_str(), bSelected))
-			{
-				mat->SetShader(s->shaderName);
-				UpdateCache();
-			}
-			if (bSelected)
-				ImGui::SetItemDefaultFocus();
-		}
-
-		ImGui::EndCombo();
-	}
-
 	//for (auto& t : mat->textures)
 	//{
 	//	TObjectPtr<CTexture>* tex = &t.tex;
