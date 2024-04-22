@@ -59,6 +59,9 @@ FDirectory* FMod::CreateDir(const FString& path)
 {
 	const char* pathPtr = path.c_str();
 
+	if (CFileSystem::IsBlacklisted(path))
+		return nullptr;
+
 	if (pathPtr[0] == '\\' || pathPtr[0] == '/')
 		pathPtr++;
 
@@ -261,6 +264,67 @@ FFile* FMod::CreateFile(const FString& path)
 	return file;
 }
 
+bool FMod::MoveFile(FFile* file, const FString& destination)
+{
+	if (!file)
+		return false;
+
+	FDirectory* newDir = FindDirectory(destination);
+	if (!newDir)
+	{
+		CONSOLE_LogWarning("CFileSystem", "Failed to move file, destination does not exist!");
+		return false;
+	}
+	
+	for (auto* f : newDir->files)
+	{
+		if (f->name == file->name && f->extension == file->extension)
+		{
+			CONSOLE_LogWarning("CFileSystem", "Failed to move file, file with the same name already exists in destination!");
+			return false;
+		}
+	}
+
+	FString oldPath = file->FullPath();
+
+	FDirectory* oldDir = file->dir;
+	oldDir->files.Erase(oldDir->files.Find(file));
+	newDir->files.Add(file);
+
+	file->dir = newDir;
+
+	std::filesystem::rename(oldPath.c_str(), file->FullPath().c_str());
+	CResourceManager::OnResourceFileMoved(file);
+	return true;
+}
+
+bool FMod::MoveDirectory(FDirectory* dir, const FString& destination)
+{
+	if (!dir)
+		return false;
+
+	FDirectory* newDir = destination.IsEmpty() ? &root : FindDirectory(destination);
+	for (auto* d : newDir->directories)
+	{
+		if (d->name == dir->name)
+		{
+			CONSOLE_LogWarning("CFileSystem", "Failed to move directory, directory with the same name already exsists in destination!");
+			return false;
+		}
+	}
+
+	FString oldPath = Path() + "/" + dir->GetPath();
+	dir->parent->directories.Erase(dir->parent->directories.Find(dir));
+	newDir->directories.Add(dir);
+
+	dir->parent = newDir;
+
+	std::filesystem::rename(oldPath.c_str(), (Path() + "/" + dir->GetPath()).c_str());
+
+	dir->OnMoved();
+	return true;
+}
+
 FFile* CFileSystem::FindFile(const FString& path)
 {
 	for (auto& m : Mods)
@@ -299,11 +363,14 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 		if (entry.is_directory())
 		{
 			auto dirName = entry.path().stem();
-			if (dirName == "bin")
-				continue;
-			if (dirName == "config")
-				continue;
-			if (dirName == "addons")
+			//if (dirName == "bin")
+			//	continue;
+			//if (dirName == "config")
+			//	continue;
+			//if (dirName == "addons")
+			//	continue;
+
+			if (IsBlacklisted(dirName.generic_string().c_str()))
 				continue;
 
 			dir->directories.Add(new FDirectory());
@@ -409,6 +476,22 @@ bool CFileSystem::UnmountMod(FMod* mod)
 	return true;
 }
 
+bool CFileSystem::IsBlacklisted(const FString& path)
+{
+	const char* blackListedPaths[] = {
+		"config",
+		"addons",
+		"bin",
+	};
+
+	for (int i = 0; i < 3; i++)
+	{
+		if (path == blackListedPaths[i])
+			return true;
+	}
+	return false;
+}
+
 #ifdef DEBUG
 bool CFileSystem::ReloadMod(FMod* mod)
 {
@@ -439,6 +522,13 @@ FDirectory::~FDirectory()
 		delete d;
 }
 
+FString FDirectory::GetPath() const
+{
+	if (!parent || parent->name.IsEmpty()) 
+		return name; 
+	return parent->GetPath() + "/" + name;
+}
+
 FFile* FDirectory::GetFile(const FString& name)
 {
 	for (auto* f : files)
@@ -447,6 +537,15 @@ FFile* FDirectory::GetFile(const FString& name)
 			return f;
 	}
 	return nullptr;
+}
+
+void FDirectory::OnMoved()
+{
+	for (auto& d : directories)
+		d->OnMoved();
+
+	for (auto& f : files)
+		CResourceManager::OnResourceFileMoved(f);
 }
 
 #if _WIN32
@@ -476,6 +575,32 @@ FString CFileSystem::GetCurrentPath()
 FFile::~FFile()
 {
 	CResourceManager::OnResourceFileDeleted(this);
+}
+
+bool FFile::SetName(const FString& n)
+{
+	for (auto* f : dir->files)
+		if (f->name == n && f->extension == extension)
+			return false;
+
+	FString oldPath = FullPath();
+	name = n;
+
+	std::filesystem::rename(oldPath.c_str(), FullPath().c_str());
+	return true;
+}
+
+bool FFile::SetExtension(const FString& e)
+{
+	for (auto* f : dir->files)
+		if (f->name == name && f->extension == e)
+			return false;
+
+	FString oldPath = FullPath();
+	extension = e;
+
+	std::filesystem::rename(oldPath.c_str(), FullPath().c_str());
+	return true;
 }
 
 CFStream FFile::GetSdkStream(const char* mode)

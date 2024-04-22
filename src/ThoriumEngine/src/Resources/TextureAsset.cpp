@@ -354,7 +354,12 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 		tex = nullptr;
 	}
 
-	curMipMapLevel = numMipmaps;
+	void** _d = (void**)alloca(sizeof(void*) * numMipmaps);
+	for (int i = 0; i < numMipmaps; i++)
+		_d[i] = (void*)mipMaps[i].Key;
+
+	tex = gRenderer->CreateTexture2D(_d, numMipmaps, width, height, ToTextureFormat(format), filteringType);
+	curMipMapLevel = 0;
 
 	FFile* texFile = this->file;
 	TUniquePtr<IBaseFStream> stream = texFile->GetStream("wb");

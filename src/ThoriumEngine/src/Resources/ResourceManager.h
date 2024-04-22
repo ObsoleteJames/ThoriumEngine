@@ -43,6 +43,8 @@ class ENGINE_API CResourceManager
 {
 	friend class CAsset;
 	friend struct FFile;
+	friend struct FMod;
+	friend struct FDirectory;
 
 public:
 	static void Init();
@@ -96,6 +98,7 @@ private:
 	static int ScanDir(FDirectory* dir);
 	static void OnResourceDeleted(CAsset* asset);
 
+	static void OnResourceFileMoved(FFile* file);
 	static void OnResourceFileDeleted(FFile* file);
 
 	static void StreamResources();

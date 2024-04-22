@@ -8,6 +8,14 @@
 struct FDirectory;
 struct FFile;
 
+enum EModType
+{
+	MOD_GENERIC = 1,
+	MOD_ENGINE,
+	MOD_GAME,
+	MOD_ADDON
+};
+
 struct ENGINE_API FDirectory
 {
 	friend struct FMod;
@@ -19,7 +27,7 @@ public:
 	~FDirectory();
 
 	inline const FString& GetName() const { return name; }
-	FString GetPath() const { if (!parent || parent->name.IsEmpty()) return name; return parent->GetPath() + "/" + name; }
+	FString GetPath() const;
 
 	inline const TArray<FDirectory*>& GetSubDirectories() const { return directories; }
 	FFile* GetFile(const FString& file);
@@ -27,6 +35,10 @@ public:
 	inline const TArray<FFile*>& GetFiles() const { return files; }
 
 	inline FDirectory* Parent() const { return parent; }
+
+private:
+	// Called whenever this directory has been relocated.
+	void OnMoved();
 
 private:
 	FString name;
@@ -53,11 +65,20 @@ public:
 	FFile* FindFile(const FString& path) const;
 	FFile* CreateFile(const FString& path);
 
+	bool MoveFile(FFile* file, const FString& destination);
+	inline bool MoveFile(const FString& file, const FString& destination) { return MoveFile(FindFile(file), destination); }
+
+	bool MoveDirectory(FDirectory* dir, const FString& destination);
+	inline bool MoveDirectory(const FString& dir, const FString& destination) { return MoveDirectory(FindDirectory(dir), destination); }
+	
 	inline FDirectory* GetRootDir() { return &root; }
 
 	inline const FString& GetSdkPath() const { return sdkPath; }
 	inline void SetSdkPath(const FString& path) { sdkPath = path; }
 	inline bool HasSdkContent() const { return !sdkPath.IsEmpty(); }
+
+public:
+	EModType type = MOD_GENERIC;
 
 private:
 	FString name;
@@ -85,6 +106,9 @@ public:
 	inline SizeType Size() const { return size; }
 	inline FMod* Mod() const { return mod; }
 	inline FDirectory* Dir() const { return dir; }
+
+	bool SetName(const FString&);
+	bool SetExtension(const FString&);
 
 	inline IBaseFStream* GetStream(const char* mode)
 	{
@@ -119,6 +143,8 @@ public:
 
 	static FMod* MountMod(const FString& modPath, const FString& modName = FString(), const FString& sdkPath = FString());
 	static bool UnmountMod(FMod* mod);
+
+	static bool IsBlacklisted(const FString& path);
 
 	static inline const TArray<FMod*>& GetMods() { return Mods; }
 

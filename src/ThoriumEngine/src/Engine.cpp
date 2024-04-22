@@ -74,6 +74,8 @@ void CEngine::InitMinimal()
 
 	THORIUM_ASSERT(engineMod != nullptr, "Failed to find Engine content!");
 
+	engineMod->type = MOD_ENGINE;
+
 	// Fetch core addons
 	FetchAddons(engineMod->Path() + "/addons", coreAddons);
 
@@ -150,6 +152,8 @@ void CEngine::LoadGame()
 		CONSOLE_LogError("CEngine", FString("Failed to initialize module '") + projectConfig.game + "'");
 
 	FMod* fMod = CFileSystem::MountMod(wGame);
+	fMod->type = MOD_GAME;
+
 	FString sdkPath = ".project/" + wGame + "/sdk_content";
 	if (FFileHelper::DirectoryExists(sdkPath))
 		fMod->SetSdkPath(sdkPath);
@@ -474,7 +478,8 @@ void CEngine::LoadAddon(FAddon& addon)
 
 	if (addon.bHasContent)
 	{
-		addon.mod = CFileSystem::MountMod(addon.path + "/content");
+		addon.mod = CFileSystem::MountMod(addon.path + "/content", addon.name, addon.path + "/sdk_content");
+		addon.mod->type = MOD_ADDON;
 		if (!addon.mod)
 		{
 			CONSOLE_LogError("CEngine", "Failed to mount library content\n" + addon.path + "/content");

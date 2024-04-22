@@ -27,11 +27,11 @@
 
 #include "EditorMenu.h"
 #include "AssetBrowserWidget.h"
+#include "Debug/ObjectDebugger.h"
 #include "Layers/PropertyEditor.h"
 #include "Layers/ConsoleWidget.h"
 #include "Layers/InputOutputWidget.h"
 #include "Layers/ProjectSettings.h"
-#include "Layers/ObjectDebugger.h"
 #include "Layers/MaterialEditor.h"
 #include "Layers/AddonsWindow.h"
 #include "Layers/ModelEditor.h"

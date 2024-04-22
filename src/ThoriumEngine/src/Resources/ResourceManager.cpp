@@ -68,6 +68,33 @@ void CResourceManager::OnResourceDeleted(CAsset* asset)
 	allocatedResources.erase(it);
 }
 
+void CResourceManager::OnResourceFileMoved(FFile* file)
+{
+	FString oldPath;
+	for (auto& r : availableResources)
+	{
+		if (r.second.file == file)
+		{
+			oldPath = r.first;
+			break;
+		}
+	}
+
+	if (oldPath.IsEmpty())
+		return;
+
+	auto data = availableResources[oldPath];
+	availableResources.erase(oldPath);
+	availableResources[file->Path()] = data;
+
+	if (auto it = allocatedResources.find(oldPath); it != allocatedResources.end())
+	{
+		CAsset* asset = it->second;
+		allocatedResources.erase(it);
+		allocatedResources[file->Path()] = asset;
+	}
+}
+
 void CResourceManager::OnResourceFileDeleted(FFile* file)
 {
 	if (auto it = allocatedResources.find(file->Path()); it != allocatedResources.end())
