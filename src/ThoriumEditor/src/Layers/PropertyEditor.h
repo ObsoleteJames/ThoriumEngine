@@ -23,6 +23,8 @@ public:
 
 	void RenderProperty(uint type, const FProperty* prop, void** objects, int objCount, SizeType offset);
 
+	void AddComponent(FClass* type);
+
 public:
 	CEntityComponent* selectedComp = nullptr;
 	CEntity* prevEnt = nullptr;

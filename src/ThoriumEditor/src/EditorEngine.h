@@ -6,6 +6,8 @@
 #include "Object/Delegate.h"
 #include "Window.h"
 #include "CameraController.h"
+#include "Layers/EditorLog.h"
+#include "SceneOutlinerData.h"
 
 #include "Rendering/Framebuffer.h"
 
@@ -42,6 +44,8 @@ enum ESelectMode
 	ESelectMode_Faces,
 	ESelectMode_Edges
 };
+
+extern FEditorLog gBuildLog;
 
 struct SDK_API FEditorShortcut
 {
@@ -80,6 +84,14 @@ private:
 
 	FString asString;
 };
+
+extern FEditorShortcut scSaveScene;
+extern FEditorShortcut scSaveSceneAs;
+extern FEditorShortcut scNewScene;
+extern FEditorShortcut scOpenScene;
+
+extern FEditorShortcut scNewProject;
+extern FEditorShortcut scOpenProject;
 
 class SDK_API CEditorEngine : public CEngine
 {
@@ -155,6 +167,7 @@ private:
 	void DrawSelectionDebug();
 	void FocusOnSelection();
 
+	void DrawOutliner();
 	void OutlinerDrawEntity(CEntity* ent, bool bRoot = true);
 	void EntityContextMenu(CEntity* ent, const FVector& clickPos);
 	void DoEntityShortcuts();
@@ -269,6 +282,8 @@ public:
 		FMemStream data;
 		FClass* type = nullptr;
 	} copyBuffer;
+
+	FSceneOutlinerTree outlinerData;
 
 private:
 	CCameraController* camController;

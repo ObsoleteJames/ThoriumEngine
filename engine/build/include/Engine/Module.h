@@ -31,7 +31,7 @@ protected:
 	void* handle;
 };
 
-class ENGINE_API CModule : FLibrary
+class ENGINE_API CModule : public FLibrary
 {
 	friend class CEngine;
 	friend class CModuleManager;

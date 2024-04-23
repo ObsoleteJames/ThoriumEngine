@@ -216,7 +216,7 @@ bool ThoriumEditor::AcceptFile(const FString& id, FString* outFile, FString* out
 	return true;
 }
 
-void ThoriumEditor::Cancel(const FString& id)
+void ThoriumEditor::CancelFileDialog(const FString& id)
 {
 	if (curId == 0)
 		return;

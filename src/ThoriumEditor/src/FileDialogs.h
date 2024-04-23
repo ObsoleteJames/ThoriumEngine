@@ -15,5 +15,5 @@ namespace ThoriumEditor
 	// Returns true if a file dialog with the corresponding id is open
 	bool AcceptFile(const FString& id, FString* outFile, FString* outMod = nullptr);
 	
-	void Cancel(const FString& id);
+	void CancelFileDialog(const FString& id);
 }

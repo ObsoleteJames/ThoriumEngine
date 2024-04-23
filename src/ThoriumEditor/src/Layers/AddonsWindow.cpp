@@ -35,9 +35,6 @@ void CAddonsWindow::OnUIRender()
 		{
 			if (ImGui::BeginTable("addonsTable", 1, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY))
 			{
-				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
-
 				if (ImGui::TableTreeHeader("Core Addons", ImGuiTreeNodeFlags_DefaultOpen))
 				{
 					for (auto& addon : gEngine->GetAddons())

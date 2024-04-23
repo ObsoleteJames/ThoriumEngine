@@ -15,6 +15,8 @@
 #include "EditorWidgets.h"
 #include "EditorMenu.h"
 
+#include "ClassSelectorPopup.h"
+
 REGISTER_EDITOR_LAYER(CPropertyEditor, "View/Properties", nullptr, false, true)
 
 void CPropertyEditor::OnUIRender()
@@ -44,6 +46,12 @@ void CPropertyEditor::OnUIRender()
 
 		ImGui::SetCursorScreenPos(cursor + ImVec2(region.x - 38, 0));
 		ImGui::ButtonClear("Add", ImVec2(32, 32));
+
+		{
+			FClass* compClass = nullptr;
+			if (ThoriumEditor::AcceptClass("PropertyEditorAddComponent", &compClass) && compClass)
+				AddComponent(compClass);
+		}
 		
 		if (ImGui::BeginPopupContextItem("addCompBtn", ImGuiPopupFlags_MouseButtonLeft))
 		{
@@ -76,22 +84,14 @@ void CPropertyEditor::OnUIRender()
 
 			ImGui::Separator();
 
-			if (ImGui::MenuItem("Select Class..."));
+			if (ImGui::MenuItem("Select Class..."))
+				ThoriumEditor::SelectClass("PropertyEditorAddComponent", CEntityComponent::StaticClass());
 
 			ImGui::EndPopup();
 
 			FClass* _class = c.IsEmpty() ? nullptr : CModuleManager::FindClass(c);
 			if (_class)
-			{
-				TObjectPtr<CEntityComponent> comp = selectedEntities[0]->AddComponent(_class, _class->GetName());
-
-				// :P
-				bool* bUserCreated = (bool*)&*comp + CEntityComponent::__private_bUserCreated_offset();
-				*bUserCreated = true;
-
-				if (auto scene = CastChecked<CSceneComponent>(comp); scene)
-					scene->AttachTo(selectedEntities[0]->RootComponent());
-			}
+				AddComponent(_class);
 		}
 
 		ImGui::EndDisabled();
@@ -851,6 +851,19 @@ void CPropertyEditor::RenderProperty(uint type, const FProperty* prop, void** ob
 	}
 	break;
 	}
+}
+
+void CPropertyEditor::AddComponent(FClass* type)
+{
+	auto& selectedEntities = gEditorEngine()->selectedEntities;
+	TObjectPtr<CEntityComponent> comp = selectedEntities[0]->AddComponent(type, type->GetName());
+
+	// :P
+	bool* bUserCreated = (bool*)&*comp + CEntityComponent::__private_bUserCreated_offset();
+	*bUserCreated = true;
+
+	if (auto scene = CastChecked<CSceneComponent>(comp); scene)
+		scene->AttachTo(selectedEntities[0]->RootComponent());
 }
 
 void CPropertyEditor::RenderTransformEdit()

@@ -392,7 +392,8 @@ bool CEngine::UnloadProject()
 		return false;
 
 	// now delete all remaining objects in a not so safe way
-	CObjectManager::DeleteObjectsFromModule(activeGame.module);
+	if (activeGame.module)
+		CObjectManager::DeleteObjectsFromModule(activeGame.module);
 
 	if (activeGame.module && !CModuleManager::UnloadModule(activeGame.module))
 		return false;

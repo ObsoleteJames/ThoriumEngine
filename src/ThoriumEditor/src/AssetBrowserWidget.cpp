@@ -35,13 +35,99 @@ void CAssetBrowserWidget::RenderUI(float width, float height)
 
 	if (ImGui::BeginChild("assetBrowserTree", ImVec2(sizeL, height), false, ImGuiWindowFlags_AlwaysUseWindowPadding))
 	{
+		{
+			ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
+			ImVec2 cursor = ImGui::GetCursorScreenPos();
+			ImColor background = ImGui::GetStyle().Colors[ImGuiCol_ChildBg];
+
+			const char* txt = "Mods";
+
+			ImVec2 textSize = ImGui::CalcTextSize(txt);
+
+			ImGui::SetCursorScreenPos(cursor + ImVec2(0, textSize.y / 2));
+			ImGui::Separator();
+			ImGui::SetCursorScreenPos(cursor + ImVec2(0, textSize.y + 4.f));
+
+			ImGui::RenderFrame(cursor, ImVec2(cursor.x + textSize.x + 5.f, cursor.y + 16), background);
+
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 0.4f));
+			ImGui::RenderText(ImVec2(cursor.x, cursor.y), txt);
+			ImGui::PopFont();
+			ImGui::PopStyleColor();
+		}
+
+		ITexture2D* projectImg = ThoriumEditor::GetThemeIcon("folder-project");
+		ITexture2D* engineImg = ThoriumEditor::GetThemeIcon("folder-engine");
+
+		bool bAddons = false;
 		for (auto& m : mods)
 		{
+			if (m->type == MOD_ADDON)
+			{
+				bAddons = true;
+				continue;
+			}
+			
+			ImVec2 cursorPos = ImGui::GetCursorScreenPos();
+
 			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen;
 			if (dir.IsEmpty() && m->Name() == mod)
 				flags |= ImGuiTreeNodeFlags_Selected;
 
-			bool bOpen = ImGui::TreeNodeEx(ToFString(m->Name()).c_str(), flags);
+			bool bOpen = ImGui::TreeNodeEx(("\t " + m->Name()).c_str(), flags);
+
+			if (ImGui::IsItemClicked())
+				SetDir(m->Name(), "");
+
+			ImGui::SetCursorScreenPos(cursorPos + ImVec2(20, 0));
+			if (m->type == MOD_ENGINE)
+				ImGui::Image(TEX_VIEW(engineImg), ImVec2(14, 14));
+			else
+				ImGui::Image(TEX_VIEW(projectImg), ImVec2(14, 14));
+
+			if (bOpen)
+			{
+				FDirectory* root = m->GetRootDir();
+				//DrawDirTree(root, nullptr);
+				for (auto d : root->GetSubDirectories())
+					DrawDirTree(d, root, m);
+
+				ImGui::TreePop();
+			}
+		}
+
+		if (bAddons)
+		{
+			ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[1]);
+			ImVec2 cursor = ImGui::GetCursorScreenPos();
+			ImColor background = ImGui::GetStyle().Colors[ImGuiCol_ChildBg];
+
+			const char* txt = "Addons";
+
+			ImVec2 textSize = ImGui::CalcTextSize(txt);
+
+			ImGui::SetCursorScreenPos(cursor + ImVec2(0, textSize.y / 2));
+			ImGui::Separator();
+			ImGui::SetCursorScreenPos(cursor + ImVec2(0, textSize.y + 4.f));
+
+			ImGui::RenderFrame(cursor, ImVec2(cursor.x + textSize.x + 5.f, cursor.y + 16), background);
+
+			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 1, 1, 0.4f));
+			ImGui::RenderText(ImVec2(cursor.x, cursor.y), txt);
+			ImGui::PopFont();
+			ImGui::PopStyleColor();
+		}
+
+		for (auto& m : mods)
+		{
+			if (m->type != MOD_ADDON)
+				continue;
+
+			ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_DefaultOpen;
+			if (dir.IsEmpty() && m->Name() == mod)
+				flags |= ImGuiTreeNodeFlags_Selected;
+
+			bool bOpen = ImGui::TreeNodeEx(m->Name().c_str(), flags);
 
 			if (ImGui::IsItemClicked())
 				SetDir(m->Name(), "");
@@ -424,10 +510,15 @@ void CAssetBrowserWidget::DrawDirTree(FDirectory* _dir, FDirectory* parent, FMod
 	//if (_mod->Name() == mod && !dir.IsEmpty() && _dir->GetPath().Find(dir) == 0)
 	//	flags |= ImGuiTreeNodeFlags_DefaultOpen;
 
-	bool bOpen = ImGui::TreeNodeEx(ToFString(_dir->GetName() + "##_" + _mod->Name() + _dir->GetPath()).c_str(), flags);
+	ITexture2D* folderImg = ThoriumEditor::GetThemeIcon("folder");
+	ImVec2 cursorPos = ImGui::GetCursorScreenPos();
 
+	bool bOpen = ImGui::TreeNodeEx(("\t " + _dir->GetName() + "##_" + _mod->Name() + _dir->GetPath()).c_str(), flags);
 	if (ImGui::IsItemClicked())
 		SetDir(_mod, _dir);
+
+	ImGui::SetCursorScreenPos(cursorPos + ImVec2(20, 0));
+	ImGui::Image(TEX_VIEW(folderImg), ImVec2(14, 14));
 
 	if (bOpen)
 	{
