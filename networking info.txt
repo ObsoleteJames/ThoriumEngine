@@ -1,0 +1,43 @@
+
+Host()
+	- Creates networking thingy
+	- Starts listening to incomming packets
+	- yeah
+	- any new objects that are created will be registered for networking
+	- when a client attempts to connect, create a player object for that client, and send them information about the current session and objects
+
+Connect()
+	- Connects to server
+	- Receive client id
+	- after successful connection, load the server map
+	- register networked objects
+	- receive list of objects
+	- create objects that don't yet exist (any runtime object that don't exist in the map file)
+	
+CreateEntity()
+	- Server
+		when a (networked) entity is created on the server
+		the object should be replicated to all clients
+		first we serialize the data of the object (only replicated variables)
+		then we send the data to our clients
+	- Client
+		entities CANNOT be created by clients
+		this is so players can't easily cheat
+		
+		in order for a client to create an entity, we must use a Server RPC
+		we can then create the entity on the server and replicate it to our clients
+		if we want a pointer to the entity on the client
+		you can use either an ObjectPtr property on the object that called the RPC. whenever the variable gets changed on the server, it will be replicated to the client.
+		or you can use a Client RPC with an entity pointer as an argument.
+
+DestroyEntity()
+	- Server
+		when a networked entity gets destroyed on the server
+		a Multicast RPC gets called on the object so that all players are notified of its destruction
+	- Client
+		clients can only destroy an entity/object if the client owns it.
+		when a client calls the destroy function, it will call a Server RPC so the server can handle deleting the entity/object
+
+SetOwner()
+	Only servers can set the ownership of an object
+	a client can only change the ownership of an object with Server RPCs

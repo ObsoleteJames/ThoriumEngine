@@ -167,6 +167,9 @@ protected:
 	FUNCTION(MulticastRpc, NoEntityInput)
 	void OnNetDelete();
 
+	FUNCTION(MulticastRPC, NoEntityInput)
+	void OnOwnerChanged(SizeType ownerId);
+
 	template<typename T>
 	void BindEvent(TEvent<>& event, void(T::*func)()) { eventBindings.Add({ event.Bind(this, func), event }); }
 
@@ -175,7 +178,7 @@ public:
 	 * Should this object be recplicated to other clients
 	 */
 	PROPERTY(Editable, Category = "Networking")
-	bool bReplicated = true;
+	bool bReplicated = false;
 
 	/**
 	 * Determines whether this object has net priority over others.
@@ -206,6 +209,7 @@ private:
 #endif
 
 	FGuid id;
+	SizeType netId = 0;
 
 	TAtomic<uint64> users = 0;
 	bool bMarkedForDeletion = false;

@@ -4,6 +4,9 @@
 #include "Console.h"
 #include "Resources/Asset.h"
 
+#include "Engine.h"
+#include "Networking/NetworkManager.h"
+
 const SizeType zero = 0;
 
 enum EObjectPtrType
@@ -66,6 +69,18 @@ void CObject::SetId(SizeType _id)
 	SizeType old = id; 
 	id = _id; 
 	CObjectManager::IdChanged(this, old);
+}
+
+// Gets called when this object is deleted on the server
+void CObject::OnNetDelete_Implementation()
+{
+	if (!gIsServer)
+		return;
+
+	netId = 0;
+
+	// just call delete for now.
+	Delete();
 }
 
 void CObject::Serialize(FMemStream& out)
@@ -210,9 +225,28 @@ void CObject::LoadProperties(FMemStream& in, FStruct* structType, void* object)
 	//	LoadProperties(in, ((FClass*)structType)->GetBaseClass(), object);
 }
 
-void CObject::OnNetDelete_Implementation()
+void CObject::OnOwnerChanged_Implementation(SizeType ownerId)
 {
+	if (!gIsServer)
+		return;
 
+	CObject* obj = CObjectManager::FindObject(ownerId);
+	if (!obj)
+	{
+		CONSOLE_LogError("CObject", "NETWORK ERROR! owner of object '" + Name() + "' has been changed to an unkown object!");
+		return;
+	}
+
+	if (Owner)
+	{
+		auto it = Owner->Children.Find(this);
+		if (it != Owner->Children.end())
+			Owner->Children.Erase(Owner->Children.Find(this));
+	}
+
+	Owner = obj;
+	if (Owner)
+		Owner->Children.Add(this);
 }
 
 #include "Game/Entity.h"
@@ -553,6 +587,10 @@ bool CObject::LoadProperty(FMemStream& in, uint type, const FProperty* p, SizeTy
 
 void CObject::SetOwner(CObject* obj)
 {
+	// Don't change the owner if we're not the server
+	if (netId != 0 && !gIsServer)
+		return;
+
 	if (Owner == obj)
 		return;
 
@@ -580,6 +618,11 @@ CObject* CreateObject(FClass* type, const FString& _name)
 		name = GetUniqueObjectName(type);
 
 	obj->SetName(name);
+	
+	// Networking
+	if (gNetworkManager && obj->bReplicated)
+		gNetworkManager->RegisterObject(obj);
+
 	return obj;
 }
 

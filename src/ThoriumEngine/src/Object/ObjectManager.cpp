@@ -3,6 +3,7 @@
 #include "Object.h"
 #include "Console.h"
 #include "Module.h"
+#include "Networking/NetworkManager.h"
 
 TMap<FGuid, CObject*> CObjectManager::Objects;
 TArray<CObject*> CObjectManager::ObjectsToDelete;
@@ -58,6 +59,13 @@ bool CObjectManager::DeleteObject(CObject* obj, bool bNoErase)
 {
 	if (obj->bMarkedForDeletion)
 		return false;
+
+	// if this object is networked, delete it on the server first
+	if (obj->netId != 0 && gNetworkManager)
+	{
+		if (!gNetworkManager->DeleteObject(obj))
+			return false;
+	}
 
 	if (!bNoErase)
 	{
