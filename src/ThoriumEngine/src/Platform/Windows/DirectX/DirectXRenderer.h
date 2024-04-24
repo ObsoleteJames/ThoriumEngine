@@ -84,6 +84,8 @@ public:
 
 	bool bImGuiGlfw;
 
+	IDXGIFactory* factoryA;
+
 	ID3D11Device* device;
 	ID3D11DeviceContext* deviceContext;
 	IDXGIFactory2* factory;

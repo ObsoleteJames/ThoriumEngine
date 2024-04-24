@@ -9,11 +9,14 @@
 #include "Console.h"
 #include "Resources/Material.h"
 
+#pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "D3DCompiler.lib")
 #include "D3dcompiler.h"
 #include "d3d10sdklayers.h"
 
 #include <Util/Assert.h>
+
+#include <comdef.h>
 
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3.h>
@@ -33,11 +36,31 @@ void DirectXRenderer::Init()
 {
 	api = ERendererApi::DIRECTX_11;
 
+	CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factoryA);
+
+	IDXGIAdapter* adapter;
+	IDXGIAdapter* bestAdapter = nullptr;
+	size_t bestAdapterMem = 0;
+	for (int i = 0; factoryA->EnumAdapters(i, &adapter) != DXGI_ERROR_NOT_FOUND; i++)
+	{
+		DXGI_ADAPTER_DESC desc;
+		if (SUCCEEDED(adapter->GetDesc(&desc)))
+		{
+			if (bestAdapterMem < desc.DedicatedVideoMemory)
+			{
+				bestAdapterMem = desc.DedicatedVideoMemory;
+				bestAdapter = adapter;
+			}
+		}		
+	}
+
+	THORIUM_ASSERT(bestAdapter, "Failed to find Graphics Adapter!");
+
 	HRESULT hr = D3D11CreateDevice(
+		bestAdapter,				// Adapter
+		D3D_DRIVER_TYPE_UNKNOWN,	// Driver Type
 		NULL,
-		D3D_DRIVER_TYPE_HARDWARE,
-		NULL,
-#if 1
+#if 0
 		D3D11_CREATE_DEVICE_DEBUG,
 #else
 		0,
@@ -49,7 +72,8 @@ void DirectXRenderer::Init()
 		NULL,
 		&deviceContext);
 
-	THORIUM_ASSERT(SUCCEEDED(hr), "Failed to create DirectX device");
+	_com_error err(hr);
+	THORIUM_ASSERT(SUCCEEDED(hr), FString("Failed to create DirectX device\n") + err.ErrorMessage());
 
 	// Get the factory object
 	{
