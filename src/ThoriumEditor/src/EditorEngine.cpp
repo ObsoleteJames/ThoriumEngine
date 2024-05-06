@@ -117,6 +117,8 @@ void CEditorEngine::Init()
 		gameWindow->mouseY = y - viewportY;
 	});
 
+	gameWindow->SetIcon(engineMod->Path() + "/editor/thorium editor icon.png");
+
 	inputManager = CreateObject<CInputManager>();
 	inputManager->SetInputWindow(gameWindow);
 	inputManager->SetShowCursor(true);
