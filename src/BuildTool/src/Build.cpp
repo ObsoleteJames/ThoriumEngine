@@ -449,7 +449,7 @@ int GenerateCMakeProject(const FCompileConfig& config)
 				_cfg.config = config.config;
 				_cfg.engineVersion = config.engineVersion;
 
-				CompileSource(_cfg);
+				GenerateCMakeProject(_cfg);
 
 				FString libFile = libPath + "/Intermediate";
 				depend = libFile;
@@ -539,7 +539,7 @@ int GenerateCMakeProject(const FCompileConfig& config)
 				_cfg.config = config.config;
 				_cfg.engineVersion = config.engineVersion;
 
-				CompileSource(_cfg);
+				GenerateCMakeProject(_cfg);
 			}
 
 			// TODO: if addon, find the addons lib file
