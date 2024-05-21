@@ -7,9 +7,9 @@
 #include "windows.h"
 #endif
 
-void _util_assert(bool test, const FString& funcsig, const FString& message)
+void _util_assert(bool test, const char* func, int line, const FString& message)
 {
-	FString msg = funcsig + " Assertion failed!\n\n" + message;
+	FString msg = FString(func) + " Line: " + FString::ToString(line) + " Assertion failed!\n\n" + message;
 #ifdef IS_DEV
 	msg += "\n\nPress retry to debug.";
 #endif
