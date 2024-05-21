@@ -128,7 +128,7 @@ int main(int argc, char** argv)
 			engineVersion = argv[i + 1];
 
 		else if (arg == "-AS" && !bLastArg)
-			additionalSources = std::filesystem::absolute(argv[i + 1]).c_str();
+			additionalSources = std::filesystem::absolute(argv[i + 1]).generic_string().c_str();
 
 		else if (arg == "-debug")
 			targetConfig = CONFIG_DEBUG;

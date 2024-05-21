@@ -1,6 +1,7 @@
 
 #define UTIL_STD_STRING
 #include <string>
+#include "Engine.h"
 #include "Console.h"
 #include "Math/Math.h"
 #include <Util/Assert.h>
@@ -24,9 +25,28 @@ static SizeType numLogs;
 
 static bool bPrintToIO = false;
 
+std::mutex consoleInputMutex;
+FString polledInput; // input given from the terminal window.
+
 TEvent<const FConsoleMsg&> CConsole::onMsgLogged;
 TArray<CConVar*> CConsole::consoleVars;
 TArray<CConCmd*> CConsole::consoleCmds;
+
+static void ReadConsoleInput()
+{
+	while (bPrintToIO)
+	{
+		std::string input;
+		std::getline(std::cin, input);
+
+		if (input.empty())
+			continue;
+
+		consoleInputMutex.lock();
+		polledInput = input;
+		consoleInputMutex.unlock();
+	}
+}
 
 void CConsole::Init()
 {
@@ -41,11 +61,26 @@ void CConsole::Init()
 	endIndex = 0;
 }
 
+void CConsole::Update()
+{
+	if (bPrintToIO && consoleInputMutex.try_lock())
+	{
+		if (!polledInput.IsEmpty())
+			Exec(polledInput);
+
+		polledInput.Clear();
+		consoleInputMutex.unlock();
+	}
+}
+
 void CConsole::Shutdown()
 {
 #if !CONSOLE_USE_ARRAY
 	delete[] logArray;
 #endif
+
+	bPrintToIO = false;
+	//consoleInputThread.join();
 
 	// Save Config.
 	for (auto& var : consoleVars)
@@ -80,6 +115,7 @@ void CConsole::LoadConfig()
 void CConsole::EnableStdio()
 {
 	bPrintToIO = true;
+	std::thread(ReadConsoleInput).detach();
 }
 
 void CConsole::Exec(const FString& input)

@@ -154,7 +154,8 @@ void CMaterial::Init()
 
 	if (shader)
 	{
-		gpuBuffer = gRenderer->CreateShaderBuffer(nullptr, shader->bufferSize);
+		if (gRenderer)
+			gpuBuffer = gRenderer->CreateShaderBuffer(nullptr, shader->bufferSize);
 
 		Validate();
 		bInitialized = true;
@@ -267,7 +268,9 @@ void CMaterial::SetShader(const FString& shaderName)
 		shader = CShaderSource::GetShaderSource("Error");
 	}
 
-	gpuBuffer = gRenderer->CreateShaderBuffer(nullptr, shader->bufferSize);
+	if (gRenderer)
+		gpuBuffer = gRenderer->CreateShaderBuffer(nullptr, shader->bufferSize);
+
 	Validate();
 
 	bInitialized = true;

@@ -14,11 +14,11 @@
 #define THORIUM_ASSERT(...)
 #endif
 
-#if CONFIG_Debug
+#if CONFIG_DEBUG
 #define CONFIG_NAME "Debug"
-#elif CONFIG_Development
+#elif CONFIG_DEVELOPMENT
 #define CONFIG_NAME "Development"
-#elif CONFIG_Release
+#elif CONFIG_RELEASE
 #define CONFIG_NAME "Release"
 #else
 #define CONFIG_NAME "INVALID"

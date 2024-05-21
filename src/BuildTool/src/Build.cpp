@@ -469,12 +469,16 @@ int GenerateCMakeProject(const FCompileConfig& config)
 	stream << "add_compile_definitions(" << platformStr;
 	stream << " " << cmakeProj.c_str() << "_DLL)\n\n";
 
-	stream	<< "if (CMAKE_BUILD_TYPE STREQUAL \"Debug\")\n"
-			<< "\tadd_compile_definitions(CONFIG_DEBUG IS_DEV)\n"
-			<< "elseif (CMAKE_BUILD_TYPE STREQUAL \"RelWithDebInfo\")\n"
-			<< "\tadd_compile_definitions(CONFIG_DEVELOPMENT IS_DEV)\n"
-			<< "else()\n"
-			<< "\tadd_comiple_definitions(CONFIG_RELEASE)\nendif()\n";
+	// stream	<< "if (CMAKE_BUILD_TYPE STREQUAL \"Debug\" OR CMAKE_CONFIGURATION_TYPES STREQUAL \"Debug\")\n"
+	// 		<< "\tadd_compile_definitions(CONFIG_DEBUG IS_DEV)\n"
+	// 		<< "elseif (CMAKE_BUILD_TYPE STREQUAL \"RelWithDebInfo\" OR CMAKE_CONFIGURATION_TYPES STREQUAL \"RelWithDebInfo\")\n"
+	// 		<< "\tadd_compile_definitions(CONFIG_DEVELOPMENT IS_DEV)\n"
+	// 		<< "else()\n"
+	// 		<< "\tadd_compile_definitions(CONFIG_RELEASE)\nendif()\n";
+
+	stream	<< "add_compile_definitions($<$<CONFIG:Debug>:CONFIG_DEBUG> $<$<CONFIG:Debug>:IS_DEV>\n"
+			<< "\t$<$<CONFIG:RelWithDebInfo>:CONFIG_DEVELOPMENT> $<$<CONFIG:RelWithDebInfo>:IS_DEV>\n" 
+			<< "\t$<$<CONFIG:Release>:CONFIG_RELEASE>)\n\n";
 
 	if (!bIsExe)
 		stream << "add_library(" << cmakeLib.c_str() << (bIsStaticLib ? " STATIC " : " SHARED ") << " ${Files})\n\n";

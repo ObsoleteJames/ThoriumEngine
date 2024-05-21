@@ -61,10 +61,10 @@ void CWorld::InitWorld(const InitializeInfo& i)
 	initInfo = i;
 	if (!parent)
 	{
-		if (initInfo.bCreateRenderScene)
+		if (initInfo.bCreateRenderScene && gRenderer)
 			renderScene = new CRenderScene();
 
-		if (initInfo.bRegisterForRendering)
+		if (initInfo.bRegisterForRendering && gRenderer)
 			Events::OnRender.Bind(this, [=]() { this->Render(); gRenderer->PushScene(renderScene); });
 
 		if (initInfo.bCreatePhyiscsWorld && gPhysicsApi)
@@ -166,6 +166,8 @@ void CWorld::LoadScene(CScene* ptr)
 	
 	bLoading = false;
 	bLoaded = true;
+
+	CONSOLE_LogInfo("CWorld", "Loaded scene with " + FString::ToString(numEnts) + " entities");
 }
 
 void CWorld::Save()

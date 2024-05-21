@@ -1,5 +1,5 @@
 
-#include "DirectXTexture.h"
+#include "Platform/Windows/DirectX/DirectXTexture.h"
 #include "Console.h"
 
 DirectXTexture2D::DirectXTexture2D(void* data, int w, int h, ETextureFormat f, ETextureFilter filter) : format(f)

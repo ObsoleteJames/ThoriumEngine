@@ -162,7 +162,7 @@ void CTexture::Init()
 
 	curMipMapLevel = numMipmaps;
 
-	if (numMipmaps > 1)
+	if (numMipmaps > 1 && gRenderer)
 		tex = gRenderer->CreateTexture2D(nullptr, numMipmaps, width, height, ToTextureFormat(format), filteringType);
 
 	bLoading = false;
@@ -171,6 +171,9 @@ void CTexture::Init()
 
 void CTexture::Init(void* data, int width, int height, ETextureAssetFormat format /*= THTX_FORMAT_RGBA8_UINT*/, ETextureFilter filter)
 {
+	if (!gRenderer)
+		return;
+
 	if (tex)
 		delete tex;
 
@@ -180,7 +183,7 @@ void CTexture::Init(void* data, int width, int height, ETextureAssetFormat forma
 
 void CTexture::Load(uint8 lodLevel)
 {
-	if (!file || !bInitialized || curMipMapLevel <= lodLevel || bLoading)
+	if (!file || !bInitialized || curMipMapLevel <= lodLevel || bLoading || !gRenderer)
 		return;
 
 	if (numMipmaps > 1)
@@ -211,7 +214,8 @@ void CTexture::Load(uint8 lodLevel)
 	if (tex)
 		delete tex;
 
-	tex = gRenderer->CreateTexture2D(data, width, height, ToTextureFormat(format), filteringType);
+	if (gRenderer)
+		tex = gRenderer->CreateTexture2D(data, width, height, ToTextureFormat(format), filteringType);
 	curMipMapLevel = 0;
 }
 

@@ -113,6 +113,8 @@ public:
 
 	static void LoadConfig();
 
+	static void EnableStdio();
+
 public:
 	static inline void LogPlain(const FString& msg, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_PLAIN, FString(), 0, nullptr }); }
 	static inline void LogInfo(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_INFO, module, 0, nullptr }); }
@@ -136,6 +138,8 @@ public:
 
 private:
 	static void _log(const FConsoleMsg& msg);
+
+	static void _logCout(const FConsoleMsg& msg);
 
 private:
 	static TEvent<const FConsoleMsg&> onMsgLogged;

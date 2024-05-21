@@ -1,11 +1,11 @@
 
 #include "Engine.h"
 #include "Window.h"
-#include "DirectXRenderer.h"
-#include "DirectXFrameBuffer.h"
-#include "DirectXShader.h"
-#include "DirectXBuffers.h"
-#include "DirectXTexture.h"
+#include "Platform/Windows/DirectX/DirectXRenderer.h"
+#include "Platform/Windows/DirectX/DirectXFrameBuffer.h"
+#include "Platform/Windows/DirectX/DirectXShader.h"
+#include "Platform/Windows/DirectX/DirectXBuffers.h"
+#include "Platform/Windows/DirectX/DirectXTexture.h"
 #include "Console.h"
 #include "Resources/Material.h"
 

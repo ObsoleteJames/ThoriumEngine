@@ -38,6 +38,7 @@ CModule& GetModule_Engine();
 
 CEngine* gEngine = nullptr;
 
+bool bIsTerminal = 0; // wether the engine is running in terminal mode
 bool gIsClient = 0;
 bool gIsServer = 0;
 bool gIsRunning = 0;
@@ -45,6 +46,7 @@ bool gIsEditor = 0;
 bool gIsMainGaurded = 0;
 
 static CConCmd cmdLoadScene("scene", [](const TArray<FString>& args) { gEngine->LoadWorld(args[0]); });
+static CConCmd cmdQuit("quit", []() { gEngine->Exit(); });
 
 void CEngine::InitMinimal()
 {
@@ -121,14 +123,19 @@ void CEngine::Init()
 
 void CEngine::InitTerminal()
 {
+#if PLATFORM_WINDOWS
+	AllocConsole();
+	FILE* temp;
+	freopen_s(&temp, "CONIN$", "r", stdin);
+	freopen_s(&temp, "CONOUT$", "w", stderr);
+	freopen_s(&temp, "CONOUT$", "w", stdout);
+#endif
+
+	bIsTerminal = true;
 	CConsole::EnableStdio();
 
 	InitMinimal();
 	THORIUM_ASSERT(LoadProject(), "Failed to load project!");
-
-#if PLATFORM_WINDOWS
-	// TODO: create console window
-#endif
 
 	LoadWorld(activeGame.startupScene);
 }
@@ -202,15 +209,19 @@ int CEngine::Run()
 	{
 		FTimer dtTimer;
 
-		inputManager->ClearCache();
-		CWindow::PollEvents();
-
-		inputManager->BuildInput();
-
 		CResourceManager::Update();
 		CObjectManager::Update();
+		CConsole::Update();
 
-		gRenderer->ImGuiBeginFrame();
+		if (!bIsTerminal)
+		{
+			inputManager->ClearCache();
+			CWindow::PollEvents();
+
+			inputManager->BuildInput();
+
+			gRenderer->ImGuiBeginFrame();
+		}
 
 		if (!nextSceneName.IsEmpty())
 		{
@@ -234,43 +245,47 @@ int CEngine::Run()
 
 		//ImGui::ShowDemoWindow();
 
-		updateTimer.Begin();
+		if (!bIsTerminal)
+		{
+			updateTimer.Begin();
 
 #if RENDER_MULTITHREADED
-		gRenderer->JoinRenderThread();
+			gRenderer->JoinRenderThread();
 #endif
-		gRenderer->BeginRender();
+			gRenderer->BeginRender();
 
-		Events::OnRender.Invoke();
+			Events::OnRender.Invoke();
 
-		gWorld->renderScene->SetScreenPercentage(cvRenderScreenPercentage.AsFloat());
-		gWorld->renderScene->SetFrameBuffer(gameWindow->swapChain->GetFrameBuffer());
-		//gWorld->renderScene->SetDepthBuffer(gameWindow->swapChain->GetDepthBuffer());
+			gWorld->renderScene->SetScreenPercentage(cvRenderScreenPercentage.AsFloat());
+			gWorld->renderScene->SetFrameBuffer(gameWindow->swapChain->GetFrameBuffer());
+			//gWorld->renderScene->SetDepthBuffer(gameWindow->swapChain->GetDepthBuffer());
 
-		gWorld->Render();
-		gRenderer->PushScene(gWorld->renderScene);
+			gWorld->Render();
+			gRenderer->PushScene(gWorld->renderScene);
 
 #if RENDER_MULTITHREADED
-		gRenderer->RenderMT();
+			gRenderer->RenderMT();
 #else
-		gRenderer->Render();
+			gRenderer->Render();
 #endif
-		updateTimer.Stop();
-		renderTime = updateTimer.GetMiliseconds();
+			updateTimer.Stop();
+			renderTime = updateTimer.GetMiliseconds();
 
-		gameWindow->swapChain->GetDepthBuffer()->Clear();
-		gRenderer->ImGuiRender();
+			gameWindow->swapChain->GetDepthBuffer()->Clear();
+			gRenderer->ImGuiRender();
 
-		gameWindow->Present(userConfig.bVSync, 0);
+			gameWindow->Present(userConfig.bVSync, 0);
+		}
 
 		dtTimer.Stop();
 		deltaTime = dtTimer.GetSeconds();
 
-		if (gameWindow->WantsToClose() || bWantsToExit)
+		if ((gameWindow && gameWindow->WantsToClose()) || bWantsToExit)
 			gIsRunning = false;
 	}
 
-	gRenderer->ImGuiShutdown();
+	if (gRenderer)
+		gRenderer->ImGuiShutdown();
 
 	OnExit();
 	return 0;
@@ -348,21 +363,23 @@ bool CEngine::LoadProject(const FString& path /*= "."*/)
 
 	CreatePhysicsApi(physicsSettings.api.Get());
 
-	// TODO: Make input manager class a config variable.
-	if (!inputManager || inputManager->GetClass() != activeGame.inputManagerClass.Get())
+	if (!bIsTerminal)
 	{
-		TObjectPtr<CInputManager> oldIM = inputManager;
-		inputManager = (CInputManager*)CreateObject(activeGame.inputManagerClass.Get());
-		if (oldIM)
+		if (!inputManager || inputManager->GetClass() != activeGame.inputManagerClass.Get())
 		{
-			inputManager->CopyState(oldIM);
-			oldIM->Delete();
+			TObjectPtr<CInputManager> oldIM = inputManager;
+			inputManager = (CInputManager*)CreateObject(activeGame.inputManagerClass.Get());
+			if (oldIM)
+			{
+				inputManager->CopyState(oldIM);
+				oldIM->Delete();
+			}
+			else
+				inputManager->LoadConfig();
 		}
 		else
 			inputManager->LoadConfig();
 	}
-	else
-		inputManager->LoadConfig();
 
 	bProjectLoaded = true;
 	return true;
@@ -556,7 +573,8 @@ void CEngine::OnExit()
 	gameInstance->Delete();
 	gameInstance = nullptr;
 
-	CWindow::Shutdown();
+	if (!bIsTerminal)
+		CWindow::Shutdown();
 
 	CResourceManager::Shutdown();
 	CModuleManager::Cleanup();
@@ -1023,6 +1041,8 @@ CGameInstance* CEngine::SetGameInstance(FClass* type)
 
 void CEngine::CreatePhysicsApi(FClass* type)
 {
+	THORIUM_ASSERT(type, "Attempted to create Physics API with invalid type!");
+
 	if (gPhysicsApi)
 	{
 		// if the already existing api is the same as what we want, we don't need to do anything.

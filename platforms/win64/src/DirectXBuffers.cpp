@@ -2,8 +2,8 @@
 #include <Util/Assert.h>
 
 #include "EngineCore.h"
-#include "DirectXBuffers.h"
-#include "DirectXRenderer.h"
+#include "Platform/Windows/DirectX/DirectXBuffers.h"
+#include "Platform/Windows/DirectX/DirectXRenderer.h"
 #include "Console.h"
 
 DirectXVertexBuffer::DirectXVertexBuffer(const TArray<FVertex>& vertices)

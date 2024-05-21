@@ -48,6 +48,11 @@ public:
 	virtual void Init();
 
 	/**
+	 * starts the engine as a terminal application
+	 */
+	virtual void InitTerminal();
+
+	/**
 	 * Loads the specified game.
 	 */
 	void LoadGame();
