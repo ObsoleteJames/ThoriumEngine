@@ -27,9 +27,9 @@
 #if PLATFORM_WINDOWS
 #define PLATFORM_NAME "win64"
 #elif PLATFORM_LINUX
-#define PLATOFMR_NAME "linux"
+#define PLATFORM_NAME "linux"
 #else
-#define PLATOFRM_NAME "INVALID"
+#define PLATFORM_NAME "INVALID"
 #endif
 
 #ifdef _WIN32

@@ -115,7 +115,7 @@ FString GetVariableType(const CppProperty& property, bool bIgnoreTemplate = fals
 
 void CParser::WriteModuleCpp()
 {
-	std::ofstream stream((GeneratedOutput + "\\" + projectName + ".init.cpp").c_str(), std::ios::trunc | std::ios::out);
+	std::ofstream stream((GeneratedOutput + "/" + projectName + ".init.cpp").c_str(), std::ios::trunc | std::ios::out);
 	if (!stream.is_open())
 		return;
 
@@ -135,7 +135,7 @@ void CParser::WriteModuleCpp()
 
 void CParser::WriteGeneratedHeader(const FHeaderData& data)
 {
-	FString FilePath = (GeneratedOutput + "\\" + data.FileName + ".generated.h");
+	FString FilePath = (GeneratedOutput + "/" + data.FileName + ".generated.h");
 	std::ofstream stream(FilePath.c_str(), std::ios::trunc | std::ios::out);
 	if (!stream.is_open())
 		return;
@@ -222,7 +222,7 @@ static FString GetDisplayName(const FString& in)
 
 void CParser::WriteGeneratedCpp(const FHeaderData& data)
 {
-	std::ofstream stream((GeneratedOutput + "\\" + data.FileName + ".generated.cpp").c_str(), std::ios::trunc | std::ios::out);
+	std::ofstream stream((GeneratedOutput + "/" + data.FileName + ".generated.cpp").c_str(), std::ios::trunc | std::ios::out);
 	if (!stream.is_open())
 		return;
 
@@ -424,7 +424,7 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			stream << ")\n";
 
 			stream << "#undef CLASS_NEXT_PROPERTY\n"
-				   << "#define CLASS_NEXT_PROPERTY &##EVALUATE_PROPERTY_NAME(" << Class.name.c_str() << ", " << p.name.c_str() << ")\n";
+				   << "#define CLASS_NEXT_PROPERTY & EVALUATE_PROPERTY_NAME(" << Class.name.c_str() << ", " << p.name.c_str() << ")\n";
 
 			if (!p.IfGuard.IsEmpty())
 				stream << "#endif\n";
@@ -697,7 +697,7 @@ void CParser::LoadModuleData(const FString& path)
 	CFStream stream((path + "/module.bin").c_str(), "rb");
 	if (!stream.IsOpen())
 	{
-		std::cerr << "error: failed to open '" << path.c_str() << "Intermediate\\module.bin'";
+		std::cerr << "error: failed to open '" << path.c_str() << "Intermediate/module.bin'";
 		return;
 	}
 
@@ -721,7 +721,7 @@ void CParser::LoadModuleData(const FString& path)
 
 bool CParser::WriteModuleData()
 {
-	CFStream stream((targetPath + "\\Intermediate\\module.bin").c_str(), "wb");
+	CFStream stream((targetPath + "/Intermediate/module.bin").c_str(), "wb");
 	if (!stream.IsOpen())
 		return false;
 
@@ -756,7 +756,7 @@ bool CParser::WriteModuleData()
 
 bool CParser::HeaderUpToDate(FHeaderData& header)
 {
-	CFStream stream((GeneratedOutput + "\\Timestamp.bin"), "rb");
+	CFStream stream((GeneratedOutput + "/Timestamp.bin"), "rb");
 	if (!stream.IsOpen())
 		return false;
 
@@ -786,7 +786,7 @@ bool CParser::HeaderUpToDate(FHeaderData& header)
 
 void CParser::WriteTimestamp()
 {
-	CFStream stream((GeneratedOutput + "\\Timestamp.bin"), "wb");
+	CFStream stream((GeneratedOutput + "/Timestamp.bin"), "wb");
 	if (!stream.IsOpen())
 		return;
 

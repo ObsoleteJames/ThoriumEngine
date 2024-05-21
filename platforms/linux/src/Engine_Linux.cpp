@@ -1,11 +1,12 @@
 
 #include "Engine.h"
 
+#include <fstream>
 #include <unistd.h>
 #include <spawn.h>
 #include <sys/wait.h>
 
-FString CEngine::OSGetEnginePath(const FString& engineVersion)
+FString CEngine::OSGetEnginePath(const FString& version)
 {
 	std::ifstream stream(std::string(getenv("HOME")) + "/.thoriumengine/" + version.c_str() + "/path.txt", std::ios_base::in);
 	if (!stream.is_open())
@@ -21,7 +22,7 @@ FString CEngine::OSGetEnginePath(const FString& engineVersion)
 
 FString CEngine::OSGetDataPath()
 {
-	return FString(getenv("HOME")) + "/.thoriumengine/" + version.c_str();
+	return FString(getenv("HOME")) + "/.thoriumengine/" + ENGINE_VERSION;
 }
 
 FString CEngine::OSGetDocumentsPath()
@@ -53,7 +54,7 @@ int CEngine::ExecuteProgram(const FString& cmd, bool bWait)
 	args.Erase(args.first()); 
 	
 	TArray<const char*> args_c(args.Size() + 1);
-	for (int i = 0; i < args.size(); i++)
+	for (int i = 0; i < args.Size(); i++)
 		args_c[i] = args[i].c_str();
 	
 	args_c.Add(0);

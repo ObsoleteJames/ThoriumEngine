@@ -27,9 +27,9 @@
 #if PLATFORM_WINDOWS
 #define PLATFORM_NAME "win64"
 #elif PLATFORM_LINUX
-#define PLATOFMR_NAME "linux"
+#define PLATFORM_NAME "linux"
 #else
-#define PLATOFRM_NAME "INVALID"
+#define PLATFORM_NAME "INVALID"
 #endif
 
 #ifdef _WIN32
@@ -40,7 +40,7 @@
 	#endif
 #elif __GNUC__
 	#ifdef ENGINE_DLL
-		#define ENGINE_API __atribute__((visibility("default")))
+		#define ENGINE_API __attribute__ ((visibility ("default")))
 	#else
 		#define ENGINE_API
 	#endif

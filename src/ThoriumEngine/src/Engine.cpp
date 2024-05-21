@@ -18,7 +18,7 @@
 #include "Resources/Scene.h"
 #include "Misc/Timer.h"
 
-#include "ImGui/ImGui.h"
+#include "ImGui/imgui.h"
 
 #include <GLFW/glfw3.h>
 #include <Util/Assert.h>
@@ -845,9 +845,13 @@ void CEngine::SaveConsoleLog()
 #endif
 		FString typeStr;
 
+#if _WIN32
 		char timeBuff[48];
-
 		ctime_s(timeBuff, sizeof(timeBuff), (time_t*)&log->time);
+#else
+		char* timeBuff = ctime((time_t*)&log->time);
+#endif
+
 		FString timeStr = timeBuff;
 		timeStr.Erase(timeStr.last());
 

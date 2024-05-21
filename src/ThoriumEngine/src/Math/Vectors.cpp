@@ -2,7 +2,6 @@
 #include "Vectors.h"
 #include "Rendering/RenderProxies.h"
 #include "Window.h"
-#include <DirectXMath.h>
 
 #include <glm/gtx/matrix_decompose.hpp>
 #include "glm/gtx/projection.hpp"

@@ -204,7 +204,7 @@ void CResourceManager::ScanMod(FMod* mod)
 {
 	int numFiles = ScanDir(&mod->root);
 
-	CONSOLE_LogInfo("CResourceManager", FString("Found ") + std::to_string(numFiles) + " assets in '" + mod->Name() + "'");
+	CONSOLE_LogInfo("CResourceManager", FString("Found ") + std::to_string(numFiles).c_str() + " assets in '" + mod->Name() + "'");
 
 	for (auto& it : availableResources)
 	{

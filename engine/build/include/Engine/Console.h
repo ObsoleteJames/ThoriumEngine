@@ -109,6 +109,7 @@ class ENGINE_API CConsole
 
 public:
 	static void Init();
+	static void Update();
 	static void Shutdown();
 
 	static void LoadConfig();

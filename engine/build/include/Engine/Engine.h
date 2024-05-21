@@ -14,6 +14,7 @@ class CInputManager;
 
 extern ENGINE_API CEngine* gEngine;
 
+extern ENGINE_API bool bIsTerminal;
 extern ENGINE_API bool gIsClient;
 extern ENGINE_API bool gIsServer;
 extern ENGINE_API bool gIsRunning;
@@ -188,5 +189,5 @@ protected:
 
 	//CRenderScene* worldRenderScene;
 
-	CWindow* gameWindow;
+	CWindow* gameWindow = nullptr;
 };

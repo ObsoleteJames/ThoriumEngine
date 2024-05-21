@@ -8,7 +8,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include "Vectors.Generated.h"
+#include "Vectors.generated.h"
 
 class IBaseWindow;
 class CCameraProxy;

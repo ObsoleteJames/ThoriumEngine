@@ -550,27 +550,19 @@ void FDirectory::OnMoved()
 
 #if _WIN32
 #include "windows.h"
-#endif
 
 void CFileSystem::SetCurrentPath(const FString& path)
 {
-#if _WIN32
 	SetCurrentDirectoryA(path.c_str());
-#else
-	chdir(path.c_str());
-#endif
 }
 
 FString CFileSystem::GetCurrentPath()
 {
 	char buff[128];
-#if _WIN32
 	GetCurrentDirectoryA(128, buff);
-#else
-	getcwd(buff, 128);
-#endif
 	return buff;
 }
+#endif
 
 FFile::~FFile()
 {

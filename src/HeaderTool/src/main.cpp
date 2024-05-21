@@ -271,7 +271,7 @@ int main(int argc, char** argv)
 	else
 		projectName = "Engine";
 	
-	GeneratedOutput = targetPath + "\\Intermediate\\generated";
+	GeneratedOutput = targetPath + "/Intermediate/generated";
 
 	std::cout << "Running HeaderTool for project: " << projectName.c_str() << std::endl;
 
@@ -280,7 +280,7 @@ int main(int argc, char** argv)
 
 	try
 	{
-		FString path = targetPath + "\\src\\";
+		FString path = targetPath + "/src/";
 		for (auto entry : std::filesystem::recursive_directory_iterator(path.c_str()))
 		{
 			if (!entry.is_regular_file())
@@ -299,7 +299,7 @@ int main(int argc, char** argv)
 				Headers.Add(header);
 		}
 	}
-	catch (std::exception e) { std::cerr << "error: " << e.what(); }
+	catch (std::exception& e) { std::cerr << "error: " << e.what() << "\n"; }
 
 	for (auto& h : Headers)
 	{

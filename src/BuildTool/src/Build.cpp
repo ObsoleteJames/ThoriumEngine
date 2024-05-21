@@ -298,17 +298,20 @@ int GenerateCMakeProject(const FCompileConfig& config)
 		pid_t pid;
 		
 		const char* pt = (bIsEngine ? "0" : (bIsGame ? "1" : "3"));
-		TArray<const char*> argv = {
+		const char* argv[] = {
+			p.c_str(),
 			targetPath.c_str(),
 			"-pt",
-			pt
+			pt,
+			0
 		};
 
-		int status = posix_spawn(&pid, p.c_str(), NULL, NULL, (char**)argv.Data(), environ);
+		int status = posix_spawn(&pid, p.c_str(), NULL, NULL, (char**)argv, environ);
 
 		if (status != 0)
 		{
-			std::cerr << "error: failed to run HeaderTool! if this is the first time compiling ignore this.\n";
+			std::cerr << "error (" << status << "): failed to run HeaderTool! if this is the first time compiling ignore this.\n";
+			std::cerr << p.c_str() << "\n";
 			//return 1;
 		}
 		else
@@ -363,7 +366,7 @@ int GenerateCMakeProject(const FCompileConfig& config)
 	TArray<FString> files;
 	TArray<FString> generatedFiles;
 	GetCppFilesInDir(buildCfg, targetPath + "/src", files, true);
-	GetCppFilesInDir(buildCfg, targetPath + "/intermediate/generated", generatedFiles);
+	GetCppFilesInDir(buildCfg, targetPath + "/Intermediate/generated", generatedFiles);
 	GetCppFilesInDir(buildCfg, config.additionalSources, files);
 
 	stream << "\nset(Files ";
@@ -391,7 +394,7 @@ int GenerateCMakeProject(const FCompileConfig& config)
 		}
 	}
 
-	stream << "\ninclude_directories(../src ../intermediate/generated ";
+	stream << "\ninclude_directories(../src ../Intermediate/generated ";
 
 	auto* includes = buildCfg.GetArray("Include");
 	if (includes)
@@ -481,7 +484,11 @@ int GenerateCMakeProject(const FCompileConfig& config)
 			<< "\t$<$<CONFIG:Release>:CONFIG_RELEASE>)\n\n";
 
 	if (!bIsExe)
-		stream << "add_library(" << cmakeLib.c_str() << (bIsStaticLib ? " STATIC " : " SHARED ") << " ${Files})\n\n";
+	{
+		stream << "add_library(" << cmakeLib.c_str() << (bIsStaticLib ? " STATIC" : " SHARED") << " ${Files})\n\n";
+		if (bIsStaticLib && config.platform == PLATFORM_LINUX)
+			stream << "set_property(TARGET " << cmakeLib.c_str() << " PROPERTY POSITION_INDEPENDENT_CODE ON)\n";
+	}
 	else
 		stream << "add_executable(" << cmakeLib.c_str() << " WIN32 ${Files})\n\n";
 
@@ -592,11 +599,11 @@ int GenerateCMakeProject(const FCompileConfig& config)
 	{
 #if _WIN32
 		FString headerToolP = "\"" + enginePath + "/bin/win64/HeaderTool.exe\" \"" + targetPath + "\" -pt " + (bIsEngine ? "0" : (bIsGame ? "1" : "3"));	
-#else
-		FString headerToolP = "\"" + enginePath + "/bin/linux/HeaderTool\" \"" + targetPath + "\" -pt " + (bIsEngine ? "0" : (bIsGame ? "1" : "3"));	
+		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " PRE_BUILD COMMAND " << headerToolP.c_str() << ")\n";
+// #else
+// 		FString headerToolP = "\"" + enginePath + "/bin/linux/HeaderTool\" \"" + targetPath + "\" -pt " + (bIsEngine ? "0" : (bIsGame ? "1" : "3"));	
 #endif
 
-		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " PRE_BUILD COMMAND " << headerToolP.c_str() << ")\n";
 
 		if (includeOut)
 		{

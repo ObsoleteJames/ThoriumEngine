@@ -1,10 +1,10 @@
 #pragma once
 
 #include "Asset.h"
+#include "Rendering/Texture.h"
 #include "TextureAsset.generated.h"
 
 class IBaseTexture;
-enum ETextureFormat;
 
 ENUM()
 enum ETextureAssetFormat

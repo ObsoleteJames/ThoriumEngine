@@ -1,4 +1,5 @@
 
+#include <Util/Assert.h>
 #include "Module.h"
 #include "Misc/FileHelper.h"
 #include "Console.h"
@@ -22,7 +23,7 @@ int CModuleManager::LoadModule(const FString& path, CModule** outPtr)
 	GetModule_Func f = (GetModule_Func)dlsym(wModule, "__GetModuleInstance");
 	if (!f)
 	{
-		THORIUM_ASSERT(0, "Failed to find func '__GetModuleInstance' in library '" + path.c_str() + "'!");
+		THORIUM_ASSERT(0, FString("Failed to find func '__GetModuleInstance' in library '") + path.c_str() + "'!");
 	}
 
 	m = f();

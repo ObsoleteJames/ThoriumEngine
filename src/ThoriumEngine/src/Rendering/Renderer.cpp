@@ -9,6 +9,7 @@
 #include <map>
 
 #include <algorithm>
+#include <thread>
 
 IRenderer* gRenderer = nullptr;
 FRenderStatistics gRenderStats;
@@ -482,7 +483,7 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 			FObjectInfoBuffer objectInfo;
 			objectInfo.transform = rc.Value->transform;
 			objectInfo.position = rc.Key->GetPosition();
-			memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min(rc.Value->skeletonMatrices.Size(), 48ull) * sizeof(FMatrix));
+			memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min((int)rc.Value->skeletonMatrices.Size(), 48) * sizeof(FMatrix));
 			gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
 
 			IShader* _shader = rc.Value->mat->GetVsShader(ShaderType_DeferredPass);
@@ -630,7 +631,7 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 			FObjectInfoBuffer objectInfo;
 			objectInfo.transform = rc.Value->transform;
 			objectInfo.position = rc.Key->GetPosition();
-			memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min(rc.Value->skeletonMatrices.Size(), 48ull) * sizeof(FMatrix));
+			memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min((int)rc.Value->skeletonMatrices.Size(), 48) * sizeof(FMatrix));
 			gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
 
 			FForwardLightsBuffer lights{};
@@ -739,7 +740,7 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 				FObjectInfoBuffer objectInfo;
 				objectInfo.transform = rc.Value->transform;
 				objectInfo.position = rc.Key->GetPosition();
-				memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min(rc.Value->skeletonMatrices.Size(), 48ull) * sizeof(FMatrix));
+				memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min((int)rc.Value->skeletonMatrices.Size(), 48) * sizeof(FMatrix));
 				gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
 
 				FForwardLightsBuffer lights{};
@@ -904,7 +905,7 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 				FObjectInfoBuffer objectInfo;
 				objectInfo.transform = rc.Value->transform;
-				memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min(rc.Value->skeletonMatrices.Size(), 48ull));
+				memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min((int)rc.Value->skeletonMatrices.Size(), 48));
 				gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
 
 				gRenderer->SetVsShader(rc.Value->mat->GetVsShader(0));
@@ -1033,7 +1034,7 @@ void IRenderer::RenderShadowMaps(CRenderScene* scene)
 				FObjectInfoBuffer objectInfo;
 				objectInfo.transform = rc.Value.transform;
 				objectInfo.position = rc.Key->GetPosition();
-				memcpy(objectInfo.skeletonMatrices, rc.Value.skeletonMatrices.Data(), FMath::Min(rc.Value.skeletonMatrices.Size(), 48ull) * sizeof(FMatrix));
+				memcpy(objectInfo.skeletonMatrices, rc.Value.skeletonMatrices.Data(), FMath::Min((int)rc.Value.skeletonMatrices.Size(), 48) * sizeof(FMatrix));
 				gRenderer->objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
 
 				gRenderer->SetVsShader(rc.Value.mat->GetVsShader(0));
