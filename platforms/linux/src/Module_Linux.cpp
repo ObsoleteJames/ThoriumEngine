@@ -1,5 +1,8 @@
 
 #include "Module.h"
+#include "Misc/FileHelper.h"
+#include "Console.h"
+
 #include "unistd.h"
 #include "dlfcn.h"
 

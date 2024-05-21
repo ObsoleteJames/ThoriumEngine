@@ -48,6 +48,7 @@ struct FCompileConfig
 	ECompiler compiler;
 
 	FString engineVersion;
+	FString additionalSources;
 };
 
 int GenerateCMakeProject(const FCompileConfig& config);

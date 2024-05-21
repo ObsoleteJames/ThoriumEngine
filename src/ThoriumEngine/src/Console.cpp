@@ -7,6 +7,8 @@
 #include <Util/KeyValue.h>
 #include <mutex>
 
+#include <iostream>
+
 #define CONSOLE_MAX 512
 
 static std::mutex consoleMutex;
@@ -19,6 +21,8 @@ static FConsoleMsg* logArray;
 static SizeType beginIndex;
 static SizeType endIndex;
 static SizeType numLogs;
+
+static bool bPrintToIO = false;
 
 TEvent<const FConsoleMsg&> CConsole::onMsgLogged;
 TArray<CConVar*> CConsole::consoleVars;
@@ -71,6 +75,11 @@ void CConsole::LoadConfig()
 		if (!v.IsEmpty() && v.IsNumber())
 			var->SetValue(std::stof(v.c_str()));
 	}
+}
+
+void CConsole::EnableStdio()
+{
+	bPrintToIO = true;
 }
 
 void CConsole::Exec(const FString& input)
@@ -176,8 +185,44 @@ void CConsole::_log(const FConsoleMsg& _msg)
 	logArray.Add(msg);
 #endif
 
+	if (bPrintToIO)
+		_logCout(msg);
+
 	onMsgLogged.Fire(msg);
 	consoleMutex.unlock();
+}
+
+static FString TimeToHmsString(time_t* time)
+{
+	struct tm time_info;
+	char timeString[9];  // space for "HH:MM:SS\0"
+
+#if _WIN32
+	localtime_s(&time_info, time);
+#else
+	time_info = *localtime(time);
+#endif
+
+	strftime(timeString, sizeof(timeString), "%H:%M:%S", &time_info);
+	timeString[8] = '\0';
+	return FString(timeString);
+}
+
+void CConsole::_logCout(const FConsoleMsg &msg)
+{
+	const char* txtCol;
+	if (msg.type == CONSOLE_PLAIN)
+		txtCol = "\033[0;40m\033[0;90m";
+	else if (msg.type == CONSOLE_INFO)
+		txtCol = "\033[0;40m\033[0;37m";
+	else if (msg.type == CONSOLE_WARNING)
+		txtCol = "\033[1;40m\033[0;33m";
+	else if (msg.type == CONSOLE_ERROR)
+		txtCol = "\033[1;41m\033[0;37m";
+
+	FString timeTxt = TimeToHmsString((time_t*)&msg.time);
+
+	std::cout << "\033[0;40m\033[0;32m[" << timeTxt.c_str() << "] " << msg.module.c_str() << " " << txtCol << msg.msg.c_str() << "\n";
 }
 
 CConCmd::CConCmd(const FString& n, CmdFuncPtr f) : name(n)

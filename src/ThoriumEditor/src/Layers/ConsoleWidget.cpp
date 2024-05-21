@@ -11,7 +11,7 @@
 
 REGISTER_EDITOR_LAYER(CConsoleWidget, "View/Console", nullptr, false, true)
 
-FString TimeToHmsString(time_t* time)
+static FString TimeToHmsString(time_t* time)
 {
 	struct tm time_info;
 	char timeString[9];  // space for "HH:MM:SS\0"

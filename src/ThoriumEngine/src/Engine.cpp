@@ -28,10 +28,6 @@
 #include "Platform/Windows/DirectX/DirectXRenderer.h"
 #include <windows.h>
 #include <shlobj.h>
-#else
-#include <unistd.h>
-#include <spawn.h>
-#include <sys/wait.h>
 #endif
 
 #include <filesystem>
@@ -99,7 +95,7 @@ void CEngine::Init()
 #ifdef _WIN32
 	Renderer::CreateRenderer<DirectXRenderer>();
 #else
-	Renderer::CreateRenderer<VulkanRenderer>();
+	//Renderer::CreateRenderer<VulkanRenderer>();
 #endif
 
 	gameWindow->swapChain = gRenderer->CreateSwapChain(gameWindow);
@@ -119,6 +115,20 @@ void CEngine::Init()
 	//worldRenderScene->SetFrameBuffer(gameWindow->swapChain->GetFrameBuffer());
 	//worldRenderScene->SetDepthBuffer(gameWindow->swapChain->GetDepthBuffer());
 	//worldRenderScene->SetCamera(CreateObject<CCameraComponent>());
+
+	LoadWorld(activeGame.startupScene);
+}
+
+void CEngine::InitTerminal()
+{
+	CConsole::EnableStdio();
+
+	InitMinimal();
+	THORIUM_ASSERT(LoadProject(), "Failed to load project!");
+
+#if PLATFORM_WINDOWS
+	// TODO: create console window
+#endif
 
 	LoadWorld(activeGame.startupScene);
 }
@@ -864,9 +874,9 @@ void CEngine::HotReloadModule(const FString& module)
 }
 #endif
 
+#ifdef _WIN32
 FString CEngine::OSGetEnginePath(const FString& engineVersion)
 {
-#ifdef _WIN32
 	FString keyPath = "SOFTWARE\\ThoriumEngine\\" + engineVersion;
 
 	HKEY hKey;
@@ -881,23 +891,10 @@ FString CEngine::OSGetEnginePath(const FString& engineVersion)
 		return "";
 
 	return FString(strBuff);
-#else
-	std::ifstream stream(std::string(getenv("HOME")) + "/.thoriumengine/" + version.c_str() + "/path.txt", std::ios_base::in);
-	if (!stream.is_open())
-	{
-		return FString();
-	}
-
-	std::string str;
-	std::getline(stream, str);
-
-	return str.c_str();
-#endif
 }
 
 FString CEngine::OSGetDataPath()
 {
-#ifdef _WIN32
 	PWSTR appdata;
 	if (FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &appdata)))
 		return FString();
@@ -906,14 +903,10 @@ FString CEngine::OSGetDataPath()
 	wcstombs(r, appdata, MAX_PATH);
 
 	return FString(r);
-#else
-	return FString(getenv("HOME")) + "/.thoriumengine/" + version.c_str();
-#endif
 }
 
 FString CEngine::OSGetDocumentsPath()
 {
-#ifdef _WIN32
 	PWSTR appdata;
 	if (FAILED(SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &appdata)))
 		return FString();
@@ -922,14 +915,10 @@ FString CEngine::OSGetDocumentsPath()
 	wcstombs(r, appdata, MAX_PATH);
 
 	return FString(r);
-#else
-	return FString(getenv("HOME")) + "/Documents";
-#endif
 }
 
 FString CEngine::OpenFileDialog(const FString& filter /*= FString()*/)
 {
-#ifdef _WIN32
 	OPENFILENAMEA ofn;
 	CHAR szFile[255] = { 0 };
 	CHAR currentDir[255] = { 0 };
@@ -949,14 +938,10 @@ FString CEngine::OpenFileDialog(const FString& filter /*= FString()*/)
 		return ofn.lpstrFile;
 
 	return FString();
-#else
-	return FString();
-#endif
 }
 
 FString CEngine::SaveFileDialog(const FString& filter /*= FString()*/)
 {
-#ifdef _WIN32
 	OPENFILENAMEA ofn;
 	CHAR szFile[256] = { 0 };
 	CHAR currentDir[256] = { 0 };
@@ -978,14 +963,10 @@ FString CEngine::SaveFileDialog(const FString& filter /*= FString()*/)
 		return ofn.lpstrFile;
 
 	return FString();
-#else
-	return FString();
-#endif
 }
 
 FString CEngine::OpenFolderDialog()
 {
-#ifdef _WIN32
 	BROWSEINFO bi = { 0 };
 	LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
 
@@ -1004,19 +985,10 @@ FString CEngine::OpenFolderDialog()
 	}
 
 	return FString();
-#else
-	return FString();
-#endif
 }
-
-#if _WIN32
-#else
-extern char** environ;
-#endif
 
 int CEngine::ExecuteProgram(const FString& cmd, bool bWait)
 {
-#if PLATFORM_WINDOWS
 	PROCESS_INFORMATION ht{};
 	STARTUPINFO si{};
 	si.cb = sizeof(si);
@@ -1036,29 +1008,8 @@ int CEngine::ExecuteProgram(const FString& cmd, bool bWait)
 		CloseHandle(ht.hThread);
 	}
 	return r;
-#else
-	TArray<FString> args = cmd.Split(" \t");
-	FString exec = args[0];
-	args.Erase(args.first()); 
-	
-	TArray<const char*> args_c(args.Size() + 1);
-	for (int i = 0; i < args.size(); i++)
-		args_c[i] = args[i].c_str();
-	
-	args_c.Add(0);
-
-	pid_t pid;
-	int status = posix_spawn(&pid, exec.c_str(), NULL, NULL, (char**)args_c.Data(), environ);
-
-	if (status != 0)
-		return status;
-
-	if (bWait)
-		waitpid(pid, &status, 0);
-
-	return status;
-#endif
 }
+#endif // _WIN32
 
 CGameInstance* CEngine::SetGameInstance(FClass* type)
 {

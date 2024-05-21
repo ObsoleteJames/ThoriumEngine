@@ -14,6 +14,8 @@ extern "C" __attribute__((visibility("default"))) int Launch(const char* cmdLine
 	FCommandLine::Parse(cmdLine);
 
 	bool bDedicated = false;
+	if (FCommandLine::HasParam("-dedicated"))
+		bDedicated = true;
 
 	gEngine = new CEngine();
 
@@ -23,8 +25,11 @@ extern "C" __attribute__((visibility("default"))) int Launch(const char* cmdLine
 
 		if (bDedicated)
 		{
-			gEngine->InitMinimal();
+			//gEngine->InitMinimal();
+			gEngine->InitTerminal();
 			// TODO: Do server stuff
+
+			//gEngine->HostServer("42708")
 
 		}
 		else

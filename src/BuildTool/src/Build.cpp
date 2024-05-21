@@ -350,17 +350,21 @@ int GenerateCMakeProject(const FCompileConfig& config)
 	stream << "include_guard(GLOBAL)\n";
 	stream << "project(" << cmakeProj.c_str() << ")\n";
 
-	if (config.config == CONFIG_DEBUG)
-		stream << "set(CMAKE_BUILD_TYPE Debug)\n";
-	if (config.config == CONFIG_DEVELOPMENT)
-		stream << "set(CMAKE_BUILD_TYPE RelWithDebInfo)\n";
-	if (config.config == CONFIG_RELEASE)
-		stream << "set(CMAKE_BUILD_TYPE Release)\n";
+	if (config.platform != PLATFORM_WIN64)
+	{
+		if (config.config == CONFIG_DEBUG)
+			stream << "set(CMAKE_BUILD_TYPE Debug)\n";
+		if (config.config == CONFIG_DEVELOPMENT)
+			stream << "set(CMAKE_BUILD_TYPE RelWithDebInfo)\n";
+		if (config.config == CONFIG_RELEASE)
+			stream << "set(CMAKE_BUILD_TYPE Release)\n";
+	}
 
 	TArray<FString> files;
 	TArray<FString> generatedFiles;
 	GetCppFilesInDir(buildCfg, targetPath + "/src", files, true);
 	GetCppFilesInDir(buildCfg, targetPath + "/intermediate/generated", generatedFiles);
+	GetCppFilesInDir(buildCfg, config.additionalSources, files);
 
 	stream << "\nset(Files ";
 
@@ -462,10 +466,15 @@ int GenerateCMakeProject(const FCompileConfig& config)
 
 	const char* platformStr = config.platform == PLATFORM_WIN64 ? "PLATFORM_WINDOWS" 
 		: (config.platform == PLATFORM_LINUX ? "PLATFORM_LINUX" : "PLATFORM_MACOS");
-	stream << "add_compile_definitions(" << platformStr << " CONFIG_" << FString(ConfigStrings[config.config]).c_str();
-	if (config.config != CONFIG_RELEASE)
-		stream << " IS_DEV";
-	stream << " " << cmakeProj.c_str() << "_DLL)\n";
+	stream << "add_compile_definitions(" << platformStr;
+	stream << " " << cmakeProj.c_str() << "_DLL)\n\n";
+
+	stream	<< "if (CMAKE_BUILD_TYPE STREQUAL \"Debug\")\n"
+			<< "\tadd_compile_definitions(CONFIG_DEBUG IS_DEV)\n"
+			<< "elseif (CMAKE_BUILD_TYPE STREQUAL \"RelWithDebInfo\")\n"
+			<< "\tadd_compile_definitions(CONFIG_DEVELOPMENT IS_DEV)\n"
+			<< "else()\n"
+			<< "\tadd_comiple_definitions(CONFIG_RELEASE)\nendif()\n";
 
 	if (!bIsExe)
 		stream << "add_library(" << cmakeLib.c_str() << (bIsStaticLib ? " STATIC " : " SHARED ") << " ${Files})\n\n";
