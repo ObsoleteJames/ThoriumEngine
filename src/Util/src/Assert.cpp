@@ -5,6 +5,8 @@
 
 #ifdef _WIN32
 #include "windows.h"
+#else
+#include <iostream>
 #endif
 
 void _util_assert(bool test, const char* func, int line, const FString& message)
@@ -22,6 +24,8 @@ void _util_assert(bool test, const char* func, int line, const FString& message)
 #endif
 	if (r == IDIGNORE)
 		return;
+#else
+	std::cerr << "ASSERTION FAILED!\n" << message.c_str() << std::endl;
 #endif
 
 	std::exit(1);
