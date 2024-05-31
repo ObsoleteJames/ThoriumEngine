@@ -37,7 +37,7 @@ LONG WINAPI Win32ExceptionHandler(_EXCEPTION_POINTERS* exceptionInfo)
 	ExInfo.ThreadId = ::GetCurrentThreadId();
 	ExInfo.ExceptionPointers = exceptionInfo;
 	ExInfo.ClientPointers = FALSE;
-
+	
 	HANDLE hFile = CreateFile(("crash " + timeTxt + ".dmp").c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	pDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpWithFullMemory, &ExInfo, NULL, NULL);
