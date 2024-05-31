@@ -1003,7 +1003,7 @@ void IRenderer::RenderShadowMaps(CRenderScene* scene)
 		// Render directional light shadows
 		gRenderer->SetFrameBuffer(nullptr, gRenderer->sunLightShadows);
 
-		for (int j = 0; j < 4; j++)
+		for (int j = 0; j < FMath::Min(cvRenderShadowQuality.AsInt() + 1, 4); j++)
 		{
 			gRenderer->SetViewport((float)(gRenderer->shadowTexSize * j), 0, (float)gRenderer->shadowTexSize, (float)gRenderer->shadowTexSize);
 

@@ -199,6 +199,58 @@ void ImGui::Text(const FString& txt)
 	ImGui::Text(txt.c_str());
 }
 
+bool ImGui::TypeSelector(const char* label, int* value, int numOptions, const char** names, ImVec2 size /*= 10.f*/, float rounding /*= 5.f*/)
+{
+	FString lbl = label;
+	ImVec2 textSize = ImGui::CalcTextSize(label, 0, true);
+
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	ImVec2 cursor = ImGui::GetCursorScreenPos();
+	ImVec2 contentSize = size.x == 0.f ? ImGui::GetContentRegionAvail() : size;
+	if (textSize.x > 0)
+		contentSize.x -= textSize.x + style.FramePadding.x;
+
+	float itemWidth = contentSize.x / numOptions;
+
+	bool r = false;
+	for (int i = 0; i < numOptions; i++)
+	{
+		ImVec2 itemPos = cursor + ImVec2(itemWidth * i, 0);
+		ImVec2 itemSize = ImVec2(itemWidth, size.y);
+		ImGui::SetCursorScreenPos(itemPos);
+		if (ImGui::InvisibleButton(("##" + lbl + FString::ToString(i)).c_str(), itemSize))
+		{
+			r = true;
+			*value = i;
+		}
+
+		bool bHovered = ImGui::IsItemHovered();
+		bool bSelected = *value == i;
+
+		// Draw button
+		auto col = ImGui::ColorConvertFloat4ToU32(style.Colors[bHovered ? ImGuiCol_TabUnfocusedActive : (bSelected ? ImGuiCol_TabActive : ImGuiCol_Tab)]);
+		ImGui::RenderFrame(itemPos, itemPos + itemSize, col, false, rounding);
+
+		if (i < numOptions - 1)
+		{
+			ImGui::RenderFrame(itemPos + ImVec2(itemSize.x - rounding, 0), itemPos + itemSize, col, false);
+			ImGui::RenderFrame(itemPos + ImVec2(itemSize.x - 1.f, 0), itemPos + itemSize, ImGui::ColorConvertFloat4ToU32(style.Colors[ImGuiCol_FrameBg]), false);
+		}
+		if (i > 0)
+		{
+			ImGui::RenderFrame(itemPos, itemPos + ImVec2(rounding, itemSize.y), col, false);
+		}
+
+		ImVec2 nameSize = ImGui::CalcTextSize(names[i]);
+		ImGui::RenderText(itemPos + (itemSize / 2) - (nameSize / 2), names[i]);
+	}
+
+	ImGui::RenderText(cursor + ImVec2(contentSize.x + style.FramePadding.x, 0), label);
+
+	return r;
+}
+
 bool ImGui::DragVector(const char* label, FVector* v, float speed, FVector min, FVector max, const char* format, ImGuiSliderFlags flags)
 {
 	auto areaSize = ImGui::GetContentRegionAvail();

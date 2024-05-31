@@ -990,6 +990,7 @@ FString CEngine::SaveFileDialog(const FString& filter /*= FString()*/)
 FString CEngine::OpenFolderDialog()
 {
 	BROWSEINFO bi = { 0 };
+	bi.ulFlags = BIF_USENEWUI;
 	LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
 
 	CHAR currentDir[256] = { 0 };
@@ -1047,16 +1048,19 @@ void CEngine::CreatePhysicsApi(FClass* type)
 {
 	THORIUM_ASSERT(type, "Attempted to create Physics API with invalid type!");
 
-	if (gPhysicsApi)
+	if (type)
 	{
-		// if the already existing api is the same as what we want, we don't need to do anything.
-		if (gPhysicsApi->GetClass() == type)
-			return;
+		if (gPhysicsApi)
+		{
+			// if the already existing api is the same as what we want, we don't need to do anything.
+			if (gPhysicsApi->GetClass() == type)
+				return;
 
-		gPhysicsApi->Shutdown();
-		gPhysicsApi->Delete();
+			gPhysicsApi->Shutdown();
+			gPhysicsApi->Delete();
+		}
+		gPhysicsApi = (IPhysicsApi*)CreateObject(type);
+		gPhysicsApi->Init();
+		gPhysicsApi->MakeIndestructible();
 	}
-	gPhysicsApi = (IPhysicsApi*)CreateObject(type);
-	gPhysicsApi->Init();
-	gPhysicsApi->MakeIndestructible();
 }

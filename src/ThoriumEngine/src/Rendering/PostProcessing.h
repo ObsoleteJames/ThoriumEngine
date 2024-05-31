@@ -24,7 +24,7 @@ enum EPostProcessFeature
 };
 
 STRUCT()
-struct FPostProcessSettings
+struct ENGINE_API FPostProcessSettings
 {
 	GENERATED_BODY()
 

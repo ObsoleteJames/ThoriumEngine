@@ -14,7 +14,7 @@ enum EKeyframeType
 };
 
 STRUCT()
-struct FKeyframe
+struct ENGINE_API FKeyframe
 {
 	GENERATED_BODY()
 
