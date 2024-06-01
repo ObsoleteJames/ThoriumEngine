@@ -1,7 +1,7 @@
 # Thorium Engine
 3D game engine based on the Source engine and Unreal Engine
 
-![preview Image](Screenshot_2024-02-16_002624.png)
+![preview Image](preview.png)
 
 # Building
 Requirements
