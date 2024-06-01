@@ -30,6 +30,12 @@ const char* ConfigStrings[] = {
 	"Release"
 };
 
+const char* CMakeConfigStrings[] = {
+	"Debug",
+	"RelWithDebInfo",
+	"Release"
+};
+
 int CompileMSVC(FKeyValue& buildCfg, EPlatform platform, EConfig config, const FString& msvcPath);
 int CompileClang(const FString& path, EPlatform platform, EConfig config);
 int CompilerGcc(const FString& path, EPlatform platform, EConfig config);
@@ -37,6 +43,10 @@ int CompilerGcc(const FString& path, EPlatform platform, EConfig config);
 class FStringExpression
 {
 public:
+	FStringExpression() {}
+	FStringExpression(const FStringExpression&);
+	FStringExpression& operator=(const FStringExpression& other);
+
 	void SetExpressionValue(const FString& key, const FString& value);
 	FString GetExpression(const FString& key);
 
@@ -46,8 +56,26 @@ private:
 	TArray<TPair<FString, FString>> expressions;
 };
 
-void FStringExpression::SetExpressionValue(const FString& key, const FString& value)
+FStringExpression::FStringExpression(const FStringExpression& other) : expressions(other.expressions)
 {
+}
+
+FStringExpression &FStringExpression::operator=(const FStringExpression &other)
+{
+	expressions = other.expressions;
+	return *this;
+}
+
+void FStringExpression::SetExpressionValue(const FString &key, const FString &value)
+{
+	for (auto& it : expressions)
+	{
+		if (it.Key == key)
+		{
+			it.Value = value;
+			return;
+		}
+	}
 	expressions.Add({ key.ToLowerCase(), value });
 }
 
@@ -220,7 +248,6 @@ int GenerateCMakeProject(const FCompileConfig& config)
 
 	FStringExpression strExp;
 	strExp.SetExpressionValue("PLATFORM", PlatformStrings[config.platform]);
-	strExp.SetExpressionValue("CONFIG", ConfigStrings[config.config]);
 	strExp.SetExpressionValue("PATH", targetPath);
 
 	enginePath = GetEnginePath(config.engineVersion);
@@ -257,6 +284,13 @@ int GenerateCMakeProject(const FCompileConfig& config)
 
 	FString targetBuild = *buildCfg.GetValue("Target");
 	strExp.SetExpressionValue("TARGET", targetBuild);
+
+	FStringExpression strExpConfigs[3] = { strExp, strExp, strExp };
+	strExp.SetExpressionValue("CONFIG", ConfigStrings[config.config]);
+
+	strExpConfigs[0].SetExpressionValue("CONFIG", ConfigStrings[0]);
+	strExpConfigs[1].SetExpressionValue("CONFIG", ConfigStrings[1]);
+	strExpConfigs[2].SetExpressionValue("CONFIG", ConfigStrings[2]);
 
 	FString type = *buildCfg.GetValue("Type");
 	FString version = *buildCfg.GetValue("Version");
@@ -401,8 +435,16 @@ int GenerateCMakeProject(const FCompileConfig& config)
 	{
 		for (auto i : *includes)
 		{
-			i.ReplaceAll('\\', '/');
-			stream << "\n\t" << strExp.ParseString(i).c_str();
+			if (i.Find("${CONFIG}") != -1)
+			{
+				for (int c = 0; c < 3; c++)
+				{
+					i.ReplaceAll('\\', '/');
+					stream << "\n\t<$<$CONFIG:" << CMakeConfigStrings[c] << ">:" << strExpConfigs[c].ParseString(i).c_str() << ">";
+				}
+			}
+			else
+				stream << "\n\t" << strExp.ParseString(i).c_str();
 		}
 	}
 	stream << ")\n\n";
@@ -503,7 +545,12 @@ int GenerateCMakeProject(const FCompileConfig& config)
 		for (auto depend : *dep)
 		{
 			stream << "target_link_libraries(" << cmakeLib.c_str();
-			depend = strExp.ParseString(depend);
+			bool bHasConfigExp = depend.Find("${CONFIG}") != -1;
+			int its = bHasConfigExp ? 3 : 1;
+
+			FString deps[3] = { strExpConfigs[0].ParseString(depend), strExpConfigs[1].ParseString(depend), strExpConfigs[2].ParseString(depend) };
+
+			//depend = strExp.ParseString(depend);
 			bool bIsAddon = false;
 			bool bIsBuildFile = false;
 			bool bIsCmakeLists = false;
@@ -511,13 +558,18 @@ int GenerateCMakeProject(const FCompileConfig& config)
 			{
 				continue;
 				bIsAddon = true;
-				depend.Erase(depend.begin(), depend.begin() + 6);
+				for (int i = 0; i < its; i++)
+					deps[i].Erase(deps[i].begin(), deps[i].begin() + 6);
 			}
 			else if (auto ii = depend.Find("CMakeLists.txt"); ii != -1)
 			{
 				bIsCmakeLists = true;
 
-				depend.Erase(depend.begin() + ii - 1, depend.end());
+				for (int i = 0; i < its; i++)
+				{
+					int p = deps[i].Find("CMakeLists.txt");
+					deps[i].Erase(deps[i].begin() + p - 1, deps[i].end());
+				}
 			}
 			else if (depend.Find("Build.cfg") != -1)
 			{
@@ -564,7 +616,15 @@ int GenerateCMakeProject(const FCompileConfig& config)
 
 			// TODO: if addon, find the addons lib file
 			
-			stream << " \"" << depend.c_str() << "\"";
+			if (bHasConfigExp)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					stream << " <$<$CONFIG:" << CMakeConfigStrings[i] << ">:\"" << deps[i].c_str() << "\">";
+				}
+			}
+			else
+				stream << " \"" << deps[0].c_str() << "\"";
 			stream << ")\n";
 		}
 	}
@@ -573,23 +633,53 @@ int GenerateCMakeProject(const FCompileConfig& config)
 
 	if (auto* libOut = buildCfg.GetValue("LibOut", false); libOut)
 	{
-		FString lo = strExp.ParseString(*libOut);
-		lo.ReplaceAll('\\', '/');
+		FString loA = *libOut;
+		loA.ReplaceAll('\\', '/');
+		bool bHasConfigExp = loA.Find("${CONFIG}") != -1;
+		int its = bHasConfigExp ? 3 : 1;
+	
+		FString los[3] = { strExpConfigs[0].ParseString(loA), strExpConfigs[1].ParseString(loA), strExpConfigs[2].ParseString(loA) };
+
+		//FString lo = strExp.ParseString(*libOut);
+		//lo.ReplaceAll('\\', '/');
 		if (!bIsStaticLib)
-			cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:" + cmakeLib + ">\" \"" + lo + "/\"\n";
+		{
+			if (bHasConfigExp)
+			{
+				cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:" + cmakeLib + ">\" \"";
+				for (int i = 0; i < its; i++)
+				{
+					cmds += FString("$<$<CONFIG:") + CMakeConfigStrings[i] + ">:" + los[i] + "/>";
+				}
+				cmds += "\"\n";
+			}
+			else
+				cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:" + cmakeLib + ">\" \"" + los[0] + "/\"\n";
+		}
 			// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
 			// 	<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "\")\n";
 
 		try
 		{
-			std::filesystem::create_directories(lo.c_str());
+			for (int i = 0; i < its; i++)
+				std::filesystem::create_directories(los[i].c_str());
 		}
 		catch(std::exception& e)
 		{
 			std::cout << e.what();
 		}
-
-		cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_LINKER_FILE:" + cmakeLib + ">\" \"" + lo + "/\"\n";
+		
+		if (bHasConfigExp)
+		{
+			cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_LINKER_FILE:" + cmakeLib + ">\" \"";
+			for (int i = 0; i < its; i++)
+			{
+				cmds += FString("$<$<CONFIG:") + CMakeConfigStrings[i] + ">:" + los[i] + "/>";
+			}
+			cmds += "\"\n";
+		}
+		else
+			cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_LINKER_FILE:" + cmakeLib + ">\" \"" + los[0] + "/\"\n";
 		// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_LINKER_FILE:"
 		// 	<< cmakeLib.c_str() << ">\" \"" << lo.c_str() << "\")\n";
 	}
@@ -617,19 +707,34 @@ int GenerateCMakeProject(const FCompileConfig& config)
 
 	if (auto* binOut = buildCfg.GetValue("BuildOut", false); binOut)
 	{
-		FString bo = strExp.ParseString(*binOut);
+		FString bo = *binOut;
 		bo.ReplaceAll('\\', '/');
-
+		bool bHasConfigExp = bo.Find("${CONFIG}") != -1;
+		int its = bHasConfigExp ? 3 : 1;
+	
+		FString bos[3] = { strExpConfigs[0].ParseString(bo), strExpConfigs[1].ParseString(bo), strExpConfigs[2].ParseString(bo) };
+		
 		try
 		{
-			std::filesystem::create_directories(bo.c_str());
+			for (int i = 0; i < its; i++)
+				std::filesystem::create_directories(bos[i].c_str());
 		}
 		catch(std::exception& e)
 		{
 			std::cout << e.what();
 		}
 
-		cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:" + cmakeLib + ">\" \"" + bo + "/\"\n";
+		if (bHasConfigExp)
+		{
+			cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:" + cmakeLib + ">\" \"";
+			for (int i = 0; i < its; i++)
+			{
+				cmds += FString("$<$<CONFIG:") + CMakeConfigStrings[i] + ">:" + bos[i] + "/>"; 
+			}
+			cmds += "\"\n";
+		}
+		else
+			cmds += "\tCOMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:" + cmakeLib + ">\" \"" + bos[0] + "/\"\n";
 		// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
 		// 	<< cmakeLib.c_str() << ">\" \"" << bo.c_str() << "\")\n";
 		
