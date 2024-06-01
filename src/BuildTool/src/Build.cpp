@@ -738,7 +738,7 @@ int GenerateCMakeProject(const FCompileConfig& config)
 		// stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy \"$<TARGET_FILE:"
 		// 	<< cmakeLib.c_str() << ">\" \"" << bo.c_str() << "\")\n";
 		
-		std::filesystem::create_directories(bo.c_str());
+		//std::filesystem::create_directories(bos[0].c_str());
 	}
 
 	if (cmds.Size() > 0)
