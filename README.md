@@ -13,7 +13,7 @@ Requirements
 - Run 'install_win64.bat' as administrator
 - Run 'platforms/win64/build_buildtool.sh'
 - Run 'platforms/win64/generate_vsproj.bat' this will generate a VS project in 'src/ThoriumEngine/Intermediate/build/'
-- Open the generated project and compile the project.
+- Open the generated project and compile the engine.
 
 ### Linux
 - Run 'install_linux.sh'
