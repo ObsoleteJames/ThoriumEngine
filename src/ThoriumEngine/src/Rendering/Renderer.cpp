@@ -183,6 +183,17 @@ void IRenderer::Init()
 	shaderPPExposure = CShaderSource::GetShaderSource("PPExposure");
 	shaderPPExposure->LoadShaderObjects();
 
+	shaderBloomPass = CShaderSource::GetShaderSource("BloomPass");
+	shaderBloomPass->LoadShaderObjects();
+
+	shaderBloomPreFilter = CShaderSource::GetShaderSource("BloomPreFilter");
+	shaderBloomPreFilter->LoadShaderObjects();
+
+	shaderGaussianBlurV = CShaderSource::GetShaderSource("GaussianBlurV");
+	shaderGaussianBlurV->LoadShaderObjects();
+	shaderGaussianBlurH = CShaderSource::GetShaderSource("GaussianBlurH");
+	shaderGaussianBlurH->LoadShaderObjects();
+
 	sceneBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FSceneInfoBuffer));
 	objectBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FObjectInfoBuffer));
 	forwardLightsBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FForwardLightsBuffer));
@@ -269,6 +280,60 @@ void IRenderer::Blit(IFrameBuffer* a, IFrameBuffer* b, FVector2 viewportPos, FVe
 
 	gRenderer->SetViewport(0, 0, (float)widthB, (float)heightB);
 	gRenderer->SetFrameBuffer(b);
+	gRenderer->SetShaderResource(a, 1);
+	gRenderer->SetShaderBuffer(blitDataBuffer, 0);
+	gRenderer->SetVsShader(gRenderer->shaderScreenPlane->GetShader(ShaderType_Vertex));
+	gRenderer->SetPsShader(gRenderer->shaderBlit->GetShader(ShaderType_Fragment));
+
+	FMesh mesh;
+	mesh.numVertices = 3;
+	gRenderer->DrawMesh(&mesh);
+}
+
+void IRenderer::Blit(IFrameBuffer* a, IFrameBuffer* b, int destinationMip)
+{
+	int w, h;
+	a->GetSize(w, h);
+
+	int widthB, heightB;
+	b->GetSize(widthB, heightB);
+
+	float sizeScalar[4] = { 0, 0, (float)widthB / float(w), (float)heightB / float(h) };
+
+	if (!blitDataBuffer)
+		blitDataBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(float) * 4);
+
+	blitDataBuffer->Update(sizeof(float) * 4, sizeScalar);
+
+	gRenderer->SetViewport(0, 0, (float)widthB, (float)heightB);
+	gRenderer->SetFrameBuffer(b, destinationMip);
+	gRenderer->SetShaderResource(a, 1);
+	gRenderer->SetShaderBuffer(blitDataBuffer, 0);
+	gRenderer->SetVsShader(gRenderer->shaderScreenPlane->GetShader(ShaderType_Vertex));
+	gRenderer->SetPsShader(gRenderer->shaderBlit->GetShader(ShaderType_Fragment));
+
+	FMesh mesh;
+	mesh.numVertices = 3;
+	gRenderer->DrawMesh(&mesh);
+}
+
+void IRenderer::Blit(IFrameBuffer* a, IFrameBuffer* b, int destinationMip, FVector2 viewportPos, FVector2 viewportScale)
+{
+	int w, h;
+	a->GetSize(w, h);
+
+	int widthB, heightB;
+	b->GetSize(widthB, heightB);
+
+	float sizeScalar[4] = { viewportPos.x, viewportPos.y, viewportScale.x, viewportScale.y };
+
+	if (!blitDataBuffer)
+		blitDataBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(float) * 4);
+
+	blitDataBuffer->Update(sizeof(float) * 4, sizeScalar);
+
+	gRenderer->SetViewport(0, 0, (float)widthB, (float)heightB);
+	gRenderer->SetFrameBuffer(b, destinationMip);
 	gRenderer->SetShaderResource(a, 1);
 	gRenderer->SetShaderBuffer(blitDataBuffer, 0);
 	gRenderer->SetVsShader(gRenderer->shaderScreenPlane->GetShader(ShaderType_Vertex));
@@ -370,7 +435,7 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 	// figure out which volume has the highest priority
 	for (auto& volume : scene->ppVolumes)
 	{
-		if (volume->postProcessMaterial)
+		if (volume->postProcessMaterial || !volume->IsEnabled())
 			continue;
 
 		if (volume->IsGlobal())
@@ -416,7 +481,10 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 	FSceneInfoBuffer sceneInfo{ camMatrix, camera->view, camera->projection,
 		camMatrix.Inverse(), camera->view.Inverse(), camera->projection.Inverse(),
-		camera->position, 0u, camera->GetForwardVector(), 0u, scene->GetTime(), exposure, gamma, 0, FVector2((float)viewWidth, (float)viewHeight) / FVector2((float)scene->bufferWidth, (float)scene->bufferHeight) };
+		camera->position, 0u, camera->GetForwardVector(), 0u, scene->GetTime(), exposure, gamma, 0,
+		FVector2((float)viewWidth, (float)viewHeight) / FVector2((float)scene->bufferWidth, (float)scene->bufferHeight),
+		FVector2(viewWidth, viewHeight)
+	};
 	gRenderer->sceneBuffer->Update(sizeof(FSceneInfoBuffer), &sceneInfo);
 
 	static TArray<TPair<CPrimitiveProxy*, FMeshBuilder>> dynamicMeshes;
@@ -807,6 +875,79 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 			gRenderer->DrawMesh(&mesh);
 		}
 
+		gRenderer->CopyResource(scene->colorBuffer, scene->preTranslucentBuff);
+		
+		UnlockGPU();
+		// Bloom Pass
+		static TObjectPtr<IShaderBuffer> bloomInfoBuffer;
+		if (!bloomInfoBuffer)
+			bloomInfoBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FBloomSettings));
+
+		FBloomSettings bloomSettings { 0.2f, 1.2f, 0.7f };
+		if (ppVolumeA)
+		{
+			bloomSettings.intensity = ppVolumeA->ppSettings.bloomIntensity;
+			bloomSettings.threshold = ppVolumeA->ppSettings.bloomThreshold;
+			bloomSettings.softThreshold = ppVolumeA->ppSettings.bloomSoftThreshold;
+		}
+
+		bloomInfoBuffer->Update(sizeof(FBloomSettings), &bloomSettings);
+
+		gRenderer->SetViewport(0, 0, viewWidth / 2, viewHeight / 2);
+		gRenderer->SetFrameBuffer(scene->bloomBuffersX[0]);
+		gRenderer->SetShaderResource(scene->colorBuffer, 0);
+		gRenderer->SetShaderBuffer(bloomInfoBuffer, 0);
+		gRenderer->SetVsShader(gRenderer->shaderScreenPlane->GetShader(ShaderType_Vertex));
+		gRenderer->SetPsShader(gRenderer->shaderBloomPreFilter->GetShader(ShaderType_Fragment));
+		
+		LockGPU();
+		FMesh mesh;
+		mesh.numVertices = 3;
+		gRenderer->DrawMesh(&mesh);
+
+		static const int bloomScaleLUT[] = {
+			2, 4, 8, 16, 32, 64
+		};
+
+		for (int i = 0; i < 4; i++)
+		{
+			gRenderer->SetViewport(0, 0, viewWidth / bloomScaleLUT[i] , viewHeight / bloomScaleLUT[i]);
+			gRenderer->SetVsShader(gRenderer->shaderScreenPlane->GetShader(ShaderType_Vertex));
+			gRenderer->SetPsShader(gRenderer->shaderGaussianBlurV->GetShader(ShaderType_Fragment));
+			gRenderer->SetFrameBuffer(scene->bloomBuffersY[i]);
+
+			gRenderer->SetShaderResource(scene->bloomBuffersX[i], 0);
+
+			gRenderer->DrawMesh(&mesh);
+
+			gRenderer->SetFrameBuffer(scene->bloomBuffersX[i]);
+			gRenderer->SetShaderResource(scene->bloomBuffersY[i], 0);
+			gRenderer->SetPsShader(gRenderer->shaderGaussianBlurH->GetShader(ShaderType_Fragment));
+
+			gRenderer->DrawMesh(&mesh);
+
+			if (i + 1 < 4)
+			{
+				UnlockGPU();
+				// bloom
+				Blit(scene->bloomBuffersX[i], scene->bloomBuffersX[i+1], FVector2(), FVector2(1, 1));
+				LockGPU();
+			}
+		}
+
+		// Apply bloom
+		gRenderer->SetViewport(0.f, 0.f, (float)viewWidth* sp, (float)viewHeight* sp);
+		gRenderer->SetPsShader(gRenderer->shaderBloomPass->GetShader(ShaderType_Fragment));
+		gRenderer->SetFrameBuffer(scene->colorBuffer);
+		gRenderer->SetShaderResource(scene->preTranslucentBuff, 0);
+		gRenderer->SetShaderResource(scene->bloomBuffersX[0], 1);
+		gRenderer->SetShaderResource(scene->bloomBuffersX[1], 2);
+		gRenderer->SetShaderResource(scene->bloomBuffersX[2], 3);
+		gRenderer->SetShaderResource(scene->bloomBuffersX[3], 4);
+		gRenderer->SetShaderBuffer(bloomInfoBuffer, 0);
+		
+		gRenderer->DrawMesh(&mesh);
+
 		for (auto& v : postProcessMats)
 		{
 			auto volume = v.second;
@@ -842,6 +983,8 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 		if (pass == 1)
 			scene->depth->Clear();
+
+		gRenderer->SetViewport(0, 0, (float)viewWidth * sp, (float)viewHeight * sp);
 
 		gRenderer->SetFrameBuffer(scene->colorBuffer, scene->depth);
 		gRenderer->SetShaderBuffer(gRenderer->sceneBuffer, 1);

@@ -18,8 +18,6 @@ Global
 	{
 		#include "common/pixel_input.hlsl"
 	};
-
-	Property<int> vTestProperty(Name = "Test Property");
 }
 
 PS

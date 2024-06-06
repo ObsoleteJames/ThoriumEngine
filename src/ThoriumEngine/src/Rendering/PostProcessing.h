@@ -31,13 +31,13 @@ struct ENGINE_API FPostProcessSettings
 public:
 	// ------------- Bloom -------------
 	PROPERTY(Name = "Intensity", Category = "Bloom")
-	float bloomIntensity = 0.5f;
+	float bloomIntensity = 0.2f;
 
 	PROPERTY(Name = "Threshold", Category = "Bloom")
 	float bloomThreshold = 1.f;
 
-	PROPERTY(Name = "Blur Amount", Category = "Bloom")
-	float bloomBlur = 2.5f;
+	PROPERTY(Name = "Soft Threshold", Category = "Bloom")
+	float bloomSoftThreshold = 0.5f;
 
 	// ------------- Exposure -------------
 	PROPERTY(Category = "Exposure")

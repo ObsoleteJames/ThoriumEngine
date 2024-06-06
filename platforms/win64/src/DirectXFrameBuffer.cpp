@@ -11,7 +11,7 @@ DirectXFrameBuffer::DirectXFrameBuffer(ID3D11Texture2D* fromTexture, int w, int 
 	height = h;
 
 	IRenderer::LockGPU();
-	HRESULT hr = GetDirectXRenderer()->device->CreateRenderTargetView(fromTexture, nullptr, &targetView);
+	HRESULT hr = GetDirectXRenderer()->device->CreateRenderTargetView(fromTexture, nullptr, &targetViews[0]);
 	THORIUM_ASSERT(SUCCEEDED(hr), "Failed to create DirectX framebuffer");
 	IRenderer::UnlockGPU();
 }
@@ -19,20 +19,28 @@ DirectXFrameBuffer::DirectXFrameBuffer(ID3D11Texture2D* fromTexture, int w, int 
 DirectXFrameBuffer::DirectXFrameBuffer(int w, int h, ETextureFormat f, ETextureFilter _filter) : filter(_filter)
 {
 	type = TextureType_Framebuffer;
-	Generate(w, h, f);
+	Generate(w, h, 1, f);
+}
+
+DirectXFrameBuffer::DirectXFrameBuffer(int w, int h, int mipmapCount, ETextureFormat f, ETextureFilter _filter) : filter(_filter)
+{
+	type = TextureType_Framebuffer;
+	Generate(w, h, mipmapCount, f);
 }
 
 DirectXFrameBuffer::~DirectXFrameBuffer()
 {
-	targetView->Release();
+	for (int i = 0; i < numMipMaps; i++)
+		targetViews[i]->Release();
 	if (buffer)
 		buffer->Release();
 }
 
 void DirectXFrameBuffer::Resize(int width, int height)
 {
-	if (targetView)
-		targetView->Release();
+	for (int i = 0; i < numMipMaps; i++)
+		if (targetViews[i])
+			targetViews[i]->Release();
 	if (buffer)
 		buffer->Release();
 
@@ -41,20 +49,22 @@ void DirectXFrameBuffer::Resize(int width, int height)
 	if (sampler)
 		sampler->Release();
 
-	Generate(width, height, format);
+	Generate(width, height, numMipMaps, format);
 }
 
 void DirectXFrameBuffer::Clear(float r, float g, float b, float a)
 {
 	float bg[] = { r, g, b, a };
-	GetDirectXRenderer()->deviceContext->ClearRenderTargetView(targetView, bg);
+	for (int i = 0; i < numMipMaps; i++)
+		GetDirectXRenderer()->deviceContext->ClearRenderTargetView(targetViews[i], bg);
 }
 
-void DirectXFrameBuffer::Generate(int w, int h, ETextureFormat f)
+void DirectXFrameBuffer::Generate(int w, int h, int mipmap, ETextureFormat f)
 {
 	width = w;
 	height = h;
 	format = f;
+	numMipMaps = mipmap;
 
 	//THORIUM_ASSERT(format < THTX_FORMAT_DXT1, "Invalid format for framebuffer");
 
@@ -62,7 +72,7 @@ void DirectXFrameBuffer::Generate(int w, int h, ETextureFormat f)
 	D3D11_TEXTURE2D_DESC tex{};
 	tex.Width = width;
 	tex.Height = height;
-	tex.MipLevels = 1;
+	tex.MipLevels = numMipMaps;
 	tex.ArraySize = 1;
 	tex.Format = DirectXRenderer::GetDXTextureFormat(format).Key;
 	tex.SampleDesc.Count = 1;
@@ -73,8 +83,25 @@ void DirectXFrameBuffer::Generate(int w, int h, ETextureFormat f)
 	HRESULT hr = GetDirectXRenderer()->device->CreateTexture2D(&tex, nullptr, &buffer);
 	THORIUM_ASSERT(SUCCEEDED(hr), "Failed to create DirectX Texture2D");
 
-	hr = GetDirectXRenderer()->device->CreateRenderTargetView(buffer, nullptr, &targetView);
-	THORIUM_ASSERT(SUCCEEDED(hr), "Failed to create DirectX framebuffer");
+	if (numMipMaps == 1)
+	{
+		hr = GetDirectXRenderer()->device->CreateRenderTargetView(buffer, nullptr, &targetViews[0]);
+		THORIUM_ASSERT(SUCCEEDED(hr), "Failed to create DirectX framebuffer");
+	}
+	else
+	{
+		for (int i = 0; i < numMipMaps; i++)
+		{
+
+			D3D11_RENDER_TARGET_VIEW_DESC rtdesc{};
+			rtdesc.Format = tex.Format;
+			rtdesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+			rtdesc.Texture2D.MipSlice = i;
+
+			hr = GetDirectXRenderer()->device->CreateRenderTargetView(buffer, nullptr, &targetViews[i]);
+			THORIUM_ASSERT(SUCCEEDED(hr), "Failed to create DirectX framebuffer");
+		}
+	}
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
 	srvDesc.Format = tex.Format;

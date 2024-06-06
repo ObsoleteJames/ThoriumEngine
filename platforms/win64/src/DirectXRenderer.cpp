@@ -369,6 +369,11 @@ IFrameBuffer* DirectXRenderer::CreateFrameBuffer(int width, int height, ETexture
 	return new DirectXFrameBuffer(width, height, format, filter);
 }
 
+IFrameBuffer* DirectXRenderer::CreateFrameBuffer(int width, int height, int numMipMaps, ETextureFormat format, ETextureFilter filter /*= THTX_FILTER_LINEAR*/)
+{
+	return new DirectXFrameBuffer(width, height, numMipMaps, format, filter);
+}
+
 ITexture2D* DirectXRenderer::CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter)
 {
 	auto* t = new DirectXTexture2D(data, width, height, format, filter);
@@ -660,6 +665,11 @@ void DirectXRenderer::SetShaderResource(IDepthBuffer* depthTex, int _register)
 void DirectXRenderer::SetFrameBuffer(IFrameBuffer* framebuffer, IDepthBuffer* depth)
 {
 	deviceContext->OMSetRenderTargets(framebuffer != nullptr, framebuffer != nullptr ? &((DirectXFrameBuffer*)framebuffer)->Get() : 0, depth != nullptr ? ((DirectXDepthBuffer*)depth)->depthView : 0);
+}
+
+void DirectXRenderer::SetFrameBuffer(IFrameBuffer* framebuffer, int mip, IDepthBuffer* depth)
+{
+	deviceContext->OMSetRenderTargets(framebuffer != nullptr, framebuffer != nullptr ? &((DirectXFrameBuffer*)framebuffer)->Get(mip) : 0, depth != nullptr ? ((DirectXDepthBuffer*)depth)->depthView : 0);
 }
 
 void DirectXRenderer::SetFrameBuffers(IFrameBuffer** framebuffers, SizeType count, IDepthBuffer* depth)

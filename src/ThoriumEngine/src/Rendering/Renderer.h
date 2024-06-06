@@ -100,6 +100,7 @@ struct FSceneInfoBuffer
 	float padding_gamma;
 
 	FVector2 framebufferScale;
+	FVector2 viewport;
 };
 
 struct FObjectInfoBuffer
@@ -177,7 +178,7 @@ struct FBloomSettings
 {
 	float intensity;
 	float threshold;
-	float blur;
+	float softThreshold;
 };
 
 struct FTextSDFBuffer
@@ -269,6 +270,7 @@ public:
 	virtual ISwapChain* CreateSwapChain(IBaseWindow* window) = 0;
 	virtual IDepthBuffer* CreateDepthBuffer(FDepthBufferInfo depthInfo) = 0;
 	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, ETextureFormat format, ETextureFilter filter = THTX_FILTER_LINEAR) = 0;
+	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, int numMipMaps, ETextureFormat format, ETextureFilter filter = THTX_FILTER_LINEAR) = 0;
 
 	virtual ITexture2D* CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter) = 0;
 	virtual ITexture2D* CreateTexture2D(void** data, int numMipMaps, int width, int height, ETextureFormat format, ETextureFilter filter) = 0;
@@ -299,6 +301,7 @@ public:
 	//virtual void SetShaderResource(IFrameBuffer* fb, int _register) = 0;
 
 	virtual void SetFrameBuffer(IFrameBuffer* framebuffer, IDepthBuffer* depth = nullptr) = 0;
+	virtual void SetFrameBuffer(IFrameBuffer* framebuffer, int mip, IDepthBuffer* depth = nullptr) = 0;
 	virtual void SetFrameBuffers(IFrameBuffer** framebuffers, SizeType count, IDepthBuffer* depth = nullptr) = 0;
 
 	virtual void SetViewport(float x, float y, float width, float height) = 0;
@@ -321,7 +324,10 @@ protected:
 	//virtual void BindGlobalData() = 0;
 
 	static void Blit(IFrameBuffer* source, IFrameBuffer* destination);
+	static void Blit(IFrameBuffer* source, IFrameBuffer* destination, int destinationMip);
+
 	static void Blit(IFrameBuffer* source, IFrameBuffer* destination, FVector2 viewportPos, FVector2 viewportScale);
+	static void Blit(IFrameBuffer* source, IFrameBuffer* destination, int destinationMip, FVector2 viewportPos, FVector2 viewportScale);
 
 private:
 	static void renderAll();
@@ -360,6 +366,9 @@ protected:
 	TObjectPtr<CShaderSource> shaderDeferredSpotLight;
 
 	TObjectPtr<CShaderSource> shaderPPExposure;
+	TObjectPtr<CShaderSource> shaderGaussianBlurV;
+	TObjectPtr<CShaderSource> shaderGaussianBlurH;
+	TObjectPtr<CShaderSource> shaderBloomPreFilter;
 	TObjectPtr<CShaderSource> shaderBloomPass;
 
 	TObjectPtr<IShaderBuffer> sceneBuffer;

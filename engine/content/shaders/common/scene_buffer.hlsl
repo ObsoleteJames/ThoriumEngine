@@ -24,6 +24,8 @@ cbuffer SceneInfo : register(b1)
     // The GBuffers can be a larger size than the viewport,
     // so when sampling a framebuffer we need to account for the size difference using this value.
     float2 vFrameBufferScale; 
+
+    float2 vViewport;
 }
 
 // either the last frame (for forward and deferred pass), or the last pass (for when drawing transparent materials).

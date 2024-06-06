@@ -5,10 +5,12 @@
 #include "Renderer.h"
 #include "Rendering/Texture.h"
 
-CRenderScene::CRenderScene(int fbWidth /*= 1280*/, int fbHeight /*= 720*/)
-{
-	primaryCamera = nullptr;
+static const int bloomScaleLUT[] = {
+	2, 4, 8, 16, 32, 64
+};
 
+CRenderScene::CRenderScene(int fbWidth /*= 1280*/, int fbHeight /*= 720*/) : primaryCamera(nullptr)
+{
 	bufferWidth = fbWidth;
 	bufferHeight = fbHeight;
 
@@ -27,6 +29,12 @@ CRenderScene::CRenderScene(int fbWidth /*= 1280*/, int fbHeight /*= 720*/)
 
 	aoBuffer = gRenderer->CreateFrameBuffer(fbWidth / 2, fbHeight / 2, TEXTURE_FORMAT_R8_UNORM);
 
+	for (int i = 0; i < 4; i++)
+	{
+		bloomBuffersX[i] = gRenderer->CreateFrameBuffer(fbWidth / bloomScaleLUT[i], fbHeight / bloomScaleLUT[i], TEXTURE_FORMAT_RGBA16_FLOAT, THTX_FILTER_LINEAR);
+		bloomBuffersY[i] = gRenderer->CreateFrameBuffer(fbWidth / bloomScaleLUT[i], fbHeight / bloomScaleLUT[i], TEXTURE_FORMAT_RGBA16_FLOAT, THTX_FILTER_LINEAR);
+	}
+
 	depth = gRenderer->CreateDepthBuffer({ widthB, heightB, TH_DBF_D24_S8, 1, false });
 
 	depthTex = gRenderer->CreateTexture2D(nullptr, widthB, heightB, TEXTURE_FORMAT_R24G8, THTX_FILTER_POINT);
@@ -41,6 +49,13 @@ CRenderScene::~CRenderScene()
 	delete GBufferD;
 	delete preTranslucentBuff;
 	delete aoBuffer;
+	
+	for (int i = 0; i < 4; i++)
+	{
+		delete bloomBuffersX[i];
+		delete bloomBuffersY[i];
+	}
+
 	delete depth;
 	delete depthTex;
 }
@@ -64,6 +79,12 @@ void CRenderScene::ResizeBuffers(int width, int height)
 	preTranslucentBuff->Resize(widthB, heightB);
 
 	aoBuffer->Resize(width / 2, height / 2);
+
+	for (int i = 0; i < 4; i++)
+	{
+		bloomBuffersX[i]->Resize(width / bloomScaleLUT[i], height / bloomScaleLUT[i]);
+		bloomBuffersY[i]->Resize(width / bloomScaleLUT[i], height / bloomScaleLUT[i]);
+	}
 
 	depth->Resize(widthB, heightB);
 	delete depthTex;
