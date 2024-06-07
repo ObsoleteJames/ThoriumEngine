@@ -28,7 +28,7 @@ PS
 	float4 Main(PS_Input input) : SV_TARGET
 	{
 		float3 color = SampleFrameBuffer(vColor, input.vTextureCoords).xyz * vExposure;
-		color = pow(abs(color), abs(float3(1 / vGamma, 1 / vGamma, 1 / vGamma)));
+		//color = pow(abs(color), abs(float3(1 / vGamma, 1 / vGamma, 1 / vGamma)));
 
 		return float4(color, 1.f);
 	}

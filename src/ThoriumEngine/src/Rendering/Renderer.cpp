@@ -916,7 +916,7 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 			gRenderer->SetPsShader(gRenderer->shaderGaussianBlurV->GetShader(ShaderType_Fragment));
 			gRenderer->SetFrameBuffer(scene->bloomBuffersY[i]);
 
-			gRenderer->SetShaderResource(scene->bloomBuffersX[i], 0);
+			gRenderer->SetShaderResource(scene->bloomBuffersX[i > 0 ? i - 1 : i], 0);
 
 			gRenderer->DrawMesh(&mesh);
 
@@ -926,13 +926,13 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 			gRenderer->DrawMesh(&mesh);
 
-			if (i + 1 < 4)
-			{
-				UnlockGPU();
-				// bloom
-				Blit(scene->bloomBuffersX[i], scene->bloomBuffersX[i+1], FVector2(), FVector2(1, 1));
-				LockGPU();
-			}
+			//if (i + 1 < 4)
+			//{
+			//	UnlockGPU();
+			//	// bloom
+			//	Blit(scene->bloomBuffersX[i], scene->bloomBuffersX[i+1], FVector2(), FVector2(1, 1));
+			//	LockGPU();
+			//}
 		}
 
 		// Apply bloom
