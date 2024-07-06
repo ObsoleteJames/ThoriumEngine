@@ -35,6 +35,12 @@ CConVar cvRenderSsaoQuality("r.ssao.quality", "config/graphics.cfg", 4, 0, 4);
 CConVar cvRenderSsShadows("r.ssshadows.enabled", "config/graphics.cfg", 1);
 CConVar cvRenderSsShadowsQuality("r.ssshadows.quality", "config/graphics.cfg", 4, 0, 4);
 
+// Bloom
+CConVar cvRenderBloomEnabled("r.bloom.enabled", "config/graphics.cfg", 1);
+CConVar cvRenderBloomIntensity("r.bloom.intensity", "config/graphics.cfg", 0.25f);
+CConVar cvRenderBloomThreshold("r.bloom.threshold", "config/graphics.cfg", 1.f);
+CConVar cvRenderBloomKnee("r.bloom.knee", "config/graphics.cfg", 0.75f);
+
 CConVar cvRenderFBPointFilter("r.framebuffer.pointfilter", "config/graphics.cfg", 0, 0, 1);
 
 CConVar cvForceForwardRendering("r.forceforward", "config/graphics.cfg", 0, 0, 1);
@@ -877,76 +883,80 @@ void IRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 		gRenderer->CopyResource(scene->colorBuffer, scene->preTranslucentBuff);
 		
-		UnlockGPU();
-		// Bloom Pass
-		static TObjectPtr<IShaderBuffer> bloomInfoBuffer;
-		if (!bloomInfoBuffer)
-			bloomInfoBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FBloomSettings));
-
-		FBloomSettings bloomSettings { 0.2f, 1.2f, 0.7f };
-		if (ppVolumeA)
+		if (cvRenderBloomEnabled.AsBool())
 		{
-			bloomSettings.intensity = ppVolumeA->ppSettings.bloomIntensity;
-			bloomSettings.threshold = ppVolumeA->ppSettings.bloomThreshold;
-			bloomSettings.softThreshold = ppVolumeA->ppSettings.bloomSoftThreshold;
-		}
+			UnlockGPU();
+			
+			// Bloom Pass
+			static TObjectPtr<IShaderBuffer> bloomInfoBuffer;
+			if (!bloomInfoBuffer)
+				bloomInfoBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FBloomSettings));
 
-		bloomInfoBuffer->Update(sizeof(FBloomSettings), &bloomSettings);
+			FBloomSettings bloomSettings{ cvRenderBloomIntensity.AsFloat(), cvRenderBloomThreshold.AsFloat(), cvRenderBloomKnee.AsFloat() };
+			if (ppVolumeA)
+			{
+				bloomSettings.intensity = ppVolumeA->ppSettings.bloomIntensity;
+				bloomSettings.threshold = ppVolumeA->ppSettings.bloomThreshold;
+				bloomSettings.knee = ppVolumeA->ppSettings.bloomKnee;
+			}
 
-		gRenderer->SetViewport(0, 0, viewWidth / 2, viewHeight / 2);
-		gRenderer->SetFrameBuffer(scene->bloomBuffersX[0]);
-		gRenderer->SetShaderResource(scene->colorBuffer, 0);
-		gRenderer->SetShaderBuffer(bloomInfoBuffer, 0);
-		gRenderer->SetVsShader(gRenderer->shaderScreenPlane->GetShader(ShaderType_Vertex));
-		gRenderer->SetPsShader(gRenderer->shaderBloomPreFilter->GetShader(ShaderType_Fragment));
-		
-		LockGPU();
-		FMesh mesh;
-		mesh.numVertices = 3;
-		gRenderer->DrawMesh(&mesh);
+			bloomInfoBuffer->Update(sizeof(FBloomSettings), &bloomSettings);
 
-		static const int bloomScaleLUT[] = {
-			2, 4, 8, 16, 32, 64
-		};
-
-		for (int i = 0; i < 4; i++)
-		{
-			gRenderer->SetViewport(0, 0, viewWidth / bloomScaleLUT[i] , viewHeight / bloomScaleLUT[i]);
+			gRenderer->SetViewport(0, 0, viewWidth / 2, viewHeight / 2);
+			gRenderer->SetFrameBuffer(scene->bloomBuffersX[0]);
+			gRenderer->SetShaderResource(scene->colorBuffer, 0);
+			gRenderer->SetShaderBuffer(bloomInfoBuffer, 0);
 			gRenderer->SetVsShader(gRenderer->shaderScreenPlane->GetShader(ShaderType_Vertex));
-			gRenderer->SetPsShader(gRenderer->shaderGaussianBlurV->GetShader(ShaderType_Fragment));
-			gRenderer->SetFrameBuffer(scene->bloomBuffersY[i]);
+			gRenderer->SetPsShader(gRenderer->shaderBloomPreFilter->GetShader(ShaderType_Fragment));
 
-			gRenderer->SetShaderResource(scene->bloomBuffersX[i > 0 ? i - 1 : i], 0);
-
+			LockGPU();
+			FMesh mesh;
+			mesh.numVertices = 3;
 			gRenderer->DrawMesh(&mesh);
 
-			gRenderer->SetFrameBuffer(scene->bloomBuffersX[i]);
-			gRenderer->SetShaderResource(scene->bloomBuffersY[i], 0);
-			gRenderer->SetPsShader(gRenderer->shaderGaussianBlurH->GetShader(ShaderType_Fragment));
+			static const int bloomScaleLUT[] = {
+				2, 4, 8, 16, 32, 64
+			};
+
+			for (int i = 0; i < 4; i++)
+			{
+				gRenderer->SetViewport(0, 0, viewWidth / bloomScaleLUT[i], viewHeight / bloomScaleLUT[i]);
+				gRenderer->SetVsShader(gRenderer->shaderScreenPlane->GetShader(ShaderType_Vertex));
+				gRenderer->SetPsShader(gRenderer->shaderGaussianBlurV->GetShader(ShaderType_Fragment));
+				gRenderer->SetFrameBuffer(scene->bloomBuffersY[i]);
+
+				gRenderer->SetShaderResource(scene->bloomBuffersX[i > 0 ? i - 1 : i], 0);
+
+				gRenderer->DrawMesh(&mesh);
+
+				gRenderer->SetFrameBuffer(scene->bloomBuffersX[i]);
+				gRenderer->SetShaderResource(scene->bloomBuffersY[i], 0);
+				gRenderer->SetPsShader(gRenderer->shaderGaussianBlurH->GetShader(ShaderType_Fragment));
+
+				gRenderer->DrawMesh(&mesh);
+
+				//if (i + 1 < 4)
+				//{
+				//	UnlockGPU();
+				//	// bloom
+				//	Blit(scene->bloomBuffersX[i], scene->bloomBuffersX[i+1], FVector2(), FVector2(1, 1));
+				//	LockGPU();
+				//}
+			}
+
+			// Apply bloom
+			gRenderer->SetViewport(0.f, 0.f, (float)viewWidth * sp, (float)viewHeight * sp);
+			gRenderer->SetPsShader(gRenderer->shaderBloomPass->GetShader(ShaderType_Fragment));
+			gRenderer->SetFrameBuffer(scene->colorBuffer);
+			gRenderer->SetShaderResource(scene->preTranslucentBuff, 0);
+			gRenderer->SetShaderResource(scene->bloomBuffersX[0], 1);
+			gRenderer->SetShaderResource(scene->bloomBuffersX[1], 2);
+			gRenderer->SetShaderResource(scene->bloomBuffersX[2], 3);
+			gRenderer->SetShaderResource(scene->bloomBuffersX[3], 4);
+			gRenderer->SetShaderBuffer(bloomInfoBuffer, 0);
 
 			gRenderer->DrawMesh(&mesh);
-
-			//if (i + 1 < 4)
-			//{
-			//	UnlockGPU();
-			//	// bloom
-			//	Blit(scene->bloomBuffersX[i], scene->bloomBuffersX[i+1], FVector2(), FVector2(1, 1));
-			//	LockGPU();
-			//}
 		}
-
-		// Apply bloom
-		gRenderer->SetViewport(0.f, 0.f, (float)viewWidth* sp, (float)viewHeight* sp);
-		gRenderer->SetPsShader(gRenderer->shaderBloomPass->GetShader(ShaderType_Fragment));
-		gRenderer->SetFrameBuffer(scene->colorBuffer);
-		gRenderer->SetShaderResource(scene->preTranslucentBuff, 0);
-		gRenderer->SetShaderResource(scene->bloomBuffersX[0], 1);
-		gRenderer->SetShaderResource(scene->bloomBuffersX[1], 2);
-		gRenderer->SetShaderResource(scene->bloomBuffersX[2], 3);
-		gRenderer->SetShaderResource(scene->bloomBuffersX[3], 4);
-		gRenderer->SetShaderBuffer(bloomInfoBuffer, 0);
-		
-		gRenderer->DrawMesh(&mesh);
 
 		for (auto& v : postProcessMats)
 		{

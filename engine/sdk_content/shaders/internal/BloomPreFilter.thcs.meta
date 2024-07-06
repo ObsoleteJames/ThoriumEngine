@@ -26,7 +26,7 @@ PS
 	{
 		float vBloomIntensity;
 		float vBloomThreshold;
-		float vBloomSoftThreshold;
+		float vBloomKnee;
 	}
 
 	Texture2D vColor : TEXTURE : register(t0);
@@ -37,10 +37,9 @@ PS
 		float3 col = SampleTexture2D(vColor, input.vTextureCoords).xyz;
 		float brightness = max(col.x, max(col.y, col.z));
 
-		float knee = vBloomThreshold * vBloomSoftThreshold;
-		float soft = brightness - vBloomThreshold + knee;
-		soft = clamp(soft, 0, 2 * knee);
-		soft = soft * soft / (4 * knee * 0.00001f);
+		float soft = brightness - vBloomThreshold + vBloomKnee;
+		soft = clamp(soft, 0, 2 * vBloomKnee);
+		soft = soft * soft / (4 * vBloomKnee * 0.00001f);
 		float contribution = max(soft, brightness - vBloomThreshold);
 		contribution /= max(contribution, 0.00001f);
 

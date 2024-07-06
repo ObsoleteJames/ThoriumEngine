@@ -178,7 +178,7 @@ struct FBloomSettings
 {
 	float intensity;
 	float threshold;
-	float softThreshold;
+	float knee;
 };
 
 struct FTextSDFBuffer

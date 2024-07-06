@@ -406,9 +406,9 @@ int GenerateCMakeProject(const FCompileConfig& config)
 	stream << "\nset(Files ";
 
 	for (auto& f : files)
-		stream << "\n\t" << f.c_str();
+		stream << "\n\t\"" << f.c_str() << "\"";
 	for (auto& f : generatedFiles)
-		stream << "\n\t" << f.c_str();
+		stream << "\n\t\"" << f.c_str() << "\"";
 
 	stream << ")\n\n";
 
@@ -440,11 +440,11 @@ int GenerateCMakeProject(const FCompileConfig& config)
 				for (int c = 0; c < 3; c++)
 				{
 					i.ReplaceAll('\\', '/');
-					stream << "\n\t<$<$CONFIG:" << CMakeConfigStrings[c] << ">:" << strExpConfigs[c].ParseString(i).c_str() << ">";
+					stream << "\n\t\"<$<$CONFIG:" << CMakeConfigStrings[c] << ">:" << strExpConfigs[c].ParseString(i).c_str() << ">\"";
 				}
 			}
 			else
-				stream << "\n\t" << strExp.ParseString(i).c_str();
+				stream << "\n\t\"" << strExp.ParseString(i).c_str() << "\"";
 		}
 	}
 	stream << ")\n\n";

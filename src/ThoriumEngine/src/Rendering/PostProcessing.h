@@ -36,8 +36,8 @@ public:
 	PROPERTY(Name = "Threshold", Category = "Bloom")
 	float bloomThreshold = 1.f;
 
-	PROPERTY(Name = "Soft Threshold", Category = "Bloom")
-	float bloomSoftThreshold = 0.5f;
+	PROPERTY(Name = "Knee", Category = "Bloom")
+	float bloomKnee = 0.5f;
 
 	// ------------- Exposure -------------
 	PROPERTY(Category = "Exposure")

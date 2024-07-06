@@ -39,10 +39,10 @@ PS
 
 		for (int i = 1; i < 5; i++)
 		{
-			col += SampleTexture2D(vColor, input.vTextureCoords + (float2(0, offset[i]) / float(texHeight))) * weight[i];
-			col += SampleTexture2D(vColor, input.vTextureCoords - (float2(0, offset[i]) / float(texHeight))) * weight[i];
+			col += SampleTexture2D(vColor, input.vTextureCoords + (float2(0, offset[i] * 1.25f) / float(texHeight))) * weight[i];
+			col += SampleTexture2D(vColor, input.vTextureCoords - (float2(0, offset[i] * 1.25f) / float(texHeight))) * weight[i];
 		}
 
-		return float4(col / 1.5f, 1.f);
+		return float4(col, 1.f);
 	}
 }
