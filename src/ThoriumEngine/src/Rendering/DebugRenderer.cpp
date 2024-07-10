@@ -1,7 +1,7 @@
 
 #include "DebugRenderer.h"
-#include "Resources/Material.h"
-#include "Resources/ModelAsset.h"
+#include "Assets/Material.h"
+#include "Assets/ModelAsset.h"
 #include "Renderer.h"
 #include "RenderScene.h"
 #include "Game/World.h"
@@ -14,8 +14,8 @@ CDebugRenderer::CDebugRenderer()
 	lineMesh.vertexBuffer = gRenderer->CreateVertexBuffer({ { FVector::zero }, { -FVector::forward } });
 	lineMesh.topologyType = FMesh::TOPOLOGY_LINES;
 
-	cube = CResourceManager::GetResource<CModelAsset>("models/Cube.thmdl");
-	sphere = CResourceManager::GetResource<CModelAsset>("models/Sphere.thmdl");
+	cube = CAssetManager::GetAsset<CModelAsset>("models/Cube.thmdl");
+	sphere = CAssetManager::GetAsset<CModelAsset>("models/Sphere.thmdl");
 
 	cube->Load(0);
 	sphere->Load(0);

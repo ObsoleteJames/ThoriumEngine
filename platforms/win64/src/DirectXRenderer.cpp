@@ -7,7 +7,7 @@
 #include "Platform/Windows/DirectX/DirectXBuffers.h"
 #include "Platform/Windows/DirectX/DirectXTexture.h"
 #include "Console.h"
-#include "Resources/Material.h"
+#include "Assets/Material.h"
 
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "D3DCompiler.lib")

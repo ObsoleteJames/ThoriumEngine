@@ -1,7 +1,7 @@
 
 #include "TransformGizmoEntity.h"
-#include "Resources/ModelAsset.h"
-#include "Resources/Material.h"
+#include "Assets/ModelAsset.h"
+#include "Assets/Material.h"
 #include "Rendering/Renderer.h"
 #include "Game/Components/CameraComponent.h"
 #include "Game/Components/ModelComponent.h"

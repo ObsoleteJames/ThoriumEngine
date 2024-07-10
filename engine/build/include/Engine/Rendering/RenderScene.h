@@ -119,6 +119,9 @@ private:
 	// Ambient occlusion buffer.
 	IFrameBuffer* aoBuffer;
 
+	IFrameBuffer* bloomBuffersX[4];
+	IFrameBuffer* bloomBuffersY[4];
+
 	ITexture2D* depthTex;
 
 	IDepthBuffer* depth;

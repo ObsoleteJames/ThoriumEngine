@@ -14,8 +14,8 @@
 #include "Game/GameInstance.h"
 #include "Game/Input/InputManager.h"
 #include "Game/Components/CameraComponent.h"
-#include "Resources/Material.h"
-#include "Resources/Scene.h"
+#include "Assets/Material.h"
+#include "Assets/Scene.h"
 #include "Misc/Timer.h"
 
 #include "ImGui/imgui.h"
@@ -56,7 +56,7 @@ void CEngine::InitMinimal()
 	CConsole::Init();
 	CONSOLE_LogInfo("CEngine", "Initializing...");
 	
-	CResourceManager::Init();
+	CAssetManager::Init();
 	CModuleManager::RegisterModule(&GetModule_Engine());
 
 	if (gIsEditor || !FFileHelper::DirectoryExists("./core"))
@@ -209,7 +209,7 @@ int CEngine::Run()
 	{
 		FTimer dtTimer;
 
-		CResourceManager::Update();
+		CAssetManager::Update();
 		CObjectManager::Update();
 		CConsole::Update();
 
@@ -576,7 +576,7 @@ void CEngine::OnExit()
 	if (!bIsTerminal)
 		CWindow::Shutdown();
 
-	CResourceManager::Shutdown();
+	CAssetManager::Shutdown();
 	CModuleManager::Cleanup();
 
 	SaveConsoleLog();
@@ -621,7 +621,7 @@ void CEngine::DoLoadWorld()
 	CScene* pScene = nullptr;
 	if (nextSceneName != "empty")
 	{
-		pScene = CResourceManager::GetResource<CScene>(nextSceneName);
+		pScene = CAssetManager::GetAsset<CScene>(nextSceneName);
 		if (!pScene)
 		{
 			CONSOLE_LogError("CEngine", FString("Failed to find scene file '") + nextSceneName + "'");

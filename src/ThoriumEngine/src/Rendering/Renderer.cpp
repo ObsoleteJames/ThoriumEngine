@@ -1,7 +1,7 @@
 
 #include "Renderer.h"
 #include "RenderScene.h"
-#include "Resources/Material.h"
+#include "Assets/Material.h"
 #include "Game/Components/CameraComponent.h"
 #include "Console.h"
 #include "DebugRenderer.h"
@@ -46,6 +46,8 @@ CConVar cvRenderFBPointFilter("r.framebuffer.pointfilter", "config/graphics.cfg"
 CConVar cvForceForwardRendering("r.forceforward", "config/graphics.cfg", 0, 0, 1);
 
 static FPostProcessSettings defaultPostProcess;
+
+static bool bInitSuccess = false;
 
 IRenderer::IRenderer()
 {
@@ -169,36 +171,47 @@ void IRenderer::Init()
 	//CResourceManager::LoadResources<CShaderSource>();
 
 	debugUnlit = CShaderSource::GetShaderSource("Unlit");
-	debugUnlit->LoadShaderObjects();
+	if (debugUnlit)
+		debugUnlit->LoadShaderObjects();
 
 	debugNormalForward = CShaderSource::GetShaderSource("DebugNormalForward");
-	debugNormalForward->LoadShaderObjects();
+	if (debugNormalForward)
+		debugNormalForward->LoadShaderObjects();
 
 	shaderScreenPlane = CShaderSource::GetShaderSource("ScreenPlaneVS");
-	shaderScreenPlane->LoadShaderObjects();
+	if (shaderScreenPlane)
+		shaderScreenPlane->LoadShaderObjects();
 	
 	shaderBlit = CShaderSource::GetShaderSource("blitFrameBuffer");
-	shaderBlit->LoadShaderObjects();
+	if (shaderBlit)
+		shaderBlit->LoadShaderObjects();
 
 	shaderDeferredDirLight = CShaderSource::GetShaderSource("DeferredDirectionalLight");
-	shaderDeferredDirLight->LoadShaderObjects();
+	if (shaderDeferredDirLight)
+		shaderDeferredDirLight->LoadShaderObjects();
 
 	shaderDeferredPointLight = CShaderSource::GetShaderSource("DeferredPointLight");
-	shaderDeferredPointLight->LoadShaderObjects();
+	if (shaderDeferredPointLight)
+		shaderDeferredPointLight->LoadShaderObjects();
 
 	shaderPPExposure = CShaderSource::GetShaderSource("PPExposure");
-	shaderPPExposure->LoadShaderObjects();
+	if (shaderPPExposure)
+		shaderPPExposure->LoadShaderObjects();
 
 	shaderBloomPass = CShaderSource::GetShaderSource("BloomPass");
-	shaderBloomPass->LoadShaderObjects();
+	if (shaderBloomPass)
+		shaderBloomPass->LoadShaderObjects();
 
 	shaderBloomPreFilter = CShaderSource::GetShaderSource("BloomPreFilter");
-	shaderBloomPreFilter->LoadShaderObjects();
+	if (shaderBloomPreFilter)
+		shaderBloomPreFilter->LoadShaderObjects();
 
 	shaderGaussianBlurV = CShaderSource::GetShaderSource("GaussianBlurV");
-	shaderGaussianBlurV->LoadShaderObjects();
+	if (shaderGaussianBlurV)
+		shaderGaussianBlurV->LoadShaderObjects();
 	shaderGaussianBlurH = CShaderSource::GetShaderSource("GaussianBlurH");
-	shaderGaussianBlurH->LoadShaderObjects();
+	if (shaderGaussianBlurH)
+		shaderGaussianBlurH->LoadShaderObjects();
 
 	sceneBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FSceneInfoBuffer));
 	objectBuffer = gRenderer->CreateShaderBuffer(nullptr, sizeof(FObjectInfoBuffer));
@@ -234,10 +247,15 @@ void IRenderer::Init()
 
 	sunLightShadows = gRenderer->CreateDepthBuffer(sunDepth);
 
-	meshIcoSphere = CResourceManager::GetResource<CModelAsset>("models/IcoSphere.thmdl");
-	meshIcoSphere->Load(0);
+	meshIcoSphere = CAssetManager::GetAsset<CModelAsset>("models/IcoSphere.thmdl");
+	if (meshIcoSphere)
+		meshIcoSphere->Load(0);
 
-	gDebugRenderer = new CDebugRenderer();
+	// check if *most* assets are present.
+	bInitSuccess = meshIcoSphere && debugUnlit && debugNormalForward;
+
+	if (bInitSuccess)
+		gDebugRenderer = new CDebugRenderer();
 }
 
 static TObjectPtr<IShaderBuffer> blitDataBuffer = nullptr;
@@ -352,6 +370,10 @@ void IRenderer::Blit(IFrameBuffer* a, IFrameBuffer* b, int destinationMip, FVect
 
 void IRenderer::renderAll()
 {
+	// do this so we don't crash, so we can still use the engine.
+	if (!bInitSuccess)
+		return;
+
 	if (gDebugRenderer)
 		gDebugRenderer->Render();
 

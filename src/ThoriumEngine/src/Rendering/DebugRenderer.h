@@ -4,7 +4,7 @@
 #include "Math/Vectors.h"
 #include "Math/Color.h"
 #include "Math/Transform.h"
-#include "Resources/Mesh.h"
+#include "Assets/Mesh.h"
 
 class CMaterial;
 class CRenderScene;

@@ -11,7 +11,7 @@
 #include "Rendering/RenderProxies.h"
 #include "Rendering/PostProcessing.h"
 #include "Rendering/Renderer.h"
-#include "Resources/Scene.h"
+#include "Assets/Scene.h"
 #include "Physics/PhysicsWorld.h"
 #include "Console.h"
 #include "Object/ObjectHandle.h"

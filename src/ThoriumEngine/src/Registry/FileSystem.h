@@ -21,7 +21,7 @@ struct ENGINE_API FDirectory
 	friend struct FMod;
 	friend struct FFile;
 	friend class CFileSystem;
-	friend class CResourceManager;
+	friend class CAssetManager;
 
 public:
 	~FDirectory();
@@ -50,7 +50,7 @@ private:
 struct ENGINE_API FMod
 {
 	friend class CFileSystem;
-	friend class CResourceManager;
+	friend class CAssetManager;
 
 public:
 	inline const FString& Name() const { return name; }

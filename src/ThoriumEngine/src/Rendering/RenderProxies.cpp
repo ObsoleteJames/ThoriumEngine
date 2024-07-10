@@ -2,7 +2,7 @@
 #include "RenderProxies.h"
 #include "RenderScene.h"
 #include "Renderer.h"
-#include "Resources/Material.h"
+#include "Assets/Material.h"
 #include "PostProcessing.h"
 
 //CCameraProxy::~CCameraProxy()

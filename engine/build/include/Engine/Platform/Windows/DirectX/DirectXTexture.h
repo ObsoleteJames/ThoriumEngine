@@ -2,7 +2,7 @@
 
 #include "DirectXRenderer.h"
 #include "Rendering/Texture.h"
-#include "Resources/TextureAsset.h"
+#include "Assets/TextureAsset.h"
 
 class ENGINE_API DirectXTexture2D : public ITexture2D
 {

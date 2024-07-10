@@ -1,7 +1,7 @@
 
 #include "BillboardComponent.h"
-#include "Resources/Material.h"
-#include "Resources/TextureAsset.h"
+#include "Assets/Material.h"
+#include "Assets/TextureAsset.h"
 #include "Game/World.h"
 
 void CBillboardComponent::Init()
@@ -54,7 +54,7 @@ void CBillboardComponent::Init()
 
 	bounds.extents = FVector::one * 0.5f;
 
-	sprite = CResourceManager::GetResource<CTexture>("misc/Obsolete.thtex");
+	sprite = CAssetManager::GetAsset<CTexture>("misc/Obsolete.thtex");
 
 	if (GetWorld())
 	{
