@@ -163,8 +163,12 @@ PS_FORWARD
 
 PS_DEFERRED
 {	
-	#include "common/deferred_output.hlsl"
 	#include "common/normal_map.hlsl"
+
+	struct PS_Output
+	{
+		#include "common/deferred_output.hlsl"
+	};
 
 	PS_Output Main(PS_Input input)
 	{

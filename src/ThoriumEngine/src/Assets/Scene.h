@@ -19,9 +19,10 @@ class ENGINE_API CScene : public CAsset
 public:
 	CScene() = default;
 
-	void Save(CWorld* world);
+	//void Save(CWorld* world);
 	
 protected:
+	void OnSave(IBaseFStream* stream);
 	void OnLoad(IBaseFStream* stream, uint8 lodLevel) {}
 
 public:
@@ -30,5 +31,8 @@ public:
 
 	PROPERTY(Editable, Category = "Physics")
 	float gravity = 9.81f;
+
+private:
+	CWorld* world;
 
 };

@@ -5,19 +5,11 @@
 #include "Game/Entity.h"
 #include <Util/FStream.h>
 
-void CScene::Save(CWorld* world)
+void CScene::OnSave(IBaseFStream* stream)
 {
-	TUniquePtr<IBaseFStream> stream = file->GetStream("wb");
-	if (!stream || !stream->IsOpen())
-	{
-		CONSOLE_LogError("CWorld", FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
-		return;
-	}
-
 	uint sig = CSCENE_SIGNITURE;
-	uint8 version = CSCENE_VERSION;
 
-	*stream << &sig << &version;
+	*stream << &sig;
 
 	if (gamemodeClass.Get())
 	{

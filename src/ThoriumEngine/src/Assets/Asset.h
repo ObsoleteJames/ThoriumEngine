@@ -43,6 +43,9 @@ public:
 	inline FString GetPath() const { if (file) return file->Path(); return ""; }
 	inline FFile* File() const { return file; }
 
+	inline uint8 Version() const { return version; }
+	inline uint8 AssetVersion() const { return assetVersion; }
+
 public:
 	void Serialize(FMemStream& out) final;
 	void Load(FMemStream& in) final;

@@ -256,6 +256,8 @@ void IRenderer::Init()
 
 	if (bInitSuccess)
 		gDebugRenderer = new CDebugRenderer();
+	else
+		CONSOLE_LogError("IRenderer", "Failed to initialize! rendering is disabled");
 }
 
 static TObjectPtr<IShaderBuffer> blitDataBuffer = nullptr;

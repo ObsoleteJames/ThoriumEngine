@@ -113,8 +113,6 @@ private:
 protected:
 	bool bAllowInstancing;
 
-	uint16 fileVersion;
-
 	FLODGroup LODs[6];
 	uint8 numLODs;
 

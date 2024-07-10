@@ -35,9 +35,9 @@ void CModelAsset::OnInit(IBaseFStream* stream)
 	uint numColliders = 0;
 	uint numConvexMeshes = 0;
 
-	*stream >> &numMeshes >> &numMaterials >> &numLODs >> &numBodyGroups;
+	*stream >> &numMeshes >> &numMaterials >> &numLODs >> &numBodyGroups;  
 
-	if (fileVersion > THMDL_VERSION_6)
+	if (version > THMDL_VERSION_6)
 	{
 		*stream >> &numColliders >> &numConvexMeshes;
 
@@ -56,7 +56,7 @@ void CModelAsset::OnInit(IBaseFStream* stream)
 		SizeType nextMesh;
 		*stream >> &nextMesh;
 
-		if (fileVersion > THMDL_VERSION_5)
+		if (version > THMDL_VERSION_5)
 			*stream >> meshes[i].meshName;
 
 		SizeType numVertices;
@@ -64,10 +64,10 @@ void CModelAsset::OnInit(IBaseFStream* stream)
 
 		*stream >> &numVertices >> &numIndices;
 
-		if (fileVersion > THMDL_VERSION_5)
+		if (version > THMDL_VERSION_5)
 			*stream >> &meshes[i].topologyType;
 
-		if (fileVersion > THMDL_VERSION_3)
+		if (version > THMDL_VERSION_3)
 			*stream >> &meshes[i].bounds;
 
 		stream->Seek(nextMesh, SEEK_SET);
@@ -85,7 +85,7 @@ void CModelAsset::OnInit(IBaseFStream* stream)
 		*stream >> &numIndices;
 
 		// fucking idiot forgot to save the distance bias.
-		if (fileVersion > THMDL_VERSION_5)
+		if (version > THMDL_VERSION_5)
 			*stream >> &LODs[i].distanceBias;
 
 		LODs[i].meshIndices.Resize(numIndices);
@@ -121,7 +121,7 @@ void CModelAsset::OnInit(IBaseFStream* stream)
 		}
 	}
 
-	if (fileVersion > THMDL_VERSION_6)
+	if (version > THMDL_VERSION_6)
 	{
 		for (uint i = 0; i < numColliders; i++)
 		{
@@ -346,15 +346,15 @@ void CModelAsset::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 
 		FString tempName;
 		
-		if (fileVersion > THMDL_VERSION_5)
+		if (version > THMDL_VERSION_5)
 			*stream >> tempName;
 
 		*stream >> &numVertices >> &numIndices;
 
-		if (fileVersion > THMDL_VERSION_5)
+		if (version > THMDL_VERSION_5)
 			*stream >> &meshes[it].topologyType;
 
-		if (fileVersion > THMDL_VERSION_3)
+		if (version > THMDL_VERSION_3)
 			*stream >> &meshes[it].bounds;
 
 		vertices.Resize(numVertices);
@@ -437,15 +437,15 @@ void CModelAsset::LoadMeshData()
 		
 		FString tempName;
 
-		if (fileVersion > THMDL_VERSION_5)
+		if (version > THMDL_VERSION_5)
 			*stream >> tempName;
 		
 		*stream >> &numVertices >> &numIndices;
 
-		if (fileVersion > THMDL_VERSION_5)
+		if (version > THMDL_VERSION_5)
 			*stream >> &mesh.topologyType;
 
-		if (fileVersion > THMDL_VERSION_3)
+		if (version > THMDL_VERSION_3)
 			*stream >> &mesh.bounds;
 
 		FVertex* vertices = new FVertex[numVertices];

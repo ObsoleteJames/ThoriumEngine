@@ -100,10 +100,12 @@ void CWorld::LoadScene(CScene* ptr)
 		return;
 	}
 
-	uint sig;
-	uint8 version;
+	stream->Seek(sizeof(FAssetHeader), SEEK_SET);
 
-	*stream >> &sig >> &version;
+	uint sig;
+	uint8 version = scene->Version();
+
+	*stream >> &sig;
 
 	if (sig != CSCENE_SIGNITURE || version != CSCENE_VERSION)
 	{
@@ -172,7 +174,8 @@ void CWorld::LoadScene(CScene* ptr)
 
 void CWorld::Save()
 {
-	scene->Save(this);
+	scene->world = this;
+	scene->Save();
 }
 
 CEntity* CWorld::CreateEntity(FClass* classType, const FString& name)
