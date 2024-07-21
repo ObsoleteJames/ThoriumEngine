@@ -102,7 +102,7 @@ void CMaterial::OnInit(IBaseFStream* stream)
 			{
 				t.tex = CAssetManager::GetAsset<CTexture>(texPath);
 				if (!t.tex)
-					t.tex = CAssetManager::GetAsset<CTexture>("misc/missing.thtex");
+					t.tex = CAssetManager::GetAsset<CTexture>("misc/missing.thasset");
 			}
 		}
 		else

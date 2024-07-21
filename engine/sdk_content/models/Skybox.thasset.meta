@@ -1,0 +1,11 @@
+
+{
+
+	skybox.fbx_0
+	{
+		file: "F:\MyProjects\VS_Projects\ThoriumEngine\engine\sdk_content\models\skybox.fbx"
+		position: "0.000000,0.000000,0.000000"
+		rotation: "0.000000,0.000000,0.000000"
+		scale: "0.010000,0.010000,0.010000"
+	}
+}

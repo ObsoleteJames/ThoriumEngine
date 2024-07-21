@@ -392,7 +392,8 @@ void CModelAsset::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 		*stream >> &meshes[it].materialIndex;
 
 		FMaterial& mat = materials[meshes[it].materialIndex];
-		mat.obj = CAssetManager::GetAsset<CMaterial>(mat.path);
+		if (!mat.path.IsEmpty())
+			mat.obj = CAssetManager::GetAsset<CMaterial>(mat.path);
 	}
 
 	SetLodLevel(lodLevel, true);

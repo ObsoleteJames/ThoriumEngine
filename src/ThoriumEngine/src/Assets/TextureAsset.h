@@ -53,7 +53,7 @@ public:
 	void Init(void* data, int width, int height, ETextureAssetFormat format = THTX_FORMAT_RGBA8_UINT, ETextureFilter filter = THTX_FILTER_LINEAR);
 	void OnInit(IBaseFStream* stream) override;
 
-	void OnSave(IBaseFStream* stream) override {}
+	void OnSave(IBaseFStream* stream) override;
 	void OnLoad(IBaseFStream* stream, uint8 lodLevel) override;
 	void Unload(uint8 lodLevel) override;
 
@@ -74,6 +74,11 @@ public:
 
 	static CTexture* CreateFromImage(const FString& file);
 
+private:
+	uint8 GetFileVersion() const override;
+
+	bool IsLoaded(uint8 lod) const override;
+
 protected:
 	ETextureAssetFormat format;
 	ETextureFilter filteringType = THTX_FILTER_ANISOTROPIC;
@@ -86,5 +91,4 @@ protected:
 	int width, height;
 
 	IBaseTexture* tex = nullptr;
-
 };

@@ -30,6 +30,7 @@ struct FConsoleMsg
 	SizeType time;
 
 	FConsoleMsg* next = nullptr;
+	int repeats;
 };
 
 class ENGINE_API CConCmd

@@ -36,7 +36,7 @@ public:
 	virtual void Unload(uint8 lodLevel) {}
 
 public:
-	inline bool IsLodLoaded(uint8 lod);
+	inline bool IsLodLoaded(uint8 lod) const;
 	
 	inline SizeType AssetId() const { return assetId; }
 
@@ -56,6 +56,7 @@ protected:
 	virtual void OnLoad(IBaseFStream* stream, uint8 lodLevel) = 0;
 
 	virtual uint8 GetFileVersion() const { return -1; }
+	virtual bool IsLoaded(uint8 lod) const;
 
 	virtual void OnDelete() override;
 
@@ -78,7 +79,7 @@ protected:
 
 };
 
-bool CAsset::IsLodLoaded(uint8 lod)
+bool CAsset::IsLodLoaded(uint8 lod) const
 {
 	return lodLevels & (1 << (lod));
 }

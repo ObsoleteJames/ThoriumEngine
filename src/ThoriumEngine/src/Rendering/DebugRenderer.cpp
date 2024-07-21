@@ -14,11 +14,13 @@ CDebugRenderer::CDebugRenderer()
 	lineMesh.vertexBuffer = gRenderer->CreateVertexBuffer({ { FVector::zero }, { -FVector::forward } });
 	lineMesh.topologyType = FMesh::TOPOLOGY_LINES;
 
-	cube = CAssetManager::GetAsset<CModelAsset>("models/Cube.thmdl");
-	sphere = CAssetManager::GetAsset<CModelAsset>("models/Sphere.thmdl");
+	cube = CAssetManager::GetAsset<CModelAsset>("models/Cube.thasset");
+	sphere = CAssetManager::GetAsset<CModelAsset>("models/Sphere.thasset");
 
-	cube->Load(0);
-	sphere->Load(0);
+	if (cube)
+		cube->Load(0);
+	if (sphere)
+		sphere->Load(0);
 }
 
 void CDebugRenderer::DrawLine(const FVector& begin, const FVector& end, const FColor& color, float time /*= 0.f*/, bool bOverlay /*= false*/)

@@ -56,6 +56,9 @@ void CAsset::Save()
 
 void CAsset::Load(uint8 lodLevel)
 {
+	if (IsLoaded(lodLevel))
+		return;
+
 	if (!file)
 	{
 		CONSOLE_LogError("CAsset", "Attempted to load from file, but file isn't present!");
@@ -77,6 +80,11 @@ void CAsset::Load(uint8 lodLevel)
 void CAsset::Load(FMemStream& in)
 {
 	BaseClass::Load(in);
+}
+
+bool CAsset::IsLoaded(uint8 lod) const
+{
+	return IsLodLoaded(lod);
 }
 
 void CAsset::OnDelete()

@@ -150,6 +150,30 @@ void CTexture::OnInit(IBaseFStream* stream)
 	bInitialized = true;
 }
 
+static TPair<uint8*, SizeType>* texSaveMipMaps = nullptr;
+
+void CTexture::OnSave(IBaseFStream* stream)
+{
+	//stream->Write((void*)thtexMagicStr, THTEX_MAGIC_SIZE);
+
+	//uint16 version = THTEX_VERSION;
+	//*stream << &version;
+
+	*stream << &format;
+	*stream << &width << &height;
+	//*stream << &dataSize;
+	*stream << &numMipmaps;
+	*stream << &filteringType;
+
+	for (int i = 0; i < numMipmaps; i++)
+	{
+		auto& mp = texSaveMipMaps[i];
+
+		*stream << &mp.Value;
+		stream->Write(mp.Key, mp.Value);
+	}
+}
+
 void CTexture::Init(void* data, int width, int height, ETextureAssetFormat format /*= THTX_FORMAT_RGBA8_UINT*/, ETextureFilter filter)
 {
 	if (!gRenderer)
@@ -164,9 +188,6 @@ void CTexture::Init(void* data, int width, int height, ETextureAssetFormat forma
 
 void CTexture::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 {
-	if (!file || !bInitialized || curMipMapLevel <= lodLevel || bLoading || !gRenderer)
-		return;
-
 	if (numMipmaps > 1)
 	{
 		bLoading = true;
@@ -254,7 +275,7 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 		uint8* newData = (uint8*)malloc(w * h * numChannels[format]);
 		if (!stbir_resize_uint8(data, width, height, 0, newData, w, h, 0, numChannels[format]))
 		{
-			CONSOLE_LogError("CTexture", "Failed to import texture. Compressed textures need width/height to be power of 8.");
+			CONSOLE_LogError("CTexture", "Failed to import texture. Compressed textures need width/height to be a power of 8.");
 			free(data);
 			free(newData);
 			return false;
@@ -280,7 +301,7 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 
 		if (width / mipPow <= 16)
 		{
-			numMipmaps = i + 1;
+			numMipmaps = i;
 			break;
 		}
 
@@ -339,39 +360,14 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 	tex = gRenderer->CreateTexture2D(_d, numMipmaps, width, height, ToTextureFormat(format), filteringType);
 	curMipMapLevel = 0;
 
-	FFile* texFile = this->file;
-	TUniquePtr<IBaseFStream> stream = texFile->GetStream("wb");
+	texSaveMipMaps = mipMaps.Data();
 
-	if (!stream || !stream->IsOpen())
-	{
-		CONSOLE_LogError("CTexture", "Failed to create file stream for texture.");
-		for (auto& mp : mipMaps)
-			free(mp.Key);
+	Save();
 
-		return false;
-	}
-
-	stream->Write((void*)thtexMagicStr, THTEX_MAGIC_SIZE);
-
-	uint16 version = THTEX_VERSION;
-	*stream << &version;
-
-	*stream << &format;
-	*stream << &width << &height;
-	//*stream << &dataSize;
-	*stream << &numMipmaps;
-	*stream << &filteringType;
-
-	for (auto& mp : mipMaps)
-	{
-		*stream << &mp.Value;
-		stream->Write(mp.Key, mp.Value);
-	}
-	
 	for (auto& mp : mipMaps)
 		free(mp.Key);
 
-	CFStream sdkStream = texFile->GetSdkStream("wb");
+	CFStream sdkStream = File()->GetSdkStream("wb");
 	if (sdkStream.IsOpen())
 	{
 		sdkStream << file;
@@ -426,4 +422,16 @@ CTexture* CTexture::CreateFromImage(const FString& file)
 
 	stbi_image_free(data);
 	return tex;
+}
+
+uint8 CTexture::GetFileVersion() const
+{
+	return THTEX_VERSION;
+}
+
+bool CTexture::IsLoaded(uint8 lod) const
+{
+	if (curMipMapLevel <= lod || bLoading)
+		return true;
+	return false;
 }

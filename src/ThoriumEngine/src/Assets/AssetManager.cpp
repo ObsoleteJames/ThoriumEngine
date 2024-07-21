@@ -27,7 +27,7 @@ static std::atomic<bool> bResourceRunning;
 
 static TArray<std::thread> resourceThreads;
 
-static CConCmd cmdPrintStreamCount("resources.printinfo", []() { CONSOLE_LogInfo("CResourceManager", "Resources: " + FString::ToString(CAssetManager::AssetsCount()) + "\nStreaming: " + FString::ToString(CAssetManager::StreamingAssetsCount())); });
+static CConCmd cmdPrintStreamCount("resources.printinfo", []() { CONSOLE_LogInfo("CAssetManager", "Assets: " + FString::ToString(CAssetManager::AssetsCount()) + "\nStreaming: " + FString::ToString(CAssetManager::StreamingAssetsCount())); });
 
 FAssetClass* GetClassFromExt(const FString& ext)
 {
@@ -155,14 +155,14 @@ void CAssetManager::Init()
 	for (int i = 0; i < RESOURCE_THREAD_COUNT; i++)
 		resourceThreads[i] = std::thread(&CAssetManager::StreamAssets);
 
-	CONSOLE_LogInfo("CResourceManager", "Created resource threads (" + FString::ToString(RESOURCE_THREAD_COUNT) + ")");
-	CONSOLE_LogInfo("CResourceManager", "Initialized");
+	CONSOLE_LogInfo("CAssetManager", "Created asset streaming threads (" + FString::ToString(RESOURCE_THREAD_COUNT) + ")");
+	CONSOLE_LogInfo("CAssetManager", "Initialized");
 }
 
 void CAssetManager::Shutdown()
 {
 	bResourceRunning = false;
-	CONSOLE_LogInfo("CResourceManager", "Shutting down resource threads...");
+	CONSOLE_LogInfo("CAssetManager", "Shutting down asset streaming threads...");
 	for (int i = 0; i < RESOURCE_THREAD_COUNT; i++)
 		resourceThreads[i].join();
 
@@ -267,7 +267,7 @@ void CAssetManager::ScanMod(FMod* mod)
 {
 	int numFiles = ScanDir(&mod->root);
 
-	CONSOLE_LogInfo("CResourceManager", FString("Found ") + std::to_string(numFiles).c_str() + " assets in '" + mod->Name() + "'");
+	CONSOLE_LogInfo("CAssetManager", FString("Found ") + std::to_string(numFiles).c_str() + " assets in '" + mod->Name() + "'");
 
 	for (auto& it : availableAssets)
 	{
@@ -321,9 +321,12 @@ void CAssetManager::ClearDependancy(SizeType idA, SizeType idB, const FString& p
 
 TObjectPtr<CAsset> CAssetManager::GetAsset(FAssetClass* type, const FString& path)
 {
+	if (path.IsEmpty())
+		return nullptr;
+
 	CAsset* r = GetAsset(type, GetAssetId(path));
 	if (!r)
-		CONSOLE_LogError("CResourceManager", "Failed to get resource '" + path + "'!");
+		CONSOLE_LogError("CAssetManager", "Failed to get resource '" + path + "'!");
 	return r;
 }
 
@@ -342,7 +345,7 @@ TObjectPtr<CAsset> CAssetManager::GetAsset(FAssetClass* type, SizeType assetId)
 
 		if (type && file->second.type != type)
 		{
-			CONSOLE_LogError("CResourceManager", "Failed to get resource '" + FString::ToString(assetId) + "', Invalid Type! expected " + type->GetName());
+			CONSOLE_LogError("CAssetManager", "Failed to get asset '" + FString::ToString(assetId) + "', Invalid Type! expected " + type->GetName());
 			return nullptr;
 		}
 
@@ -356,7 +359,7 @@ TObjectPtr<CAsset> CAssetManager::GetAsset(FAssetClass* type, SizeType assetId)
 		asset = it->second;
 		if ((FAssetClass*)asset->GetClass() != type)
 		{
-			CONSOLE_LogError("CResourceManager", "Failed to get resource '" + FString::ToString(assetId) + "', Invalid Type! expected " + type->GetName());
+			CONSOLE_LogError("CAssetManager", "Failed to get asset '" + FString::ToString(assetId) + "', Invalid Type! expected " + type->GetName());
 			return nullptr;
 		}
 	}
@@ -404,6 +407,8 @@ TObjectPtr<CAsset> CAssetManager::CreateAsset(FAssetClass* type, const FString& 
 	SizeType assetId = FMath::Random64();
 
 	availableAssets[assetId] = { file, assetId, CASSET_VERSION, type };
+
+	assetPaths[file->Path()] = assetId;
 	
 	CAsset* asset = AllocateAsset(type, assetId);
 	asset->file = file;
@@ -467,6 +472,8 @@ bool CAssetManager::RegisterNewAsset(CAsset* asset, const FString& p, const FStr
 
 	FFile* file = mod->CreateFile(path);
 	availableAssets[assetId] = { file, assetId, CASSET_VERSION, (FAssetClass*)asset->GetClass() };
+
+	assetPaths[file->Path()] = assetId;
 
 	asset->file = file;
 	allocatedAssets[assetId] = asset;

@@ -247,7 +247,7 @@ void IRenderer::Init()
 
 	sunLightShadows = gRenderer->CreateDepthBuffer(sunDepth);
 
-	meshIcoSphere = CAssetManager::GetAsset<CModelAsset>("models/IcoSphere.thmdl");
+	meshIcoSphere = CAssetManager::GetAsset<CModelAsset>("models/IcoSphere.thasset");
 	if (meshIcoSphere)
 		meshIcoSphere->Load(0);
 
