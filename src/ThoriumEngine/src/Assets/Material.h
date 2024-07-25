@@ -68,6 +68,8 @@ public:
 	virtual void OnLoad(IBaseFStream* stream, uint8 lodLevel);
 	virtual void Unload(uint8 lodLevel);
 
+	void LoadTextures(uint8 lod);
+
 public:
 	TObjectPtr<CMaterial> CreateDynamicInstance();
 

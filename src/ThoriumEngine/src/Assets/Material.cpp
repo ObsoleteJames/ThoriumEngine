@@ -216,6 +216,15 @@ void CMaterial::Unload(uint8 lodLevel)
 	}
 }
 
+void CMaterial::LoadTextures(uint8 lod)
+{
+	for (auto& t : textures)
+	{
+		if (t.tex)
+			t.tex->Load(lod);
+	}
+}
+
 TObjectPtr<CMaterial> CMaterial::CreateDynamicInstance()
 {
 	return nullptr;

@@ -46,3 +46,8 @@ void CScene::OnSave(IBaseFStream* stream)
 	stream->Seek(numEntsOffset, SEEK_SET);
 	*stream << &numEnts;
 }
+
+uint8 CScene::GetFileVersion() const
+{
+	return CSCENE_VERSION;
+}

@@ -13,7 +13,7 @@ void CSunLightEntity::Init()
 
 	TObjectPtr<CBillboardComponent> billboard = AddComponent<CBillboardComponent>("Billboard");
 	billboard->AttachTo(light);
-	billboard->sprite = CAssetManager::GetAsset<CTexture>("editor/icons/SunLight.thtex");
+	billboard->SetSprite(CAssetManager::GetAsset<CTexture>("editor/icons/SunLight.thasset"));
 	billboard->SetScale(FVector(0.36f));
 	billboard->bEditorOnly = true;
 }

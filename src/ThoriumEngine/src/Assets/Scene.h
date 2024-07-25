@@ -25,6 +25,8 @@ protected:
 	void OnSave(IBaseFStream* stream);
 	void OnLoad(IBaseFStream* stream, uint8 lodLevel) {}
 
+	virtual uint8 GetFileVersion() const;
+
 public:
 	PROPERTY(Editable, Category = "Gamemode")
 	TClassPtr<CGameMode> gamemodeClass = CGameMode::StaticClass();
