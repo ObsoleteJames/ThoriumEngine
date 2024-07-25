@@ -3,7 +3,7 @@
 #include "EngineCore.h"
 #include "Math/Vectors.h"
 #include "Object/Object.h"
-#include "Resources/Asset.h"
+#include "Assets/Asset.h"
 #include "Shader.generated.h"
 
 struct FFile;
@@ -90,10 +90,10 @@ public:
 	CShaderSource() = default;
 	virtual ~CShaderSource();
 
-	virtual void Init();
+	virtual void OnInit(IBaseFStream* stream);
 
-	virtual void Save();
-	virtual void Load(uint8 lodLevel) {}
+	virtual void OnSave(IBaseFStream* stream);
+	virtual void OnLoad(IBaseFStream* stream, uint8 lodLevel) {}
 
 	void OnDelete() override;
 

@@ -620,7 +620,7 @@ int GenerateCMakeProject(const FCompileConfig& config)
 			{
 				for (int i = 0; i < 3; i++)
 				{
-					stream << " <$<$CONFIG:" << CMakeConfigStrings[i] << ">:\"" << deps[i].c_str() << "\">";
+					stream << " \"$<$<CONFIG:" << CMakeConfigStrings[i] << ">:" << deps[i].c_str() << ">\"";
 				}
 			}
 			else

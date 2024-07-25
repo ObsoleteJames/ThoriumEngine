@@ -1,7 +1,7 @@
 
 #include "Math.h"
 #include "Vectors.h"
-#include "Resources/Mesh.h"
+#include "Assets/Mesh.h"
 #include <random>
 
 static std::random_device _randomDev;

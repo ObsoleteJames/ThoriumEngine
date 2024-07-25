@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Rendering/Buffers.h"
-#include "Resources/ModelAsset.h"
+#include "Assets/ModelAsset.h"
 
 #include <d3d11.h>
 

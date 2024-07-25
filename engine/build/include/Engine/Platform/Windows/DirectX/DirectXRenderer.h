@@ -26,6 +26,7 @@ public:
 	virtual ISwapChain* CreateSwapChain(IBaseWindow* window);
 	virtual IDepthBuffer* CreateDepthBuffer(FDepthBufferInfo depthInfo);
 	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, ETextureFormat format, ETextureFilter filter);
+	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, int numMipMaps, ETextureFormat format, ETextureFilter filter = THTX_FILTER_LINEAR);
 
 	virtual ITexture2D* CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter);
 	virtual ITexture2D* CreateTexture2D(void** data, int numMipMaps, int width, int height, ETextureFormat format, ETextureFilter filter);
@@ -55,6 +56,7 @@ public:
 	virtual void SetShaderResource(IDepthBuffer* depthTex, int _register);
 
 	virtual void SetFrameBuffer(IFrameBuffer* framebuffer, IDepthBuffer* depth);
+	virtual void SetFrameBuffer(IFrameBuffer* framebuffer, int mip, IDepthBuffer* depth);
 	virtual void SetFrameBuffers(IFrameBuffer** framebuffers, SizeType count, IDepthBuffer* depth);
 
 	virtual void SetViewport(float x, float y, float width, float height);

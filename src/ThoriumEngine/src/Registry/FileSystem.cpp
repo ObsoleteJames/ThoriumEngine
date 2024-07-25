@@ -3,7 +3,7 @@
 #include "FileSystem.h"
 #include "Engine.h"
 #include "Misc/FileHelper.h"
-#include "Resources/ResourceManager.h"
+#include "Assets/AssetManager.h"
 #include "Console.h"
 #include <filesystem>
 
@@ -294,7 +294,7 @@ bool FMod::MoveFile(FFile* file, const FString& destination)
 	file->dir = newDir;
 
 	std::filesystem::rename(oldPath.c_str(), file->FullPath().c_str());
-	CResourceManager::OnResourceFileMoved(file);
+	CAssetManager::OnAssetFileMoved(file);
 	return true;
 }
 
@@ -450,7 +450,7 @@ FMod* CFileSystem::MountMod(const FString& modPath, const FString& mn, const FSt
 	}
 #endif
 
-	CResourceManager::ScanMod(mod);
+	CAssetManager::ScanMod(mod);
 	return mod;
 }
 
@@ -469,7 +469,7 @@ bool CFileSystem::UnmountMod(FMod* mod)
 	if (!modIndex)
 		return false;
 
-	CResourceManager::DeleteResourcesFromMod(mod);
+	CAssetManager::DeleteAssetsFromMod(mod);
 
 	Mods.Erase(Mods.At(modIndex));
 	delete mod;
@@ -545,7 +545,7 @@ void FDirectory::OnMoved()
 		d->OnMoved();
 
 	for (auto& f : files)
-		CResourceManager::OnResourceFileMoved(f);
+		CAssetManager::OnAssetFileMoved(f);
 }
 
 #if _WIN32
@@ -566,7 +566,7 @@ FString CFileSystem::GetCurrentPath()
 
 FFile::~FFile()
 {
-	CResourceManager::OnResourceFileDeleted(this);
+	CAssetManager::OnAssetFileDeleted(this);
 }
 
 bool FFile::SetName(const FString& n)

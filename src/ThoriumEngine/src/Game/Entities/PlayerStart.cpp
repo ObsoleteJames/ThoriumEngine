@@ -8,7 +8,7 @@ void CPlayerStart::Init()
 
 	mdl = AddComponent<CModelComponent>("model");
 	mdl->AttachTo(RootComponent());
-	mdl->SetModel("models/Dummy/Dummy.thmdl");
-	mdl->SetMaterial("models/Dummy/DummyMatGreen.thmat");
+	mdl->SetModel("models/Dummy/Dummy.thasset");
+	mdl->SetMaterial("models/Dummy/DummyMatGreen.thasset");
 	mdl->bEditorOnly = true;
 }

@@ -1,0 +1,196 @@
+
+Shader
+{
+    Name = "Simple";
+    Type = SHADER_FORWARD_DEFERRED;
+
+	// Shader Features
+	Feature_Lighting = true;
+	Feature_CubeMapLighting = true;
+	Feature_Shadows = true;
+}
+
+Global
+{
+	#include "common/common.hlsl"
+
+	struct VS_Input
+	{
+		#include "common/vertex_input.hlsl"
+	};
+
+	struct PS_Input
+	{
+		#include "common/pixel_input.hlsl"
+	};
+	
+	//Property<float> vRoughness(Name = "Roughness", UiGroup = "Specular");
+	//Property<float> vMetallic(Name = "Metallic", UiGroup = "Specular");
+
+	Property<Texture2D> vRoughness(Name = "Roughness", UiGroup = "Specular") = "misc\\grey_127.thtex";
+	Property<Texture2D> vMetallic(Name = "Metallic", UiGroup = "Specular") = "misc\\black.thtex";
+	Property<Texture2D> vAmbientOcclusion(Name = "Ambient Occlusion", UiGroup = "Color") = "misc\\white.thtex";
+
+	Property<Texture2D> vEmission(Name = "Emmision", UiGroup = "Color");
+	Property<float> vEmissionIntensity(Name = "Emmision Intensity", UiGroup = "Color");
+}
+
+VS
+{
+	#include "common/vertex.hlsl"
+	
+    PS_Input Main(VS_Input input)
+    {
+		PS_Input output = ProcessVertex(input);
+
+		FinalizeVertex(input, output);
+		return output;
+    }
+}
+
+PS_FORWARD
+{
+	#include "common/forward_light_data.hlsl"
+	#include "common/shadow_data.hlsl"
+	#include "common/normal_map.hlsl"
+	#include "common/lighting.hlsl"
+
+	#define SHADOW_SAMPLES 8
+
+	float3 divide(float a, float3 b)
+	{
+		float x = b.x / a;
+		float y = b.y / a;
+		float z = b.z / a;
+		return float3(x, y, z);
+	}
+
+	float4 DirLight(float3 posWs, float3 normal, float roughness, float metallic, float3 diffuse, FDirectionalLight light)
+	{
+		// Is in shadow?
+		float shadow = DirectionalLightShadow(light, posWs, SHADOW_SAMPLES);
+
+		float3 V = normalize(vCameraPos - posWs);
+		float3 H = normalize(V + light.direction);
+		float3 radiance = light.color * light.intensity;
+
+		float3 F0 = float3(0.04, 0.04, 0.04);
+		F0 = lerp(F0, diffuse, metallic);
+		float3 F = fresnelSchlick(max(dot(H, V), 0), F0);
+
+		float NDF = DistributionGGX(normal, H, roughness);
+		float G = GeometrySmith(normal, V, light.direction, roughness);
+
+		float3 numerator = mul(NDF * G, F);
+		float denominator = 4.0 * max(dot(normal, V), 0.0) * max(dot(normal, light.direction), 0.0)  + 0.0001;
+		float specular = numerator / denominator;
+
+		float3 kS = F;
+		float3 kD = float3(1, 1, 1) - kS;
+		kD = mul((1.0 - metallic), kD);
+		float NdotL = max(dot(normal, light.direction), 0);
+		return float4((kD * diffuse / PI + specular) * radiance * NdotL, length(specular) * length(radiance) * NdotL) * (1 - shadow);
+	}
+
+	float4 PointLight(float3 posWs, float3 normal, float roughness, float metallic, float3 diffuse, FPointLight light)
+	{
+		float3 V = normalize(vCameraPos - posWs);
+		float3 L = normalize(light.position - posWs);
+		float3 H = normalize(V + L);
+
+		float distance = length(light.position - posWs);
+		float attenuation = 1 - saturate(distance / light.range);
+		float3 radiance = light.color * attenuation * light.intensity;
+
+		float3 F0 = float3(0.04, 0.04, 0.04);
+		F0 = lerp(F0, diffuse, metallic);
+		float3 F = fresnelSchlick(max(dot(H, V), 0), F0);
+
+		float NDF = DistributionGGX(normal, H, roughness);
+		float G = GeometrySmith(normal, V, L, roughness);
+
+		float3 numerator = mul(NDF * G, F);
+		float denominator = 4.0 * max(dot(normal, V), 0.0) * max(dot(normal, L), 0.0)  + 0.0001;
+		float3 specular = numerator / denominator;
+
+		float3 kS = F;
+		float3 kD = float3(1, 1, 1) - kS;
+		kD = mul((1.0 - metallic), kD);
+
+		float NdotL = max(dot(normal, L), 0);
+
+		return float4((kD * diffuse / PI + specular) * radiance * NdotL, length(specular) * length(radiance) * NdotL);
+	}
+
+    float4 Main(PS_Input input) : SV_TARGET
+    {
+		float distanceFromCam = length(vCameraPos - input.vPositionWs);
+		int texLod = (int)floor(distanceFromCam / 10);
+
+		//float3 debugLod = lerp(float3(0.4f, 1, 0.4f), float3(1, 0.4f, 0.4f), min((float)texLod / 6.0f, 1.f));
+		//float3 debugLod = float3((float)texLod / 6.f, 1.f, 1.f);
+
+		float4 diffuse = SampleTexture2DLOD(vBaseColor, input.vTextureCoords, texLod) * vColorTint;
+		float4 emission = SampleTexture2D(vEmission, input.vTextureCoords) * vEmissionIntensity;
+		float rough = SampleTexture2D(vRoughness, input.vTextureCoords).r;
+		float metallic = SampleTexture2D(vMetallic, input.vTextureCoords).r;
+
+		float ao = SampleTexture2D(vAmbientOcclusion, input.vTextureCoords).r;
+
+		float3 d2 = diffuse.xyz;
+		float3 normal = CalculateNormal(input.vNormalWs, input.vTangentUWs, input.vTangentVWs, input.vTextureCoords);
+
+		float4 outColor = float4(0, 0, 0, 0);
+
+		for (int i = 0; i < numDirectionalLights; i++)
+		{
+			outColor = outColor + DirLight(input.vPositionWs, normal, rough, metallic, d2, directionalLights[i]);
+		}
+
+		for (int i = 0; i < numPointLights; i++)
+		{
+			outColor = outColor + PointLight(input.vPositionWs, normal, rough, metallic, d2, pointLights[i]);
+		}
+
+		float3 color = outColor.xyz + emission.xyz;
+
+		//const float gamma = 1.6;
+		//color = pow(abs(color), abs(float3(1 / gamma, 1 / gamma, 1 / gamma)));
+
+		return float4(color.xyz * ao, min(1, diffuse.a * vAlpha + outColor.w));
+    }
+}
+
+PS_DEFERRED
+{	
+	#include "common/normal_map.hlsl"
+
+	struct PS_Output
+	{
+		#include "common/deferred_output.hlsl"
+	};
+
+	PS_Output Main(PS_Input input)
+	{
+		float distanceFromCam = length(vCameraPos - input.vPositionWs);
+		int texLod = (int)floor(distanceFromCam / 10);
+
+		float3 normal = (CalculateNormal(input.vNormalWs, input.vTangentUWs, input.vTangentVWs, input.vTextureCoords) + 1.f) / 2;
+		float4 diffuse = SampleTexture2DLOD(vBaseColor, input.vTextureCoords, texLod) * vColorTint;
+		float4 emission = SampleTexture2D(vEmission, input.vTextureCoords) * vEmissionIntensity;
+		float rough = SampleTexture2D(vRoughness, input.vTextureCoords).r;
+		float metallic = SampleTexture2D(vMetallic, input.vTextureCoords).r;
+		float ao = SampleTexture2D(vAmbientOcclusion, input.vTextureCoords).r;
+
+		if (diffuse.a < 0.5)
+			discard;
+
+		PS_Output output;
+		output.vColor = float4(emission.xyz, 1);
+		output.vNormal = float4(normal, 1);
+		output.vDiffuse = float4(diffuse.xyz, 1);
+		output.vMaterial = float4(metallic, rough, ao, 1.f);
+		output.GBufferD = float4(0, 0, 0, 0);
+		return output;
+	}
+}
