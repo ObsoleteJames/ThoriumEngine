@@ -11,6 +11,8 @@
 #include "ThirdParty/stb_dxt.h"
 #include "ThirdParty/stb_image_resize.h"
 
+#include <Util/Assert.h>
+
 #define THTEX_VERSION 0x0003
 #define THTEX_VERSION_01 0x0001
 #define THTEX_VERSION_02 0x0002

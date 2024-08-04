@@ -29,19 +29,6 @@ static TArray<std::thread> resourceThreads;
 
 static CConCmd cmdPrintStreamCount("resources.printinfo", []() { CONSOLE_LogInfo("CAssetManager", "Assets: " + FString::ToString(CAssetManager::AssetsCount()) + "\nStreaming: " + FString::ToString(CAssetManager::StreamingAssetsCount())); });
 
-FAssetClass* GetClassFromExt(const FString& ext)
-{
-	for (CModule* m : CModuleManager::GetModules())
-	{
-		for (auto a : m->Assets)
-		{
-			if (a->GetExtension() == ext)
-				return a;
-		}
-	}
-	return nullptr;
-}
-
 int CAssetManager::ScanDir(FDirectory* dir)
 {
 	int numFiles = 0;
@@ -257,7 +244,7 @@ bool CAssetManager::FetchAssetData(FFile* file, FAssetData& outData)
 
 	outData.file = file;
 	outData.id = info.assetId;
-	outData.type = (FAssetClass*)CModuleManager::FindClass(typeName);
+	outData.type = (FAssetClass*)CModuleManager::GetClass(typeName);
 	outData.version = info.assetVersion;
 
 	return outData.type != nullptr;

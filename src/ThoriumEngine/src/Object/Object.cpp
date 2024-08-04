@@ -2,7 +2,10 @@
 #include "Object.h"
 #include "Module.h"
 #include "Console.h"
+#include "PropertyTypes.h"
 #include "Assets/Asset.h"
+
+#include <Util/Assert.h>
 
 const SizeType zero = 0;
 
@@ -223,7 +226,7 @@ void CObject::SerializeProperty(FMemStream& data, uint type, const FProperty* p,
 	switch (type)
 	{
 	case EVT_STRUCT:
-		if (FStruct* pType = CModuleManager::FindStruct(p->typeName); pType)
+		if (FStruct* pType = CModuleManager::GetStruct(p->typeName); pType)
 			SerializeProperties(data, pType, (void*)((SizeType)object + offset));
 		else
 			data << &zero;
@@ -253,7 +256,7 @@ void CObject::SerializeProperty(FMemStream& data, uint type, const FProperty* p,
 	break;
 	case EVT_ENUM:
 	{
-		if (FEnum* pEnum = CModuleManager::FindEnum(p->typeName); pEnum)
+		if (FEnum* pEnum = CModuleManager::GetEnum(p->typeName); pEnum)
 			data.Write((void*)((SizeType)object + offset), pEnum->Size());
 		else
 			data.Write((void*)&zero, pEnum->Size());
@@ -268,7 +271,7 @@ void CObject::SerializeProperty(FMemStream& data, uint type, const FProperty* p,
 		data << &arraySize;
 
 		for (SizeType i = 0; i < arraySize; i++)
-			SerializeProperty(data, helper->objType, p, 0, (void*)((SizeType)helper->Data(array) + (i * helper->objSize)));
+			SerializeProperty(data, helper->objType.type, p, 0, (void*)((SizeType)helper->Data(array) + (i * helper->objSize)));
 	}
 	break;
 	case EVT_OBJECT_PTR:
@@ -277,7 +280,7 @@ void CObject::SerializeProperty(FMemStream& data, uint type, const FProperty* p,
 
 		EObjectPtrType type = OBJPTR_GENERIC;
 		SizeType objId = 0;
-		FClass* ptrClass = ptr.IsValid() ? ptr->GetClass() : CModuleManager::FindClass(p->typeName);
+		FClass* ptrClass = ptr.IsValid() ? ptr->GetClass() : CModuleManager::GetClass(p->typeName);
 		if (ptrClass->CanCast(CAsset::StaticClass()))
 			type = OBJPTR_ASSET_REF;
 		else if (ptrClass->CanCast(CEntity::StaticClass()))
@@ -381,7 +384,7 @@ bool CObject::LoadProperty(FMemStream& in, uint type, const FProperty* p, SizeTy
 	{
 	case EVT_STRUCT:
 	{
-		if (FStruct* pType = CModuleManager::FindStruct(p->typeName); pType)
+		if (FStruct* pType = CModuleManager::GetStruct(p->typeName); pType)
 			LoadProperties(in, pType, (void*)((SizeType)object + offset));
 		else
 			return false;
@@ -415,7 +418,7 @@ bool CObject::LoadProperty(FMemStream& in, uint type, const FProperty* p, SizeTy
 		break;
 	case EVT_ENUM:
 	{
-		if (FEnum* pEnum = CModuleManager::FindEnum(p->typeName); pEnum)
+		if (FEnum* pEnum = CModuleManager::GetEnum(p->typeName); pEnum)
 			in.Read((void*)((SizeType)object + offset), pEnum->Size());
 		else
 			return false;
@@ -434,14 +437,14 @@ bool CObject::LoadProperty(FMemStream& in, uint type, const FProperty* p, SizeTy
 		for (SizeType i = 0; i < arraySize; i++)
 		{
 			helper->AddEmpty(array);
-			LoadProperty(in, helper->objType, p, 0, (void*)((SizeType)helper->Data(array) + (i * helper->objSize)));
+			LoadProperty(in, helper->objType.type, p, 0, (void*)((SizeType)helper->Data(array) + (i * helper->objSize)));
 		}
 	}
 		break;
 	case EVT_OBJECT_PTR:
 	{
 		TObjectPtr<CObject>& ptr = *(TObjectPtr<CObject>*)((SizeType)object + offset);
-		FClass* cType = CModuleManager::FindClass(p->typeName);
+		FClass* cType = CModuleManager::GetClass(p->typeName);
 		
 		EObjectPtrType type;
 		in >> &type;
@@ -510,7 +513,7 @@ bool CObject::LoadProperty(FMemStream& in, uint type, const FProperty* p, SizeTy
 		FString className;
 		in >> className;
 		if (!className.IsEmpty())
-			ptr = CModuleManager::FindClass(className);
+			ptr = CModuleManager::GetClass(className);
 	}
 		break;
 	case EVT_FLOAT:

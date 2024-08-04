@@ -1,15 +1,18 @@
 #pragma once
 
 #include "EngineCore.h"
+#include "Class.h"
 
-struct FArrayHelper
+class FArrayHelper
 {
-	void(*AddEmpty)(void* ptr);
-	void(*Erase)(void* ptr, SizeType i);
-	void(*Clear)(void* ptr);
-	SizeType(*Size)(void* ptr);
-	void*(*Data)(void* ptr);
-	
-	uint objType;
+public:
+	FArgType objType;
 	SizeType objSize;
+
+public:
+	virtual void AddEmpty(void* ptr) = 0;
+	virtual void Erase(void* ptr, SizeType index) = 0;
+	virtual void Clear(void* ptr) = 0;
+	virtual SizeType Size(void* ptr) = 0;
+	virtual void* Data(void* ptr) = 0;
 };

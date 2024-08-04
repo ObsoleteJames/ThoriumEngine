@@ -4,6 +4,7 @@
 #include "Console.h"
 
 #include <Util/FStream.h>
+#include <Util/Assert.h>
 
 #define THCS_VERSION_06 6
 #define THCS_VERSION_07 7

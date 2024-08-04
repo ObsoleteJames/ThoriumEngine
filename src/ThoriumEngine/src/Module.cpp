@@ -4,6 +4,8 @@
 #include "Misc/FileHelper.h"
 #include "Console.h"
 
+#include <Util/Assert.h>
+
 #ifdef PLATFORM_WINDOWS
 #include <windows.h>
 #endif
@@ -11,37 +13,70 @@
 TArray<CModule*> CModuleManager::modules;
 TArray<FLibrary*> CModuleManager::libraries;
 
-FClass* CModuleManager::FindClass(const FString& name)
+FClass* CModuleManager::GetClass(const FString& name)
 {
-for (auto* m : modules)
+	for (auto* m : modules)
 	{
-		for (auto* c : m->Classes)
-			if (c->GetInternalName() == name)
-				return c;
+		for (auto c : m->Classes)
+			if (c.second->GetInternalName() == name)
+				return c.second;
 	}
 
 	return nullptr;
 }
 
-FStruct* CModuleManager::FindStruct(const FString& name)
+FClass* CModuleManager::GetClass(SizeType id)
 {
-for (auto* m : modules)
+	for (auto* m : modules)
 	{
-		for (auto* c : m->Structures)
-			if (c->GetInternalName() == name)
-				return c;
+		if (auto it = m->Classes.find(id); it != m->Classes.end())
+			return it->second;
+	}
+
+	return nullptr;
+}
+
+FStruct* CModuleManager::GetStruct(const FString& name)
+{
+	for (auto* m : modules)
+	{
+		for (auto c : m->Structures)
+			if (c.second->GetInternalName() == name)
+				return c.second;
 	}
 	return nullptr;
 }
 
-FEnum* CModuleManager::FindEnum(const FString& name)
+FStruct* CModuleManager::GetStruct(SizeType id)
 {
-for (auto* m : modules)
+	for (auto* m : modules)
 	{
-		for (auto* c : m->Enums)
-			if (c->GetInternalName() == name)
-				return c;
+		if (auto it = m->Structures.find(id); it != m->Structures.end())
+			return it->second;
 	}
+
+	return nullptr;
+}
+
+FEnum* CModuleManager::GetEnum(const FString& name)
+{
+	for (auto* m : modules)
+	{
+		for (auto c : m->Enums)
+			if (c.second->GetInternalName() == name)
+				return c.second;
+	}
+	return nullptr;
+}
+
+FEnum* CModuleManager::GetEnum(SizeType id)
+{
+	for (auto* m : modules)
+	{
+		if (auto it = m->Enums.find(id); it != m->Enums.end())
+			return it->second;
+	}
+
 	return nullptr;
 }
 
@@ -60,8 +95,8 @@ void CModuleManager::FindChildClasses(FClass* target, TArray<FClass*>& out)
 	{
 		for (auto c : m->Classes)
 		{
-			if (c->GetBaseClass() == target)
-				out.Add(c);
+			if (c.second->GetBaseClass() == target)
+				out.Add(c.second);
 		}
 	}
 }
@@ -70,10 +105,10 @@ void CModuleManager::GetClassesOfType(FClass* type, TArray<FClass*>& out)
 {
 	for (auto* m : modules)
 	{
-		for (auto* c : m->Classes)
+		for (auto c : m->Classes)
 		{
-			if (c->CanCast(type))
-				out.Add(c);
+			if (c.second->CanCast(type))
+				out.Add(c.second);
 		}
 	}
 }
@@ -234,4 +269,36 @@ CModule* CModuleManager::FindModule(const FString& name)
 			return m;
 
 	return nullptr;
+}
+
+CModule::CModule(const char* _name)
+{
+	name = _name;
+}
+
+void CModule::RegisterFClass(FClass* c)
+{
+	//Classes.Add(c);
+	THORIUM_ASSERT(Classes.find(c->id) == Classes.end(), "Failed to register class '" + c->cppName + "' duplicate IDs!");
+
+	Classes[c->id] = c;
+}
+
+void CModule::RegisterFStruct(FStruct* c)
+{
+	THORIUM_ASSERT(Structures.find(c->id) == Structures.end(), "Failed to register class '" + c->cppName + "' duplicate IDs!");
+
+	Structures[c->id] = c;
+}
+
+void CModule::RegisterFEnum(FEnum* c)
+{
+	THORIUM_ASSERT(Enums.find(c->id) == Enums.end(), "Failed to register class '" + c->cppName + "' duplicate IDs!");
+
+	Enums[c->id] = c;
+}
+
+void CModule::RegisterFAsset(FAssetClass* c)
+{
+	Assets.Add(c);
 }

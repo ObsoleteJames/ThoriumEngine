@@ -62,7 +62,7 @@ void CInputManager::LoadConfig()
 				{
 				case 0:
 				{
-					FEnum* keyEnum = CModuleManager::FindEnum("EKeyCode");
+					FEnum* keyEnum = CModuleManager::GetEnum("EKeyCode");
 					if (!keyEnum)
 						break;
 
@@ -72,7 +72,7 @@ void CInputManager::LoadConfig()
 					break;
 				case 1:
 				{
-					FEnum* mouseEnum = CModuleManager::FindEnum("EMouseButton");
+					FEnum* mouseEnum = CModuleManager::GetEnum("EMouseButton");
 					if (!mouseEnum)
 						break;
 
@@ -105,7 +105,7 @@ void CInputManager::LoadConfig()
 				{
 				case 0:
 				{
-					FEnum* keyEnum = CModuleManager::FindEnum("EKeyCode");
+					FEnum* keyEnum = CModuleManager::GetEnum("EKeyCode");
 					if (!keyEnum)
 						break;
 
@@ -115,7 +115,7 @@ void CInputManager::LoadConfig()
 					break;
 				case 1:
 				{
-					FEnum* mouseEnum = CModuleManager::FindEnum("EMouseButton");
+					FEnum* mouseEnum = CModuleManager::GetEnum("EMouseButton");
 					if (!mouseEnum)
 						break;
 

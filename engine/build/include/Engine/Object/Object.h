@@ -6,7 +6,6 @@
 #include "Util/Guid.h"
 #include "EngineCore.h"
 #include "ObjectManager.h"
-#include "Misc/Script.h"
 #include "ObjectMacros.h"
 
 #include "Object.generated.h"

@@ -2,6 +2,8 @@
 
 enum EVariableType
 {
+	EVT_NULL,
+	EVT_VOID,
 	EVT_STRUCT,
 	EVT_CLASS,
 	EVT_STRING,
@@ -10,16 +12,29 @@ enum EVariableType
 	EVT_OBJECT_PTR,
 
 	EVT_CLASS_PTR,
+	EVT_STRUCT_PTR,
+	EVT_ENUM_PTR,
 
 	// Primitive types
 	EVT_FLOAT,
 	EVT_DOUBLE,
+
 	EVT_INT,
+	EVT_INT8,
+	EVT_INT16,
+	EVT_INT64,
+
 	EVT_UINT,
+	EVT_UINT8,
+	EVT_UINT16,
+	EVT_UINT64,
+
 	EVT_BOOL,
 
 	EVT_END // Used to mark the end of enum.
 };
+
+extern const char* VariableTypeToString(uint8 type);
 
 enum EVariableFlags
 {

@@ -70,6 +70,9 @@ FString GetVariableType(const CppProperty& property, bool bIgnoreTemplate = fals
 			return "EVT_OBJECT_PTR";
 	}
 
+	if (property.typeName == "void")
+		return "EVT_VOID";
+
 	if (property.typeName == "FString" || property.typeName == "WString")
 		return "EVT_STRING";
 
@@ -80,10 +83,6 @@ FString GetVariableType(const CppProperty& property, bool bIgnoreTemplate = fals
 		return "EVT_FLOAT";
 	if (property.typeName == "double")
 		return "EVT_DOUBLE";
-	if (property.typeName.Find("int") != -1)
-		return "EVT_INT";
-	if (property.typeName.Find("uint") != -1)
-		return "EVT_UINT";
 	if (property.typeName == "bool")
 		return "EVT_BOOL";
 
@@ -110,7 +109,37 @@ FString GetVariableType(const CppProperty& property, bool bIgnoreTemplate = fals
 			return t.type == 0 ? "EVT_STRUCT" : t.type == 1 ? "EVT_CLASS" : "EVT_ENUM";
 	}
 
-	return "EVT_END";
+	if (property.typeName.Find("int") != -1)
+		return "EVT_INT";
+	if (property.typeName.Find("uint") != -1)
+		return "EVT_UINT";
+
+	return "EVT_NULL";
+}
+
+SizeType GetTypeId(const CppProperty& p)
+{
+	for (auto header : Headers)
+	{
+		for (auto Class : header.classes)
+		{
+			if (Class.name == p.typeName)
+				return Class.id;
+		}
+		for (auto Enum : header.enums)
+		{
+			if (Enum.name == p.typeName)
+				Enum.id;
+		}
+	}
+
+	for (auto t : PreRegisteredClasses)
+	{
+		if (t.name == p.typeName)
+			return t.id;
+	}
+
+	return 0;
 }
 
 void CParser::WriteModuleCpp()
@@ -228,7 +257,7 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 
 	FString moduleGetter = FString("GetModule_") + projectName + "()";
 
-	stream << "\n#include <Util/Core.h>\n#include \"" << data.FilePath.c_str() << "\"\n#include \"Object/Class.h\"\n#include \"Module.h\"\n";
+	stream << "\n#include <Util/Core.h>\n#include \"" << data.FilePath.c_str() << "\"\n#include \"Object/Class.h\"\n#include \"Object/PropertyTypes.h\"\n#include \"Script/Frame.h\"\n#include \"Module.h\"\n";
 	//stream << "\nextern CModule " << projectName.c_str() << "_module;\n\n";
 	stream << "\nCModule& " << moduleGetter.c_str() << ";\n\n";
 
@@ -305,14 +334,29 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 					objTypeName = p.nestedTemplateType + "<" + p.typeName + (p.bPointer ? "*" : "") + ">";
 
 				FString type = GetVariableType(p, true);
-				stream << "static FArrayHelper _arrayHelper_" << p.name.c_str() << "{\n ";
+				/*stream << "static FArrayHelper _arrayHelper_" << p.name.c_str() << "{\n ";
 				stream << "\t[](void* ptr) { (*(" << ArrayTypeName.c_str() << "*)ptr).Add(" << (p.bPointer ? FString(");") : (type == "EVT_OBJECT_PTR" ? ");" : p.typeName + "());")).c_str() << " },\n";
 				stream << "\t[](void* ptr, SizeType i) { (*(" << ArrayTypeName.c_str() << "*)ptr).Erase(" << "(*(" << ArrayTypeName.c_str() << "*)ptr).At(i)); },\n";
 				stream << "\t[](void* ptr) { (*(" << ArrayTypeName.c_str() << "*)ptr).Clear(); },\n";
 				stream << "\t[](void* ptr) { return (*(" << ArrayTypeName.c_str() << "*)ptr).Size(); }, \n";
 				stream << "\t[](void* ptr) { return (void*)(*(" << ArrayTypeName.c_str() << "*)ptr).Data(); }, \n";
 				stream << "\t" << type.c_str() << ", \n";
-				stream << "\tsizeof(" << objTypeName.c_str() << ")\n};\n\n";
+				stream << "\tsizeof(" << objTypeName.c_str() << ")\n};\n\n";*/
+
+				FString helperName = "FArrayHelper_" + Class.name + "_" + p.name;
+
+				stream << "class " << helperName.c_str() << " : public FArrayHelper\n{\npublic:\n";
+				stream << "\t" << helperName.c_str() << "() { ";
+				stream << " objType = {" << type.c_str() << ", " << GetTypeId(p) << ", EVT_NULL, 0, " << p.bConst << ", " << p.bRef << ", " << p.bPointer << " }; ";
+				stream << "objSize = sizeof(" << objTypeName.c_str() << "); }\n\n";
+				//stream << "\tvoid AddEmpty(void* ptr) final { ";
+
+				stream << "\tvoid AddEmpty(void* ptr) final { (*(" << ArrayTypeName.c_str() << "*)ptr).Add(" << (p.bPointer ? FString(");") : (type == "EVT_OBJECT_PTR" ? ");" : p.typeName + "());")).c_str() << " };\n";
+				stream << "\tvoid Erase(void* ptr, SizeType i) final { (*(" << ArrayTypeName.c_str() << "*)ptr).Erase(" << "(*(" << ArrayTypeName.c_str() << "*)ptr).At(i)); };\n";
+				stream << "\tvoid Clear(void* ptr) final { (*(" << ArrayTypeName.c_str() << "*)ptr).Clear(); };\n";
+				stream << "\tSizeType Size(void* ptr) final { return (*(" << ArrayTypeName.c_str() << "*)ptr).Size(); }; \n";
+				stream << "\tvoid* Data(void* ptr) final { return (void*)(*(" << ArrayTypeName.c_str() << "*)ptr).Data(); }; \n";
+				stream << "} static _arrayHelper_" << p.name.c_str() << ";\n\n";
 			}
 
 			// MetaData
@@ -421,6 +465,9 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			else
 				stream << "nullptr";
 			
+			stream << ", " << std::to_string(p.name.Hash());
+			stream << ", 2";
+
 			stream << ")\n";
 
 			stream << "#undef CLASS_NEXT_PROPERTY\n"
@@ -462,9 +509,9 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 						continue;
 					}
 
-					FString flags = "VTAG_NONE";
+					/*FString flags = "VTAG_NONE";
 					if (arg.bPointer)
-						flags += " | VTAG_TYPE_POINTER";
+						flags += " | VTAG_TYPE_POINTER";*/
 
 					FString objType = "nullptr";
 					if (typeId == "EVT_CLASS")
@@ -472,7 +519,9 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 					else if (typeId == "EVT_STRUCT")
 						objType = arg.typeName + "::StaticStruct()";
 
-					stream << "\t{ \"" << arg.name.c_str() << "\", " << typeId.c_str() << ", " << flags.c_str() << ", " << objType.c_str() << " },\n";
+					//stream << "\t{ \"" << arg.name.c_str() << "\", " << typeId.c_str() << ", " << flags.c_str() << ", " << objType.c_str() << " },\n";
+
+					stream << "\t{ \"" << arg.name.c_str() << "\", { " << typeId.c_str() << ", " << GetTypeId(arg) << ", EVT_NULL, 0, " << arg.bConst << ", " << arg.bRef << ", " << arg.bPointer << " } },\n";
 				}
 
 				stream << "};\n\n";
@@ -515,8 +564,20 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			FString funcFlags = "FunctionFlags_NONE";
 			if (f.macro.ArgIndex("NoEntityInput") == -1)
 				funcFlags += " | FunctionFlags_ALLOW_AS_INPUT";
+			if (f.macro.ArgIndex("ScriptCallable") != -1)
+				funcFlags += " | FunctionFlags_SCRIPT_CALLABLE";
+			if (f.macro.ArgIndex("ScriptVirtual") != -1)
+				funcFlags += " | FunctionFlags_SCRIPT_VIRTUAL";
+			if (f.bStatic)
+				funcFlags += " | FunctionFlags_STATIC";
 
-			stream << (f.bStatic ? "1" : "0") << ", " << funcFlags.c_str() << ")\n";
+			//stream << (f.bStatic ? "1" : "0") << ", " << funcFlags.c_str() << ")\n";
+			stream << funcFlags.c_str();
+			stream << ", " << std::to_string(f.name.Hash()) << ", 2, ";
+
+			stream << GetVariableType(f.returnType).c_str() << ", " << GetTypeId(f.returnType);
+
+			stream << ")\n";
 			stream << "#undef CLASS_NEXT_FUNCTION\n" << "#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(" << Class.name.c_str() << ", " << f.name.c_str() << ")\n\n";
 		}
 
@@ -559,7 +620,8 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			<< "\t\tsize = sizeof(" << Class.name.c_str() << ");\n"
 			<< "\t\tnumProperties = " << std::to_string(Class.Properties.Size()) << ";\n"
 			<< "\t\tPropertyList = CLASS_NEXT_PROPERTY;\n"
-			<< "\t\tbIsClass = " << (Class.classMacro.type != FMacro::STRUCT ? "true" : "false") << ";\n";
+			<< "\t\tbIsClass = " << (Class.classMacro.type != FMacro::STRUCT ? "true" : "false") << ";\n"
+			<< "\t\tid = " << Class.name.Hash() << ";\n";
 
 		if (bHasTags)
 		{
@@ -569,12 +631,12 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			stream << "#endif\n";
 		}
 
-		if (auto i = Class.classMacro.ArgIndex("Extension"); Class.classMacro.type == FMacro::ASSET && Class.classMacro.ArgIndex("Abstract") == -1)
+		if (auto i = Class.classMacro.ArgIndex("MetaExtension"); Class.classMacro.type == FMacro::ASSET && Class.classMacro.ArgIndex("Abstract") == -1)
 		{
-			if (i == -1)
-				std::cerr << "error: type of asset must have extension type specified!";
-			else
-				stream << "\t\textension = \"" << Class.classMacro.Arguments[i].Value.c_str() << "\";\n";
+			if (i != -1)
+				stream << "\t\tmetaExt = \"" << Class.classMacro.Arguments[i].Value.c_str() << "\";\n";
+				//std::cerr << "error: type of asset must have extension type specified!";
+			//else
 
 			auto importI = Class.classMacro.ArgIndex("ImportableAs");
 			if (importI != -1)

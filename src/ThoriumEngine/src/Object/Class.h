@@ -3,14 +3,16 @@
 class CObject;
 
 #include <Util/Core.h>
-#include "Misc/Script.h"
 #include "ObjectTypes.h"
-#include "PropertyTypes.h"
 #include "Module.h"
 
 #include "EngineCore.h"
 
 class FClass;
+class FArrayHelper;
+struct FStack;
+
+typedef uint8 EDataType;
 
 typedef void(*FFunctionExecPtr)(CObject* target, FStack& stack);
 
@@ -21,6 +23,21 @@ struct FBaseField
 #if defined(INCLUDE_EDITOR_DATA)
 	FString description;
 #endif
+
+	size_t id;
+};
+
+struct FArgType
+{
+	uint type;
+	size_t typeId;
+
+	uint templateType;
+	size_t templateTypeId;
+
+	bool bConst : 1;
+	bool bRef : 1;
+	bool bPointer : 1;
 };
 
 struct ENGINE_API FPropertyMeta
@@ -43,9 +60,11 @@ public:
 
 struct FProperty : public FBaseField
 {
+	uint8 protectionLvl;
+
 	FString typeName;
 
-	uint type;
+	EDataType type;
 	uint flags;
 	SizeType offset;
 	SizeType size;
@@ -58,18 +77,19 @@ struct FProperty : public FBaseField
 struct FFuncArg
 {
 	FString name;
-	uint type;
-	uint8 flags;
-	void* classPtr;
+	FArgType type;
 };
 
 enum EFunctionFlags_
 {
 	FunctionFlags_NONE = 0,
 	FunctionFlags_ALLOW_AS_INPUT = 1 << 0, // can this function be called from entity IO.
+	FunctionFlags_STATIC = 1 << 1,
+	FunctionFlags_SCRIPT_VIRTUAL = 1 << 2, // function that can be overriden in scripts.
+	FunctionFlags_SCRIPT_CALLABLE = 1 << 3,
 };
 
-typedef int EFunctionFlags;
+typedef uint EFunctionFlags;
 
 struct FFunction : public FBaseField
 {
@@ -80,17 +100,21 @@ struct FFunction : public FBaseField
 		COMMAND,
 		SERVER_RPC,
 		CLIENT_RPC,
-		MULTICAST_RPC
+		MULTICAST_RPC,
+		OPERATOR,
 	};
 
-	FFunctionExecPtr execFunc;
+	uint8 protectionLvl;
+
+	//FFunctionExecPtr execFunc;
+	std::function<bool(CObject* obj, FStack& stack)> execFunc;
 	EType type;
 
-	//TArray<FFuncArg> Arguments;
+	FArgType returnType;
+
 	SizeType numArguments;
 	FFuncArg* Arguments;
 
-	bool bStatic : 1;
 	EFunctionFlags flags;
 	FFunction* next;
 };
@@ -170,10 +194,15 @@ public:
 	inline const FProperty* GetPropertyList() const { return PropertyList; }
 	inline bool IsClass() const { return bIsClass; }
 
+	const FProperty* GetProperty(SizeType id);
+
 protected:
 	SizeType size;
 
 	bool bIsClass;
+	bool bIsScriptType = 0; // Wether this type was compiled from a script.
+
+	SizeType baseTypeId;
 
 	uint32 numProperties;
 	const FProperty* PropertyList;
@@ -192,6 +221,7 @@ public:
 	inline const FFunction* GetFunctionList() const { return FunctionList; }
 
 	const FFunction* GetFunction(const FString& name);
+	const FFunction* GetFunction(SizeType id);
 
 	inline uint Flags() const { return flags; }
 	inline bool HasFlag(uint f) const { return (flags & f); }
@@ -227,18 +257,19 @@ protected:
 class ENGINE_API FAssetClass : public FClass
 {
 public:
-	inline const FString& GetExtension() const { return extension; }
 	inline uint AssetFlags() const { return assetFlags; }
 
 	inline const FString& ImportableAs() const { return importableAs; }
 
+	inline const FString& MetaExtension() const { return metaExt; }
+
 protected:
-	FString extension;
 	uint assetFlags;
 
-	// List of file types that this asset can be convert from. example: ".fbx;.png;.obj;..."
-	FString importableAs; 
+	FString metaExt;
 
+	// List of file types that this asset can be convert from. example: ".fbx;.png;.obj;..."
+	FString importableAs;
 };
 
 template<class T>
@@ -256,7 +287,7 @@ TClassPtr<T>::TClassPtr(const TClassPtr<T>& other) : ptr(other.ptr)
 template<class T>
 TClassPtr<T>::TClassPtr(const FString& type)
 {
-	FClass* c = CModuleManager::FindClass(type);
+	FClass* c = CModuleManager::GetClass(type);
 	if (c && c->CanCast(T::StaticClass()))
 		ptr = c;
 }

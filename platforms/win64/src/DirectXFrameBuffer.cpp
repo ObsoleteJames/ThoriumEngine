@@ -2,6 +2,7 @@
 #include "Platform/Windows/DirectX/DirectXFrameBuffer.h"
 #include "Window.h"
 #include "Console.h"
+#include <Util/Assert.h>
 
 DirectXFrameBuffer::DirectXFrameBuffer(ID3D11Texture2D* fromTexture, int w, int h)
 {

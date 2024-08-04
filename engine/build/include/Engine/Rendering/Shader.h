@@ -113,14 +113,14 @@ public:
 private:
 	void LoadVersion05(IBaseFStream* stream);
 
+	virtual uint8 GetFileVersion() const;
+
 public:
 	TArray<FShaderProperty> properties;
 	TArray<FShaderTexture> textures;
 	FString shaderName;
 	FString description;
 	int8 type; // CShaderSource::EType
-
-	uint16 version;
 
 	uint8 features = ShaderFeature_None;
 
@@ -132,10 +132,10 @@ public:
 	//IShader* psShader = nullptr;
 	//IShader* geoShader = nullptr;
 
-	int8 bCompiled;
-	int8 bHasPS;
-	int8 bHasVS;
-	int8 bHasGEO;
+	int8 bCompiled = false;
+	int8 bHasPS = false;
+	int8 bHasVS = false;
+	int8 bHasGEO = false;
 };
 
 class ENGINE_API IShader

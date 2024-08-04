@@ -392,6 +392,7 @@ int CParser::ParseHeader(FHeaderData& data)
 						if (readStage == 0 && (ch == ':' || ch == '\n'))
 						{
 							_class.name = bPrevWasSpace ? prevValue : curValue;
+							_class.id = _class.name.Hash();
 							readStage = 1;
 						}
 						if (readStage == 1 && (ch == ',' || ch == '\n'))
@@ -790,6 +791,7 @@ int CParser::ParseHeader(FHeaderData& data)
 						if (_enum.name.IsEmpty())
 						{
 							_enum.name = bPrevWasSpace ? prevValue : value;
+							_enum.id = _enum.name.Hash();
 							readStage = 1;
 							break;
 						}
@@ -806,6 +808,7 @@ int CParser::ParseHeader(FHeaderData& data)
 					if (ch == ':')
 					{
 						_enum.name = bPrevWasSpace ? prevValue : value;
+						_enum.id = _enum.name.Hash();
 						bPrevWasSpace = false;
 						continue;
 					}

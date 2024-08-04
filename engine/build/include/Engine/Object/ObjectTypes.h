@@ -2,6 +2,8 @@
 
 enum EVariableType
 {
+	EVT_NULL,
+	EVT_VOID,
 	EVT_STRUCT,
 	EVT_CLASS,
 	EVT_STRING,
@@ -10,6 +12,8 @@ enum EVariableType
 	EVT_OBJECT_PTR,
 
 	EVT_CLASS_PTR,
+	EVT_STRUCT_PTR,
+	EVT_ENUM_PTR,
 
 	// Primitive types
 	EVT_FLOAT,

@@ -796,7 +796,7 @@ void CEngine::LoadMandatoryAddons()
 {
 	LoadCoreAddon("jolt_physics");
 
-	CreatePhysicsApi(CModuleManager::FindClass("CJoltPhysicsApi"));
+	CreatePhysicsApi(CModuleManager::GetClass("CJoltPhysicsApi"));
 }
 
 void CEngine::UnloadWorld()

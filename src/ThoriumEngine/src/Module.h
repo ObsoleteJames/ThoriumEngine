@@ -1,6 +1,7 @@
 #pragma once
 
 #include "EngineCore.h"
+#include <Util/Map.h>
 
 class CModuleManager;
 class FClass;
@@ -37,12 +38,12 @@ class ENGINE_API CModule : public FLibrary
 	friend class CModuleManager;
 
 public:
-	CModule(const char* _name) { name = _name; }
+	CModule(const char* _name);
 
-	inline void RegisterFClass(FClass* c) { Classes.Add(c); }
-	inline void RegisterFStruct(FStruct* c) { Structures.Add(c); }
-	inline void RegisterFEnum(FEnum* c) { Enums.Add(c); }
-	inline void RegisterFAsset(FAssetClass* c) { Assets.Add(c); }
+	void RegisterFClass(FClass* c);
+	void RegisterFStruct(FStruct* c);
+	void RegisterFEnum(FEnum* c);
+	void RegisterFAsset(FAssetClass* c);
 
 protected:
 	//FStruct* StructList;
@@ -50,9 +51,9 @@ protected:
 	//FEnum* EnumList;
 
 public:
-	TArray<FStruct*> Structures;
-	TArray<FClass*> Classes;
-	TArray<FEnum*> Enums;
+	TMap<SizeType, FStruct*> Structures;
+	TMap<SizeType, FClass*> Classes;
+	TMap<SizeType, FEnum*> Enums;
 	TArray<FAssetClass*> Assets;
 
 };
@@ -63,9 +64,13 @@ class ENGINE_API CModuleManager
 	friend class CEditorEngine;
 
 public:
-	static FClass* FindClass(const FString& name);
-	static FStruct* FindStruct(const FString& name);
-	static FEnum* FindEnum(const FString& name);
+	static FClass* GetClass(const FString& name);
+	static FStruct* GetStruct(const FString& name);
+	static FEnum* GetEnum(const FString& name);
+
+	static FClass* GetClass(SizeType id);
+	static FStruct* GetStruct(SizeType id);
+	static FEnum* GetEnum(SizeType id);
 
 	static void GetAssetTypes(TArray<FAssetClass*>& out);
 

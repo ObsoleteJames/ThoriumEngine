@@ -19,7 +19,6 @@
 
 #define GENERATED_BODY() _BODY_MACRO_COMBINE(FILE_ID, _, __LINE__, _GeneratedBody)
 
-
 #define DECLARE_FUNCTION(func, ...) static void func(__VA_ARGS__);
 #define DEFINE_FUNCTION(func, ...) void func(__VA_ARGS__);
 
@@ -47,13 +46,22 @@ public: \
 
 #define EVALUATE_PROPERTY_NAME(TClass, InternalName) TClass##_##InternalName##_Property
 
-#define DECLARE_PROPERTY(TClass, DisplayName, InternalName, Description, TypeName, TType, TTags, TOffset, TSize, TMetaData, TTypeHelper) \
-static FProperty  EVALUATE_PROPERTY_NAME(TClass, InternalName) { DisplayName, #InternalName, Description, TypeName, TType, TTags, TOffset, TSize, TMetaData, TTypeHelper, CLASS_NEXT_PROPERTY };
-
+#if defined(INCLUDE_EDITOR_DATA)
+#define DECLARE_PROPERTY(TClass, DisplayName, InternalName, Description, TypeName, TType, TTags, TOffset, TSize, TMetaData, TTypeHelper, TId, TProtection) \
+static FProperty  EVALUATE_PROPERTY_NAME(TClass, InternalName) { DisplayName, #InternalName, Description, TId, TProtection, TypeName, TType, TTags, TOffset, TSize, TMetaData, TTypeHelper, CLASS_NEXT_PROPERTY };
+#else
+#define DECLARE_PROPERTY(TClass, DisplayName, InternalName, Description, TypeName, TType, TTags, TOffset, TSize, TMetaData, TTypeHelper, TId, TProtection) \
+static FProperty  EVALUATE_PROPERTY_NAME(TClass, InternalName) { DisplayName, #InternalName, TId, TProtection, TypeName, TType, TTags, TOffset, TSize, TMetaData, TTypeHelper, CLASS_NEXT_PROPERTY };
+#endif
 
 #define EVALUATE_FUNCTION_NAME(TClass, InternalName) TClass##_##InternalName##_Function
 
-#define DECLARE_FUNCTION_PROPERTY(TClass, DisplayName, Description, InternalName, TFuncPtr, TType, TArgList, TArgCount, isStatic, flags) \
-static FFunction EVALUATE_FUNCTION_NAME(TClass, InternalName) { DisplayName, #InternalName, Description, TFuncPtr, TType, TArgCount, TArgList, isStatic, flags, CLASS_NEXT_FUNCTION };
+#if defined(INCLUDE_EDITOR_DATA)
+#define DECLARE_FUNCTION_PROPERTY(TClass, DisplayName, Description, InternalName, TFuncPtr, TType, TArgList, TArgCount, flags, TId, TProtection, TReturnType, TReturnTypeID) \
+static FFunction EVALUATE_FUNCTION_NAME(TClass, InternalName) { DisplayName, #InternalName, Description, TId, TProtection, TFuncPtr, TType, { TReturnType, TReturnTypeID, EVT_NULL, 0, 0, 0, 0 }, TArgCount, TArgList, flags, CLASS_NEXT_FUNCTION };
+#else
+#define DECLARE_FUNCTION_PROPERTY(TClass, DisplayName, Description, InternalName, TFuncPtr, TType, TArgList, TArgCount, flags, TId, TProtection, TReturn) \
+static FFunction EVALUATE_FUNCTION_NAME(TClass, InternalName) { DisplayName, #InternalName, TId, TProtection, TFuncPtr, TType, TReturn, TArgCount, TArgList, flags, CLASS_NEXT_FUNCTION };
+#endif
 
-#define POP_STACK_VARIABLE(Type, OutVar) Type OutVar; stack.Pop(OutVar)
+#define POP_STACK_VARIABLE(Type, OutVar) Type OutVar; stack.Pop(&OutVar)

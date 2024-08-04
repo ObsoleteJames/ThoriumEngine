@@ -17,6 +17,7 @@ struct FTypeDefinition
 	FString name;
 	FString moduleName;
 	uint8 type; // 0 = struct, 1 = class, 2 = enum.
+	SizeType id;
 };
 
 enum EProjectType

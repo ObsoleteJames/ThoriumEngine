@@ -15,6 +15,7 @@
 #include "Physics/PhysicsWorld.h"
 #include "Console.h"
 #include "Object/ObjectHandle.h"
+#include "Script/Frame.h"
 #include <Util/Assert.h>
 #include <Util/FStream.h>
 
@@ -131,7 +132,7 @@ void CWorld::LoadScene(CScene* ptr)
 		FString typeName;
 		*stream >> typeName >> &entId >> &dataSize;
 
-		FClass* type = CModuleManager::FindClass(typeName);
+		FClass* type = CModuleManager::GetClass(typeName);
 
 		CEntity* ent = (CEntity*)CreateEntity(type, "");
 
