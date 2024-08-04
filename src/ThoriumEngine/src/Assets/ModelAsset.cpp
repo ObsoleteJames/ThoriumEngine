@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "ModelAsset.h"
 #include "Rendering/Renderer.h"
+#include "Rendering/GraphicsInterface.h"
 #include "Console.h"
 #include "Material.h"
 #include "Math/Math.h"
@@ -366,8 +367,8 @@ void CModelAsset::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 		for (SizeType i = 0; i < numIndices; i++)
 			*stream >> &indices[i];
 
-		meshes[it].vertexBuffer = Renderer::CreateVertexBuffer(vertices);
-		meshes[it].indexBuffer = Renderer::CreateIndexBuffer(indices);
+		meshes[it].vertexBuffer = gGHI->CreateVertexBuffer(vertices);
+		meshes[it].indexBuffer = gGHI->CreateIndexBuffer(indices);
 		meshes[it].numVertices = (uint)numVertices;
 		meshes[it].numIndices = (uint)numIndices;
 

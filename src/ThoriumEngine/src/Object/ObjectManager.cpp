@@ -123,6 +123,15 @@ void CObjectManager::Update()
 	}
 }
 
+void CObjectManager::Shutdown()
+{
+	for (auto it = ObjectsToDelete.rbegin(); it != ObjectsToDelete.rend(); it++)
+		delete *it;
+
+	for (auto it = Objects.begin(); it != Objects.end(); it++)
+		delete it->second;
+}
+
 void CObjectManager::DeleteObjectsFromModule(CModule* module)
 {
 	auto objs = Objects;

@@ -23,6 +23,8 @@ public:
 
 	FBounds Bounds() const override;
 
+	void SetSprite(CTexture* tex);
+
 public:
 	PROPERTY(Editable)
 	TObjectPtr<CTexture> sprite;

@@ -3,7 +3,7 @@
 
 #include "EngineCore.h"
 #include "Platform/Windows/DirectX/DirectXBuffers.h"
-#include "Platform/Windows/DirectX/DirectXRenderer.h"
+#include "Platform/Windows/DirectX/DirectXInterface.h"
 #include "Console.h"
 
 DirectXVertexBuffer::DirectXVertexBuffer(const TArray<FVertex>& vertices)

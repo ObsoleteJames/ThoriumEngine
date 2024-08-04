@@ -1,6 +1,7 @@
 
 #include "RenderScene.h"
 #include "RenderProxies.h"
+#include "Rendering/GraphicsInterface.h"
 #include "Math/Transform.h"
 #include "Renderer.h"
 #include "Rendering/Texture.h"
@@ -19,25 +20,25 @@ CRenderScene::CRenderScene(int fbWidth /*= 1280*/, int fbHeight /*= 720*/) : pri
 	int widthB = int((float)fbWidth * sp);
 	int heightB = int((float)fbHeight * sp);
 
-	colorBuffer = gRenderer->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA16_FLOAT, cvRenderFBPointFilter.AsBool() ? THTX_FILTER_POINT : THTX_FILTER_LINEAR);
-	GBufferA = gRenderer->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_R10G10B10A2_UNORM);
-	GBufferB = gRenderer->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA8_UNORM);
-	GBufferC = gRenderer->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA8_UNORM);
-	GBufferD = gRenderer->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA8_UNORM);
+	colorBuffer = gGHI->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA16_FLOAT, cvRenderFBPointFilter.AsBool() ? THTX_FILTER_POINT : THTX_FILTER_LINEAR);
+	GBufferA = gGHI->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_R10G10B10A2_UNORM);
+	GBufferB = gGHI->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA8_UNORM);
+	GBufferC = gGHI->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA8_UNORM);
+	GBufferD = gGHI->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA8_UNORM);
 
-	preTranslucentBuff = gRenderer->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA16_FLOAT);
+	preTranslucentBuff = gGHI->CreateFrameBuffer(widthB, heightB, TEXTURE_FORMAT_RGBA16_FLOAT);
 
-	aoBuffer = gRenderer->CreateFrameBuffer(fbWidth / 2, fbHeight / 2, TEXTURE_FORMAT_R8_UNORM);
+	aoBuffer = gGHI->CreateFrameBuffer(fbWidth / 2, fbHeight / 2, TEXTURE_FORMAT_R8_UNORM);
 
 	for (int i = 0; i < 4; i++)
 	{
-		bloomBuffersX[i] = gRenderer->CreateFrameBuffer(fbWidth / bloomScaleLUT[i], fbHeight / bloomScaleLUT[i], TEXTURE_FORMAT_RGBA16_FLOAT, THTX_FILTER_LINEAR);
-		bloomBuffersY[i] = gRenderer->CreateFrameBuffer(fbWidth / bloomScaleLUT[i], fbHeight / bloomScaleLUT[i], TEXTURE_FORMAT_RGBA16_FLOAT, THTX_FILTER_LINEAR);
+		bloomBuffersX[i] = gGHI->CreateFrameBuffer(fbWidth / bloomScaleLUT[i], fbHeight / bloomScaleLUT[i], TEXTURE_FORMAT_RGBA16_FLOAT, THTX_FILTER_LINEAR);
+		bloomBuffersY[i] = gGHI->CreateFrameBuffer(fbWidth / bloomScaleLUT[i], fbHeight / bloomScaleLUT[i], TEXTURE_FORMAT_RGBA16_FLOAT, THTX_FILTER_LINEAR);
 	}
 
-	depth = gRenderer->CreateDepthBuffer({ widthB, heightB, TH_DBF_D24_S8, 1, false });
+	depth = gGHI->CreateDepthBuffer({ widthB, heightB, TH_DBF_D24_S8, 1, false });
 
-	depthTex = gRenderer->CreateTexture2D(nullptr, widthB, heightB, TEXTURE_FORMAT_R24G8, THTX_FILTER_POINT);
+	depthTex = gGHI->CreateTexture2D(nullptr, widthB, heightB, TEXTURE_FORMAT_R24G8, THTX_FILTER_POINT);
 }
 
 CRenderScene::~CRenderScene()
@@ -88,7 +89,7 @@ void CRenderScene::ResizeBuffers(int width, int height)
 
 	depth->Resize(widthB, heightB);
 	delete depthTex;
-	depthTex = gRenderer->CreateTexture2D(nullptr, widthB, heightB, TEXTURE_FORMAT_R24G8, THTX_FILTER_POINT);
+	depthTex = gGHI->CreateTexture2D(nullptr, widthB, heightB, TEXTURE_FORMAT_R24G8, THTX_FILTER_POINT);
 }
 
 bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitiveHitInfo* outHit, float maxDistance /*= 0.f*/)

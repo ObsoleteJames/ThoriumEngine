@@ -3,6 +3,7 @@
 #include "Assets/Material.h"
 #include "Assets/ModelAsset.h"
 #include "Renderer.h"
+#include "GraphicsInterface.h"
 #include "RenderScene.h"
 #include "Game/World.h"
 
@@ -11,7 +12,7 @@ CDebugRenderer* gDebugRenderer;
 CDebugRenderer::CDebugRenderer()
 {
 	lineMesh.numVertices = 2;
-	lineMesh.vertexBuffer = gRenderer->CreateVertexBuffer({ { FVector::zero }, { -FVector::forward } });
+	lineMesh.vertexBuffer = gGHI->CreateVertexBuffer({ { FVector::zero }, { -FVector::forward } });
 	lineMesh.topologyType = FMesh::TOPOLOGY_LINES;
 
 	cube = CAssetManager::GetAsset<CModelAsset>("models/Cube.thasset");

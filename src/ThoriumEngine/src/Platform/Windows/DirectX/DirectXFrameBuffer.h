@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Rendering/Framebuffer.h"
-#include "DirectXRenderer.h"
+#include "DirectXInterface.h"
 
 class CWindow;
 

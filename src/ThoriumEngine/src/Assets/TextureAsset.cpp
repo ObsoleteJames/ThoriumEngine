@@ -2,6 +2,7 @@
 #include "TextureAsset.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Texture.h"
+#include "Rendering/GraphicsInterface.h"
 #include "Console.h"
 #include <mutex>
 #include <chrono>
@@ -143,8 +144,8 @@ void CTexture::OnInit(IBaseFStream* stream)
 
 	curMipMapLevel = numMipmaps;
 
-	if (numMipmaps > 1 && gRenderer)
-		tex = gRenderer->CreateTexture2D(nullptr, numMipmaps, width, height, ToTextureFormat(format), filteringType);
+	if (numMipmaps > 1 && gGHI)
+		tex = gGHI->CreateTexture2D(nullptr, numMipmaps, width, height, ToTextureFormat(format), filteringType);
 
 	bLoading = false;
 	bInitialized = true;
@@ -176,13 +177,13 @@ void CTexture::OnSave(IBaseFStream* stream)
 
 void CTexture::Init(void* data, int width, int height, ETextureAssetFormat format /*= THTX_FORMAT_RGBA8_UINT*/, ETextureFilter filter)
 {
-	if (!gRenderer)
+	if (!gGHI)
 		return;
 
 	if (tex)
 		delete tex;
 
-	tex = gRenderer->CreateTexture2D(data, width, height, ToTextureFormat(format), filter);
+	tex = gGHI->CreateTexture2D(data, width, height, ToTextureFormat(format), filter);
 	bInitialized = true;
 }
 
@@ -209,8 +210,8 @@ void CTexture::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 	if (tex)
 		delete tex;
 
-	if (gRenderer)
-		tex = gRenderer->CreateTexture2D(data, width, height, ToTextureFormat(format), filteringType);
+	if (gGHI)
+		tex = gGHI->CreateTexture2D(data, width, height, ToTextureFormat(format), filteringType);
 	curMipMapLevel = 0;
 }
 
@@ -357,7 +358,7 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 	for (int i = 0; i < numMipmaps; i++)
 		_d[i] = (void*)mipMaps[i].Key;
 
-	tex = gRenderer->CreateTexture2D(_d, numMipmaps, width, height, ToTextureFormat(format), filteringType);
+	tex = gGHI->CreateTexture2D(_d, numMipmaps, width, height, ToTextureFormat(format), filteringType);
 	curMipMapLevel = 0;
 
 	texSaveMipMaps = mipMaps.Data();

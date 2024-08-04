@@ -70,6 +70,8 @@ public:
 
 	virtual void FetchData() = 0;
 
+	inline CMaterial* GetMaterial() const { return postProcessMaterial; }
+
 	inline const FPostProcessSettings& PostProcessSettings() const { return ppSettings; }
 
 	inline const FBounds& Bounds() const { return bounds; }

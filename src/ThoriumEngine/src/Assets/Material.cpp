@@ -1,6 +1,7 @@
 
 #include "Material.h"
 #include "Rendering/Renderer.h"
+#include "Rendering/GraphicsInterface.h"
 #include "Rendering/Buffers.h"
 #include "TextureAsset.h"
 #include "Console.h"
@@ -132,7 +133,7 @@ void CMaterial::OnInit(IBaseFStream* stream)
 	if (shader)
 	{
 		if (gRenderer)
-			gpuBuffer = gRenderer->CreateShaderBuffer(nullptr, shader->bufferSize);
+			gpuBuffer = gGHI->CreateShaderBuffer(nullptr, shader->bufferSize);
 
 		Validate();
 		bInitialized = true;
@@ -243,7 +244,7 @@ void CMaterial::SetShader(const FString& shaderName)
 	}
 
 	if (gRenderer)
-		gpuBuffer = gRenderer->CreateShaderBuffer(nullptr, shader->bufferSize);
+		gpuBuffer = gGHI->CreateShaderBuffer(nullptr, shader->bufferSize);
 
 	Validate();
 

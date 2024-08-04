@@ -74,7 +74,7 @@ void DirectXFrameBuffer::Generate(int w, int h, int mipmap, ETextureFormat f)
 	tex.Height = height;
 	tex.MipLevels = numMipMaps;
 	tex.ArraySize = 1;
-	tex.Format = DirectXRenderer::GetDXTextureFormat(format).Key;
+	tex.Format = DirectXInterface::GetDXTextureFormat(format).Key;
 	tex.SampleDesc.Count = 1;
 	tex.SampleDesc.Quality = 0;
 	tex.Usage = D3D11_USAGE_DEFAULT;

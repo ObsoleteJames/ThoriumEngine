@@ -1,18 +1,18 @@
 #pragma once
 
-#include "Rendering/Renderer.h"
+#include "Rendering/GraphicsInterface.h"
 #include <d3d11.h>
 #include <dxgi1_2.h>
 #pragma comment(lib, "d3d11.lib")
 
-class DirectXRenderer;
-extern DirectXRenderer* GetDirectXRenderer();
+class DirectXInterface;
+extern DirectXInterface* GetDirectXRenderer();
 
-class ENGINE_API DirectXRenderer : public IRenderer
+class ENGINE_API DirectXInterface : public IGraphicsInterface
 {
 public:
-	DirectXRenderer() = default;
-	virtual ~DirectXRenderer();
+	DirectXInterface() = default;
+	virtual ~DirectXInterface();
 
 	virtual void CompileShader(const FString& source, IShader::EType shaderType, void** outBuffer, SizeType* outBufferSize);
 	
@@ -30,9 +30,11 @@ public:
 
 	virtual ITexture2D* CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter);
 	virtual ITexture2D* CreateTexture2D(void** data, int numMipMaps, int width, int height, ETextureFormat format, ETextureFilter filter);
-	virtual ITextureCube* CreateTextureCube(void* data, int width, int height, ETextureFormat format, ETextureFilter filter) { return nullptr; }
+	virtual ITextureCube* CreateTextureCube(void* data, int width, int height, ETextureFormat format, ETextureFilter filter);
 
 	virtual void CopyResource(ITexture2D* source, ITexture2D* destination);
+	virtual void CopyResource(ITextureCube* source, ITextureCube* destination);
+	virtual void CopyResource(ITextureCube* source, ITexture2D* destination, int targetFace);
 	virtual void CopyResource(IFrameBuffer* source, ITexture2D* destination);
 	virtual void CopyResource(IFrameBuffer* source, IFrameBuffer* destination);
 	virtual void CopyResource(IDepthBuffer* source, ITexture2D* destination);

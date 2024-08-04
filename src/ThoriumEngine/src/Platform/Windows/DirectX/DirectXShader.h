@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Rendering/Shader.h"
-#include "DirectXRenderer.h"
+#include "DirectXInterface.h"
 
 class ENGINE_API DirectXShader : public IShader
 {

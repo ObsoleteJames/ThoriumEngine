@@ -1,7 +1,7 @@
 
 #include "Engine.h"
 #include "Window.h"
-#include "Platform/Windows/DirectX/DirectXRenderer.h"
+#include "Platform/Windows/DirectX/DirectXInterface.h"
 #include "Platform/Windows/DirectX/DirectXFrameBuffer.h"
 #include "Platform/Windows/DirectX/DirectXShader.h"
 #include "Platform/Windows/DirectX/DirectXBuffers.h"
@@ -27,14 +27,14 @@
 #include "ImGui/imgui_impl_glfw.h"
 #include "ImGui/imgui_impl_dx11.h"
 
-DirectXRenderer* GetDirectXRenderer()
+DirectXInterface* GetDirectXRenderer()
 {
-	return (DirectXRenderer*)gRenderer;
+	return (DirectXInterface*)gRenderer;
 }
 
-void DirectXRenderer::Init()
+void DirectXInterface::Init()
 {
-	api = ERendererApi::DIRECTX_11;
+	api = EGraphicsApi::DIRECTX_11;
 
 	CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factoryA);
 
@@ -207,11 +207,9 @@ void DirectXRenderer::Init()
 
 		device->CreateRasterizerState(&desc, &rasterCullOff);
 	}
-
-	IRenderer::Init();
 }
 
-void DirectXRenderer::InitImGui(IBaseWindow* wnd)
+void DirectXInterface::InitImGui(IBaseWindow* wnd)
 {
 	bImGuiGlfw = wnd->IsGlfwWindow();
 	if (!wnd->IsGlfwWindow())
@@ -221,7 +219,7 @@ void DirectXRenderer::InitImGui(IBaseWindow* wnd)
 	ImGui_ImplDX11_Init(device, deviceContext);
 }
 
-void DirectXRenderer::ImGuiShutdown()
+void DirectXInterface::ImGuiShutdown()
 {
 	ImGui_ImplDX11_Shutdown();
 	if (!bImGuiGlfw)
@@ -231,14 +229,14 @@ void DirectXRenderer::ImGuiShutdown()
 	ImGui::DestroyContext();
 }
 
-DirectXRenderer::~DirectXRenderer()
+DirectXInterface::~DirectXInterface()
 {
 	factory->Release();
 	deviceContext->Release();
 	device->Release();
 }
 
-void DirectXRenderer::CompileShader(const FString& source, IShader::EType shaderType, void** outBuffer, SizeType* outBufferSize)
+void DirectXInterface::CompileShader(const FString& source, IShader::EType shaderType, void** outBuffer, SizeType* outBufferSize)
 {
 	class CShaderInclude : public ID3DInclude
 	{
@@ -324,7 +322,7 @@ void DirectXRenderer::CompileShader(const FString& source, IShader::EType shader
 	outCode->Release();
 }
 
-IShader* DirectXRenderer::LoadShader(CShaderSource* source, EShaderType type, FString file)
+IShader* DirectXInterface::LoadShader(CShaderSource* source, EShaderType type, FString file)
 {
 	if (!source)
 		return nullptr;
@@ -339,42 +337,42 @@ IShader* DirectXRenderer::LoadShader(CShaderSource* source, EShaderType type, FS
 	return nullptr;
 }
 
-IVertexBuffer* DirectXRenderer::CreateVertexBuffer(const TArray<FVertex>& vertices)
+IVertexBuffer* DirectXInterface::CreateVertexBuffer(const TArray<FVertex>& vertices)
 {
 	return new DirectXVertexBuffer(vertices);
 }
 
-IIndexBuffer* DirectXRenderer::CreateIndexBuffer(const TArray<uint>& indices)
+IIndexBuffer* DirectXInterface::CreateIndexBuffer(const TArray<uint>& indices)
 {
 	return new DirectXIndexBuffer(indices);
 }
 
-IShaderBuffer* DirectXRenderer::CreateShaderBuffer(void* data, SizeType size)
+IShaderBuffer* DirectXInterface::CreateShaderBuffer(void* data, SizeType size)
 {
 	return new DirectXShaderBuffer(data, size);
 }
 
-ISwapChain* DirectXRenderer::CreateSwapChain(IBaseWindow* window)
+ISwapChain* DirectXInterface::CreateSwapChain(IBaseWindow* window)
 {
 	return new DirectXSwapChain(window);
 }
 
-IDepthBuffer* DirectXRenderer::CreateDepthBuffer(FDepthBufferInfo depthInfo)
+IDepthBuffer* DirectXInterface::CreateDepthBuffer(FDepthBufferInfo depthInfo)
 {
 	return new DirectXDepthBuffer(depthInfo);
 }
 
-IFrameBuffer* DirectXRenderer::CreateFrameBuffer(int width, int height, ETextureFormat format, ETextureFilter filter)
+IFrameBuffer* DirectXInterface::CreateFrameBuffer(int width, int height, ETextureFormat format, ETextureFilter filter)
 {
 	return new DirectXFrameBuffer(width, height, format, filter);
 }
 
-IFrameBuffer* DirectXRenderer::CreateFrameBuffer(int width, int height, int numMipMaps, ETextureFormat format, ETextureFilter filter /*= THTX_FILTER_LINEAR*/)
+IFrameBuffer* DirectXInterface::CreateFrameBuffer(int width, int height, int numMipMaps, ETextureFormat format, ETextureFilter filter /*= THTX_FILTER_LINEAR*/)
 {
 	return new DirectXFrameBuffer(width, height, numMipMaps, format, filter);
 }
 
-ITexture2D* DirectXRenderer::CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter)
+ITexture2D* DirectXInterface::CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter)
 {
 	auto* t = new DirectXTexture2D(data, width, height, format, filter);
 	if (!t->tex || !t->view || !t->sampler)
@@ -385,7 +383,7 @@ ITexture2D* DirectXRenderer::CreateTexture2D(void* data, int width, int height, 
 	return t;
 }
 
-ITexture2D* DirectXRenderer::CreateTexture2D(void** data, int numMipMaps, int width, int height, ETextureFormat format, ETextureFilter filter)
+ITexture2D* DirectXInterface::CreateTexture2D(void** data, int numMipMaps, int width, int height, ETextureFormat format, ETextureFilter filter)
 {
 	auto* t = new DirectXTexture2D(data, numMipMaps, width, height, format, filter);
 	if (!t->tex || !t->view || !t->sampler)
@@ -396,7 +394,18 @@ ITexture2D* DirectXRenderer::CreateTexture2D(void** data, int numMipMaps, int wi
 	return t;
 }
 
-void DirectXRenderer::CopyResource(ITexture2D* source, ITexture2D* destination)
+ITextureCube* DirectXInterface::CreateTextureCube(void* data, int width, int height, ETextureFormat format, ETextureFilter filter)
+{
+	auto* t = new DirectXTextureCube(data, width, height, format, filter);
+	if (!t->tex || !t->view || !t->sampler)
+	{
+		delete t;
+		return nullptr;
+	}
+	return t;
+}
+
+void DirectXInterface::CopyResource(ITexture2D* source, ITexture2D* destination)
 {
 	DirectXTexture2D* s = (DirectXTexture2D*)source;
 	DirectXTexture2D* d = (DirectXTexture2D*)destination;
@@ -404,7 +413,19 @@ void DirectXRenderer::CopyResource(ITexture2D* source, ITexture2D* destination)
 	deviceContext->CopyResource(d->tex, s->tex);
 }
 
-void DirectXRenderer::CopyResource(IFrameBuffer* source, ITexture2D* destination)
+void DirectXInterface::CopyResource(ITextureCube* source, ITextureCube* destination)
+{
+	DirectXTextureCube* s = (DirectXTextureCube*)source;
+	DirectXTextureCube* d = (DirectXTextureCube*)destination;
+
+	deviceContext->CopyResource(d->tex, s->tex);
+}
+
+void DirectXInterface::CopyResource(ITextureCube* source, ITexture2D* destination, int targetFace)
+{
+}
+
+void DirectXInterface::CopyResource(IFrameBuffer* source, ITexture2D* destination)
 {
 	DirectXFrameBuffer* s = (DirectXFrameBuffer*)source;
 	DirectXTexture2D* d = (DirectXTexture2D*)destination;
@@ -412,7 +433,7 @@ void DirectXRenderer::CopyResource(IFrameBuffer* source, ITexture2D* destination
 	deviceContext->CopyResource(d->tex, s->buffer);
 }
 
-void DirectXRenderer::CopyResource(IFrameBuffer* source, IFrameBuffer* destination)
+void DirectXInterface::CopyResource(IFrameBuffer* source, IFrameBuffer* destination)
 {
 	DirectXFrameBuffer* s = (DirectXFrameBuffer*)source;
 	DirectXFrameBuffer* d = (DirectXFrameBuffer*)destination;
@@ -420,7 +441,7 @@ void DirectXRenderer::CopyResource(IFrameBuffer* source, IFrameBuffer* destinati
 	deviceContext->CopyResource(d->buffer, s->buffer);
 }
 
-void DirectXRenderer::CopyResource(IDepthBuffer* source, ITexture2D* destination)
+void DirectXInterface::CopyResource(IDepthBuffer* source, ITexture2D* destination)
 {
 	DirectXDepthBuffer* s = (DirectXDepthBuffer*)source;
 	DirectXTexture2D* d = (DirectXTexture2D*)destination;
@@ -428,7 +449,7 @@ void DirectXRenderer::CopyResource(IDepthBuffer* source, ITexture2D* destination
 	deviceContext->CopyResource(d->tex, s->depthBuffer);
 }
 
-void DirectXRenderer::CopyResource(IDepthBuffer* source, IFrameBuffer* destination)
+void DirectXInterface::CopyResource(IDepthBuffer* source, IFrameBuffer* destination)
 {
 	DirectXDepthBuffer* s = (DirectXDepthBuffer*)source;
 	DirectXFrameBuffer* d = (DirectXFrameBuffer*)destination;
@@ -445,7 +466,7 @@ void DirectXRenderer::CopyResource(IDepthBuffer* source, IFrameBuffer* destinati
 //	deviceContext->PSSetConstantBuffers(3, 1, &((DirectXShaderBuffer*)&*objectBuffer)->buffer);
 //}
 
-void DirectXRenderer::DrawMesh(FMesh* mesh)
+void DirectXInterface::DrawMesh(FMesh* mesh)
 {
 	uint vertexData[2] = { sizeof(FVertex), 0 };
 	if (mesh->vertexBuffer)
@@ -467,7 +488,7 @@ void DirectXRenderer::DrawMesh(FMesh* mesh)
 	gRenderStats.numDrawCalls++;
 }
 
-void DirectXRenderer::DrawMesh(FDrawMeshCmd* info)
+void DirectXInterface::DrawMesh(FDrawMeshCmd* info)
 {
 	FMesh* mesh = info->mesh;
 	info->material->UpdateGpuBuffer();
@@ -532,7 +553,7 @@ void DirectXRenderer::DrawMesh(FDrawMeshCmd* info)
 	gRenderStats.numDrawCalls++;
 }
 
-void DirectXRenderer::DrawMesh(FMeshBuilder::FRenderMesh* data)
+void DirectXInterface::DrawMesh(FMeshBuilder::FRenderMesh* data)
 {
 	FMesh* mesh = &data->mesh;
 	data->mat->UpdateGpuBuffer();
@@ -586,7 +607,7 @@ void DirectXRenderer::DrawMesh(FMeshBuilder::FRenderMesh* data)
 	gRenderStats.numDrawCalls++;
 }
 
-void DirectXRenderer::SetMaterial(CMaterial* mat)
+void DirectXInterface::SetMaterial(CMaterial* mat)
 {
 	mat->UpdateGpuBuffer();
 
@@ -609,24 +630,24 @@ void DirectXRenderer::SetMaterial(CMaterial* mat)
 	}
 }
 
-void DirectXRenderer::SetVsShader(IShader* shader)
+void DirectXInterface::SetVsShader(IShader* shader)
 {
 	deviceContext->VSSetShader(shader != nullptr ? (ID3D11VertexShader*)((DirectXShader*)shader)->shader : nullptr, nullptr, 0);
 }
 
-void DirectXRenderer::SetPsShader(IShader* shader)
+void DirectXInterface::SetPsShader(IShader* shader)
 {
 	deviceContext->PSSetShader(shader != nullptr ? (ID3D11PixelShader*)((DirectXShader*)shader)->shader : nullptr, nullptr, 0);
 }
 
-void DirectXRenderer::SetShaderBuffer(IShaderBuffer* buffer, int _register)
+void DirectXInterface::SetShaderBuffer(IShaderBuffer* buffer, int _register)
 {
 	deviceContext->VSSetConstantBuffers(_register, 1, &((DirectXShaderBuffer*)&*buffer)->buffer);
 	deviceContext->PSSetConstantBuffers(_register, 1, &((DirectXShaderBuffer*)&*buffer)->buffer);
 	deviceContext->GSSetConstantBuffers(_register, 1, &((DirectXShaderBuffer*)&*buffer)->buffer);
 }
 
-void DirectXRenderer::SetShaderResource(IBaseTexture* texture, int _register)
+void DirectXInterface::SetShaderResource(IBaseTexture* texture, int _register)
 {
 	if (texture->Type() == TextureType_2D)
 	{
@@ -648,7 +669,7 @@ void DirectXRenderer::SetShaderResource(IBaseTexture* texture, int _register)
 	}
 }
 
-void DirectXRenderer::SetShaderResource(IDepthBuffer* depthTex, int _register)
+void DirectXInterface::SetShaderResource(IDepthBuffer* depthTex, int _register)
 {
 	DirectXDepthBuffer* tex = (DirectXDepthBuffer*)depthTex;
 	deviceContext->PSSetShaderResources(_register, 1, &tex->view);
@@ -662,17 +683,17 @@ void DirectXRenderer::SetShaderResource(IDepthBuffer* depthTex, int _register)
 //	deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
 //}
 
-void DirectXRenderer::SetFrameBuffer(IFrameBuffer* framebuffer, IDepthBuffer* depth)
+void DirectXInterface::SetFrameBuffer(IFrameBuffer* framebuffer, IDepthBuffer* depth)
 {
 	deviceContext->OMSetRenderTargets(framebuffer != nullptr, framebuffer != nullptr ? &((DirectXFrameBuffer*)framebuffer)->Get() : 0, depth != nullptr ? ((DirectXDepthBuffer*)depth)->depthView : 0);
 }
 
-void DirectXRenderer::SetFrameBuffer(IFrameBuffer* framebuffer, int mip, IDepthBuffer* depth)
+void DirectXInterface::SetFrameBuffer(IFrameBuffer* framebuffer, int mip, IDepthBuffer* depth)
 {
 	deviceContext->OMSetRenderTargets(framebuffer != nullptr, framebuffer != nullptr ? &((DirectXFrameBuffer*)framebuffer)->Get(mip) : 0, depth != nullptr ? ((DirectXDepthBuffer*)depth)->depthView : 0);
 }
 
-void DirectXRenderer::SetFrameBuffers(IFrameBuffer** framebuffers, SizeType count, IDepthBuffer* depth)
+void DirectXInterface::SetFrameBuffers(IFrameBuffer** framebuffers, SizeType count, IDepthBuffer* depth)
 {
 	TArray<ID3D11RenderTargetView*> arr(count);
 	for (SizeType i = 0; i < count; i++)
@@ -681,7 +702,7 @@ void DirectXRenderer::SetFrameBuffers(IFrameBuffer** framebuffers, SizeType coun
 	deviceContext->OMSetRenderTargets((uint)count, arr.Data(), depth != nullptr ? ((DirectXDepthBuffer*)depth)->depthView : 0);
 }
 
-void DirectXRenderer::SetViewport(float x, float y, float width, float height)
+void DirectXInterface::SetViewport(float x, float y, float width, float height)
 {
 	D3D11_VIEWPORT viewport{};
 	viewport.TopLeftX = x;
@@ -694,7 +715,7 @@ void DirectXRenderer::SetViewport(float x, float y, float width, float height)
 	deviceContext->RSSetViewports(1, &viewport);
 }
 
-void DirectXRenderer::SetBlendMode(EBlendMode mode)
+void DirectXInterface::SetBlendMode(EBlendMode mode)
 {
 	if (mode == EBlendMode::BLEND_DISABLED)
 		deviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
@@ -704,7 +725,7 @@ void DirectXRenderer::SetBlendMode(EBlendMode mode)
 		deviceContext->OMSetBlendState(blendAdditiveColor, nullptr, 0xFFFFFFFF);
 }
 
-void DirectXRenderer::SetFaceCulling(bool bEnabled)
+void DirectXInterface::SetFaceCulling(bool bEnabled)
 {
 	if (bEnabled)
 		deviceContext->RSSetState(nullptr);
@@ -712,17 +733,17 @@ void DirectXRenderer::SetFaceCulling(bool bEnabled)
 		deviceContext->RSSetState(rasterCullOff);
 }
 
-void DirectXRenderer::BindGBuffer()
+void DirectXInterface::BindGBuffer()
 {
 
 }
 
-void DirectXRenderer::Present()
+void DirectXInterface::Present()
 {
 	//swapchain->Present(1, 0);
 }
 
-TPair<DXGI_FORMAT, int> DirectXRenderer::GetDXTextureFormat(ETextureFormat format)
+TPair<DXGI_FORMAT, int> DirectXInterface::GetDXTextureFormat(ETextureFormat format)
 {
 	static constexpr DXGI_FORMAT formats[] = {
 		DXGI_FORMAT_UNKNOWN,
@@ -757,7 +778,7 @@ TPair<DXGI_FORMAT, int> DirectXRenderer::GetDXTextureFormat(ETextureFormat forma
 	return { formats[format], formatSizes[format] };
 }
 
-void DirectXRenderer::ImGuiBeginFrame()
+void DirectXInterface::ImGuiBeginFrame()
 {
 	ImGui_ImplDX11_NewFrame();
 	if (!bImGuiGlfw)
@@ -767,7 +788,7 @@ void DirectXRenderer::ImGuiBeginFrame()
 	ImGui::NewFrame();
 }
 
-void DirectXRenderer::ImGuiRender()
+void DirectXInterface::ImGuiRender()
 {
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

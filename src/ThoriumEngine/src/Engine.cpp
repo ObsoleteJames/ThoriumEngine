@@ -8,7 +8,9 @@
 #include "Misc/FileHelper.h"
 #include "Console.h"
 #include "Rendering/Renderer.h"
+#include "Rendering/GraphicsInterface.h"
 #include "Rendering/RenderScene.h"
+#include "Rendering/DefaultRenderer.h"
 #include "Game/World.h"
 #include "Game/Events.h"
 #include "Game/GameInstance.h"
@@ -25,7 +27,7 @@
 #include <Util/KeyValue.h>
 
 #ifdef _WIN32
-#include "Platform/Windows/DirectX/DirectXRenderer.h"
+#include "Platform/Windows/DirectX/DirectXInterface.h"
 #include <windows.h>
 #include <shlobj.h>
 #endif
@@ -94,13 +96,15 @@ void CEngine::Init()
 	LoadUserConfig();
 
 	gameWindow = new CWindow(userConfig.windowWidth, userConfig.windowHeight, userConfig.windowPosX, userConfig.windowPosY, activeGame.title);
-#ifdef _WIN32
-	Renderer::CreateRenderer<DirectXRenderer>();
-#else
-	//Renderer::CreateRenderer<VulkanRenderer>();
-#endif
 
-	gameWindow->swapChain = gRenderer->CreateSwapChain(gameWindow);
+	gGHI = GetGraphicsInterface();
+	gGHI->Init();
+
+	gRenderer = CreateObject<CDefaultRenderer>();
+	gRenderer->MakeIndestructible();
+	gRenderer->Init();
+
+	gameWindow->swapChain = gGHI->CreateSwapChain(gameWindow);
 	gameWindow->SetWindowMode((CWindow::EWindowMode)userConfig.windowMode);
 
 	// Clear the screen in order to prevent it from being white as the scene loads
@@ -220,7 +224,7 @@ int CEngine::Run()
 
 			inputManager->BuildInput();
 
-			gRenderer->ImGuiBeginFrame();
+			gGHI->ImGuiBeginFrame();
 		}
 
 		if (!nextSceneName.IsEmpty())
@@ -252,8 +256,6 @@ int CEngine::Run()
 #if RENDER_MULTITHREADED
 			gRenderer->JoinRenderThread();
 #endif
-			gRenderer->BeginRender();
-
 			Events::OnRender.Invoke();
 
 			gWorld->renderScene->SetScreenPercentage(cvRenderScreenPercentage.AsFloat());
@@ -272,7 +274,7 @@ int CEngine::Run()
 			renderTime = updateTimer.GetMiliseconds();
 
 			gameWindow->swapChain->GetDepthBuffer()->Clear();
-			gRenderer->ImGuiRender();
+			gGHI->ImGuiRender();
 
 			gameWindow->Present(userConfig.bVSync, 0);
 		}
@@ -284,8 +286,8 @@ int CEngine::Run()
 			gIsRunning = false;
 	}
 
-	if (gRenderer)
-		gRenderer->ImGuiShutdown();
+	if (gGHI)
+		gGHI->ImGuiShutdown();
 
 	OnExit();
 	return 0;
@@ -573,11 +575,16 @@ void CEngine::OnExit()
 	gameInstance->Delete();
 	gameInstance = nullptr;
 
+	gRenderer->Delete();
+	delete gGHI;
+
 	if (!bIsTerminal)
 		CWindow::Shutdown();
 
 	CAssetManager::Shutdown();
 	CModuleManager::Cleanup();
+
+	CObjectManager::Shutdown();
 
 	SaveConsoleLog();
 	CConsole::Shutdown();
@@ -613,7 +620,7 @@ void CEngine::InitImGui()
 		io.Fonts->AddFontDefault();
 	}
 
-	gRenderer->InitImGui(gameWindow);
+	gGHI->InitImGui(gameWindow);
 }
 
 void CEngine::DoLoadWorld()

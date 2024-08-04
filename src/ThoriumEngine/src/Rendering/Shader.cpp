@@ -1,6 +1,7 @@
 
 #include "ShaderParser.h"
 #include "Renderer.h"
+#include "GraphicsInterface.h"
 #include "Console.h"
 
 #include <Util/FStream.h>
@@ -253,11 +254,11 @@ bool CShaderSource::Compile()
 		SizeType size;
 
 		if (sh.Key & ShaderType_Vertex)
-			gRenderer->CompileShader(shader.global + sh.Value, IShader::VFX_VS, &data, &size);
+			gGHI->CompileShader(shader.global + sh.Value, IShader::VFX_VS, &data, &size);
 		if (sh.Key & ShaderType_Fragment)
-			gRenderer->CompileShader(shader.global + sh.Value, IShader::VFX_PS, &data, &size);
+			gGHI->CompileShader(shader.global + sh.Value, IShader::VFX_PS, &data, &size);
 		if (sh.Key & ShaderType_Geometry)
-			gRenderer->CompileShader(shader.global + sh.Value, IShader::VFX_GEO, &data, &size);
+			gGHI->CompileShader(shader.global + sh.Value, IShader::VFX_GEO, &data, &size);
 
 		THORIUM_ASSERT(data, "Failed to compile shader!");
 
@@ -372,7 +373,7 @@ bool CShaderSource::Compile()
 
 void CShaderSource::LoadShaderObjects()
 {
-	if (!gRenderer || !bCompiled)
+	if (!gGHI || !bCompiled)
 		return;
 
 	//if (bHasVS && !vsShader)
@@ -384,7 +385,7 @@ void CShaderSource::LoadShaderObjects()
 	{
 		FString shaderName = GetShaderName((EShaderType)sh.Key);
 		FString p = file->Mod()->Path() + "/"  + file->Dir()->GetPath() + "/vfx/" + file->Name() + ".thcs." + shaderName;
-		sh.Value = gRenderer->LoadShader(this, (EShaderType)sh.Key, p);
+		sh.Value = gGHI->LoadShader(this, (EShaderType)sh.Key, p);
 	}
 }
 
