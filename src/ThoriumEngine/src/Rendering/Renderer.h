@@ -240,6 +240,7 @@ class ENGINE_API IRenderer : public CObject
 {
 	friend class IShader;
 	friend class CEngine;
+	friend class CEditorEngine;
 
 	GENERATED_BODY()
 

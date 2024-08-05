@@ -2,9 +2,9 @@
 
 #include "Renderer.h"
 
-IGraphicsInterface* GetGraphicsInterface(EGraphicsApi api = EGraphicsApi::DEFAULT);
+extern ENGINE_API IGraphicsInterface* GetGraphicsInterface(EGraphicsApi api = EGraphicsApi::DEFAULT);
 
-class IGraphicsInterface
+class ENGINE_API IGraphicsInterface
 {
 public:
 	virtual ~IGraphicsInterface() = default;

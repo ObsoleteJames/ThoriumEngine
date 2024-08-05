@@ -4,7 +4,7 @@
 #include "DefaultRenderer.generated.h"
 
 CLASS()
-class CDefaultRenderer : public IRenderer
+class ENGINE_API CDefaultRenderer : public IRenderer
 {
 	GENERATED_BODY()
 

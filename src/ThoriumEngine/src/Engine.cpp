@@ -251,11 +251,11 @@ int CEngine::Run()
 
 		if (!bIsTerminal)
 		{
-			updateTimer.Begin();
-
 #if RENDER_MULTITHREADED
 			gRenderer->JoinRenderThread();
 #endif
+			updateTimer.Begin();
+
 			Events::OnRender.Invoke();
 
 			gWorld->renderScene->SetScreenPercentage(cvRenderScreenPercentage.AsFloat());
@@ -565,7 +565,6 @@ void CEngine::OnExit()
 	SaveUserConfig();
 
 	gWorld->Delete();
-	delete gRenderer;
 	delete gameWindow;
 
 	gPhysicsApi->Shutdown();

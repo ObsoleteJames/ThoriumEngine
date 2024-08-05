@@ -54,13 +54,13 @@ FString GetEnginePath(const FString& version)
 	HKEY hKey;
 	LONG lRes = RegOpenKeyExA(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
 	if (lRes == ERROR_FILE_NOT_FOUND)
-		return "";
+		return FString();
 
 	CHAR strBuff[MAX_PATH];
 	DWORD buffSize = sizeof(strBuff);
 	lRes = RegQueryValueExA(hKey, "path", 0, NULL, (LPBYTE)strBuff, &buffSize);
 	if (lRes != ERROR_SUCCESS)
-		return "";
+		return FString();
 
 	return strBuff;
 #else

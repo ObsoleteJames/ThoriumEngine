@@ -29,7 +29,7 @@
 
 DirectXInterface* GetDirectXRenderer()
 {
-	return (DirectXInterface*)gRenderer;
+	return (DirectXInterface*)gGHI;
 }
 
 void DirectXInterface::Init()
