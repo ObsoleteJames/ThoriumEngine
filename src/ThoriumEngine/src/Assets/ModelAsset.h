@@ -84,6 +84,10 @@ public:
 
 	FTransform GetBoneModelTransform(int bone) const;
 
+	// loads all materials present in the model asset.
+	// by default only the materials that are needed to render are loaded.
+	void LoadAllMaterials();
+
 public:
 	int GetLodFromDistance(float distance);
 

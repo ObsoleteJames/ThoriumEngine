@@ -7,6 +7,7 @@ PRIVATE_MEMBER_OFFSET_ACCESSOR(FOutputBinding, fireCount) \
 DECLARE_STRUCT(FOutputBinding, Engine)
 
 #define Engine_Entity_h_60_GeneratedBody \
+PRIVATE_MEMBER_OFFSET_ACCESSOR(CEntity, type) \
 PRIVATE_MEMBER_OFFSET_ACCESSOR(CEntity, boundOutputs) \
 DECLARE_EXEC_FUNCTION(SetWorldPosition)\
 DECLARE_EXEC_FUNCTION(SetPosition)\

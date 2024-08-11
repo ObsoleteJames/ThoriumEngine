@@ -1038,6 +1038,18 @@ int CEngine::ExecuteProgram(const FString& cmd, bool bWait)
 	}
 	return r;
 }
+
+void CEngine::GetMonitorSize(int monitor, int* w, int* h)
+{
+	int count;
+	GLFWmonitor** monitors = glfwGetMonitors(&count);
+	if (monitor >= count)
+		return;
+	const GLFWvidmode* mode = glfwGetVideoMode(monitors[monitor]);
+	*w = mode->width;
+	*h = mode->height;
+}
+
 #endif // _WIN32
 
 CGameInstance* CEngine::SetGameInstance(FClass* type)

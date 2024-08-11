@@ -122,6 +122,18 @@ FBounds CEntity::GetBounds()
 	return r;
 }
 
+void CEntity::MakeStatic()
+{
+	type = ENTITY_STATIC;
+	GetWorld()->RemoveDynamicEntity(this);
+}
+
+void CEntity::MakeDynamic()
+{
+	type = ENTITY_DYNAMIC;
+	GetWorld()->RegisterDynamicEntity(this);
+}
+
 void CEntity::Init()
 {
 	rootComponent = AddComponent<CSceneComponent>("root");
@@ -252,6 +264,9 @@ void CEntity::OnDelete()
 	for (auto it = comps.rbegin(); it != comps.rend(); it++)
 		it->second->Delete();
 	components.clear();
+
+	if (type == ENTITY_DYNAMIC)
+		world->RemoveDynamicEntity(this);
 
 	FWorldRegisterer::UnregisterEntity(world, this);
 }

@@ -159,6 +159,10 @@ void CWorld::LoadScene(CScene* ptr)
 	{
 		d.Key->Load(d.Value);
 
+		// incase the entity is static we remove it from the dynamic entity list, as it is added by CreateEntity()
+		if (d.Key->GetType() == ENTITY_STATIC)
+			RemoveDynamicEntity(d.Key);
+
 		if (!gIsEditor && d.Key->bEditorOnly)
 			d.Key->Delete();
 	}
@@ -189,6 +193,8 @@ CEntity* CWorld::CreateEntity(FClass* classType, const FString& name)
 
 	if (bActive)
 		r->OnStart();
+
+	r->MakeDynamic();
 
 	auto findE = entities.find(r->EntityId());
 	while (findE != entities.end())
@@ -316,25 +322,25 @@ void CWorld::Update(double dt)
 
 	if (gIsEditor)
 	{
-		for (auto& ent : entities)
+		for (auto& ent : dynamicEntities)
 		{
 			if (bActive)
 			{
-				if (ent.second->type == ENTITY_DYNAMIC && !ent.second->bEditorEntity)
-					ent.second->Update(dt);
+				if (ent->type == ENTITY_DYNAMIC)
+					ent->Update(dt);
 			}
-			else if (ent.second->bEditorEntity)
+			else if (ent->bEditorEntity)
 			{
-				ent.second->Update(dt);
+				ent->Update(dt);
 			}
 		}
 	}
 	else if (bActive)
 	{
-		for (auto& ent : entities)
+		for (auto& ent : dynamicEntities)
 		{
-			if (ent.second->type == ENTITY_DYNAMIC)
-				ent.second->Update(dt);
+			if (ent->type == ENTITY_DYNAMIC)
+				ent->Update(dt);
 		}
 	}
 
@@ -419,6 +425,20 @@ CEntityIOManager* CWorld::GetEntityIOManager() const
 	if (parent) 
 		return parent->GetEntityIOManager(); 
 	return entityIOManager;
+}
+
+void CWorld::RegisterDynamicEntity(CEntity* ent)
+{
+	auto it = dynamicEntities.Find(ent);
+	if (it == dynamicEntities.end())
+		dynamicEntities.Add(ent);
+}
+
+void CWorld::RemoveDynamicEntity(CEntity* ent)
+{
+	auto it = dynamicEntities.Find(ent);
+	if (it != dynamicEntities.end())
+		dynamicEntities.Erase(it);
 }
 
 void FWorldRegisterer::UnregisterEntity(CWorld* world, CEntity* ent)

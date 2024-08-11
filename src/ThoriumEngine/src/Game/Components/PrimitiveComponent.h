@@ -19,8 +19,8 @@ public:
 	void SetVelocity(const FVector& v);
 	FVector GetVelocity();
 
-	inline bool IsKinematic() const { return GetEntity() ? (GetEntity()->type == ENTITY_DYNAMIC && bStaticBody) : bStaticBody; }
-	inline bool IsStatic() const { return GetEntity() ? GetEntity()->type == ENTITY_STATIC : bStaticBody; }
+	inline bool IsKinematic() const { return GetEntity() ? (GetEntity()->GetType() == ENTITY_DYNAMIC && bStaticBody) : bStaticBody; }
+	inline bool IsStatic() const { return GetEntity() ? GetEntity()->GetType() == ENTITY_STATIC : bStaticBody; }
 
 	void EnableCollision(bool bEnabled);
 

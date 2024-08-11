@@ -357,7 +357,7 @@ void CModelComponent::SetupPhysics()
 			FPhysicsBodySettings bodySettings{};
 			bodySettings.component = this;
 			bodySettings.entity = GetEntity();
-			bodySettings.motionType = GetEntity()->type == ENTITY_STATIC ? PHBM_STATIC : (bStaticBody ? PHBM_KINEMATIC : PHBM_DYNAMIC);
+			bodySettings.motionType = GetEntity()->GetType() == ENTITY_STATIC ? PHBM_STATIC : (bStaticBody ? PHBM_KINEMATIC : PHBM_DYNAMIC);
 			if (bIsTrigger)
 				bodySettings.motionType = PHBM_STATIC;
 

@@ -321,6 +321,10 @@ int GenerateCMakeProject(const FCompileConfig& config)
 		STARTUPINFO si{};
 		si.cb = sizeof(si);
 		FString htCmd = enginePath + "/bin/win64/HeaderTool.exe \"" + targetPath + "\" -pt " + (bIsEngine ? "0" : (bIsGame ? "1" : "3"));
+		
+		if (bIsExe)
+			htCmd += " -target \"" + targetBuild + "\"";
+
 		if (!CreateProcessA(NULL, (char*)htCmd.c_str(), nullptr, nullptr, false, 0, nullptr, nullptr, &si, &ht))
 		{
 			std::cerr << "error: failed to run HeaderTool!\n";
@@ -455,7 +459,10 @@ int GenerateCMakeProject(const FCompileConfig& config)
 		for (auto depend : *dep)
 		{
 			depend = strExp.ParseString(depend);
-			FString libTarget;
+			FString libTarget = depend;
+			if (auto i = libTarget.FindLastOf("/\\"); i != -1)
+				libTarget.Erase(libTarget.begin(), libTarget.begin() + i + 1);
+
 			if (depend.Find("package:") == 0)
 			{
 				FString package = depend;
@@ -505,6 +512,15 @@ int GenerateCMakeProject(const FCompileConfig& config)
 			}
 
 			stream << "add_subdirectory(\"" << depend.c_str() << "\" \"build/" << libTarget.c_str() << "\")\n";
+
+			try 
+			{
+				std::filesystem::create_directories((targetPath + "/Intermediate/build/build/" + libTarget).c_str());
+			}
+			catch (std::exception& e)
+			{
+				std::cout << e.what() << std::endl;
+			}
 		}
 		stream << std::endl;
 	}
@@ -688,7 +704,9 @@ int GenerateCMakeProject(const FCompileConfig& config)
 	if (bRunHeaderTool)
 	{
 #if _WIN32
-		FString headerToolP = "\"" + enginePath + "/bin/win64/HeaderTool.exe\" \"" + targetPath + "\" -pt " + (bIsEngine ? "0" : (bIsGame ? "1" : "3"));	
+		FString headerToolP = "\"" + enginePath + "/bin/win64/HeaderTool.exe\" \"" + targetPath + "\" -pt " + (bIsEngine ? "0" : (bIsGame ? "1" : "3"));
+		if (bIsExe)
+			headerToolP += " -target \"" + targetBuild + "\"";
 		stream << "add_custom_command(TARGET " << cmakeLib.c_str() << " PRE_BUILD COMMAND " << headerToolP.c_str() << ")\n";
 // #else
 // 		FString headerToolP = "\"" + enginePath + "/bin/linux/HeaderTool\" \"" + targetPath + "\" -pt " + (bIsEngine ? "0" : (bIsGame ? "1" : "3"));	

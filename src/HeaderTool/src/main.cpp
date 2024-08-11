@@ -258,13 +258,12 @@ int main(int argc, char** argv)
 #endif
 
 		FKeyValue kv(targetPath + "/addon.cfg");
-		if (!kv.IsOpen())
+		if (kv.IsOpen())
 		{
-			std::cerr << "error: failed to open addon config!";
-			return 1;
+			projectName = *kv.GetValue("identity");
 		}
-
-		projectName = *kv.GetValue("identity");
+		else
+			std::cout << "warning: failed to open addon config!\n";
 
 		CParser::LoadModuleData(enginePath + "/build/include/engine");
 	}

@@ -524,6 +524,12 @@ FTransform CModelAsset::GetBoneModelTransform(int bone) const
 	return r;
 }
 
+void CModelAsset::LoadAllMaterials()
+{
+	for (auto& mat : materials)
+		mat.obj = CAssetManager::GetAsset<CMaterial>(mat.path);
+}
+
 int CModelAsset::GetLodFromDistance(float distance)
 {
 	for (int8 i = numLODs; i > 0; i--)
