@@ -216,7 +216,9 @@ void IRenderer::renderAll()
 	TArray<CRenderScene*>& renderQueue = gRenderer->renderScenes;
 
 	// reset render stats
+	SizeType fc = gRenderStats.frameCount + 1;
 	gRenderStats = FRenderStatistics();
+	gRenderStats.frameCount = fc;
 
 	// Draw each scene.
 	for (auto scene : renderQueue)

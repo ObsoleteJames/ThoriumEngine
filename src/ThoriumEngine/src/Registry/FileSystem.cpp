@@ -269,7 +269,7 @@ bool FMod::MoveFile(FFile* file, const FString& destination)
 	if (!file)
 		return false;
 
-	FDirectory* newDir = FindDirectory(destination);
+	FDirectory* newDir = destination.IsEmpty() ? &root : FindDirectory(destination);
 	if (!newDir)
 	{
 		CONSOLE_LogWarning("CFileSystem", "Failed to move file, destination does not exist!");

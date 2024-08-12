@@ -127,6 +127,8 @@ void CAssetManager::OnAssetFileMoved(FFile* file)
 void CAssetManager::OnAssetFileDeleted(FFile* file)
 {
 	auto* data = GetAssetData(file->Path());
+	if (!data)
+		return;
 
 	if (auto it = allocatedAssets.find(data->id); it != allocatedAssets.end())
 	{
