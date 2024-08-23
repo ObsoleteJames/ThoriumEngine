@@ -420,7 +420,7 @@ FMod* CFileSystem::MountMod(const FString& modPath, const FString& mn, const FSt
 
 	FMod* mod = *Mods.last();
 	mod->name = modName;
-	mod->path = modPath;
+	mod->path = Absolute(modPath);
 	MountDir(mod, modPath, &mod->root);
 
 #ifdef IS_DEV
@@ -562,6 +562,12 @@ FString CFileSystem::GetCurrentPath()
 	GetCurrentDirectoryA(128, buff);
 	return buff;
 }
+
+FString CFileSystem::Absolute(const FString& p)
+{
+	return std::filesystem::absolute(p.c_str()).generic_string().c_str();
+}
+
 #endif
 
 FFile::~FFile()

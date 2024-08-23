@@ -152,7 +152,7 @@ FLibrary* CModuleManager::LoadFLibrary(const FString& name, const FString& path)
 	for (auto* l : libraries)
 	{
 		if (l->Path() == path)
-			return nullptr;
+			return l;
 	}
 
 	FLibrary* lib = new FLibrary();
