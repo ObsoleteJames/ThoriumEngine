@@ -4,7 +4,7 @@
 #include "Math/Vectors.h"
 #include "Math/Color.h"
 #include "Math/Transform.h"
-#include "Resources/Mesh.h"
+#include "Assets/Mesh.h"
 
 class CMaterial;
 class CRenderScene;
@@ -43,9 +43,9 @@ public:
 	// Set RenderScene for the next draw call, by default the gWorld's RenderScene is used.
 	void SetScene(CRenderScene* scene);
 
-private:
 	void Render();
 
+private:
 	CRenderScene* GetScene();
 
 	void _Line(const FVector& begin, const FVector& end, CMaterial* mat, CRenderScene* scene, bool bOverlay);

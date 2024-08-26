@@ -1,6 +1,7 @@
 
 #include "ShaderParser.h"
 #include "Renderer.h"
+#include "GraphicsInterface.h"
 #include "Console.h"
 
 #include <Util/FStream.h>
@@ -62,7 +63,7 @@ CShaderSource::~CShaderSource()
 	shaders.Clear();
 }
 
-void CShaderSource::Init()
+void CShaderSource::OnInit(IBaseFStream* stream)
 {
 	// Add the static properties and textures.
 	//properties.Add({ "vColorTint", "Color Tint", "", "Color", FShaderProperty::VEC4, FShaderProperty::COLOR, 0});
@@ -74,13 +75,6 @@ void CShaderSource::Init()
 
 	// Register the shader
 	_shaders.Add(this);
-
-	TUniquePtr<IBaseFStream> stream = file->GetStream("rb");
-	if (!stream->IsOpen())
-	{
-		CONSOLE_LogError("CShaderSource", FString("Failed to create filestream for Shader '") + ToFString(file->Path()) + "'");
-		return;
-	}
 
 	char magicStr[THCS_MAGIC_SIZE];
 	stream->Read(magicStr, THCS_MAGIC_SIZE);
@@ -100,8 +94,6 @@ void CShaderSource::Init()
 
 	bCompiled = true;
 
-	*stream >> &version;
-	
 	if (version != THCS_VERSION && version != THCS_VERSION_06 && version != THCS_VERSION_07)
 	{
 		if (version == 5)
@@ -183,19 +175,9 @@ void CShaderSource::Init()
 	bInitialized = true;
 }
 
-void CShaderSource::Save()
+void CShaderSource::OnSave(IBaseFStream* stream)
 {
-	TUniquePtr<IBaseFStream> stream = file->GetStream("wb");
-	if (!stream->IsOpen())
-	{
-		CONSOLE_LogError("CShaderSource", FString("Failed to create file stream for '") + ToFString(file->Path()) + "'");
-		return;
-	}
-
 	stream->Write((void*)thcsMagicStr, THCS_MAGIC_SIZE);
-
-	uint16 version = THCS_VERSION;
-	*stream << &version;
 
 	*stream << shaderName;
 	*stream << description;
@@ -272,11 +254,11 @@ bool CShaderSource::Compile()
 		SizeType size;
 
 		if (sh.Key & ShaderType_Vertex)
-			gRenderer->CompileShader(shader.global + sh.Value, IShader::VFX_VS, &data, &size);
+			gGHI->CompileShader(shader.global + sh.Value, IShader::VFX_VS, &data, &size);
 		if (sh.Key & ShaderType_Fragment)
-			gRenderer->CompileShader(shader.global + sh.Value, IShader::VFX_PS, &data, &size);
+			gGHI->CompileShader(shader.global + sh.Value, IShader::VFX_PS, &data, &size);
 		if (sh.Key & ShaderType_Geometry)
-			gRenderer->CompileShader(shader.global + sh.Value, IShader::VFX_GEO, &data, &size);
+			gGHI->CompileShader(shader.global + sh.Value, IShader::VFX_GEO, &data, &size);
 
 		THORIUM_ASSERT(data, "Failed to compile shader!");
 
@@ -391,7 +373,7 @@ bool CShaderSource::Compile()
 
 void CShaderSource::LoadShaderObjects()
 {
-	if (!gRenderer || !bCompiled)
+	if (!gGHI || !bCompiled)
 		return;
 
 	//if (bHasVS && !vsShader)
@@ -403,7 +385,7 @@ void CShaderSource::LoadShaderObjects()
 	{
 		FString shaderName = GetShaderName((EShaderType)sh.Key);
 		FString p = file->Mod()->Path() + "/"  + file->Dir()->GetPath() + "/vfx/" + file->Name() + ".thcs." + shaderName;
-		sh.Value = gRenderer->LoadShader(this, (EShaderType)sh.Key, p);
+		sh.Value = gGHI->LoadShader(this, (EShaderType)sh.Key, p);
 	}
 }
 
@@ -494,4 +476,9 @@ void CShaderSource::LoadVersion05(IBaseFStream* stream)
 	}
 
 	bInitialized = true;
+}
+
+uint8 CShaderSource::GetFileVersion() const
+{
+	return THCS_VERSION;
 }

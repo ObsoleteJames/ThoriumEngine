@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Rendering/Framebuffer.h"
-#include "DirectXRenderer.h"
+#include "DirectXInterface.h"
 
 class CWindow;
 
@@ -10,25 +10,28 @@ class ENGINE_API DirectXFrameBuffer : public IFrameBuffer
 public:
 	DirectXFrameBuffer(ID3D11Texture2D* fromTexture, int w = 0, int h = 0);
 	DirectXFrameBuffer(int width, int height, ETextureFormat format, ETextureFilter filter);
+	DirectXFrameBuffer(int width, int height, int mipmapCount, ETextureFormat format, ETextureFilter filter);
 	virtual ~DirectXFrameBuffer();
 
 	virtual void Resize(int width, int height);
 	virtual void Clear(float r, float g, float b, float a);
 
-	inline ID3D11RenderTargetView*& Get() { return targetView; }
+	inline ID3D11RenderTargetView*& Get(int index = 0) { return targetViews[index]; }
 
 private:
-	void Generate(int w, int h, ETextureFormat format);
+	void Generate(int w, int h, int mipmap, ETextureFormat format);
 
 public:
 	ETextureFormat format;
 	ETextureFilter filter;
 
-	ID3D11RenderTargetView* targetView = nullptr;
+	ID3D11RenderTargetView* targetViews[6] = {};
 	ID3D11Texture2D* buffer = nullptr;
 
 	ID3D11ShaderResourceView* view = nullptr;
 	ID3D11SamplerState* sampler = nullptr;
+
+	int numMipMaps = 1;
 
 };
 

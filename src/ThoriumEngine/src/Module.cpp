@@ -6,9 +6,6 @@
 
 #ifdef PLATFORM_WINDOWS
 #include <windows.h>
-#else
-#include <unistd.h>
-#include <dlfcn.h>
 #endif
 
 TArray<CModule*> CModuleManager::modules;
@@ -81,6 +78,8 @@ void CModuleManager::GetClassesOfType(FClass* type, TArray<FClass*>& out)
 	}
 }
 
+#ifdef PLATFORM_WINDOWS
+
 int CModuleManager::LoadModule(const FString& path, CModule** outPtr)
 {
 	//FString path = name + "\\bin\\" + name + ".dll";
@@ -90,7 +89,6 @@ int CModuleManager::LoadModule(const FString& path, CModule** outPtr)
 	CModule* m = nullptr;
 	typedef CModule* (*GetModule_Func)();
 
-#ifdef PLATFORM_WINDOWS
 	HMODULE wModule = LoadLibrary(path.c_str());
 	if (!wModule)
 		return 2;
@@ -106,23 +104,6 @@ int CModuleManager::LoadModule(const FString& path, CModule** outPtr)
 		return 3;
 
 	m->handle = wModule;
-#else
-	void* wModule = dlopen(path.c_str(), RTLD_NOW);
-	if (!wModule)
-		return 2;
-
-	GetModule_Func f = (GetModule_Func)dlsym(wModule, "__GetModuleInstance");
-	if (!f)
-	{
-		THORIUM_ASSERT(0, "Failed to find func '__GetModuleInstance' in library '" + path.c_str() + "'!");
-	}
-
-	m = f();
-	if (!m)
-		return 3;
-
-	m->handle = wModule;
-#endif
 
 	if (outPtr)
 		*outPtr = m;
@@ -149,11 +130,7 @@ bool CModuleManager::UnloadModule(const FString& name)
 
 	modules.Erase(it);
 
-#ifdef PLATFORM_WINDOWS
 	FreeLibrary((HMODULE)it->handle);
-#else
-	dlclose(it->handle);
-#endif
 
 	return true;
 }
@@ -163,11 +140,7 @@ bool CModuleManager::UnloadModule(CModule* module)
 	if (module->name == "Engine")
 		return false;
 
-#ifdef PLATFORM_WINDOWS
 	FreeLibrary((HMODULE)module->handle);
-#else
-	dlclose(module->handle);
-#endif
 
 	modules.Erase(modules.Find(module));
 	return true;
@@ -179,14 +152,13 @@ FLibrary* CModuleManager::LoadFLibrary(const FString& name, const FString& path)
 	for (auto* l : libraries)
 	{
 		if (l->Path() == path)
-			return nullptr;
+			return l;
 	}
 
 	FLibrary* lib = new FLibrary();
 	lib->name = name;
 	lib->path = path;
 
-#ifdef PLATFORM_WINDOWS
 	HMODULE wModule = LoadLibrary(path.c_str());
 	if (!wModule)
 	{
@@ -195,20 +167,44 @@ FLibrary* CModuleManager::LoadFLibrary(const FString& name, const FString& path)
 	}
 
 	lib->handle = (void*)wModule;
-#else
-	void* wModule = dlopen(path.c_str(), RTLD_NOW);
-	if (!wModule)
-	{
-		delete lib;
-		return nullptr;
-	}
-
-	lib->handle = wModule;
-#endif
 
 	libraries.Add(lib);
 	return lib;
 }
+
+void CModuleManager::Cleanup()
+{
+	for (auto m : modules)
+	{
+		if (m->handle)
+		{
+			FreeLibrary((HMODULE)m->handle);
+		}
+	}
+
+	for (auto* l : libraries)
+	{
+		if (l->handle)
+		{
+			FreeLibrary((HMODULE)l->handle);
+			delete l;
+		}
+	}
+}
+
+FLibrary::FuncAdress FLibrary::GetFunctionPtr(const FString& fun)
+{
+	SizeType errCode = 0;
+	auto f = GetProcAddress((HMODULE)handle, fun.c_str());
+	errCode = GetLastError();
+	
+	if (!f)
+		CONSOLE_LogError("FLibrary", "Unable to obtain FuntionPtr '" + fun + "' from library '" + name + "', error code: " + FString::ToString(errCode));
+
+	return f;
+}
+
+#endif
 
 bool CModuleManager::UnloadLibrary(FLibrary* lib)
 {
@@ -231,34 +227,6 @@ bool CModuleManager::UnloadLibrary(const FString& name)
 	return false;
 }
 
-void CModuleManager::Cleanup()
-{
-	for (auto m : modules)
-	{
-		if (m->handle)
-		{
-#ifdef PLATFORM_WINDOWS
-			FreeLibrary((HMODULE)m->handle);
-#else
-			dlclose(m->handle);
-#endif
-		}
-	}
-
-	for (auto* l : libraries)
-	{
-		if (l->handle)
-		{
-#ifdef PLATFORM_WINDOWS
-			FreeLibrary((HMODULE)l->handle);
-#else
-			dlclose(l->handle);
-#endif
-			delete l;
-		}
-	}
-}
-
 CModule* CModuleManager::FindModule(const FString& name)
 {
 	for (auto m : modules)
@@ -266,19 +234,4 @@ CModule* CModuleManager::FindModule(const FString& name)
 			return m;
 
 	return nullptr;
-}
-
-FLibrary::FuncAdress FLibrary::GetFunctionPtr(const FString& fun)
-{
-	SizeType errCode = 0;
-#ifdef PLATFORM_WINDOWS
-	auto f = GetProcAddress((HMODULE)handle, fun.c_str());
-	errCode = GetLastError();
-#else
-	void* f = dlsym(handle, fun.c_str());
-#endif
-	if (!f)
-		CONSOLE_LogError("FLibrary", "Unable to obtain FuntionPtr '" + fun + "' from library '" + name + "', error code: " + FString::ToString(errCode));
-
-	return f;
 }

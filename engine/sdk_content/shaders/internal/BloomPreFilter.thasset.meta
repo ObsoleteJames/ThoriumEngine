@@ -1,0 +1,48 @@
+
+Shader
+{
+	Name = "BloomPreFilter";
+	Type = SHADER_INTERNAL;
+}
+
+Global
+{
+	#include "common/common.hlsl"
+
+	struct VS_Input
+	{
+		#include "common/vertex_input.hlsl"
+	};
+
+	struct PS_Input
+	{
+		#include "common/pixel_input.hlsl"
+	};
+}
+
+PS
+{
+	cbuffer BloomInfo : register(b0)
+	{
+		float vBloomIntensity;
+		float vBloomThreshold;
+		float vBloomKnee;
+	}
+
+	Texture2D vColor : TEXTURE : register(t0);
+	SamplerState vColorSampler : SAMPLER : register(s0);
+
+	float4 Main(PS_Input input) : SV_TARGET
+	{
+		float3 col = SampleTexture2D(vColor, input.vTextureCoords).xyz;
+		float brightness = max(col.x, max(col.y, col.z));
+
+		float soft = brightness - vBloomThreshold + vBloomKnee;
+		soft = clamp(soft, 0, 2 * vBloomKnee);
+		soft = soft * soft / (4 * vBloomKnee * 0.00001f);
+		float contribution = max(soft, brightness - vBloomThreshold);
+		contribution /= max(contribution, 0.00001f);
+
+		return float4(col * contribution, 1.f);
+	}
+}

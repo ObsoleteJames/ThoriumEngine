@@ -1,7 +1,7 @@
 
 #include "BillboardComponent.h"
-#include "Resources/Material.h"
-#include "Resources/TextureAsset.h"
+#include "Assets/Material.h"
+#include "Assets/TextureAsset.h"
 #include "Game/World.h"
 
 void CBillboardComponent::Init()
@@ -27,7 +27,7 @@ void CBillboardComponent::Init()
 			sprite = comp->sprite;
 
 			mat->SetTexture("vBaseColor", sprite);
-			mat->Load(0);
+			mat->LoadTextures(0);
 
 			transform.position = comp->GetWorldPosition();
 			transform.scale = comp->GetWorldScale();
@@ -54,7 +54,7 @@ void CBillboardComponent::Init()
 
 	bounds.extents = FVector::one * 0.5f;
 
-	sprite = CResourceManager::GetResource<CTexture>("misc/Obsolete.thtex");
+	sprite = CAssetManager::GetAsset<CTexture>("misc/Obsolete.thasset");
 
 	if (GetWorld())
 	{
@@ -81,4 +81,10 @@ FBounds CBillboardComponent::Bounds() const
 	r.extents = r.extents * scale;
 	r.position = r.position * scale + GetWorldPosition();
 	return r;
+}
+
+void CBillboardComponent::SetSprite(CTexture* tex)
+{
+	if (tex)
+		sprite = tex;
 }

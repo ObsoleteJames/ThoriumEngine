@@ -11,9 +11,11 @@ extern "C" __declspec(dllexport) int Launch(const char* cmdLine)
 extern "C" __attribute__((visibility("default"))) int Launch(const char* cmdLine)
 #endif
 {
-	FCommandLine::Parse(cmdLine);
+	FCommandLine::Parse(cmdLine, false);
 
 	bool bDedicated = false;
+	if (FCommandLine::HasParam("-dedicated"))
+		bDedicated = true;
 
 	gEngine = new CEngine();
 
@@ -23,8 +25,10 @@ extern "C" __attribute__((visibility("default"))) int Launch(const char* cmdLine
 
 		if (bDedicated)
 		{
-			gEngine->InitMinimal();
+			gEngine->InitTerminal();
 			// TODO: Do server stuff
+
+			//gEngine->HostServer("42708")
 
 		}
 		else

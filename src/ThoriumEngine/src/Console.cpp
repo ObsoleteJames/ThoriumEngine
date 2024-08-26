@@ -1,11 +1,15 @@
 
 #define UTIL_STD_STRING
 #include <string>
+#include "Engine.h"
 #include "Console.h"
 #include "Math/Math.h"
 #include <Util/Assert.h>
 #include <Util/KeyValue.h>
 #include <mutex>
+#include <thread>
+
+#include <iostream>
 
 #define CONSOLE_MAX 512
 
@@ -20,9 +24,30 @@ static SizeType beginIndex;
 static SizeType endIndex;
 static SizeType numLogs;
 
+static bool bPrintToIO = false;
+
+std::mutex consoleInputMutex;
+FString polledInput; // input given from the terminal window.
+
 TEvent<const FConsoleMsg&> CConsole::onMsgLogged;
 TArray<CConVar*> CConsole::consoleVars;
 TArray<CConCmd*> CConsole::consoleCmds;
+
+static void ReadConsoleInput()
+{
+	while (bPrintToIO)
+	{
+		std::string input;
+		std::getline(std::cin, input);
+
+		if (input.empty())
+			continue;
+
+		consoleInputMutex.lock();
+		polledInput = input;
+		consoleInputMutex.unlock();
+	}
+}
 
 void CConsole::Init()
 {
@@ -37,11 +62,26 @@ void CConsole::Init()
 	endIndex = 0;
 }
 
+void CConsole::Update()
+{
+	if (bPrintToIO && consoleInputMutex.try_lock())
+	{
+		if (!polledInput.IsEmpty())
+			Exec(polledInput);
+
+		polledInput.Clear();
+		consoleInputMutex.unlock();
+	}
+}
+
 void CConsole::Shutdown()
 {
 #if !CONSOLE_USE_ARRAY
 	delete[] logArray;
 #endif
+
+	bPrintToIO = false;
+	//consoleInputThread.join();
 
 	// Save Config.
 	for (auto& var : consoleVars)
@@ -71,6 +111,12 @@ void CConsole::LoadConfig()
 		if (!v.IsEmpty() && v.IsNumber())
 			var->SetValue(std::stof(v.c_str()));
 	}
+}
+
+void CConsole::EnableStdio()
+{
+	bPrintToIO = true;
+	std::thread(ReadConsoleInput).detach();
 }
 
 void CConsole::Exec(const FString& input)
@@ -151,8 +197,17 @@ CConVar* CConsole::GetConVar(const FString& name)
 
 void CConsole::_log(const FConsoleMsg& _msg)
 {
+	FConsoleMsg& prev = *logArray.last();
+	if (prev.type == _msg.type && prev.module == _msg.module && prev.msg == _msg.msg)
+	{
+		prev.repeats++;
+		prev.time = (SizeType)time(nullptr);
+		return;
+	}
+
 	FConsoleMsg msg = _msg;
 	msg.time = (SizeType)time(nullptr);
+	msg.repeats = 1;
 
 	consoleMutex.lock();
 #if !CONSOLE_USE_ARRAY
@@ -176,8 +231,44 @@ void CConsole::_log(const FConsoleMsg& _msg)
 	logArray.Add(msg);
 #endif
 
+	if (bPrintToIO)
+		_logCout(msg);
+
 	onMsgLogged.Fire(msg);
 	consoleMutex.unlock();
+}
+
+static FString TimeToHmsString(time_t* time)
+{
+	struct tm time_info;
+	char timeString[9];  // space for "HH:MM:SS\0"
+
+#if _WIN32
+	localtime_s(&time_info, time);
+#else
+	time_info = *localtime(time);
+#endif
+
+	strftime(timeString, sizeof(timeString), "%H:%M:%S", &time_info);
+	timeString[8] = '\0';
+	return FString(timeString);
+}
+
+void CConsole::_logCout(const FConsoleMsg &msg)
+{
+	const char* txtCol;
+	if (msg.type == CONSOLE_PLAIN)
+		txtCol = "\033[0;40m\033[0;90m";
+	else if (msg.type == CONSOLE_INFO)
+		txtCol = "\033[0;40m\033[0;37m";
+	else if (msg.type == CONSOLE_WARNING)
+		txtCol = "\033[1;40m\033[0;33m";
+	else if (msg.type == CONSOLE_ERROR)
+		txtCol = "\033[1;41m\033[0;37m";
+
+	FString timeTxt = TimeToHmsString((time_t*)&msg.time);
+
+	std::cout << "\033[0;40m\033[0;32m[" << timeTxt.c_str() << "] " << msg.module.c_str() << " " << txtCol << msg.msg.c_str() << "\n";
 }
 
 CConCmd::CConCmd(const FString& n, CmdFuncPtr f) : name(n)

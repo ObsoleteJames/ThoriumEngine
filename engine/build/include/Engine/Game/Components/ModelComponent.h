@@ -1,8 +1,8 @@
 #pragma once
 
 #include "PrimitiveComponent.h"
-#include "Resources/ModelAsset.h"
-#include "Resources/Material.h"
+#include "Assets/ModelAsset.h"
+#include "Assets/Material.h"
 #include "ModelComponent.generated.h"
 
 class CAnimGraphInstance;

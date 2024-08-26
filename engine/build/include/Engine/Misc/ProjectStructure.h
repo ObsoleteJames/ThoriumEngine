@@ -61,7 +61,7 @@ struct ENGINE_API FGame
 	FMod* mod = nullptr;
 	CModule* module = nullptr;
 
-	FString startupScene;
+	FString startupScene = "empty";
 	TClassPtr<CGameInstance> gameInstanceClass;
 	TClassPtr<CInputManager> inputManagerClass;
 };

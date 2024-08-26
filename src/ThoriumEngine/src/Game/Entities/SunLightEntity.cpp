@@ -1,6 +1,6 @@
 
 #include "SunLightEntity.h"
-#include "Resources/TextureAsset.h"
+#include "Assets/TextureAsset.h"
 #include "Game/Components/SunLightComponent.h"
 #include "Game/Components/BillboardComponent.h"
 
@@ -13,7 +13,7 @@ void CSunLightEntity::Init()
 
 	TObjectPtr<CBillboardComponent> billboard = AddComponent<CBillboardComponent>("Billboard");
 	billboard->AttachTo(light);
-	billboard->sprite = CResourceManager::GetResource<CTexture>("editor/icons/SunLight.thtex");
+	billboard->SetSprite(CAssetManager::GetAsset<CTexture>("editor/icons/SunLight.thasset"));
 	billboard->SetScale(FVector(0.36f));
 	billboard->bEditorOnly = true;
 }

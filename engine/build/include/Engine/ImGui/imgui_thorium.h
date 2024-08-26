@@ -21,4 +21,6 @@ namespace ImGui
 	IMGUI_API bool ButtonClear(const char* text, const ImVec2 size = ImVec2(0,0), ImGuiButtonFlags flags = 0);
 
 	IMGUI_API void Text(const FString& txt);
+
+	IMGUI_API bool TypeSelector(const char* label, int* v, int numOptions, const char** names, ImVec2 size = ImVec2(0, 24), float rounding = 5.f);
 }

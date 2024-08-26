@@ -1,7 +1,7 @@
 # Thorium Engine
 3D game engine based on the Source engine and Unreal Engine
 
-![preview Image](Screenshot_2024-02-16_002624.png)
+![preview Image](preview.png)
 
 # Building
 Requirements
@@ -10,11 +10,11 @@ Requirements
 - GCC 11 or greater for linux
 
 ### Windows
-- Run 'install.bat' as administrator
-- Run 'src/build_buildtool.sh'
-- Run 'src/generate.bat' this will generate a VS project in 'src/ThoriumEngine/Intermediate/build/'
-- Open the generated project and compile the project.
+- Run 'install_win64.bat' as administrator
+- Run 'platforms/win64/build_buildtool.sh'
+- Run 'platforms/win64/generate_vsproj.bat' this will generate a VS project in 'src/ThoriumEngine/Intermediate/build/'
+- Open the generated project and compile the engine.
 
 ### Linux
-- Run 'install.sh'
-- Run 'src/build.sh' to build the project
+- Run 'install_linux.sh'
+- Run 'platforms/linux/build_release.sh' or 'platforms/linux/build_development.sh' to build the project

@@ -41,6 +41,7 @@ int main(int argc, char** argv)
 
 	// by default the latest version
 	FString engineVersion = "1.0";
+	FString additionalSources;
 
 	FString arg;
 
@@ -126,6 +127,9 @@ int main(int argc, char** argv)
 		else if (arg == "-engine" && !bLastArg)
 			engineVersion = argv[i + 1];
 
+		else if (arg == "-AS" && !bLastArg)
+			additionalSources = std::filesystem::absolute(argv[i + 1]).generic_string().c_str();
+
 		else if (arg == "-debug")
 			targetConfig = CONFIG_DEBUG;
 		else if (arg == "-development")
@@ -176,6 +180,7 @@ int main(int argc, char** argv)
 			cfg.platform = targetPlatform;
 			cfg.engineVersion = engineVersion;
 			cfg.path = std::filesystem::absolute(sourcePath.c_str()).generic_string().c_str();
+			cfg.additionalSources = additionalSources;
 
 			int i = GenerateCMakeProject(cfg);
 			if (i != 0)

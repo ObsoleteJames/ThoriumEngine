@@ -46,6 +46,7 @@ public:
 	inline void SetDepthBuffer(IDepthBuffer* depth) { }
 
 	inline void PushCommand(const FRenderCommand& cmd) { renderQueue.Add(cmd); }
+	inline const TArray<FRenderCommand>& GetRenderQueue() const { return renderQueue; }
 	
 	inline void RegisterPrimitive(CPrimitiveProxy* proxy) { primitives.Add(proxy); }
 	inline void UnregisterPrimitve(CPrimitiveProxy* proxy) { if (auto it = primitives.Find(proxy); it != primitives.end()) primitives.Erase(it); }
@@ -94,10 +95,6 @@ private:
 	TArray<CPostProcessVolumeProxy*> ppVolumes;
 	TArray<CCubeMapProxy*> cubemaps;
 
-	// the position of the primary camera that was used for rendering the sun light shadow map,
-	FVector sunLightCamPos;
-	FVector sunLightCamDir;
-
 	//TArray<CTexture*> lightmaps;
 
 	CCameraProxy* primaryCamera = nullptr;
@@ -107,6 +104,13 @@ private:
 	float screenPercentage = 100.f;
 
 	int bufferWidth, bufferHeight;
+
+public:
+	// the position of the primary camera that was used for rendering the sun light shadow map,
+	FVector sunLightCamPos;
+	FVector sunLightCamDir;
+
+public:
 	IFrameBuffer* colorBuffer; // float16 output buffer
 	IFrameBuffer* GBufferA; // Normal
 	IFrameBuffer* GBufferB; // Material (red = metallic, green = roughness, blue = ao, alpha = specular)
@@ -118,6 +122,9 @@ private:
 
 	// Ambient occlusion buffer.
 	IFrameBuffer* aoBuffer;
+
+	IFrameBuffer* bloomBuffersX[4];
+	IFrameBuffer* bloomBuffersY[4];
 
 	ITexture2D* depthTex;
 

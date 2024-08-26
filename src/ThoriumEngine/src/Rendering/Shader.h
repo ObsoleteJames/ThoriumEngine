@@ -3,7 +3,7 @@
 #include "EngineCore.h"
 #include "Math/Vectors.h"
 #include "Object/Object.h"
-#include "Resources/Asset.h"
+#include "Assets/Asset.h"
 #include "Shader.generated.h"
 
 struct FFile;
@@ -90,10 +90,10 @@ public:
 	CShaderSource() = default;
 	virtual ~CShaderSource();
 
-	virtual void Init();
+	virtual void OnInit(IBaseFStream* stream);
 
-	virtual void Save();
-	virtual void Load(uint8 lodLevel) {}
+	virtual void OnSave(IBaseFStream* stream);
+	virtual void OnLoad(IBaseFStream* stream, uint8 lodLevel) {}
 
 	void OnDelete() override;
 
@@ -113,14 +113,14 @@ public:
 private:
 	void LoadVersion05(IBaseFStream* stream);
 
+	virtual uint8 GetFileVersion() const;
+
 public:
 	TArray<FShaderProperty> properties;
 	TArray<FShaderTexture> textures;
 	FString shaderName;
 	FString description;
 	int8 type; // CShaderSource::EType
-
-	uint16 version;
 
 	uint8 features = ShaderFeature_None;
 
@@ -132,10 +132,10 @@ public:
 	//IShader* psShader = nullptr;
 	//IShader* geoShader = nullptr;
 
-	int8 bCompiled;
-	int8 bHasPS;
-	int8 bHasVS;
-	int8 bHasGEO;
+	int8 bCompiled = false;
+	int8 bHasPS = false;
+	int8 bHasVS = false;
+	int8 bHasGEO = false;
 };
 
 class ENGINE_API IShader

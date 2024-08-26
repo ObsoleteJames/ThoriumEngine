@@ -30,6 +30,7 @@ struct FConsoleMsg
 	SizeType time;
 
 	FConsoleMsg* next = nullptr;
+	int repeats;
 };
 
 class ENGINE_API CConCmd
@@ -109,9 +110,12 @@ class ENGINE_API CConsole
 
 public:
 	static void Init();
+	static void Update();
 	static void Shutdown();
 
 	static void LoadConfig();
+
+	static void EnableStdio();
 
 public:
 	static inline void LogPlain(const FString& msg, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_PLAIN, FString(), 0, nullptr }); }
@@ -136,6 +140,8 @@ public:
 
 private:
 	static void _log(const FConsoleMsg& msg);
+
+	static void _logCout(const FConsoleMsg& msg);
 
 private:
 	static TEvent<const FConsoleMsg&> onMsgLogged;

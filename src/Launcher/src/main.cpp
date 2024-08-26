@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <fstream>
+
+#include <iostream>
 #endif
 
 #ifdef _WIN32
@@ -35,7 +37,7 @@ LONG WINAPI Win32ExceptionHandler(_EXCEPTION_POINTERS* exceptionInfo)
 	ExInfo.ThreadId = ::GetCurrentThreadId();
 	ExInfo.ExceptionPointers = exceptionInfo;
 	ExInfo.ClientPointers = FALSE;
-
+	
 	HANDLE hFile = CreateFile(("crash " + timeTxt + ".dmp").c_str(), GENERIC_WRITE, FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 	pDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpWithFullMemory, &ExInfo, NULL, NULL);
@@ -52,13 +54,13 @@ FString GetEnginePath(const FString& version)
 	HKEY hKey;
 	LONG lRes = RegOpenKeyExA(HKEY_CURRENT_USER, keyPath.c_str(), 0, KEY_READ, &hKey);
 	if (lRes == ERROR_FILE_NOT_FOUND)
-		return "";
+		return FString();
 
 	CHAR strBuff[MAX_PATH];
 	DWORD buffSize = sizeof(strBuff);
 	lRes = RegQueryValueExA(hKey, "path", 0, NULL, (LPBYTE)strBuff, &buffSize);
 	if (lRes != ERROR_SUCCESS)
-		return "";
+		return FString();
 
 	return strBuff;
 #else
@@ -110,27 +112,33 @@ int main(int argc, char** argv)
 #if _WIN32
 	HMODULE EngineLib = LoadLibrary("core\\bin\\win64\\Engine.dll");
 #else
-	void* EngineLib = dlopen("core/bin/linux/Engine.dll", RTLD_NOW);
+	void* EngineLib = dlopen("core/bin/linux/Engine.so", RTLD_NOW);
 #endif
-	FString enginePath = "core";
+	FString engineFile;
+	FString enginePath;
 	if (!EngineLib && !bForceLocalEngine)
 	{
-		FString engineVersion;
+		FString engineVersion = "1.0";
 		FKeyValue kv("config/project.cfg");
 		if (kv.IsOpen())
-		{
 			engineVersion = kv.GetValue("engine_version")->Value;
 
-			enginePath = GetEnginePath(engineVersion);
+		enginePath = GetEnginePath(engineVersion);
 #if _WIN32
-			EngineLib = LoadLibrary((enginePath + "\\bin\\win64\\Engine.dll").c_str());
+		engineFile = enginePath + "\\bin\\win64\\Engine.dll";
+		EngineLib = LoadLibrary((enginePath + "\\bin\\win64\\Engine.dll").c_str());
 #else
-			EngineLib = dlopen((enginePath + "/bin/linux/Engine.dll").c_str(), RTLD_NOW);
+		engineFile = enginePath + "/bin/linux/Engine.so";
+		EngineLib = dlopen((enginePath + "/bin/linux/Engine.so").c_str(), RTLD_NOW);
 #endif
-		}
 	}
 
-	UTIL_ASSERT(EngineLib, "Unable to load 'engine.dll'!");
+#ifndef _WIN32
+	if (!EngineLib)
+		std::cerr << dlerror() << std::endl;
+#endif
+
+	UTIL_ASSERT(EngineLib, "Unable to load '" + engineFile + "'!");
 
 	// Load Dependencies
 	
@@ -139,7 +147,7 @@ int main(int argc, char** argv)
 #if _WIN32
 	HMODULE launcher = LoadLibrary((enginePath + "\\bin\\win64\\Launcher.dll").c_str());
 #else
-	void* launcher = dlopen((enginePath + "/bin/linux/Launcher.dll").c_str(), RTLD_NOW);
+	void* launcher = dlopen((enginePath + "/bin/linux/Launcher.so").c_str(), RTLD_NOW);
 #endif
 	if (!launcher)
 	{
@@ -147,6 +155,8 @@ int main(int argc, char** argv)
 #if _WIN32
 		err += std::to_string(GetLastError());
 		MessageBox(NULL, err.c_str(), "Error", MB_OK);
+#else
+		std::cerr << "error: failed to load launcher.so!\n";
 #endif
 		return -1;
 	}
@@ -173,6 +183,8 @@ int main(int argc, char** argv)
 #if _WIN32
 		err += std::to_string(GetLastError());
 		MessageBox(NULL, err.c_str(), "Error", MB_OK);
+#else
+		std::cerr << "error: Couldn't find function 'int Launch(const char*)' in Launcher.so!\n";
 #endif
 		return -1;
 	}

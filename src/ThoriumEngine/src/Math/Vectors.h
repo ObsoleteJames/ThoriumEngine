@@ -8,7 +8,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include "Vectors.Generated.h"
+#include "Vectors.generated.h"
 
 class IBaseWindow;
 class CCameraProxy;
@@ -99,7 +99,7 @@ public:
 
 	inline float Magnitude() const { return FMath::Sqrt(x * x + y * y + z * z); }
 	inline FVector Normalize() const { return FVector(*this) /= Magnitude(); }
-	inline FVector Orthogonal() const;
+	FVector Orthogonal() const;
 
 	static float Distance(const FVector& a, const FVector& b);
 	static float Dot(const FVector& a, const FVector& b);

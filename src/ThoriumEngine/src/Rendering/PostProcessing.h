@@ -24,20 +24,20 @@ enum EPostProcessFeature
 };
 
 STRUCT()
-struct FPostProcessSettings
+struct ENGINE_API FPostProcessSettings
 {
 	GENERATED_BODY()
 
 public:
 	// ------------- Bloom -------------
 	PROPERTY(Name = "Intensity", Category = "Bloom")
-	float bloomIntensity = 0.5f;
+	float bloomIntensity = 0.2f;
 
 	PROPERTY(Name = "Threshold", Category = "Bloom")
 	float bloomThreshold = 1.f;
 
-	PROPERTY(Name = "Blur Amount", Category = "Bloom")
-	float bloomBlur = 2.5f;
+	PROPERTY(Name = "Knee", Category = "Bloom")
+	float bloomKnee = 0.5f;
 
 	// ------------- Exposure -------------
 	PROPERTY(Category = "Exposure")
@@ -69,6 +69,8 @@ public:
 	virtual ~CPostProcessVolumeProxy() = default;
 
 	virtual void FetchData() = 0;
+
+	inline CMaterial* GetMaterial() const { return postProcessMaterial; }
 
 	inline const FPostProcessSettings& PostProcessSettings() const { return ppSettings; }
 

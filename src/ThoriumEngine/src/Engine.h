@@ -14,6 +14,7 @@ class CInputManager;
 
 extern ENGINE_API CEngine* gEngine;
 
+extern ENGINE_API bool bIsTerminal;
 extern ENGINE_API bool gIsClient;
 extern ENGINE_API bool gIsServer;
 extern ENGINE_API bool gIsRunning;
@@ -46,6 +47,11 @@ public:
 	 * Starts the engine and Intializes services (Renderer, Window, etc).
 	 */
 	virtual void Init();
+
+	/**
+	 * starts the engine as a terminal application
+	 */
+	virtual void InitTerminal();
 
 	/**
 	 * Loads the specified game.
@@ -103,6 +109,10 @@ public:
 	static FString OpenFolderDialog();
 
 	static int ExecuteProgram(const FString& cmd, bool bWaitForExit = true);
+
+	// quick hack to get a monitors size
+	// needs to be replaced with proper data structures at some point
+	static void GetMonitorSize(int monitor, int* w, int* h);
 
 public:
 	inline CWindow* GetGameWindow() const { return gameWindow; }
@@ -183,5 +193,5 @@ protected:
 
 	//CRenderScene* worldRenderScene;
 
-	CWindow* gameWindow;
+	CWindow* gameWindow = nullptr;
 };

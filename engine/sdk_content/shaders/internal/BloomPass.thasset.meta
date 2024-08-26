@@ -1,0 +1,66 @@
+
+Shader
+{
+	Name = "BloomPass";
+	Type = SHADER_INTERNAL;
+}
+
+Global
+{
+	#include "common/common.hlsl"
+
+	struct VS_Input
+	{
+		#include "common/vertex_input.hlsl"
+	};
+
+	struct PS_Input
+	{
+		#include "common/pixel_input.hlsl"
+	};
+}
+
+PS
+{
+	cbuffer BloomInfo : register(b0)
+	{
+		float vBloomIntensity;
+		float vBloomThreshold;
+		float vBloomSoftThreshold;
+	}
+
+	Texture2D vColor : TEXTURE : register(t0);
+	SamplerState vColorSampler : SAMPLER : register(s0);
+
+	Texture2D vBloom1 : TEXTURE : register(t1);
+	SamplerState vBloom1Sampler : SAMPLER : register(s1);
+	Texture2D vBloom2 : TEXTURE : register(t2);
+	SamplerState vBloom2Sampler : SAMPLER : register(s2);
+	Texture2D vBloom3 : TEXTURE : register(t3);
+	SamplerState vBloom3Sampler : SAMPLER : register(s3);
+	Texture2D vBloom4 : TEXTURE : register(t4);
+	SamplerState vBloom4Sampler : SAMPLER : register(s4);
+	
+	static const float weight[5] = { 0.2270270270, 0.1945945946, 0.1216216216, 0.0540540541, 0.0162162162 };
+
+	float4 Main(PS_Input input) : SV_TARGET
+	{
+		float3 col = SampleTexture2D(vColor, input.vTextureCoords).xyz;
+		//col = 0;
+		//float intensity = 0.25f;
+
+#if 1
+		float3 bloom = SampleTexture2D(vBloom1, input.vTextureCoords).xyz * vBloomIntensity;
+		bloom += SampleTexture2D(vBloom2, input.vTextureCoords).xyz * vBloomIntensity;
+		bloom += SampleTexture2D(vBloom3, input.vTextureCoords).xyz * vBloomIntensity;
+		bloom += SampleTexture2D(vBloom4, input.vTextureCoords).xyz * vBloomIntensity;
+		col += bloom / 4;
+		col = pow(abs(col), abs(float3(1 / vGamma, 1 / vGamma, 1 / vGamma)));
+#else
+		col += SampleTexture2D(vBloom4, input.vTextureCoords).xyz * vBloomIntensity;
+		col = pow(abs(col), abs(float3(1 / vGamma, 1 / vGamma, 1 / vGamma)));
+#endif
+
+		return float4(col, 1.f);
+	}
+}

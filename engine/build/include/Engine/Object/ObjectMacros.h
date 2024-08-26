@@ -2,6 +2,10 @@
 
 #include "Class.h"
 
+#if __GNUC__
+#	pragma GCC diagnostic ignored "-Winvalid-offsetof"
+#endif
+
 #define STRUCT(...)
 #define CLASS(...)
 #define ENUM(...)
@@ -44,12 +48,12 @@ public: \
 #define EVALUATE_PROPERTY_NAME(TClass, InternalName) TClass##_##InternalName##_Property
 
 #define DECLARE_PROPERTY(TClass, DisplayName, InternalName, Description, TypeName, TType, TTags, TOffset, TSize, TMetaData, TTypeHelper) \
-static FProperty  EVALUATE_PROPERTY_NAME(TClass, InternalName)##{ DisplayName, #InternalName, Description, TypeName, TType, TTags, TOffset, TSize, TMetaData, TTypeHelper, CLASS_NEXT_PROPERTY };
+static FProperty  EVALUATE_PROPERTY_NAME(TClass, InternalName) { DisplayName, #InternalName, Description, TypeName, TType, TTags, TOffset, TSize, TMetaData, TTypeHelper, CLASS_NEXT_PROPERTY };
 
 
 #define EVALUATE_FUNCTION_NAME(TClass, InternalName) TClass##_##InternalName##_Function
 
 #define DECLARE_FUNCTION_PROPERTY(TClass, DisplayName, Description, InternalName, TFuncPtr, TType, TArgList, TArgCount, isStatic, flags) \
-static FFunction EVALUATE_FUNCTION_NAME(TClass, InternalName)##{ DisplayName, #InternalName, Description, TFuncPtr, TType, TArgCount, TArgList, isStatic, flags, CLASS_NEXT_FUNCTION };
+static FFunction EVALUATE_FUNCTION_NAME(TClass, InternalName) { DisplayName, #InternalName, Description, TFuncPtr, TType, TArgCount, TArgList, isStatic, flags, CLASS_NEXT_FUNCTION };
 
 #define POP_STACK_VARIABLE(Type, OutVar) Type OutVar; stack.Pop(OutVar)

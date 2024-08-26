@@ -7,6 +7,9 @@
 #include "Window.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Framebuffer.h"
+#include "Misc/FileHelper.h"
+#include "ThirdParty/stb_image.h"
+
 #include <Util/Assert.h>
 
 #include <GLFW/glfw3.h>
@@ -207,6 +210,18 @@ void CWindow::GetWindowPos(int* x, int* y)
 void CWindow::SetWindowPos(int x, int y)
 {
 	glfwSetWindowPos(nativeHandle, x, y);
+}
+
+void CWindow::SetIcon(const FString& file)
+{
+	if (!FFileHelper::FileExists(file))
+		return;
+
+	GLFWimage icon;
+	int cmp;
+	icon.pixels = stbi_load(file.c_str(), &icon.width, &icon.height, &cmp, 0);
+	glfwSetWindowIcon(nativeHandle, 1, &icon);
+	stbi_image_free(icon.pixels);
 }
 
 void CWindow::Present(int vSync, int flags)

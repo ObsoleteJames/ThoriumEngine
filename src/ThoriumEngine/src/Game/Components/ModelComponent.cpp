@@ -5,7 +5,7 @@
 #include "Game/World.h"
 #include "Physics/PhysicsBody.h"
 #include "Physics/PhysicsWorld.h"
-#include "Resources/Skeleton.h"
+#include "Assets/Skeleton.h"
 
 class CModelComponentProxy : public CPrimitiveProxy
 {
@@ -61,7 +61,7 @@ public:
 	{
 		for (auto& m : meshes)
 		{
-			TObjectPtr<CMaterial> mat = (m.materialIndex < materials.Size() && materials[m.materialIndex]) ? materials[m.materialIndex] : CResourceManager::GetResource<CMaterial>("materials/error.thmat");
+			TObjectPtr<CMaterial> mat = (m.materialIndex < materials.Size() && materials[m.materialIndex]) ? materials[m.materialIndex] : CAssetManager::GetAsset<CMaterial>("materials/error.thasset");
 			out.DrawMesh(m, mat, matrix, skeletonMatrices);
 		}
 	}
@@ -82,9 +82,9 @@ CModelComponent::CModelComponent()
 
 void CModelComponent::SetModel(const FString& file)
 {
-	TObjectPtr<CModelAsset> mdl = CResourceManager::GetResource<CModelAsset>(file);
+	TObjectPtr<CModelAsset> mdl = CAssetManager::GetAsset<CModelAsset>(file);
 	if (!mdl)
-		mdl = CResourceManager::GetResource<CModelAsset>("models/error.thmdl");
+		mdl = CAssetManager::GetAsset<CModelAsset>("models/error.thasset");
 
 	SetModel(mdl);
 }
@@ -214,9 +214,9 @@ void CModelComponent::SetMaterial(CMaterial* mat, SizeType slot /*= 0*/)
 
 void CModelComponent::SetMaterial(const FString& matPath, SizeType slot /*= 0*/)
 {
-	TObjectPtr<CMaterial> mat = CResourceManager::GetResource<CMaterial>(matPath);
+	TObjectPtr<CMaterial> mat = CAssetManager::GetAsset<CMaterial>(matPath);
 	if (!mat)
-		mat = CResourceManager::GetResource<CMaterial>("materials/error.thmat");
+		mat = CAssetManager::GetAsset<CMaterial>("materials/error.thasset");
 
 	SetMaterial(mat, slot);
 }
@@ -357,7 +357,7 @@ void CModelComponent::SetupPhysics()
 			FPhysicsBodySettings bodySettings{};
 			bodySettings.component = this;
 			bodySettings.entity = GetEntity();
-			bodySettings.motionType = GetEntity()->type == ENTITY_STATIC ? PHBM_STATIC : (bStaticBody ? PHBM_KINEMATIC : PHBM_DYNAMIC);
+			bodySettings.motionType = GetEntity()->GetType() == ENTITY_STATIC ? PHBM_STATIC : (bStaticBody ? PHBM_KINEMATIC : PHBM_DYNAMIC);
 			if (bIsTrigger)
 				bodySettings.motionType = PHBM_STATIC;
 

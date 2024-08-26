@@ -258,20 +258,19 @@ int main(int argc, char** argv)
 #endif
 
 		FKeyValue kv(targetPath + "/addon.cfg");
-		if (!kv.IsOpen())
+		if (kv.IsOpen())
 		{
-			std::cerr << "error: failed to open addon config!";
-			return 1;
+			projectName = *kv.GetValue("identity");
 		}
-
-		projectName = *kv.GetValue("identity");
+		else
+			std::cout << "warning: failed to open addon config!\n";
 
 		CParser::LoadModuleData(enginePath + "/build/include/engine");
 	}
 	else
 		projectName = "Engine";
 	
-	GeneratedOutput = targetPath + "\\Intermediate\\generated";
+	GeneratedOutput = targetPath + "/Intermediate/generated";
 
 	std::cout << "Running HeaderTool for project: " << projectName.c_str() << std::endl;
 
@@ -280,7 +279,7 @@ int main(int argc, char** argv)
 
 	try
 	{
-		FString path = targetPath + "\\src\\";
+		FString path = targetPath + "/src/";
 		for (auto entry : std::filesystem::recursive_directory_iterator(path.c_str()))
 		{
 			if (!entry.is_regular_file())
@@ -299,7 +298,7 @@ int main(int argc, char** argv)
 				Headers.Add(header);
 		}
 	}
-	catch (std::exception e) { std::cerr << "error: " << e.what(); }
+	catch (std::exception& e) { std::cerr << "error: " << e.what() << "\n"; }
 
 	for (auto& h : Headers)
 	{

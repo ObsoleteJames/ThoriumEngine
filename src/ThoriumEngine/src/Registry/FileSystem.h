@@ -21,7 +21,7 @@ struct ENGINE_API FDirectory
 	friend struct FMod;
 	friend struct FFile;
 	friend class CFileSystem;
-	friend class CResourceManager;
+	friend class CAssetManager;
 
 public:
 	~FDirectory();
@@ -50,7 +50,7 @@ private:
 struct ENGINE_API FMod
 {
 	friend class CFileSystem;
-	friend class CResourceManager;
+	friend class CAssetManager;
 
 public:
 	inline const FString& Name() const { return name; }
@@ -150,6 +150,9 @@ public:
 
 	static void SetCurrentPath(const FString& path);
 	static FString GetCurrentPath();
+
+	// converts a relative path to an absolute path
+	static FString Absolute(const FString&);
 
 	static void OSCreateDirectory(const FString& path);
 

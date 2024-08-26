@@ -2,7 +2,7 @@
 
 #include "Object/Object.h"
 #include "RenderCommands.h"
-#include "Resources/ModelAsset.h"
+#include "Assets/ModelAsset.h"
 #include "RenderProxies.generated.h"
 
 class CRenderScene;

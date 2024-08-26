@@ -8,30 +8,28 @@
 #include "Misc/FileHelper.h"
 #include "Console.h"
 #include "Rendering/Renderer.h"
+#include "Rendering/GraphicsInterface.h"
 #include "Rendering/RenderScene.h"
+#include "Rendering/DefaultRenderer.h"
 #include "Game/World.h"
 #include "Game/Events.h"
 #include "Game/GameInstance.h"
 #include "Game/Input/InputManager.h"
 #include "Game/Components/CameraComponent.h"
-#include "Resources/Material.h"
-#include "Resources/Scene.h"
+#include "Assets/Material.h"
+#include "Assets/Scene.h"
 #include "Misc/Timer.h"
 
-#include "ImGui/ImGui.h"
+#include "ImGui/imgui.h"
 
 #include <GLFW/glfw3.h>
 #include <Util/Assert.h>
 #include <Util/KeyValue.h>
 
 #ifdef _WIN32
-#include "Platform/Windows/DirectX/DirectXRenderer.h"
+#include "Platform/Windows/DirectX/DirectXInterface.h"
 #include <windows.h>
 #include <shlobj.h>
-#else
-#include <unistd.h>
-#include <spawn.h>
-#include <sys/wait.h>
 #endif
 
 #include <filesystem>
@@ -42,6 +40,7 @@ CModule& GetModule_Engine();
 
 CEngine* gEngine = nullptr;
 
+bool bIsTerminal = 0; // wether the engine is running in terminal mode
 bool gIsClient = 0;
 bool gIsServer = 0;
 bool gIsRunning = 0;
@@ -49,6 +48,7 @@ bool gIsEditor = 0;
 bool gIsMainGaurded = 0;
 
 static CConCmd cmdLoadScene("scene", [](const TArray<FString>& args) { gEngine->LoadWorld(args[0]); });
+static CConCmd cmdQuit("quit", []() { gEngine->Exit(); });
 
 void CEngine::InitMinimal()
 {
@@ -58,7 +58,7 @@ void CEngine::InitMinimal()
 	CConsole::Init();
 	CONSOLE_LogInfo("CEngine", "Initializing...");
 	
-	CResourceManager::Init();
+	CAssetManager::Init();
 	CModuleManager::RegisterModule(&GetModule_Engine());
 
 	if (gIsEditor || !FFileHelper::DirectoryExists("./core"))
@@ -96,13 +96,15 @@ void CEngine::Init()
 	LoadUserConfig();
 
 	gameWindow = new CWindow(userConfig.windowWidth, userConfig.windowHeight, userConfig.windowPosX, userConfig.windowPosY, activeGame.title);
-#ifdef _WIN32
-	Renderer::CreateRenderer<DirectXRenderer>();
-#else
-	Renderer::CreateRenderer<VulkanRenderer>();
-#endif
 
-	gameWindow->swapChain = gRenderer->CreateSwapChain(gameWindow);
+	gGHI = GetGraphicsInterface();
+	gGHI->Init();
+
+	gRenderer = CreateObject<CDefaultRenderer>();
+	gRenderer->MakeIndestructible();
+	gRenderer->Init();
+
+	gameWindow->swapChain = gGHI->CreateSwapChain(gameWindow);
 	gameWindow->SetWindowMode((CWindow::EWindowMode)userConfig.windowMode);
 
 	// Clear the screen in order to prevent it from being white as the scene loads
@@ -119,6 +121,25 @@ void CEngine::Init()
 	//worldRenderScene->SetFrameBuffer(gameWindow->swapChain->GetFrameBuffer());
 	//worldRenderScene->SetDepthBuffer(gameWindow->swapChain->GetDepthBuffer());
 	//worldRenderScene->SetCamera(CreateObject<CCameraComponent>());
+
+	LoadWorld(activeGame.startupScene);
+}
+
+void CEngine::InitTerminal()
+{
+#if PLATFORM_WINDOWS
+	AllocConsole();
+	FILE* temp;
+	freopen_s(&temp, "CONIN$", "r", stdin);
+	freopen_s(&temp, "CONOUT$", "w", stderr);
+	freopen_s(&temp, "CONOUT$", "w", stdout);
+#endif
+
+	bIsTerminal = true;
+	CConsole::EnableStdio();
+
+	InitMinimal();
+	THORIUM_ASSERT(LoadProject(), "Failed to load project!");
 
 	LoadWorld(activeGame.startupScene);
 }
@@ -192,15 +213,19 @@ int CEngine::Run()
 	{
 		FTimer dtTimer;
 
-		inputManager->ClearCache();
-		CWindow::PollEvents();
-
-		inputManager->BuildInput();
-
-		CResourceManager::Update();
+		CAssetManager::Update();
 		CObjectManager::Update();
+		CConsole::Update();
 
-		gRenderer->ImGuiBeginFrame();
+		if (!bIsTerminal)
+		{
+			inputManager->ClearCache();
+			CWindow::PollEvents();
+
+			inputManager->BuildInput();
+
+			gGHI->ImGuiBeginFrame();
+		}
 
 		if (!nextSceneName.IsEmpty())
 		{
@@ -224,43 +249,45 @@ int CEngine::Run()
 
 		//ImGui::ShowDemoWindow();
 
-		updateTimer.Begin();
-
+		if (!bIsTerminal)
+		{
 #if RENDER_MULTITHREADED
-		gRenderer->JoinRenderThread();
+			gRenderer->JoinRenderThread();
 #endif
-		gRenderer->BeginRender();
+			updateTimer.Begin();
 
-		Events::OnRender.Invoke();
+			Events::OnRender.Invoke();
 
-		gWorld->renderScene->SetScreenPercentage(cvRenderScreenPercentage.AsFloat());
-		gWorld->renderScene->SetFrameBuffer(gameWindow->swapChain->GetFrameBuffer());
-		//gWorld->renderScene->SetDepthBuffer(gameWindow->swapChain->GetDepthBuffer());
+			gWorld->renderScene->SetScreenPercentage(cvRenderScreenPercentage.AsFloat());
+			gWorld->renderScene->SetFrameBuffer(gameWindow->swapChain->GetFrameBuffer());
+			//gWorld->renderScene->SetDepthBuffer(gameWindow->swapChain->GetDepthBuffer());
 
-		gWorld->Render();
-		gRenderer->PushScene(gWorld->renderScene);
+			gWorld->Render();
+			gRenderer->PushScene(gWorld->renderScene);
 
 #if RENDER_MULTITHREADED
-		gRenderer->RenderMT();
+			gRenderer->RenderMT();
 #else
-		gRenderer->Render();
+			gRenderer->Render();
 #endif
-		updateTimer.Stop();
-		renderTime = updateTimer.GetMiliseconds();
+			updateTimer.Stop();
+			renderTime = updateTimer.GetMiliseconds();
 
-		gameWindow->swapChain->GetDepthBuffer()->Clear();
-		gRenderer->ImGuiRender();
+			gameWindow->swapChain->GetDepthBuffer()->Clear();
+			gGHI->ImGuiRender();
 
-		gameWindow->Present(userConfig.bVSync, 0);
+			gameWindow->Present(userConfig.bVSync, 0);
+		}
 
 		dtTimer.Stop();
 		deltaTime = dtTimer.GetSeconds();
 
-		if (gameWindow->WantsToClose() || bWantsToExit)
+		if ((gameWindow && gameWindow->WantsToClose()) || bWantsToExit)
 			gIsRunning = false;
 	}
 
-	gRenderer->ImGuiShutdown();
+	if (gGHI)
+		gGHI->ImGuiShutdown();
 
 	OnExit();
 	return 0;
@@ -338,21 +365,23 @@ bool CEngine::LoadProject(const FString& path /*= "."*/)
 
 	CreatePhysicsApi(physicsSettings.api.Get());
 
-	// TODO: Make input manager class a config variable.
-	if (!inputManager || inputManager->GetClass() != activeGame.inputManagerClass.Get())
+	if (!bIsTerminal)
 	{
-		TObjectPtr<CInputManager> oldIM = inputManager;
-		inputManager = (CInputManager*)CreateObject(activeGame.inputManagerClass.Get());
-		if (oldIM)
+		if (!inputManager || inputManager->GetClass() != activeGame.inputManagerClass.Get())
 		{
-			inputManager->CopyState(oldIM);
-			oldIM->Delete();
+			TObjectPtr<CInputManager> oldIM = inputManager;
+			inputManager = (CInputManager*)CreateObject(activeGame.inputManagerClass.Get());
+			if (oldIM)
+			{
+				inputManager->CopyState(oldIM);
+				oldIM->Delete();
+			}
+			else
+				inputManager->LoadConfig();
 		}
 		else
 			inputManager->LoadConfig();
 	}
-	else
-		inputManager->LoadConfig();
 
 	bProjectLoaded = true;
 	return true;
@@ -536,7 +565,6 @@ void CEngine::OnExit()
 	SaveUserConfig();
 
 	gWorld->Delete();
-	delete gRenderer;
 	delete gameWindow;
 
 	gPhysicsApi->Shutdown();
@@ -546,10 +574,16 @@ void CEngine::OnExit()
 	gameInstance->Delete();
 	gameInstance = nullptr;
 
-	CWindow::Shutdown();
+	gRenderer->Delete();
+	delete gGHI;
 
-	CResourceManager::Shutdown();
+	if (!bIsTerminal)
+		CWindow::Shutdown();
+
+	CAssetManager::Shutdown();
 	CModuleManager::Cleanup();
+
+	CObjectManager::Shutdown();
 
 	SaveConsoleLog();
 	CConsole::Shutdown();
@@ -585,7 +619,7 @@ void CEngine::InitImGui()
 		io.Fonts->AddFontDefault();
 	}
 
-	gRenderer->InitImGui(gameWindow);
+	gGHI->InitImGui(gameWindow);
 }
 
 void CEngine::DoLoadWorld()
@@ -593,7 +627,7 @@ void CEngine::DoLoadWorld()
 	CScene* pScene = nullptr;
 	if (nextSceneName != "empty")
 	{
-		pScene = CResourceManager::GetResource<CScene>(nextSceneName);
+		pScene = CAssetManager::GetAsset<CScene>(nextSceneName);
 		if (!pScene)
 		{
 			CONSOLE_LogError("CEngine", FString("Failed to find scene file '") + nextSceneName + "'");
@@ -817,9 +851,13 @@ void CEngine::SaveConsoleLog()
 #endif
 		FString typeStr;
 
+#if _WIN32
 		char timeBuff[48];
-
 		ctime_s(timeBuff, sizeof(timeBuff), (time_t*)&log->time);
+#else
+		char* timeBuff = ctime((time_t*)&log->time);
+#endif
+
 		FString timeStr = timeBuff;
 		timeStr.Erase(timeStr.last());
 
@@ -864,9 +902,9 @@ void CEngine::HotReloadModule(const FString& module)
 }
 #endif
 
+#ifdef _WIN32
 FString CEngine::OSGetEnginePath(const FString& engineVersion)
 {
-#ifdef _WIN32
 	FString keyPath = "SOFTWARE\\ThoriumEngine\\" + engineVersion;
 
 	HKEY hKey;
@@ -881,23 +919,10 @@ FString CEngine::OSGetEnginePath(const FString& engineVersion)
 		return "";
 
 	return FString(strBuff);
-#else
-	std::ifstream stream(std::string(getenv("HOME")) + "/.thoriumengine/" + version.c_str() + "/path.txt", std::ios_base::in);
-	if (!stream.is_open())
-	{
-		return FString();
-	}
-
-	std::string str;
-	std::getline(stream, str);
-
-	return str.c_str();
-#endif
 }
 
 FString CEngine::OSGetDataPath()
 {
-#ifdef _WIN32
 	PWSTR appdata;
 	if (FAILED(SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &appdata)))
 		return FString();
@@ -906,14 +931,10 @@ FString CEngine::OSGetDataPath()
 	wcstombs(r, appdata, MAX_PATH);
 
 	return FString(r);
-#else
-	return FString(getenv("HOME")) + "/.thoriumengine/" + version.c_str();
-#endif
 }
 
 FString CEngine::OSGetDocumentsPath()
 {
-#ifdef _WIN32
 	PWSTR appdata;
 	if (FAILED(SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &appdata)))
 		return FString();
@@ -922,14 +943,10 @@ FString CEngine::OSGetDocumentsPath()
 	wcstombs(r, appdata, MAX_PATH);
 
 	return FString(r);
-#else
-	return FString(getenv("HOME")) + "/Documents";
-#endif
 }
 
 FString CEngine::OpenFileDialog(const FString& filter /*= FString()*/)
 {
-#ifdef _WIN32
 	OPENFILENAMEA ofn;
 	CHAR szFile[255] = { 0 };
 	CHAR currentDir[255] = { 0 };
@@ -949,14 +966,10 @@ FString CEngine::OpenFileDialog(const FString& filter /*= FString()*/)
 		return ofn.lpstrFile;
 
 	return FString();
-#else
-	return FString();
-#endif
 }
 
 FString CEngine::SaveFileDialog(const FString& filter /*= FString()*/)
 {
-#ifdef _WIN32
 	OPENFILENAMEA ofn;
 	CHAR szFile[256] = { 0 };
 	CHAR currentDir[256] = { 0 };
@@ -978,15 +991,12 @@ FString CEngine::SaveFileDialog(const FString& filter /*= FString()*/)
 		return ofn.lpstrFile;
 
 	return FString();
-#else
-	return FString();
-#endif
 }
 
 FString CEngine::OpenFolderDialog()
 {
-#ifdef _WIN32
 	BROWSEINFO bi = { 0 };
+	bi.ulFlags = BIF_USENEWUI;
 	LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
 
 	CHAR currentDir[256] = { 0 };
@@ -1004,19 +1014,10 @@ FString CEngine::OpenFolderDialog()
 	}
 
 	return FString();
-#else
-	return FString();
-#endif
 }
-
-#if _WIN32
-#else
-extern char** environ;
-#endif
 
 int CEngine::ExecuteProgram(const FString& cmd, bool bWait)
 {
-#if PLATFORM_WINDOWS
 	PROCESS_INFORMATION ht{};
 	STARTUPINFO si{};
 	si.cb = sizeof(si);
@@ -1036,29 +1037,20 @@ int CEngine::ExecuteProgram(const FString& cmd, bool bWait)
 		CloseHandle(ht.hThread);
 	}
 	return r;
-#else
-	TArray<FString> args = cmd.Split(" \t");
-	FString exec = args[0];
-	args.Erase(args.first()); 
-	
-	TArray<const char*> args_c(args.Size() + 1);
-	for (int i = 0; i < args.size(); i++)
-		args_c[i] = args[i].c_str();
-	
-	args_c.Add(0);
-
-	pid_t pid;
-	int status = posix_spawn(&pid, exec.c_str(), NULL, NULL, (char**)args_c.Data(), environ);
-
-	if (status != 0)
-		return status;
-
-	if (bWait)
-		waitpid(pid, &status, 0);
-
-	return status;
-#endif
 }
+
+void CEngine::GetMonitorSize(int monitor, int* w, int* h)
+{
+	int count;
+	GLFWmonitor** monitors = glfwGetMonitors(&count);
+	if (monitor >= count)
+		return;
+	const GLFWvidmode* mode = glfwGetVideoMode(monitors[monitor]);
+	*w = mode->width;
+	*h = mode->height;
+}
+
+#endif // _WIN32
 
 CGameInstance* CEngine::SetGameInstance(FClass* type)
 {
@@ -1072,16 +1064,21 @@ CGameInstance* CEngine::SetGameInstance(FClass* type)
 
 void CEngine::CreatePhysicsApi(FClass* type)
 {
-	if (gPhysicsApi)
-	{
-		// if the already existing api is the same as what we want, we don't need to do anything.
-		if (gPhysicsApi->GetClass() == type)
-			return;
+	THORIUM_ASSERT(type, "Attempted to create Physics API with invalid type!");
 
-		gPhysicsApi->Shutdown();
-		gPhysicsApi->Delete();
+	if (type)
+	{
+		if (gPhysicsApi)
+		{
+			// if the already existing api is the same as what we want, we don't need to do anything.
+			if (gPhysicsApi->GetClass() == type)
+				return;
+
+			gPhysicsApi->Shutdown();
+			gPhysicsApi->Delete();
+		}
+		gPhysicsApi = (IPhysicsApi*)CreateObject(type);
+		gPhysicsApi->Init();
+		gPhysicsApi->MakeIndestructible();
 	}
-	gPhysicsApi = (IPhysicsApi*)CreateObject(type);
-	gPhysicsApi->Init();
-	gPhysicsApi->MakeIndestructible();
 }

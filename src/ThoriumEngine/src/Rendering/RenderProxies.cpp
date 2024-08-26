@@ -1,8 +1,9 @@
 
 #include "RenderProxies.h"
+#include "GraphicsInterface.h"
 #include "RenderScene.h"
 #include "Renderer.h"
-#include "Resources/Material.h"
+#include "Assets/Material.h"
 #include "PostProcessing.h"
 
 //CCameraProxy::~CCameraProxy()
@@ -32,7 +33,7 @@ void FMeshBuilder::DrawLine(const FVector& begin, const FVector& end, const FVec
 
 	FMesh mesh;
 	mesh.numVertices = 2;
-	mesh.vertexBuffer = gRenderer->CreateVertexBuffer(verts);
+	mesh.vertexBuffer = gGHI->CreateVertexBuffer(verts);
 	mesh.topologyType = FMesh::TOPOLOGY_LINES;
 	
 	FRenderMesh rm;
@@ -78,7 +79,7 @@ void FMeshBuilder::DrawCircle(const FVector& pos, float radius /*= 1.f*/, const 
 
 	FMesh mesh;
 	mesh.numVertices = verts.Size();
-	mesh.vertexBuffer = gRenderer->CreateVertexBuffer(verts);
+	mesh.vertexBuffer = gGHI->CreateVertexBuffer(verts);
 	mesh.topologyType = FMesh::TOPOLOGY_LINES;
 
 	FRenderMesh rm;

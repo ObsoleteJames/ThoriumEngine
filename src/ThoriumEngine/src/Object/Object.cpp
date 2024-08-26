@@ -2,7 +2,7 @@
 #include "Object.h"
 #include "Module.h"
 #include "Console.h"
-#include "Resources/Asset.h"
+#include "Assets/Asset.h"
 
 #include "Engine.h"
 #include "Networking/NetworkManager.h"
@@ -342,7 +342,10 @@ void CObject::SerializeProperty(FMemStream& data, uint type, const FProperty* p,
 			if (type == OBJPTR_GENERIC)
 				data << &ptr->id;
 			else if (type == OBJPTR_ASSET_REF)
-				data << ((TObjectPtr<CAsset>)ptr)->GetPath();
+			{
+				SizeType _id = ((TObjectPtr<CAsset>)ptr)->AssetId();
+				data << &_id;
+			}
 			else if (type != OBJPTR_WORLD_ENTITY_COMP_REF)
 				data << &objId;
 			else
@@ -355,13 +358,7 @@ void CObject::SerializeProperty(FMemStream& data, uint type, const FProperty* p,
 		}
 		else
 		{
-			if (type == OBJPTR_ASSET_REF)
-			{
-				char nul = '\0';
-				data << &nul;
-			}
-			else
-				data << &zero;
+			data << &zero;
 		}
 	}
 	break;
@@ -492,11 +489,10 @@ bool CObject::LoadProperty(FMemStream& in, uint type, const FProperty* p, SizeTy
 		}
 		else if (type == OBJPTR_ASSET_REF)
 		{
-			FString path;
-			in >> path;
+			SizeType id;
+			in >> &id;
 
-			if (!path.IsEmpty())
-				ptr = (TObjectPtr<CObject>)CResourceManager::GetResource((FAssetClass*)cType, path);
+			ptr = (TObjectPtr<CObject>)CAssetManager::GetAsset((FAssetClass*)cType, id);
 		}
 		else if (type == OBJPTR_WORLD_ENTITY_REF)
 		{

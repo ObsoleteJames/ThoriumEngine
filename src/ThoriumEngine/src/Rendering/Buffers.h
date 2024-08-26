@@ -5,7 +5,7 @@
 #include "Buffers.generated.h"
 
 CLASS(Abstract)
-class IVertexBuffer : public CObject
+class ENGINE_API IVertexBuffer : public CObject
 {
 	GENERATED_BODY()
 public:
@@ -14,7 +14,7 @@ public:
 };
 
 CLASS(Abstract)
-class IIndexBuffer : public CObject
+class ENGINE_API IIndexBuffer : public CObject
 {
 	GENERATED_BODY()
 public:
@@ -23,7 +23,7 @@ public:
 };
 
 CLASS(Abstract)
-class IShaderBuffer : public CObject
+class ENGINE_API IShaderBuffer : public CObject
 {
 	GENERATED_BODY()
 public:

@@ -183,6 +183,9 @@ protected:
 
 	CEntityIOManager* GetEntityIOManager() const;
 
+	void RegisterDynamicEntity(CEntity* ent);
+	void RemoveDynamicEntity(CEntity* ent);
+
 public: // Events
 	TDelegate<CEntity*> OnEntityCreated;
 	TDelegate<CEntity*> OnEntityDeleted;
@@ -198,6 +201,8 @@ protected:
 
 	// The window that this scene gets rendered to.
 	IBaseWindow* renderWindow = nullptr;
+
+	TArray<TObjectPtr<CEntity>> dynamicEntities;
 
 	TObjectPtr<CGameMode> gamemode;
 

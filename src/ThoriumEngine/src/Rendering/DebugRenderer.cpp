@@ -1,8 +1,9 @@
 
 #include "DebugRenderer.h"
-#include "Resources/Material.h"
-#include "Resources/ModelAsset.h"
+#include "Assets/Material.h"
+#include "Assets/ModelAsset.h"
 #include "Renderer.h"
+#include "GraphicsInterface.h"
 #include "RenderScene.h"
 #include "Game/World.h"
 
@@ -11,14 +12,16 @@ CDebugRenderer* gDebugRenderer;
 CDebugRenderer::CDebugRenderer()
 {
 	lineMesh.numVertices = 2;
-	lineMesh.vertexBuffer = gRenderer->CreateVertexBuffer({ { FVector::zero }, { -FVector::forward } });
+	lineMesh.vertexBuffer = gGHI->CreateVertexBuffer({ { FVector::zero }, { -FVector::forward } });
 	lineMesh.topologyType = FMesh::TOPOLOGY_LINES;
 
-	cube = CResourceManager::GetResource<CModelAsset>("models/Cube.thmdl");
-	sphere = CResourceManager::GetResource<CModelAsset>("models/Sphere.thmdl");
+	cube = CAssetManager::GetAsset<CModelAsset>("models/Cube.thasset");
+	sphere = CAssetManager::GetAsset<CModelAsset>("models/Sphere.thasset");
 
-	cube->Load(0);
-	sphere->Load(0);
+	if (cube)
+		cube->Load(0);
+	if (sphere)
+		sphere->Load(0);
 }
 
 void CDebugRenderer::DrawLine(const FVector& begin, const FVector& end, const FColor& color, float time /*= 0.f*/, bool bOverlay /*= false*/)

@@ -17,7 +17,7 @@ class CEntity;
 ENUM()
 enum EEntityType
 {
-	ENTITY_STATIC = 1	META(Name = "Static"),
+	ENTITY_STATIC = 1	META(Name = "Static"), // does not update during gameplay
 	ENTITY_DYNAMIC		META(Name = "Dynamic")
 };
 
@@ -131,6 +131,11 @@ public:
 
 	FBounds GetBounds();
 
+	inline EEntityType GetType() const { return type; }
+
+	void MakeStatic();
+	void MakeDynamic();
+
 private:
 	FUNCTION(Output, Name = "OnStart")
 	void outputOnStart();
@@ -190,9 +195,6 @@ public:
 	bool bEditorEntity;
 #endif
 
-	PROPERTY(Editable)
-	EEntityType type = ENTITY_DYNAMIC;
-
 	PROPERTY(Editable , Category = Health)
 	bool bCanBeDamaged = false;
 
@@ -200,12 +202,15 @@ public:
 	float health;
 
 protected:
+	FGuid entityId;
+
+	PROPERTY()
+	EEntityType type = ENTITY_DYNAMIC;
+
+private:
 	CWorld* world;
 	TObjectPtr<CSceneComponent> rootComponent;
 
-	FGuid entityId;
-
-private:
 	PROPERTY()
 	TArray<FOutputBinding> boundOutputs;
 

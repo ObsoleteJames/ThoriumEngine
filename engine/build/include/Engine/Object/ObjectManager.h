@@ -35,6 +35,7 @@ protected:
 	static bool DeleteObject(CObject* obj, bool bNoErase = false);
 	static void RegisterObject(CObject* obj);
 	static void Update();
+	static void Shutdown();
 
 	// this could cause a crash :)
 	static void DeleteObjectsFromModule(CModule* module);
