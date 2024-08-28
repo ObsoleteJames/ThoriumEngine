@@ -151,6 +151,9 @@ public:
 	static void SetCurrentPath(const FString& path);
 	static FString GetCurrentPath();
 
+	// converts a relative path to an absolute path
+	static FString Absolute(const FString&);
+
 	static void OSCreateDirectory(const FString& path);
 
 #if IS_DEV

@@ -150,6 +150,7 @@ public:
 	TArray<TObjectPtr<T>> FindEntitiesOfType();
 
 	inline const TMap<SizeType, TObjectPtr<CEntity>>& GetEntities() const { return entities; }
+	inline const TArray<TObjectPtr<CEntity>>& GetDynamicEntities() const { return dynamicEntities; }
 
 	void Start();
 	void Stop();

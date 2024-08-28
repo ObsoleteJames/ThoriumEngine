@@ -262,9 +262,9 @@ public:
 	static void Init();
 	static void Shutdown();
 
-protected:
 	static void PollEvents();
 
+protected:
 	void UpdateWindowRect();
 
 protected:

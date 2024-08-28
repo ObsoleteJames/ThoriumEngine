@@ -214,6 +214,8 @@ struct FRenderStatistics
 
 	SizeType totalPrimitives;
 	SizeType drawPrimitives;
+
+	SizeType frameCount; // amount of frames rendered.
 };
 
 // -- Buffer Registers --

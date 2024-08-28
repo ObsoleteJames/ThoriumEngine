@@ -110,6 +110,10 @@ public:
 
 	static int ExecuteProgram(const FString& cmd, bool bWaitForExit = true);
 
+	// quick hack to get a monitors size
+	// needs to be replaced with proper data structures at some point
+	static void GetMonitorSize(int monitor, int* w, int* h);
+
 public:
 	inline CWindow* GetGameWindow() const { return gameWindow; }
 
