@@ -16,6 +16,8 @@ class ENGINE_API CPlayerController : public CPawnController
 	friend class CPlayer;
 
 public:
+	CPlayerController();
+
 	inline CPlayer* GetPlayer() const { return player; }
 	inline const TArray<TObjectPtr<CCanvas>>& GetCanvass() const { return canvass; }
 

@@ -167,7 +167,7 @@ protected:
 	FUNCTION(MulticastRpc, NoEntityInput)
 	void OnNetDelete();
 
-	FUNCTION(MulticastRPC, NoEntityInput)
+	FUNCTION(MulticastRpc, NoEntityInput)
 	void OnOwnerChanged(SizeType ownerId);
 
 	template<typename T>

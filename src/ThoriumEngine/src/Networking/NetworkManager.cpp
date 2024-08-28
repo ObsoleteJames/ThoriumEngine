@@ -67,7 +67,7 @@ void CNetworkManager::Server_OnUserConnect()
 
 }
 
-void CNetworkManager::Server_OnUserDissconnect()
+void CNetworkManager::Server_OnUserDisconnect()
 {
 
 }

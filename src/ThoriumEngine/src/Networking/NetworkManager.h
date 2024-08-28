@@ -3,15 +3,20 @@
 #include "EngineCore.h"
 #include "Object/Object.h"
 #include "Game/Player.h"
+#include "Console.h"
 
 class CNetworkManager;
 
 enum EHostType
 {
 	HOST_SERVER, // server and client
-	HOST_DEDICATED, // 
+	HOST_DEDICATED,
 	HOST_CLIENT
 };
+
+extern CConCmd cvNetConnect;
+extern CConCmd cvNetHost;
+extern CConCmd cvNetDisconnect;
 
 extern ENGINE_API CNetworkManager* gNetworkManager;
 
@@ -46,7 +51,7 @@ public:
 
 private:
 	void Server_OnUserConnect();
-	void Server_OnUserDissconnect();
+	void Server_OnUserDisconnect();
 
 	void Client_OnConnect();
 	void Client_OnDisconnect();
@@ -58,6 +63,6 @@ private:
 	// Network ID - Object
 	TMap<SizeType, TObjectPtr<CObject>> networkedObjects;
 
-	// a list of all players, on the client this will only ever by 1
+	// a list of all players, on the client this will only ever have one entry
 	TArray<TObjectPtr<CPlayer>> players;
 };

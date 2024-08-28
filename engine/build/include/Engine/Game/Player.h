@@ -16,7 +16,7 @@ class ENGINE_API CPlayer : public CObject
 	friend class CGameMode;
 
 public:
-	CPlayer() = default;
+	CPlayer();
 
 	//FUNCTION(ServerRpc)
 	void SetPlayerController(CPlayerController* newController);
