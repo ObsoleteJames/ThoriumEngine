@@ -6,6 +6,8 @@
 #include "Console.h"
 
 class CNetworkManager;
+class ISteamNetworkingSockets;
+class CNetClient;
 
 enum EHostType
 {
@@ -22,15 +24,17 @@ extern ENGINE_API CNetworkManager* gNetworkManager;
 
 class ENGINE_API CNetworkManager
 {
+	friend class P_CNetworkManager;
+
 public:
 	CNetworkManager() = default;
 
 	void Update();
 
 	bool Connect(const FString& ip);
-	bool Disconnect();
+	void Disconnect();
 
-	bool Host(const FString& port);
+	bool Host(uint16 port);
 
 	bool IsConnected() const;
 	bool IsHost() const;
@@ -59,10 +63,16 @@ private:
 	// Handles finding/creating entities on the client
 	void Client_RegisterEntity(FClass* type, SizeType entId, SizeType netId);
 
+	void Init();
+
 private:
 	// Network ID - Object
 	TMap<SizeType, TObjectPtr<CObject>> networkedObjects;
 
 	// a list of all players, on the client this will only ever have one entry
 	TArray<TObjectPtr<CPlayer>> players;
+
+	TArray<CNetClient*> clients;
+
+	ISteamNetworkingSockets* api = nullptr;
 };
