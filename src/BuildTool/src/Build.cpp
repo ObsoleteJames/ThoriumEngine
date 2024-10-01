@@ -550,7 +550,6 @@ int GenerateCMakeProject(const FCompileConfig& config)
 	else
 		stream << "add_executable(" << cmakeLib.c_str() << " WIN32 ${Files})\n\n";
 
-
 	stream << "set_property(TARGET " << cmakeLib.c_str() << " PROPERTY ENABLE_EXPORTS ON)\n";
 	stream << "set_property(TARGET " << cmakeLib.c_str() << " PROPERTY CXX_STANDARD 17)\n";
 	if (config.platform != PLATFORM_WIN64)

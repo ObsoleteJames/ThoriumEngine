@@ -61,6 +61,49 @@ PS
 		return pos.xyz / pos.w;
 	}
 
+	static const uint sssMaxSteps = 16;
+	static const float sssRayMaxDistance = 0.05f;
+	static const float sssThickness = 0.02f;
+	static const float sssStepLength = sssRayMaxDistance / (float)sssMaxSteps;
+
+	float3 ScreenSpaceShadow(float3 posWs, FDirectionalLight light)
+	{
+		if (abs(length(posWs - vCameraPos)) > 10)
+			return float3(0, 0, 0);
+
+		float3 rayPos = posWs;
+		float3 rayDir = light.direction;
+
+		float3 rayStep = rayDir * sssStepLength;
+
+		float occlusion = 0.f;
+		float2 rayUv = float2(0.f, 0.f);
+
+		for (uint i = 0; i < sssMaxSteps; i++)
+		{
+			rayPos += rayStep;
+			float4 projectedPos = mul(vCameraMatrix, float4(rayPos, 1.f));
+			rayUv = (projectedPos.xy / projectedPos.w) * vFrameBufferScale;
+			rayUv = (rayUv + 1) / 2;
+			
+			if (rayUv.x > 0.f && rayUv.x < 1.f && rayUv.y > 0.f && rayUv.y < 1.f)
+			{
+				float depth = SampleTexture2DLOD(vDepth, float2(rayUv.x, 1-rayUv.y), 0).r;
+				float depthDelta = (projectedPos.z / projectedPos.w) - depth;
+
+				//if (i == sssMaxSteps-1)
+				//	return projectedPos.xyz / projectedPos.w;
+				if ((depthDelta > 0.0f) && (depthDelta < sssThickness))
+				{
+					occlusion = 1;
+					break;
+				}
+			}
+		}
+
+		return float3(occlusion, 0, 0);
+	}
+
 	float4 Main(PS_Input input) : SV_TARGET
 	{
 		float2 screenUV = input.vTextureCoords * vFrameBufferScale;
@@ -84,6 +127,10 @@ PS
 
 		if (shadow == 1.f)
 			discard;
+
+		//float3 sss = ScreenSpaceShadow(worldPos, dirLight);
+		//if (sss.r > 0.f)
+		//	shadow = sss;
 
 		float3 V = normalize(vCameraPos - worldPos);
 		float3 H = normalize(V + dirLight.direction);

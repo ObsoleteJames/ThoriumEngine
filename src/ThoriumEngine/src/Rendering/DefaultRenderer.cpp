@@ -712,6 +712,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 				2, 4, 8, 16, 32, 64
 			};
 
+			// downscale
 			for (int i = 0; i < 4; i++)
 			{
 				gGHI->SetViewport(0, 0, viewWidth / bloomScaleLUT[i], viewHeight / bloomScaleLUT[i]);
@@ -738,15 +739,42 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 				//}
 			}
 
+			// upscale
+			for (int i = 3; i > 0; i--)
+			{
+				gGHI->SetViewport(0, 0, viewWidth / bloomScaleLUT[i - 1], viewHeight / bloomScaleLUT[i - 1]);
+				gGHI->SetVsShader(shaderScreenPlane->GetShader(ShaderType_Vertex));
+				gGHI->SetPsShader(shaderGaussianBlurV->GetShader(ShaderType_Fragment));
+				gGHI->SetFrameBuffer(scene->bloomBuffersY[i - 1]);
+
+				gGHI->SetShaderResource(scene->bloomBuffersX[i], 0);
+
+				gGHI->DrawMesh(&mesh);
+
+				gGHI->SetFrameBuffer(scene->bloomBuffersX[i - 1]);
+				gGHI->SetShaderResource(scene->bloomBuffersY[i - 1], 0);
+				gGHI->SetPsShader(shaderGaussianBlurH->GetShader(ShaderType_Fragment));
+
+				gGHI->DrawMesh(&mesh);
+
+				//if (i + 1 < 4)
+				//{
+				//	UnlockGPU();
+				//	// bloom
+				//	Blit(scene->bloomBuffersX[i], scene->bloomBuffersX[i+1], FVector2(), FVector2(1, 1));
+				//	LockGPU();
+				//}
+			}
+
 			// Apply bloom
 			gGHI->SetViewport(0.f, 0.f, (float)viewWidth * sp, (float)viewHeight * sp);
 			gGHI->SetPsShader(shaderBloomPass->GetShader(ShaderType_Fragment));
 			gGHI->SetFrameBuffer(scene->colorBuffer);
 			gGHI->SetShaderResource(scene->preTranslucentBuff, 0);
 			gGHI->SetShaderResource(scene->bloomBuffersX[0], 1);
-			gGHI->SetShaderResource(scene->bloomBuffersX[1], 2);
-			gGHI->SetShaderResource(scene->bloomBuffersX[2], 3);
-			gGHI->SetShaderResource(scene->bloomBuffersX[3], 4);
+			//gGHI->SetShaderResource(scene->bloomBuffersX[1], 2);
+			//gGHI->SetShaderResource(scene->bloomBuffersX[2], 3);
+			//gGHI->SetShaderResource(scene->bloomBuffersX[3], 4);
 			gGHI->SetShaderBuffer(bloomInfoBuffer, 0);
 
 			gGHI->DrawMesh(&mesh);
