@@ -7,7 +7,16 @@
 
 class CAnimGraphInstance;
 class CAnimationGraph;
+class CAnimation;
 class CModelComponentProxy;
+class IAnimationProxy;
+
+ENUM()
+enum EModelCompAnimator
+{
+	MODEL_ANIMATE_ANIMATION,
+	MODEL_ANIMATE_ANIMGRAPH
+};
 
 CLASS()
 class ENGINE_API CModelComponent : public CPrimitiveComponent
@@ -23,6 +32,7 @@ public:
 	void SetModel(const FString& file);
 	void SetModel(TObjectPtr<CModelAsset> model);
 	void SetAnimationGraph(CAnimationGraph* animGraph);
+	void SetAnimation(CAnimation* anim);
 
 	inline TObjectPtr<CModelAsset> GetModel() const { return model; }
 	inline const TArray<TObjectPtr<CMaterial>>& GetMaterials() const { return materials; }
@@ -53,6 +63,8 @@ public:
 protected:
 	virtual void Load(FMemStream& in) override;
 
+	void Update(double dt) override;
+
 private:
 	FUNCTION()
 	void OnModelEdit();
@@ -60,14 +72,23 @@ private:
 	void SetupPhysics();
 
 private:
-	PROPERTY(Editable, Category = Rendering, OnEditFunc = OnModelEdit)
+	PROPERTY(Editable, Category = Rendering, ValidateFunc = OnModelEdit)
 	TObjectPtr<CModelAsset> model;
 
 	PROPERTY(Editable, Category = Rendering)
 	TArray<TObjectPtr<CMaterial>> materials;
-
+	
 	PROPERTY(Editable, Category = Rendering)
 	bool bCastShadows = true;
+
+	PROPERTY(Editable, Category = Animation)
+	EModelCompAnimator animationType = MODEL_ANIMATE_ANIMATION;
+
+	PROPERTY(Editable, Category = Animation, VisibleCondition = "animationType == MODEL_ANIMATE_ANIMATION")
+	TObjectPtr<CAnimation> animationAsset;
+
+	PROPERTY(Editable, Category = Animation, VisibleCondition = "animationType == MODEL_ANIMATE_ANIMGRAPH")
+	TObjectPtr<CAnimationGraph> animationGraph;
 
 	CModelComponentProxy* renderProxy = nullptr;
 
@@ -82,4 +103,6 @@ private:
 	TArray<FMatrix> boneMatrices; // cache for skeletal animation
 
 	TArray<TObjectPtr<IPhysicsBody>> physBodies;
+
+	IAnimationProxy* animProxy;
 };

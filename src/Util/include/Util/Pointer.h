@@ -5,9 +5,12 @@ class TUniquePtr
 {
 public:
 	TUniquePtr() = default;
-	TUniquePtr(T* obj) {
-		ptr = obj;
+	TUniquePtr(const TUniquePtr& other) : ptr(other.ptr) {
 	}
+	TUniquePtr(TUniquePtr&& other) : ptr(other.ptr) {
+		other.ptr = nullptr;
+	}
+	TUniquePtr(T* obj) : ptr(obj) {}
 	~TUniquePtr() {
 		delete ptr;
 	}
@@ -23,6 +26,12 @@ public:
 			delete ptr;
 
 		ptr = newPtr;
+		return *this;
+	}
+	TUniquePtr<T>& operator=(TUniquePtr<T>&& other)
+	{
+		this->ptr = other.ptr;
+		other.ptr = nullptr;
 		return *this;
 	}
 

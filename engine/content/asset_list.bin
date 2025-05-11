@@ -1,0 +1,9 @@
+{
+	// asset id
+	0123456789
+	{
+		name: "dunno"
+		path: "sounds/dunno.mp3"
+		type: AudioAsset
+	}
+}

@@ -136,17 +136,23 @@ class TArray
 public:
 	TArray();
 	TArray(SizeType size);
+	TArray(TArray<T>&&);
 	TArray(const TArray<T>&);
 	TArray(std::initializer_list<T> list);
 	~TArray();
 
+	TArray<T>& operator=(TArray<T>&&);
 	TArray<T>& operator=(const TArray<T>&);
 	TArray<T>& operator=(const std::initializer_list<T>& list);
+
+	TArray<T> operator+(const TArray<T>&) const;
+	TArray<T>& operator+=(const TArray<T>&);
 
 	T& operator[](SizeType i);
 	const T& operator[](SizeType i) const;
 
 	void Add(const T&);
+	void Add(T&&);
 	void Add();
 	void PopBack();
 	void Clear();
@@ -202,6 +208,12 @@ protected:
 	SizeType _capacity = 0;
 	SizeType _size = 0;
 };
+
+template<typename T, typename T2>
+bool operator==(const TArray<T>&, const TArray<T2>&);
+
+template<typename T, typename T2>
+bool operator!=(const TArray<T>&, const TArray<T2>&);
 
 #include "Array.inl"
 #endif

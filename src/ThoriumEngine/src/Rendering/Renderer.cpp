@@ -40,9 +40,9 @@ CConVar cvRenderSsShadowsQuality("r.ssshadows.quality", "config/graphics.cfg", 4
 
 // Bloom
 CConVar cvRenderBloomEnabled("r.bloom.enabled", "config/graphics.cfg", 1);
-CConVar cvRenderBloomIntensity("r.bloom.intensity", "config/graphics.cfg", 0.25f);
-CConVar cvRenderBloomThreshold("r.bloom.threshold", "config/graphics.cfg", 1.f);
-CConVar cvRenderBloomKnee("r.bloom.knee", "config/graphics.cfg", 0.75f);
+CConVar cvRenderBloomIntensity("r.bloom.intensity", "config/graphics.cfg", 0.1f);
+CConVar cvRenderBloomThreshold("r.bloom.threshold", "config/graphics.cfg", 1.25f);
+CConVar cvRenderBloomKnee("r.bloom.knee", "config/graphics.cfg", 0.7f);
 
 CConVar cvRenderFBPointFilter("r.framebuffer.pointfilter", "config/graphics.cfg", 0, 0, 1);
 

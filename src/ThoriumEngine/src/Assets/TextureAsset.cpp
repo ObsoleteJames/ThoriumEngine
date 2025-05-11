@@ -255,6 +255,7 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 	}
 
 	format = settings.format;
+	filteringType = settings.filter;
 
 	if (format >= THTX_FORMAT_AUTO)
 	{

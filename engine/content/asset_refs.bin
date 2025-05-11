@@ -1,0 +1,16 @@
+{
+	324232398189
+	{
+		// list of assets this depends on.
+		depends [
+			084235823,
+			094340808,
+			320492348
+		]
+		
+		// list of assets that depend on this.
+		depended [
+			340923490
+		]
+	}
+}

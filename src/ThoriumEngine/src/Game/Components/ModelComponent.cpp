@@ -6,6 +6,7 @@
 #include "Physics/PhysicsBody.h"
 #include "Physics/PhysicsWorld.h"
 #include "Assets/Skeleton.h"
+#include "Assets/Animation.h"
 
 class CModelComponentProxy : public CPrimitiveProxy
 {
@@ -145,7 +146,14 @@ void CModelComponent::SetModel(TObjectPtr<CModelAsset> m)
 
 void CModelComponent::SetAnimationGraph(CAnimationGraph* animGraph)
 {
+	animationType = MODEL_ANIMATE_ANIMGRAPH;
+	animationGraph = animGraph;
+}
 
+void CModelComponent::SetAnimation(CAnimation* anim)
+{
+	animationType = MODEL_ANIMATE_ANIMATION;
+	animationAsset = anim;
 }
 
 void CModelComponent::CalculateSkeletonMatrix()
@@ -339,6 +347,15 @@ void CModelComponent::Load(FMemStream& in)
 
 	if (model)
 		SetModel(model);
+}
+
+void CModelComponent::Update(double dt)
+{
+	BaseClass::Update(dt);
+
+	if (animationAsset)
+	{
+	}
 }
 
 void CModelComponent::OnModelEdit()
