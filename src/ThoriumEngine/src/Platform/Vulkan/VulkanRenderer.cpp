@@ -45,7 +45,7 @@ void VulkanRenderer::Init()
 	result = vkCreateDevice(phys[0], &deviceInfo, nullptr, &device);
 	THORIUM_ASSERT(result == VK_SUCCESS, "Failed to create vulkan device");
 
-
+	
 
 }
 

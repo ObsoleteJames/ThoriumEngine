@@ -61,10 +61,10 @@ public:
 
 	template<typename T>
 	static inline T Clamp(T value, T min, T max);
-	template<typename T>
-	static inline T Min(T a, T b);
-	template<typename T>
-	static inline T Max(T a, T b);
+	template<typename T, typename T2>
+	static inline T Min(T a, T2 b);
+	template<typename T, typename T2>
+	static inline T Max(T a, T2 b);
 
 	static void RayCylinderIntersection(const FVector& cylinderCenter, const FVector& cylinderDir, double cylinderRadius, double cylinderHeight,
 		const FVector& rayOrigin, const FVector& rayDir, bool& bIntersects, double& out);
@@ -104,14 +104,14 @@ T FMath::Clamp(T value, T min, T max)
 	return value < min ? min : (value > max ? max : value);
 }
 
-template<typename T>
-T FMath::Min(T a, T b)
+template<typename T, typename T2>
+T FMath::Min(T a, T2 b)
 {
 	return a > b ? b : a;
 }
 
-template<typename T>
-T FMath::Max(T a, T b)
+template<typename T, typename T2>
+T FMath::Max(T a, T2 b)
 {
 	return a > b ? a : b;
 }
