@@ -130,8 +130,8 @@ void TBaseString<T>::Resize(SizeType size)
 
 	SizeType prevSize = this->_size;
 
+	this->Reserve(size + 2);
 	this->_size = size;
-	this->Reserve(this->_size + 2);
 
 	this->_data[this->_size + 1] = (T)L'\0';
 }

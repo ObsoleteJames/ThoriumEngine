@@ -35,6 +35,8 @@ public:
 
 	FMatrix ToMatrix() const;
 
+	static FTransform Lerp(const FTransform& a, const FTransform& b, float t);
+
 public:
 	PROPERTY()
 	FVector position;

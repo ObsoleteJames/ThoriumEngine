@@ -7,6 +7,8 @@
 #include "Module.h"
 #include "Asset.h"
 
+#include <Util/KeyValue.h>
+
 #include <thread>
 #include <mutex>
 #include <atomic>
@@ -16,6 +18,8 @@
 
 TUnorderedMap<SizeType, CAsset*> CAssetManager::allocatedAssets;
 TUnorderedMap<SizeType, FAssetData> CAssetManager::availableAssets;
+
+TUnorderedMap<SizeType, FAssetData> CAssetManager::genericAssets;
 
 TUnorderedMap<FString, SizeType> CAssetManager::assetPaths;
 
@@ -67,7 +71,8 @@ int CAssetManager::ScanDir(FDirectory* dir)
 
 			if (auto it = availableAssets.find(data.id); it != availableAssets.end())
 			{
-				CONSOLE_LogError("CAssetManager", "Found mutliple assets with same ID!\n" + it->second.file->Path() + '\n' + f->Path() + " - ignored");
+				if (it->second.file != f) // if it's the same file then it's not actually a duplicate
+					CONSOLE_LogError("CAssetManager", "Found mutliple assets with same ID!\n" + it->second.file->Path() + '\n' + f->Path() + " - ignored");
 				continue;
 			}
 
@@ -147,6 +152,9 @@ void CAssetManager::OnAssetFileDeleted(FFile* file)
 
 	if (assetPaths.find(file->Path()) != assetPaths.end())
 		assetPaths.erase(file->Path());
+
+	if (genericAssets.find(data->id) != genericAssets.end())
+		genericAssets.erase(data->id);
 }
 
 void CAssetManager::Init()
@@ -265,6 +273,69 @@ bool CAssetManager::FetchAssetData(FFile* file, FAssetData& outData)
 	return outData.type != nullptr;
 }
 
+void CAssetManager::LoadGenericAssets(FMod* mod)
+{
+	FString binPath = mod->Path() + "/asset_list.bin";
+	FKeyValue kv(binPath);
+	if (!kv.IsOpen())
+		return;
+
+	for (auto& v : kv.GetCategories())
+	{
+		SizeType id = std::stoull(v->GetName().c_str());
+
+		FString path = *v->GetValue("path");
+		FString typeStr = *v->GetValue("type");
+
+		FAssetClass* type = (FAssetClass*)CModuleManager::FindClass(typeStr);
+		if (!type)
+		{
+			CONSOLE_LogError("CAssetManager", "Invalid asset type! '" + typeStr + "' does not exist. asset: \"" + path + "\"");
+			continue;
+		}
+
+		FFile* file = CFileSystem::FindFile(path);
+		if (!file)
+		{
+			CONSOLE_LogError("CAssetManager", "Invalid asset file path ! \"" + path + "\"");
+			continue;
+		}
+
+		FAssetData data{};
+		data.id = id;
+		data.file = file;
+		data.type = type;
+		data.version = CASSET_VERSION_GENERIC_TYPE;
+
+		genericAssets[id] = data;
+		availableAssets[id] = data;
+		assetPaths[path] = id;
+	}
+}
+
+void CAssetManager::SaveAssetListBin(FMod* mod)
+{
+	FString binPath = mod->Path() + "/asset_list.bin";
+	FKeyValue kv(binPath);
+
+	int numAssets = 0;
+
+	for (auto& asset : genericAssets)
+	{
+		if (asset.second.file->Mod() != mod)
+			continue;
+
+		KVCategory* cat = kv.GetCategory(FString::ToString(asset.second.id), true);
+		cat->SetValue("path", asset.second.file->Path());
+		cat->SetValue("type", asset.second.type->GetInternalName());
+
+		numAssets++;
+	}
+
+	if (numAssets > 0)
+		kv.Save();
+}
+
 void CAssetManager::ScanMod(FMod* mod)
 {
 	int numFiles = ScanDir(&mod->root);
@@ -287,11 +358,15 @@ void CAssetManager::ScanMod(FMod* mod)
 			}
 		}
 	}
+
+	LoadGenericAssets(mod);
 }
 
 void CAssetManager::DeleteAssetsFromMod(FMod* mod)
 {
 	auto ar = availableAssets;
+
+	SaveAssetListBin(mod);
 
 	for (auto& it : ar)
 	{
@@ -304,6 +379,21 @@ void CAssetManager::DeleteAssetsFromMod(FMod* mod)
 			availableAssets.erase(it.first);
 		}
 	}
+}
+
+void CAssetManager::ConvertToAsset(FFile* file, FAssetClass* type)
+{
+	SizeType id = FMath::Random64();
+
+	FAssetData data{};
+	data.id = id;
+	data.file = file;
+	data.type = type;
+	data.version = CASSET_VERSION_GENERIC_TYPE;
+
+	genericAssets[id] = data;
+	availableAssets[id] = data;
+	assetPaths[file->Path()] = id;
 }
 
 void CAssetManager::RegisterAssetDependancy(SizeType idA, SizeType idB, const FString& property)
@@ -494,7 +584,12 @@ CAsset* CAssetManager::AllocateAsset(FAssetClass* type, SizeType id)
 {
 	CAsset* r = (CAsset*)type->Instantiate();
 	allocatedAssets[id] = r;
+	
+	if (const FAssetData* data = GetAssetData(id); data)
+		r->version = data->version;
+
 	r->assetId = id;
 	r->bRegistered = true;
+
 	return r;
 }

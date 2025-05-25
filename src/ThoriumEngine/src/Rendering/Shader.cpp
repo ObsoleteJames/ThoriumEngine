@@ -231,7 +231,8 @@ void CShaderSource::OnSave(IBaseFStream* stream)
 void CShaderSource::OnDelete()
 {
 	BaseClass::OnDelete();
-	_shaders.Erase(_shaders.Find(this));
+	if (auto it = _shaders.Find(this); it != _shaders.end())
+		_shaders.Erase(it);
 }
 
 bool CShaderSource::Compile()

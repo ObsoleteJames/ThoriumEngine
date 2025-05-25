@@ -32,9 +32,9 @@ public:
 	TObjectPtr<IVertexBuffer> vertexBuffer;
 	TObjectPtr<IIndexBuffer> indexBuffer;
 
-	uint32 numIndices;
-	uint32 numVertices;
-	uint32 materialIndex;
+	uint32 numIndices = 0;
+	uint32 numVertices = 0;
+	uint32 materialIndex = 0;
 
 	uint8 topologyType = TOPOLOGY_TRIANGLES;
 	FString meshName;
@@ -46,11 +46,11 @@ public:
 
 public:
 	// This is only used for saving new mesh data.
-	SizeType numVertexData;
+	SizeType numVertexData = 0;
 	FVertex* vertexData = nullptr;
 
-	SizeType numIndexData;
+	SizeType numIndexData = 0;
 	uint* indexData = nullptr;
 
-	SizeType meshDataOffset;
+	SizeType meshDataOffset = 0;
 };

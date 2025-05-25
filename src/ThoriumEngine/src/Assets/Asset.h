@@ -5,6 +5,7 @@
 #include "AssetManager.h"
 #include "Asset.generated.h"
 
+#define CASSET_VERSION_GENERIC_TYPE 0xFF
 #define CASSET_VERSION 0x01
 
 struct FAssetHeader

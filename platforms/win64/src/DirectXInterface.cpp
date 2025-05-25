@@ -60,10 +60,10 @@ void DirectXInterface::Init()
 		bestAdapter,				// Adapter
 		D3D_DRIVER_TYPE_UNKNOWN,	// Driver Type
 		NULL,
-#if 0
-		D3D11_CREATE_DEVICE_DEBUG,
-#else
+#if CONFIG_RELEASE
 		0,
+#else
+		D3D11_CREATE_DEVICE_DEBUG,
 #endif
 		NULL,
 		0,

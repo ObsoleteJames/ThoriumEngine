@@ -7,6 +7,7 @@
 #include "Physics/PhysicsWorld.h"
 #include "Assets/Skeleton.h"
 #include "Assets/Animation.h"
+#include "Game/Animation/AnimationProxy.h"
 
 class CModelComponentProxy : public CPrimitiveProxy
 {
@@ -32,7 +33,9 @@ public:
 		float distanceFromCamera = FVector::Distance(camera ? camera->position : FVector(), model->GetWorldPosition());
 		//float distanceFromCamera = 0;
 		int lodLevel = model->GetModel()->GetLodFromDistance(distanceFromCamera);
-		model->GetModel()->Load(lodLevel);
+
+		if (model->GetModel()->File())
+			model->GetModel()->Load(lodLevel);
 
 		transform.position = model->GetWorldPosition();
 		transform.rotation = model->GetWorldRotation();
@@ -244,6 +247,7 @@ void CModelComponent::Init()
 void CModelComponent::OnStart()
 {
 	SetupPhysics();
+	ResetAnimation();
 }
 
 void CModelComponent::OnDelete()
@@ -255,6 +259,9 @@ void CModelComponent::OnDelete()
 		delete renderProxy;
 		renderProxy = nullptr;
 	}
+
+	if (animProxy)
+		delete animProxy;
 
 	for (auto& p : physBodies)
 		p->Delete();
@@ -341,6 +348,16 @@ FTransform CModelComponent::GetBoneModelTransform(int bone) const
 	return r;
 }
 
+void CModelComponent::ResetAnimation()
+{
+	if (animProxy)
+		delete animProxy;
+	animProxy = nullptr;
+
+	if (animationType == MODEL_ANIMATE_ANIMATION && animationAsset)
+		animProxy = new CAnimationProxy(this, model, &skeleton, animationAsset);
+}
+
 void CModelComponent::Load(FMemStream& in)
 {
 	BaseClass::Load(in);
@@ -353,8 +370,10 @@ void CModelComponent::Update(double dt)
 {
 	BaseClass::Update(dt);
 
-	if (animationAsset)
+	if (animProxy)
 	{
+		animProxy->Update(dt);
+		UpdateSkeletonMatrix();
 	}
 }
 

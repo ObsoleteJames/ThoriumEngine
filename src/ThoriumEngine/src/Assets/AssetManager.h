@@ -61,6 +61,9 @@ public:
 
 	static void ScanMod(FMod* mod);
 	static void DeleteAssetsFromMod(FMod* mod);
+
+	// Converts file into generic asset type
+	static void ConvertToAsset(FFile* file, FAssetClass* type);
 	
 	/**
 	 * Registers a dependancy from 'source' to 'target'.
@@ -128,9 +131,14 @@ private:
 
 	static bool FetchAssetData(FFile* file, FAssetData& outData);
 
+	static void LoadGenericAssets(FMod* mod);
+	static void SaveAssetListBin(FMod* mod);
+
 private:
 	static TUnorderedMap<SizeType, CAsset*> allocatedAssets;
 	static TUnorderedMap<SizeType, FAssetData> availableAssets;
+
+	static TUnorderedMap<SizeType, FAssetData> genericAssets;
 
 	// map of asset paths and their IDs
 	static TUnorderedMap<FString, SizeType> assetPaths;

@@ -209,6 +209,9 @@ FFile* FMod::FindFile(const FString& path) const
 
 FFile* FMod::CreateFile(const FString& path)
 {
+	if (CFileSystem::IsBlacklisted(path))
+		return nullptr;
+
 	FString dirPath = path;
 	if (dirPath[0] == '/' || dirPath[0] == '\\')
 		dirPath.Erase(dirPath.begin());
@@ -384,6 +387,9 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 		if (!entry.is_regular_file())
 			continue;
 
+		if (IsBlacklisted(entry.path().filename().generic_string().c_str()))
+			continue;
+
 		if (entry.path().extension() == ".pak")
 			continue; // TDOO: Load pak file.
 
@@ -395,6 +401,100 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 		file->dir = dir;
 		dir->files.Add(file);
 	}
+}
+
+void CFileSystem::RefreshDir(FMod* mod, const FString& path, FDirectory* dir)
+{
+	FString _path = path;
+	if (*_path.last() == '\\' || *_path.last() == '/')
+		_path.Erase(_path.last());
+
+	// check for new files/folders
+	for (auto& entry : fs::directory_iterator(_path.c_str()))
+	{
+		if (entry.is_directory())
+		{
+			auto dirName = entry.path().stem();
+			
+			if (IsBlacklisted(dirName.generic_string().c_str()))
+				continue;
+
+			// check if this dir already exists
+			for (auto d : dir->directories)
+			{
+				if (d->GetName() == dirName.generic_string().c_str())
+				{
+					goto _DirExists;
+				}
+			}
+
+			dir->directories.Add(new FDirectory());
+			FDirectory* newDir = dir->directories.last();
+			newDir->name = dirName.generic_string().c_str();
+			newDir->parent = dir;
+			MountDir(mod, _path + "/" + newDir->GetName(), newDir);
+
+		_DirExists:
+			continue;
+		}
+
+		if (!entry.is_regular_file())
+			continue;
+
+		for (auto f : dir->files)
+		{
+			if (f->Name() + f->Extension() == entry.path().filename().generic_string().c_str())
+				goto _FileExists;
+		}
+
+		if (IsBlacklisted(entry.path().filename().generic_string().c_str()))
+			continue;
+
+		FFile* file = new FFile();
+		file->mod = mod;
+
+		file->name = entry.path().stem().generic_string().c_str();
+		file->extension = entry.path().extension().generic_string().c_str();
+		file->dir = dir;
+		dir->files.Add(file);
+	
+	_FileExists:;
+	}
+
+	{
+		TArray<FDirectory*> toRemove;
+		// delete old files/folders
+		for (auto* d : dir->directories)
+		{
+			if (!fs::exists((mod->Path() + "/" + d->GetPath()).c_str()))
+				toRemove.Add(d);
+		}
+
+		for (auto* d : toRemove)
+		{
+			d->parent->directories.Erase(d->parent->directories.Find(d));
+			delete d;
+		}
+	}
+
+	{
+		TArray<FFile*> toRemove;
+		// delete old files/folders
+		for (auto* f : dir->files)
+		{
+			if (!fs::exists(f->FullPath().c_str()))
+				toRemove.Add(f);
+		}
+
+		for (auto* f : toRemove)
+		{
+			f->dir->files.Erase(f->dir->files.Find(f));
+			delete f;
+		}
+	}
+
+	for (auto* d : dir->directories)
+		RefreshDir(mod, _path + "/" + d->GetName(), d);
 }
 
 FMod* CFileSystem::MountMod(const FString& modPath, const FString& mn, const FString& sdkPath)
@@ -456,7 +556,7 @@ FMod* CFileSystem::MountMod(const FString& modPath, const FString& mn, const FSt
 
 bool CFileSystem::UnmountMod(FMod* mod)
 {
-	SizeType modIndex = 0;
+	SizeType modIndex = -1;
 	for (int i = 0; i < Mods.Size(); i++)
 	{
 		if (Mods[i] == mod)
@@ -466,7 +566,7 @@ bool CFileSystem::UnmountMod(FMod* mod)
 		}
 	}
 
-	if (!modIndex)
+	if (modIndex == -1)
 		return false;
 
 	CAssetManager::DeleteAssetsFromMod(mod);
@@ -476,15 +576,26 @@ bool CFileSystem::UnmountMod(FMod* mod)
 	return true;
 }
 
+void CFileSystem::Refresh()
+{
+	for (auto* m : Mods)
+	{
+		RefreshDir(m, m->Path(), &m->root);
+		CAssetManager::ScanMod(m);
+	}
+}
+
 bool CFileSystem::IsBlacklisted(const FString& path)
 {
 	const char* blackListedPaths[] = {
 		"config",
 		"addons",
 		"bin",
+		"asset_list.bin",
+		"asset_refs.bin"
 	};
 
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 5; i++)
 	{
 		if (path == blackListedPaths[i])
 			return true;

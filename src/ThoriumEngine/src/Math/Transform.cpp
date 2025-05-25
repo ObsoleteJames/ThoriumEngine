@@ -23,3 +23,12 @@ FMatrix FTransform::ToMatrix() const
 {
 	return (FMatrix(1.f).Translate(position) * rotation).Scale(scale);
 }
+
+FTransform FTransform::Lerp(const FTransform& a, const FTransform& b, float t)
+{
+	return FTransform(
+		FVector::Lerp(a.position, b.position, t),
+		FQuaternion::Slerp(a.rotation, b.rotation, t),
+		FVector::Lerp(a.scale, b.scale, t)
+	);
+}

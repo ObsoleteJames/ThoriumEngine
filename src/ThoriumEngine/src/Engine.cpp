@@ -574,11 +574,16 @@ void CEngine::OnExit()
 	gameInstance->Delete();
 	gameInstance = nullptr;
 
+	// Clear Shader list
+	(*(TArray<TObjectPtr<CShaderSource>>*)&CShaderSource::GetAllShaders()).Clear();
+
 	gRenderer->Delete();
 	delete gGHI;
 
 	if (!bIsTerminal)
 		CWindow::Shutdown();
+
+	CFileSystem::UnmountMod(engineMod);
 
 	CAssetManager::Shutdown();
 	CModuleManager::Cleanup();

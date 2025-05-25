@@ -66,6 +66,9 @@ public:
 	// add a new channel, returns null if it already exists
 	FAnimChannel* AddChannel(const FString& key);
 	FAnimChannel* GetChannel(const FString& key) const;
+	inline const FAnimChannel* GetChannel(int index) const { return &channels[index]; }
+
+	inline SizeType NumChannels() const { return channels.Size(); }
 
 	void CalculateFrameCount();
 

@@ -571,8 +571,8 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 
 		if (auto i = Class.classMacro.ArgIndex("Extension"); Class.classMacro.type == FMacro::ASSET && Class.classMacro.ArgIndex("Abstract") == -1)
 		{
-			if (i == -1)
-				std::cerr << "error: type of asset must have extension type specified!";
+			if (i == -1);
+				//std::cerr << "error: type of asset must have extension type specified!";
 			else
 				stream << "\t\textension = \"" << Class.classMacro.Arguments[i].Value.c_str() << "\";\n";
 

@@ -278,26 +278,29 @@ void CObject::SerializeProperty(FMemStream& data, uint type, const FProperty* p,
 		EObjectPtrType type = OBJPTR_GENERIC;
 		SizeType objId = 0;
 		FClass* ptrClass = ptr.IsValid() ? ptr->GetClass() : CModuleManager::FindClass(p->typeName);
-		if (ptrClass->CanCast(CAsset::StaticClass()))
-			type = OBJPTR_ASSET_REF;
-		else if (ptrClass->CanCast(CEntity::StaticClass()))
+		if (ptrClass)
 		{
-			type = OBJPTR_WORLD_ENTITY_REF;
-			if (auto ent = CastChecked<CEntity>(ptr); ent)
-				objId = ent->EntityId();
-		}
-		else if (ptrClass->CanCast(CEntityComponent::StaticClass()))
-		{
-			if (auto comp = CastChecked<CEntityComponent>(ptr); comp)
+			if (ptrClass->CanCast(CAsset::StaticClass()))
+				type = OBJPTR_ASSET_REF;
+			else if (ptrClass->CanCast(CEntity::StaticClass()))
 			{
-				if (auto thisEnt = Cast<CEntity>(this); thisEnt && comp->GetEntity() == thisEnt)
-					type = OBJPTR_ENTITY_COMP_REF;
-				else if (auto thisComp = Cast<CEntityComponent>(this); thisComp && comp->GetEntity() == thisComp->GetEntity())
-					type = OBJPTR_ENTITY_COMP_REF;
-				else
-					type = OBJPTR_WORLD_ENTITY_COMP_REF;
+				type = OBJPTR_WORLD_ENTITY_REF;
+				if (auto ent = CastChecked<CEntity>(ptr); ent)
+					objId = ent->EntityId();
+			}
+			else if (ptrClass->CanCast(CEntityComponent::StaticClass()))
+			{
+				if (auto comp = CastChecked<CEntityComponent>(ptr); comp)
+				{
+					if (auto thisEnt = Cast<CEntity>(this); thisEnt && comp->GetEntity() == thisEnt)
+						type = OBJPTR_ENTITY_COMP_REF;
+					else if (auto thisComp = Cast<CEntityComponent>(this); thisComp && comp->GetEntity() == thisComp->GetEntity())
+						type = OBJPTR_ENTITY_COMP_REF;
+					else
+						type = OBJPTR_WORLD_ENTITY_COMP_REF;
 
-				objId = comp->ComponentId();
+					objId = comp->ComponentId();
+				}
 			}
 		}
 

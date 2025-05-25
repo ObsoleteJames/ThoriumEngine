@@ -1,9 +1,14 @@
+
 {
-	// asset id
-	0123456789
+
+	541864987654168435
 	{
-		name: "dunno"
 		path: "sounds/dunno.mp3"
-		type: AudioAsset
+		type: "CMp3Asset"
+	}
+	12450457834759473469
+	{
+		path: "sounds/beep.wav"
+		type: "CWavAsset"
 	}
 }

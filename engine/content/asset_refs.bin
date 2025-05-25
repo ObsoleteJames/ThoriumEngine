@@ -1,15 +1,15 @@
 {
 	324232398189
 	{
-		// list of assets this depends on.
-		depends [
+		// list of assets this references.
+		refs [
 			084235823,
 			094340808,
 			320492348
 		]
 		
-		// list of assets that depend on this.
-		depended [
+		// list of assets that reference this.
+		referenced [
 			340923490
 		]
 	}

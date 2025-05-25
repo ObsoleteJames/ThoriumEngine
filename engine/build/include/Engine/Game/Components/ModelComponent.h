@@ -14,8 +14,8 @@ class IAnimationProxy;
 ENUM()
 enum EModelCompAnimator
 {
-	MODEL_ANIMATE_ANIMATION,
-	MODEL_ANIMATE_ANIMGRAPH
+	MODEL_ANIMATE_ANIMATION META(Name = "Animation File"),
+	MODEL_ANIMATE_ANIMGRAPH META(Name = "Animation Graph")
 };
 
 CLASS()
@@ -30,6 +30,7 @@ public:
 	CModelComponent();
 
 	void SetModel(const FString& file);
+
 	void SetModel(TObjectPtr<CModelAsset> model);
 	void SetAnimationGraph(CAnimationGraph* animGraph);
 	void SetAnimation(CAnimation* anim);
@@ -59,6 +60,9 @@ public:
 	inline const FSkeletonInstance& GetSkeleton() const { return skeleton; }
 
 	FTransform GetBoneModelTransform(int bone) const;
+
+	FUNCTION()
+	void ResetAnimation();
 
 protected:
 	virtual void Load(FMemStream& in) override;
@@ -104,5 +108,5 @@ private:
 
 	TArray<TObjectPtr<IPhysicsBody>> physBodies;
 
-	IAnimationProxy* animProxy;
+	IAnimationProxy* animProxy = nullptr;
 };

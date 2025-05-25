@@ -144,6 +144,9 @@ public:
 	static FMod* MountMod(const FString& modPath, const FString& modName = FString(), const FString& sdkPath = FString());
 	static bool UnmountMod(FMod* mod);
 
+	// Scans for any new or deleted files in all mods.
+	static void Refresh();
+
 	static bool IsBlacklisted(const FString& path);
 
 	static inline const TArray<FMod*>& GetMods() { return Mods; }
@@ -162,6 +165,7 @@ public:
 
 private:
 	static void MountDir(FMod* mod, const FString& path, FDirectory* dir);
+	static void RefreshDir(FMod* mod, const FString& path, FDirectory* dir);
 
 private:
 	//TArray<FFile> Files;
