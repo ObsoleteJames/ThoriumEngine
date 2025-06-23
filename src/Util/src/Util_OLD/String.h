@@ -19,6 +19,7 @@ class TBaseString : public TArray<T>
 public:
 	TBaseString();
 	TBaseString(const T*);
+	TBaseString(TBaseString<T>&&);
 	TBaseString(const TBaseString<T>&);
 
 	TBaseString<T>& operator=(const T*);

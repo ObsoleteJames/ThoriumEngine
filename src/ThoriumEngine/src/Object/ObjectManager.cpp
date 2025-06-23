@@ -128,8 +128,30 @@ void CObjectManager::Shutdown()
 	for (auto it = ObjectsToDelete.rbegin(); it != ObjectsToDelete.rend(); it++)
 		delete *it;
 
-	for (auto it = Objects.begin(); it != Objects.end(); it++)
+	for (auto it = Objects.rbegin(); it != Objects.rend(); it++)
+	{
+		// Clear all object pointers to prevent referencing deleted objects.
+		CObject* obj = it->second;
+
+		FClass* clas = obj->GetClass();
+		while (clas)
+		{
+			const FProperty* prop = clas->GetPropertyList();
+			while (prop)
+			{
+				if (prop->type == EVT_OBJECT_PTR)
+				{
+					*(SizeType*)((SizeType)obj + prop->offset) = 0;
+				}
+
+				prop = prop->next;
+			}
+
+			clas = clas->GetBaseClass();
+		}
+
 		delete it->second;
+	}
 }
 
 void CObjectManager::DeleteObjectsFromModule(CModule* module)

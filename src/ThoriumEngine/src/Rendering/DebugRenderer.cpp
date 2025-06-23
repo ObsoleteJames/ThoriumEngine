@@ -9,14 +9,24 @@
 
 CDebugRenderer* gDebugRenderer;
 
+#define DR_VERTEX_LINEBUFFER_SIZE sizeof(FVertex) * 512
+
 CDebugRenderer::CDebugRenderer()
 {
-	lineMesh.numVertices = 2;
-	lineMesh.vertexBuffer = gGHI->CreateVertexBuffer({ { FVector::zero }, { -FVector::forward } });
+	lineMesh.numVertices = 0;
+	lineMesh.vertexBuffer = gGHI->CreateVertexBuffer(DR_VERTEX_LINEBUFFER_SIZE);
 	lineMesh.topologyType = FMesh::TOPOLOGY_LINES;
+	lineOverlayMesh.numVertices = 0;
+	lineOverlayMesh.vertexBuffer = gGHI->CreateVertexBuffer(DR_VERTEX_LINEBUFFER_SIZE);
+	lineOverlayMesh.topologyType = FMesh::TOPOLOGY_LINES;
 
 	cube = CAssetManager::GetAsset<CModelAsset>("models/Cube.thasset");
 	sphere = CAssetManager::GetAsset<CModelAsset>("models/Sphere.thasset");
+
+	matDebugLine = CreateObject<CMaterial>();
+	matDebugLine->SetName("DebugDrawLine");
+	matDebugLine->SetShader("Tools");
+	matDebugLine->SetInt("vType", 4);
 
 	if (cube)
 		cube->Load(0);
@@ -26,17 +36,26 @@ CDebugRenderer::CDebugRenderer()
 
 void CDebugRenderer::DrawLine(const FVector& begin, const FVector& end, const FColor& color, float time /*= 0.f*/, bool bOverlay /*= false*/)
 {
+	//FVertex v1{};
+	//FVertex v2{};
+
+	//v1.position = begin;
+	//v2.position = end;
+	//v1.color = { color.r, color.g, color.b };
+	//v2.color = v1.color;
+
+	//lineDrawVertices.Add(v1);
+	//lineDrawVertices.Add(v2);
+
 	FTransform t;
 	t.position = begin;
-	FVector dir = (end - begin).Normalize();
-	t.rotation = FQuaternion::LookRotation(dir, FVector::Dot(dir, FVector::up) > 0.95f ? FVector::right : FVector::up);
-	t.scale = (end - begin).Magnitude();
+	t.scale = end; // use scale as end position
 
-	CMaterial* mat = CreateObject<CMaterial>();
-	mat->SetName("DebugDrawLine");
-	mat->SetShader("Tools");
-	mat->SetInt("vType", 4);
-	mat->SetColor("vColorTint", color);
+	//CMaterial* mat = CreateObject<CMaterial>();
+	//mat->SetName("DebugDrawLine");
+	//mat->SetShader("Tools");
+	//mat->SetInt("vType", 4);
+	//mat->SetColor("vColorTint", color);
 
 	FDebugDrawCmd cmd{
 		FDebugDrawCmd::LINE,
@@ -47,7 +66,7 @@ void CDebugRenderer::DrawLine(const FVector& begin, const FVector& end, const FC
 		0, 0,
 		time != 0.f ? time + GetScene()->GetTime() : 0.f,
 		GetScene(),
-		mat
+		matDebugLine
 	};
 	drawCalls.Add(cmd);
 }
@@ -260,20 +279,20 @@ void CDebugRenderer::Render()
 				FVector& pos = it->transform.position;
 				FVector& scale = it->transform.scale;
 				FQuaternion& rot = it->transform.rotation;
-				_Line(rot.Rotate(pos + (FVector(-0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, -0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
-				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(0.5f, 0.5f, -0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
-				_Line(rot.Rotate(pos + (FVector(-0.5f, -0.5f, 0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
-				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, 0.5f) * scale)), rot.Rotate(pos + (FVector(0.5f, 0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(-0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, -0.5f) * scale)), it->color, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(0.5f, 0.5f, -0.5f) * scale)), it->color, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(-0.5f, -0.5f, 0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, 0.5f) * scale)), it->color, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, 0.5f) * scale)), rot.Rotate(pos + (FVector(0.5f, 0.5f, 0.5f) * scale)), it->color, scene, it->drawType & DebugDrawType_Overlay);
 
-				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(0.5f, -0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
-				_Line(rot.Rotate(pos + (FVector(-0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, -0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
-				_Line(rot.Rotate(pos + (FVector(0.5f, 0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(0.5f, 0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
-				_Line(rot.Rotate(pos + (FVector(-0.5f, 0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(0.5f, -0.5f, 0.5f) * scale)), it->color, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(-0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, -0.5f, 0.5f) * scale)), it->color, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, 0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(0.5f, 0.5f, 0.5f) * scale)), it->color, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(-0.5f, 0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, 0.5f) * scale)), it->color, scene, it->drawType & DebugDrawType_Overlay);
 
-				_Line(rot.Rotate(pos + (FVector(0.5f, 0.5f, 0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
-				_Line(rot.Rotate(pos + (FVector(0.5f, 0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, -0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
-				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, 0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, -0.5f, 0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
-				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, -0.5f, -0.5f) * scale)), it->mat, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, 0.5f, 0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, 0.5f) * scale)), it->color, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, 0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, 0.5f, -0.5f) * scale)), it->color, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, 0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, -0.5f, 0.5f) * scale)), it->color, scene, it->drawType & DebugDrawType_Overlay);
+				_Line(rot.Rotate(pos + (FVector(0.5f, -0.5f, -0.5f) * scale)), rot.Rotate(pos + (FVector(-0.5f, -0.5f, -0.5f) * scale)), it->color, scene, it->drawType & DebugDrawType_Overlay);
 			}
 			if (it->drawType & DebugDrawType_Solid)
 			{
@@ -309,6 +328,25 @@ void CDebugRenderer::Render()
 			continue;
 		}
 	}
+
+	//lineMesh.vertexBuffer->Update(lineDrawVertices.Size(), lineDrawVertices.Data());
+	//lineMesh.numVertices = lineDrawVertices.Size();
+	//lineDrawVertices.Clear();
+
+	//lineOverlayMesh.vertexBuffer->Update(lineDrawOverlayVertices.Size(), lineDrawOverlayVertices.Data());
+	//lineOverlayMesh.numVertices = lineDrawVertices.Size();
+	//lineDrawOverlayVertices.Clear();
+
+	//FDrawMeshCmd cmd{};
+	//cmd.mesh = &lineMesh;
+	//cmd.material = matDebugLine;
+	//cmd.drawType = MESH_DRAW_PRIMITIVE_LINES;
+	//cmd.transform = FMatrix(1.f);
+
+	//scene->PushCommand(FRenderCommand(cmd, R_DEBUG_PASS));
+
+	//cmd.mesh = &lineOverlayMesh;
+	//scene->PushCommand(FRenderCommand(cmd, R_DEBUG_OVERLAY_PASS));
 }
 
 CRenderScene* CDebugRenderer::GetScene()
@@ -316,24 +354,49 @@ CRenderScene* CDebugRenderer::GetScene()
 	return scene ? scene : gWorld->GetRenderScene();
 }
 
-void CDebugRenderer::_Line(const FVector& begin, const FVector& end, CMaterial* mat, CRenderScene* scene, bool bOverlay)
+void CDebugRenderer::_Line(const FVector& begin, const FVector& end, const FColor& col, CRenderScene* scene, bool bOverlay)
 {
-	FDrawMeshCmd cmd{};
+	FVertex v1{};
+	FVertex v2{};
+
+	v1.position = begin;
+	v2.position = end;
+	v1.color = { col.r, col.g, col.b };
+	v2.color = v1.color;
+
+	if (bOverlay)
+	{
+		if (lineDrawOverlayVertices.Size() + 2 >= DR_VERTEX_LINEBUFFER_SIZE)
+			return;
+
+		lineDrawOverlayVertices.Add(v1);
+		lineDrawOverlayVertices.Add(v2);
+	}
+	else
+	{
+		if (lineDrawVertices.Size() + 2 >= DR_VERTEX_LINEBUFFER_SIZE)
+			return;
+
+		lineDrawVertices.Add(v1);
+		lineDrawVertices.Add(v2);
+	}
+
+	/*FDrawMeshCmd cmd{};
 	cmd.mesh = &lineMesh;
 	cmd.material = mat;
 	cmd.drawType = MESH_DRAW_PRIMITIVE_LINES;
 	cmd.transform = FMatrix(1.f).Translate(begin).Scale((end - begin).Magnitude()) * FQuaternion::LookRotation((end - begin).Normalize(), FVector::up);
 
-	scene->PushCommand(FRenderCommand(cmd, bOverlay ? R_DEBUG_OVERLAY_PASS : R_DEBUG_PASS));
+	scene->PushCommand(FRenderCommand(cmd, bOverlay ? R_DEBUG_OVERLAY_PASS : R_DEBUG_PASS));*/
 }
 
 void CDebugRenderer::_Line(const FTransform& t, CMaterial* mat, CRenderScene* scene, bool bOverlay)
 {
-	FDrawMeshCmd cmd{};
+	/*FDrawMeshCmd cmd{};
 	cmd.mesh = &lineMesh;
 	cmd.material = mat;
 	cmd.drawType = MESH_DRAW_PRIMITIVE_LINES;
 	cmd.transform = t.ToMatrix();
 
-	scene->PushCommand(FRenderCommand(cmd, bOverlay ? R_DEBUG_OVERLAY_PASS : R_DEBUG_PASS));
+	scene->PushCommand(FRenderCommand(cmd, bOverlay ? R_DEBUG_OVERLAY_PASS : R_DEBUG_PASS));*/
 }

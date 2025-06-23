@@ -965,12 +965,55 @@ FString CEngine::OpenFileDialog(const FString& filter /*= FString()*/)
 
 	ofn.lpstrFilter = filter.c_str();
 	ofn.nFilterIndex = 1;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
 	if (GetOpenFileNameA(&ofn) == TRUE)
 		return ofn.lpstrFile;
 
 	return FString();
+}
+
+TArray<FString> CEngine::OpenFilesDialog(const FString& filter /*= FString()*/)
+{
+	OPENFILENAMEA ofn;
+	CHAR szFile[512] = { 0 };
+	CHAR currentDir[512] = { 0 };
+	ZeroMemory(&ofn, sizeof(OPENFILENAMEA));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.lpstrFile = szFile;
+	ofn.nMaxFile = sizeof(szFile);
+
+	if (GetCurrentDirectoryA(255, currentDir))
+		ofn.lpstrInitialDir = currentDir;
+
+	ofn.lpstrFilter = filter.c_str();
+	ofn.nFilterIndex = 1;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT;
+
+	if (GetOpenFileNameA(&ofn) == TRUE)
+	{
+		TArray<FString> r;
+		FString path = ofn.lpstrFile;
+		if (ofn.nFileOffset > 0)
+		{
+			FString dir = path;
+			dir.Erase(dir.begin() + (ofn.nFileOffset - 1), dir.end());
+			path.Erase(path.begin(), path.begin() + ofn.nFileOffset);
+
+			r = path.Split(' ');
+
+			for (int i = 0; i < r.Size(); i++)
+			{
+				r[i] = dir + r[i];
+			}
+		}
+		else
+			r.Add(path);
+
+		return r;
+	}
+
+	return TArray<FString>();
 }
 
 FString CEngine::SaveFileDialog(const FString& filter /*= FString()*/)
@@ -988,7 +1031,7 @@ FString CEngine::SaveFileDialog(const FString& filter /*= FString()*/)
 
 	ofn.lpstrFilter = filter.c_str();
 	ofn.nFilterIndex = 1;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
 	ofn.lpstrDefExt = strchr(filter.c_str(), '\0') + 1;
 

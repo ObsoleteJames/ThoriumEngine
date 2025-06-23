@@ -10,8 +10,8 @@
    inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
    sodipodi:docname="btn-stepframe.svg"
    inkscape:export-filename="F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\editor\themes\default\icons\btn-stepframe.png"
-   inkscape:export-xdpi="64"
-   inkscape:export-ydpi="64"
+   inkscape:export-xdpi="48"
+   inkscape:export-ydpi="48"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -29,11 +29,11 @@
      units="px"
      inkscape:zoom="16"
      inkscape:cx="22.40625"
-     inkscape:cy="22.46875"
+     inkscape:cy="22.4375"
      inkscape:window-width="2560"
-     inkscape:window-height="1377"
-     inkscape:window-x="-8"
-     inkscape:window-y="-8"
+     inkscape:window-height="1372"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
      inkscape:window-maximized="1"
      inkscape:current-layer="layer1" />
   <defs
@@ -210,14 +210,14 @@
        inkscape:rounded="0"
        inkscape:randomized="0"
        d="m 42.046907,7.4375 -39.0703607,22.557284 0,-45.114568 z"
-       transform="matrix(0.17916507,0,0,0.21699759,3.8889169,4.7526172)"
+       transform="matrix(0.17916507,0,0,0.21699759,1.8981064,4.7360804)"
        inkscape:transform-center-x="-1.1666741" />
     <rect
        style="fill:#bfbfbf;fill-rule:evenodd;stroke:#bfbfbf;stroke-width:0.568198;stroke-linejoin:round;stroke-miterlimit:4.7;stroke-dasharray:none;paint-order:markers fill stroke"
        id="rect895"
        width="0.97961432"
        height="10.216879"
-       x="1.1359539"
-       y="1.2415607" />
+       x="9.4308205"
+       y="1.2250239" />
   </g>
 </svg>

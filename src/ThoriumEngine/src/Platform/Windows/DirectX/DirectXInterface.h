@@ -21,6 +21,9 @@ public:
 	virtual IVertexBuffer* CreateVertexBuffer(const TArray<FVertex>& vertices);
 	virtual IIndexBuffer* CreateIndexBuffer(const TArray<uint>& indices);
 
+	virtual IVertexBuffer* CreateVertexBuffer(SizeType bufferSize);
+	virtual IIndexBuffer* CreateIndexBuffer(SizeType bufferSize);
+
 	virtual IShaderBuffer* CreateShaderBuffer(void* data, SizeType size);
 
 	virtual ISwapChain* CreateSwapChain(IBaseWindow* window);

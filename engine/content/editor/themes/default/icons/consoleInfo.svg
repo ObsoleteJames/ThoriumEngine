@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="64"
+   height="64"
+   viewBox="0 0 16.933333 16.933334"
+   version="1.1"
+   id="svg938"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   sodipodi:docname="consoleInfo.svg"
+   inkscape:export-filename="F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\editor\themes\default\icons\consoleInfo24.png"
+   inkscape:export-xdpi="36"
+   inkscape:export-ydpi="36"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview940"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     units="px"
+     inkscape:zoom="10.248373"
+     inkscape:cx="26.101704"
+     inkscape:cy="30.834163"
+     inkscape:window-width="2560"
+     inkscape:window-height="1372"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs935" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       id="path1205"
+       style="opacity:1;fill:#e5e5e5;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.0969508;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+       d="M 8.4666666,1.758684 A 6.7080091,6.7080091 0 0 0 1.758684,8.4666666 6.7080091,6.7080091 0 0 0 8.4666666,15.174649 6.7080091,6.7080091 0 0 0 15.174649,8.4666666 6.7080091,6.7080091 0 0 0 8.4666666,1.758684 Z M 7.9000278,4.4345623 H 9.0333054 V 5.4766568 H 7.9000278 Z m 0.064129,2.0416034 H 8.9691765 V 12.445163 H 7.9641566 Z"
+       inkscape:export-filename="F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\editor\themes\default\icons\consoleInfo24.png"
+       inkscape:export-xdpi="36"
+       inkscape:export-ydpi="36" />
+  </g>
+</svg>

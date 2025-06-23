@@ -144,8 +144,8 @@ void CObject::SerializeProperties(FMemStream& out, FStruct* structType, void* ob
 
 		SerializeProperty(data, p->type, p, p->offset, object);
 
-		SizeType nextOffset = out.Tell() + data.Size();
-		out << &nextOffset;
+		SizeType dataSize = data.Size();
+		out << &dataSize;
 		out << data;
 
 		p = p->next;
@@ -177,11 +177,11 @@ void CObject::LoadProperties(FMemStream& in, FStruct* structType, void* object)
 	{
 		uint type;
 		FString name;
-		SizeType nextOffset;
+		SizeType dataSize;
 
 		in >> &type;
 		in >> name;
-		in >> &nextOffset;
+		in >> &dataSize;
 
 		const FProperty* property = nullptr;
 		for (const FProperty* p = structType->GetPropertyList(); p != nullptr; p = p->next)
@@ -195,12 +195,14 @@ void CObject::LoadProperties(FMemStream& in, FStruct* structType, void* object)
 
 		if (!property)
 		{
-			if (nextOffset > in.Size())
+			if (dataSize > in.Size())
 				break;
 
-			in.Seek(nextOffset, SEEK_SET);
+			in.Seek(dataSize, SEEK_CUR);
 			continue;
 		}
+
+		SizeType nextOffset = dataSize + in.Tell();
 
 		if (!LoadProperty(in, type, property, property->offset, object))
 			in.Seek(nextOffset, SEEK_SET);

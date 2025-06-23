@@ -24,7 +24,7 @@ public:
 	PROPERTY(Editable)
 	float range = 10.f;
 
-	PROPERTY(Editable)
+	PROPERTY(Editable, UIType = Color)
 	FVector color = FVector(1.f);
 
 	PROPERTY(Editable)

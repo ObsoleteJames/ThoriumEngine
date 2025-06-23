@@ -9,7 +9,10 @@ class DirectXVertexBuffer : public IVertexBuffer
 {
 public:
 	DirectXVertexBuffer(const TArray<FVertex>& vertices);
+	DirectXVertexBuffer(SizeType bufferSize);
 	virtual ~DirectXVertexBuffer();
+
+	void Update(SizeType amount, void* data, SizeType offset /* = 0 */);
 
 public:
 	ID3D11Buffer* buffer;
@@ -19,7 +22,10 @@ class DirectXIndexBuffer : public IIndexBuffer
 {
 public:
 	DirectXIndexBuffer(const TArray<uint>& indices);
+	DirectXIndexBuffer(SizeType bufferSize);
 	virtual ~DirectXIndexBuffer();
+
+	void Update(SizeType amount, void* data, SizeType offset /* = 0 */);
 
 public:
 	ID3D11Buffer* buffer;

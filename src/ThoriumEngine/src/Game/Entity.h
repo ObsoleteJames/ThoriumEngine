@@ -87,7 +87,7 @@ public:
 		arr.Clear();
 		for (auto& comp : components)
 			if (comp.second->GetClass() == T::StaticClass())
-				arr.Add(comp);
+				arr.Add(comp.second);
 	}
 
 	inline const TMap<SizeType, TObjectPtr<CEntityComponent>>& GetAllComponents() const { return components; }

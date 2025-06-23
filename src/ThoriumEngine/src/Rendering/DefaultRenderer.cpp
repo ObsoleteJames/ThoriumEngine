@@ -644,6 +644,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 	gGHI->CopyResource(scene->colorBuffer, scene->preTranslucentBuff);
 
 	// ------------- POST PROCESSING -------------
+	if (cvRenderMaterialMode.AsInt() == 0)
 	{
 		std::multimap<int, CPostProcessVolumeProxy*> postProcessMats;
 

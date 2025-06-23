@@ -105,6 +105,7 @@ public:
 	static FString OSGetDocumentsPath();
 
 	static FString OpenFileDialog(const FString& filter = FString());
+	static TArray<FString> OpenFilesDialog(const FString& filter = FString()); // open multiple files
 	static FString SaveFileDialog(const FString& filter = FString());
 	static FString OpenFolderDialog();
 

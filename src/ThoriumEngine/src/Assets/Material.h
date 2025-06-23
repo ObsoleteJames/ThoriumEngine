@@ -129,7 +129,7 @@ protected:
 	TArray<MatTexture> textures;
 	TArray<MatProperty> properties;
 
-	TObjectPtr<CShaderSource> shader;
+	CShaderSource* shader;
 
 	// Buffer for shader properties
 	TObjectPtr<IShaderBuffer> gpuBuffer;

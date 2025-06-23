@@ -27,6 +27,8 @@
 #include "ImGui/imgui_impl_glfw.h"
 #include "ImGui/imgui_impl_dx11.h"
 
+CConVar cvDirectXDebugMode("dx.debug", 0, CConVar::CLIENT);
+
 DirectXInterface* GetDirectXRenderer()
 {
 	return (DirectXInterface*)gGHI;
@@ -60,11 +62,7 @@ void DirectXInterface::Init()
 		bestAdapter,				// Adapter
 		D3D_DRIVER_TYPE_UNKNOWN,	// Driver Type
 		NULL,
-#if CONFIG_RELEASE
-		0,
-#else
-		D3D11_CREATE_DEVICE_DEBUG,
-#endif
+		cvDirectXDebugMode.AsBool() ? D3D11_CREATE_DEVICE_DEBUG : 0,
 		NULL,
 		0,
 		D3D11_SDK_VERSION,
@@ -342,9 +340,19 @@ IVertexBuffer* DirectXInterface::CreateVertexBuffer(const TArray<FVertex>& verti
 	return new DirectXVertexBuffer(vertices);
 }
 
+IVertexBuffer* DirectXInterface::CreateVertexBuffer(SizeType bufferSize)
+{
+	return new DirectXVertexBuffer(bufferSize);
+}
+
 IIndexBuffer* DirectXInterface::CreateIndexBuffer(const TArray<uint>& indices)
 {
 	return new DirectXIndexBuffer(indices);
+}
+
+IIndexBuffer* DirectXInterface::CreateIndexBuffer(SizeType bufferSize)
+{
+	return new DirectXIndexBuffer(bufferSize);
 }
 
 IShaderBuffer* DirectXInterface::CreateShaderBuffer(void* data, SizeType size)

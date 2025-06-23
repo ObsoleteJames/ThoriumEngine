@@ -11,6 +11,8 @@ class ENGINE_API IVertexBuffer : public CObject
 public:
 	IVertexBuffer() = default;
 	virtual ~IVertexBuffer() = default;
+
+	virtual void Update(SizeType amount, void* data, SizeType offset = 0) = 0;
 };
 
 CLASS(Abstract)
@@ -20,6 +22,8 @@ class ENGINE_API IIndexBuffer : public CObject
 public:
 	IIndexBuffer() = default;
 	virtual ~IIndexBuffer() = default;
+
+	virtual void Update(SizeType amount, void* data, SizeType offset = 0) = 0;
 };
 
 CLASS(Abstract)

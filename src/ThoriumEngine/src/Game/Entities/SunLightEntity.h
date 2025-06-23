@@ -14,5 +14,6 @@ public:
 	void Init();
 
 public:
-	CSunLightComponent* light;
+	PROPERTY(DontSerialize, ExposeProperties)
+	TObjectPtr<CSunLightComponent> light;
 };

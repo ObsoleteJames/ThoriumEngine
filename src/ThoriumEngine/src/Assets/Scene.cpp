@@ -26,18 +26,38 @@ void CScene::OnSave(IBaseFStream* stream)
 	for (auto& ent : ents)
 	{
 		SizeType entId = ent.second->EntityId();
-		SizeType dataSize;
+		SizeType numComps = ent.second->GetAllComponents().size();
 
 #if INCLUDE_EDITOR_DATA
 		if (ent.second->bEditorEntity)
 			continue;
 #endif
 
+		*stream << ent.second->GetClass()->GetInternalName() << &entId << &numComps;
+
+		for (auto& comp : ent.second->GetAllComponents())
+		{
+			*stream << comp.second->GetClass()->GetInternalName();
+			*stream << comp.second->Name();
+
+			SizeType id = comp.first;
+			*stream << &id;
+
+			bool bUserCreated = comp.second->IsUserCreated();
+			*stream << &bUserCreated;
+		}
+	}
+
+	for (auto& ent : ents)
+	{
+		SizeType entId = ent.second->EntityId();
+		SizeType dataSize;
+
 		FMemStream data;
 		ent.second->Serialize(data);
 
 		dataSize = data.Size();
-		*stream << ent.second->GetClass()->GetInternalName() << &entId << &dataSize;
+		*stream << &entId << &dataSize;
 
 		stream->Write(data.Data(), data.Size());
 		numEnts++;

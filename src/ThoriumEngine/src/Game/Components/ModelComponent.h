@@ -64,6 +64,8 @@ public:
 	FUNCTION()
 	void ResetAnimation();
 
+	CPrimitiveProxy* PrimitiveProxy() const override { return (CPrimitiveProxy*)renderProxy; }
+
 protected:
 	virtual void Load(FMemStream& in) override;
 

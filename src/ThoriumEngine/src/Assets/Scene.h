@@ -6,7 +6,7 @@
 
 class CWorld;
 
-#define CSCENE_VERSION 0x0001
+#define CSCENE_VERSION 0x0002
 #define CSCENE_SIGNITURE 0xD3AFB1C8
 
 ASSET(Extension = ".thscene")

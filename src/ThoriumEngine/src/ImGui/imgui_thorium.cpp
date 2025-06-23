@@ -55,13 +55,20 @@ IMGUI_API bool ImGui::TableTreeHeader(const char* label, ImGuiTreeNodeFlags flag
 	ImGui::TableNextRow();
 	ImGui::TableNextColumn();
 
-	if (bUseTableBg)
-		ImGui::PushStyleColor(ImGuiCol_Header, ImGui::GetStyle().Colors[ImGuiCol_TableRowBg]);
+	auto* cols = ImGui::GetStyle().Colors;
+	if (!bUseTableBg)
+		ImGui::PushStyleColor(ImGuiCol_Header, cols[ImGuiCol_Button]);
+	else
+		ImGui::PushStyleColor(ImGuiCol_Header, cols[ImGuiCol_TableRowBg]);
+
+	ImGui::PushStyleColor(ImGuiCol_HeaderActive, cols[ImGuiCol_ButtonActive]);
+	ImGui::PushStyleColor(ImGuiCol_HeaderHovered, cols[ImGuiCol_ButtonHovered]);
 
 	bool bOpen = ImGui::TreeNodeEx(label, flags);
 	ImGui::PopStyleVar(3);
-	if (bUseTableBg)
-		ImGui::PopStyleColor();
+	
+	//if (bUseTableBg)
+	ImGui::PopStyleColor(3);
 
 	return bOpen;
 }
@@ -137,7 +144,7 @@ bool ImGui::ImageButtonClear(const char* str_id, ImTextureID texture, const ImVe
 	ImGuiID id = window->GetID(str_id);
 
 	const ImVec2 padding = g.Style.FramePadding;
-	const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size + padding * 2.0f);
+	const ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
 	ItemSize(bb);
 	if (!ItemAdd(bb, id))
 		return false;
@@ -229,7 +236,7 @@ bool ImGui::TypeSelector(const char* label, int* value, int numOptions, const ch
 		bool bSelected = *value == i;
 
 		// Draw button
-		auto col = ImGui::ColorConvertFloat4ToU32(style.Colors[bHovered ? ImGuiCol_TabUnfocusedActive : (bSelected ? ImGuiCol_TabActive : ImGuiCol_Tab)]);
+		auto col = ImGui::ColorConvertFloat4ToU32(style.Colors[bHovered ? ImGuiCol_ButtonHovered : (bSelected ? ImGuiCol_ButtonActive : ImGuiCol_Button)]);
 		ImGui::RenderFrame(itemPos, itemPos + itemSize, col, false, rounding);
 
 		if (i < numOptions - 1)

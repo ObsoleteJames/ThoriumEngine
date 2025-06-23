@@ -7475,6 +7475,10 @@ bool ImGui::Begin(const char* name, bool* p_open, ImGuiWindowFlags flags)
         return false;
     }
 
+    if ((flags & ImGuiWindowFlags_DontFocusOnRightClick) == 0)
+        if (IsMouseClicked(ImGuiMouseButton_Right) && IsWindowHovered())
+            FocusWindow(window, ImGuiFocusRequestFlags_UnlessBelowModal);
+
     return !window->SkipItems;
 }
 

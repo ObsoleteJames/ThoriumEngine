@@ -14,6 +14,7 @@ public:
 	virtual void Init();
 
 public:
-	CPointLightComponent* light;
+	PROPERTY(DontSerialize, ExposeProperties)
+	TObjectPtr<CPointLightComponent> light;
 
 };

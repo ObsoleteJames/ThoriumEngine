@@ -34,7 +34,7 @@ CEntityComponent* CEntity::AddComponent(FClass* type, const FString& name)
 
 CEntityComponent* CEntity::AddComponent(FClass* type, SizeType id)
 {
-	CEntityComponent* comp = (CEntityComponent*)CreateObject(type, name);
+	CEntityComponent* comp = (CEntityComponent*)CreateObject(type);
 	if (!comp)
 		return nullptr;
 
@@ -172,20 +172,20 @@ void CEntity::Serialize(FMemStream& out)
 	for (auto& comp : components)
 	{
 		// Write component class typename
-		out << comp.second->GetClass()->GetInternalName();
+		//out << comp.second->GetClass()->GetInternalName();
 
 		// Write the components name. this already gets written by the default serializer
 		// but we need it earlier in order to write to the correct component when loading.
-		out << comp.second->Name();
+		//out << comp.second->Name();
 
-		FMemStream compOut;
-		comp.second->Serialize(compOut);
+		//bool bUserCreated = comp.second->IsUserCreated();
+		//out << &bUserCreated;
 
 		SizeType id = comp.first;
 		out << &id;
 
-		bool bUserCreated = comp.second->IsUserCreated();
-		out << &bUserCreated;
+		FMemStream compOut;
+		comp.second->Serialize(compOut);
 
 		SizeType compDataSize = compOut.Size();
 		out << &compDataSize;
@@ -201,61 +201,38 @@ void CEntity::Load(FMemStream& in)
 	SizeType numComponents;
 	in >> &numComponents;
 
-	TArray<TPair<CEntityComponent*, FMemStream>> comps;
-	comps.Resize(numComponents);
+	//TArray<TPair<CEntityComponent*, FMemStream>> comps;
+	//comps.Resize(numComponents);
 
 	for (SizeType i = 0; i < numComponents; i++)
 	{
-		FString classTypename;
-		in >> classTypename;
-
-		FString compName;
-		in >> compName;
-
 		SizeType compId;
 		in >> &compId;
-
-		bool bUserCreated = false;
-		in >> &bUserCreated;
 
 		SizeType compDataSize;
 		in >> &compDataSize;
 
-		FClass* compClass = CModuleManager::FindClass(classTypename);
-		if (!compClass)
+		CEntityComponent* comp = GetComponent(compId);
+		if (!comp)
 		{
-			CONSOLE_LogWarning("CEntity", "Serialized component has unkown class '" + classTypename + "', loading for entity " + Name() + ".");
 			in.Seek(compDataSize, SEEK_CUR);
 			continue;
 		}
 
-		CEntityComponent* comp = nullptr;
-		if (!bUserCreated)
-		{
-			comp = GetComponent(compClass, compName);
+		//FMemStream data;
+		//data.Resize(compDataSize);
+		//in.Read(data.Data(), compDataSize);
 
-			if (comp)
-			{
-				components.erase(comp->compId);
-				components[compId] = comp;
-			}
-		}
-		if (!comp)
-			comp = AddComponent(compClass, compId);
-
-		comp->compId = compId;
-		comps[i].Key = comp;
-		comps[i].Value.Resize(compDataSize);
-		in.Read(comps[i].Value.Data(), compDataSize);
+		comp->Load(in);
 	}
 
-	for (SizeType i = 0; i < numComponents; i++)
-	{
-		comps[i].Key->Load(comps[i].Value);
-		comps[i].Key->SetOwner(this);
-		if (comps[i].Key->bEditorOnly && !gIsEditor)
-			RemoveComponent(comps[i].Key);
-	}
+	//for (SizeType i = 0; i < numComponents; i++)
+	//{
+	//	comps[i].Key->Load(comps[i].Value);
+	//	comps[i].Key->SetOwner(this);
+	//	if (comps[i].Key->bEditorOnly && !gIsEditor)
+	//		RemoveComponent(comps[i].Key);
+	//}
 }
 
 void CEntity::OnDelete()

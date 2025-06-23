@@ -6,6 +6,7 @@
 #include "Math/Math.h"
 #include <Util/Assert.h>
 #include <Util/KeyValue.h>
+#include "Misc/CommandLine.h"
 #include <mutex>
 #include <thread>
 
@@ -57,6 +58,22 @@ void CConsole::Init()
 #else
 	logArray.Reserve(64);
 #endif
+
+	// Read command line
+	auto& args = FCommandLine::GetArgs();
+	for (int i = 0; i < args.Size(); i++)
+	{
+		if (args[i][0] == '-')
+		{
+			FString cmd = args[i];
+			cmd.Erase(cmd.begin());
+
+			if (auto* var = GetConVar(cmd); var != nullptr && i + 1 < args.Size())
+			{
+				Exec(cmd + " " + args[i + 1]);
+			}
+		}
+	}
 
 	beginIndex = 0;
 	endIndex = 0;
@@ -174,6 +191,19 @@ void CConsole::Exec(const FString& input)
 	CONSOLE_LogWarning("CConsole", FString("Unknown command '") + target + "'");
 }
 
+bool CConsole::GetValue(const FString& convar, float& out)
+{
+	for (auto* cmd : consoleVars)
+	{
+		if (cmd->Name() == convar)
+		{
+			out = cmd->AsFloat();
+			return true;
+		}
+	}
+	return false;
+}
+
 #if CONSOLE_USE_ARRAY
 const TArray<FConsoleMsg>& CConsole::GetMsgCache()
 {
@@ -189,6 +219,15 @@ FConsoleMsg* CConsole::GetLinkedList()
 CConVar* CConsole::GetConVar(const FString& name)
 {
 	for (auto* var : consoleVars)
+		if (var->Name() == name)
+			return var;
+
+	return nullptr;
+}
+
+CConCmd* CConsole::GetConCmd(const FString& name)
+{
+	for (auto* var : consoleCmds)
 		if (var->Name() == name)
 			return var;
 

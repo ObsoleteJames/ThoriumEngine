@@ -125,6 +125,8 @@ public:
 
 	static void Exec(const FString& input);
 
+	static bool GetValue(const FString& convar, float& out);
+
 #if CONSOLE_USE_ARRAY
 	static const TArray<FConsoleMsg>& GetMsgCache();
 #else
@@ -137,6 +139,7 @@ public:
 	inline static const TArray<CConCmd*>& GetConCmds() { return consoleCmds; }
 
 	static CConVar* GetConVar(const FString& name);
+	static CConCmd* GetConCmd(const FString& name);
 
 private:
 	static void _log(const FConsoleMsg& msg);

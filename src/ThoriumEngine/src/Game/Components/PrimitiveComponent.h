@@ -26,6 +26,8 @@ public:
 
 	inline bool CollisionEnabled() const { return bEnableCollision; }
 
+	virtual CPrimitiveProxy* PrimitiveProxy() const { return nullptr; }
+
 protected:
 	virtual void UpdateWorldTransform();
 

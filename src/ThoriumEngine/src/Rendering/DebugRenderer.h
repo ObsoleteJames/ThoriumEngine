@@ -48,7 +48,7 @@ public:
 private:
 	CRenderScene* GetScene();
 
-	void _Line(const FVector& begin, const FVector& end, CMaterial* mat, CRenderScene* scene, bool bOverlay);
+	void _Line(const FVector& begin, const FVector& end, const FColor& col, CRenderScene* scene, bool bOverlay);
 	void _Line(const FTransform& t, CMaterial* mat, CRenderScene* scene, bool bOverlay);
 
 private:
@@ -84,8 +84,14 @@ private:
 	};
 
 	FMesh lineMesh;
+	FMesh lineOverlayMesh;
 	TObjectPtr<CModelAsset> cube;
 	TObjectPtr<CModelAsset> sphere;
+
+	TArray<FVertex> lineDrawVertices;
+	TArray<FVertex> lineDrawOverlayVertices;
+
+	TObjectPtr<CMaterial> matDebugLine;
 
 	CRenderScene* scene = nullptr;
 	TArray<FDebugDrawCmd> drawCalls;

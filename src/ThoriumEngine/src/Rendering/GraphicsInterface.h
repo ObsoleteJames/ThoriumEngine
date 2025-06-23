@@ -14,8 +14,11 @@ public:
 
 	virtual IShader* LoadShader(CShaderSource* source, EShaderType type, FString file) = 0;
 
-	virtual IVertexBuffer* CreateVertexBuffer(const TArray<FVertex>& vertices) = 0;
+	virtual IVertexBuffer* CreateVertexBuffer(const TArray<FVertex>& vertices) = 0; // static buffer
 	virtual IIndexBuffer* CreateIndexBuffer(const TArray<uint>& indices) = 0;
+
+	virtual IVertexBuffer* CreateVertexBuffer(SizeType bufferSize) = 0; // dynamic buffer
+	virtual IIndexBuffer* CreateIndexBuffer(SizeType bufferSize) = 0;
 
 	virtual IShaderBuffer* CreateShaderBuffer(void* data, SizeType size) = 0;
 

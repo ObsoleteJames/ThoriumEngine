@@ -24,6 +24,7 @@ class TBaseString : public TArray<T>
 public:
 	TBaseString();
 	TBaseString(const T*);
+	TBaseString(TBaseString<T>&&);
 	TBaseString(const TBaseString<T>&);
 
 	TBaseString<T>& operator=(const T*);
@@ -224,6 +225,19 @@ TBaseString<T>::TBaseString(const T* str) : TArray<T>()
 
 	memcpy(this->_data, str, this->_size * sizeof(T));
 	this->_data[this->_size] = '\0';
+}
+
+template<typename T>
+TBaseString<T>::TBaseString(TBaseString<T>&& other) : TArray<T>()
+{
+	free(this->_data);
+	this->_data = other._data;
+	this->_capacity = other._capacity;
+	this->_size = other._size;
+
+	other._data = nullptr;
+	other._capacity = 0;
+	other._size = 0;
 }
 
 template<typename T>

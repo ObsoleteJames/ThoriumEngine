@@ -123,13 +123,13 @@ void CWorld::LoadScene(CScene* ptr)
 	SizeType numEnts;
 	*stream >> &numEnts;
 
-	TArray<TPair<CEntity*, FMemStream>> ents;
+	//TArray<TPair<CEntity*, FMemStream>> ents;
 
 	for (SizeType i = 0; i < numEnts; i++)
 	{
-		SizeType entId, dataSize;
+		SizeType entId, numComps;
 		FString typeName;
-		*stream >> typeName >> &entId >> &dataSize;
+		*stream >> typeName >> &entId >> &numComps;
 
 		FClass* type = CModuleManager::FindClass(typeName);
 
@@ -138,7 +138,7 @@ void CWorld::LoadScene(CScene* ptr)
 		if (!ent)
 		{
 			CONSOLE_LogError("CWorld", "Serialized entity with unkown type '" + typeName + "'");
-			stream->Seek(dataSize, SEEK_CUR);
+			//stream->Seek(dataSize, SEEK_CUR);
 			continue;
 		}
 
@@ -147,25 +147,76 @@ void CWorld::LoadScene(CScene* ptr)
 
 		ent->entityId = entId;
 
-		ents.Add();
+		for (SizeType i = 0; i < numComps; i++)
+		{
+			FString typeName;
+			FString name;
+			SizeType id;
+			bool bUserCreated;
+
+			*stream >> typeName >> name >> &id >> &bUserCreated;
+
+			FClass* compClass = CModuleManager::FindClass(typeName);
+			if (!compClass)
+			{
+				CONSOLE_LogWarning("CWorld", "Serialized component has unkown class '" + typeName + "', loading for entity " + ent->Name() + ".");
+				continue;
+			}
+
+			CEntityComponent* comp = nullptr;
+			if (!bUserCreated)
+			{
+				comp = ent->GetComponent(compClass, name);
+
+				if (comp)
+				{
+					ent->components.erase(comp->compId);
+					ent->components[id] = comp;
+				}
+			}
+			if (!comp)
+				comp = ent->AddComponent(compClass, id);
+
+			comp->compId = id;
+		}
+
+		/*ents.Add();
 		TPair<CEntity*, FMemStream>& d = *ents.last();
 		d.Key = ent;
 		d.Value.Resize(dataSize);
 
-		stream->Read(d.Value.Data(), dataSize);
+		stream->Read(d.Value.Data(), dataSize);*/
 	}
 
-	for (auto& d : ents)
+	for (SizeType i = 0; i < numEnts; i++)
 	{
-		d.Key->Load(d.Value);
+		SizeType entId, dataSize;
 
-		// incase the entity is static we remove it from the dynamic entity list, as it is added by CreateEntity()
-		if (d.Key->GetType() == ENTITY_STATIC)
-			RemoveDynamicEntity(d.Key);
+		*stream >> &entId >> &dataSize;
 
-		if (!gIsEditor && d.Key->bEditorOnly)
-			d.Key->Delete();
+		if (auto it = entities.find(entId); it != entities.end())
+		{
+			FMemStream data;
+			data.Resize(dataSize);
+			stream->Read(data.Data(), dataSize);
+
+			it->second->Load(data);
+		}
+		else
+			stream->Seek(dataSize, SEEK_CUR);
 	}
+
+	//for (auto& d : ents)
+	//{
+	//	d.Key->Load(d.Value);
+
+	//	// incase the entity is static we remove it from the dynamic entity list, as it is added by CreateEntity()
+	//	if (d.Key->GetType() == ENTITY_STATIC)
+	//		RemoveDynamicEntity(d.Key);
+
+	//	if (!gIsEditor && d.Key->bEditorOnly)
+	//		d.Key->Delete();
+	//}
 
 	for (auto ent : entities)
 		ent.second->PostInit();
