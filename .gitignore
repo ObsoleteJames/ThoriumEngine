@@ -17,6 +17,7 @@ intermediate/
 .vs/
 build/
 engine/bin/
+engine/build/
 
 # Compiled Dynamic libraries
 *.so
