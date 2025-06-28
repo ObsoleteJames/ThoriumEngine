@@ -54,7 +54,7 @@ public:
 	struct FRenderMesh
 	{
 		FMesh mesh;
-		TObjectPtr<CMaterial> mat;
+		CMaterial* mat;
 		FMatrix transform;
 		TArray<FMatrix> skeletonMatrices;
 		ERenderPass rp;

@@ -85,6 +85,9 @@ public:
 
 	static TObjectPtr<CAsset> GetAsset(FAssetClass* type, const FString& path);
 	static TObjectPtr<CAsset> GetAsset(FAssetClass* type, SizeType assetId);
+
+	static bool IsAssetLoaded(SizeType id);
+	inline static bool IsAssetLoaded(const FString& path) { return IsAssetLoaded(GetAssetId(path)); }
 	
 	//template<class T>
 	//static void GetAssets(TArray<TObjectPtr<T>>& out);

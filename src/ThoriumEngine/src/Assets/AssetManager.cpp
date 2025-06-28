@@ -459,6 +459,15 @@ TObjectPtr<CAsset> CAssetManager::GetAsset(FAssetClass* type, SizeType assetId)
 	return asset;
 }
 
+bool CAssetManager::IsAssetLoaded(SizeType id)
+{
+	auto it = allocatedAssets.find(id);
+	if (it == allocatedAssets.end())
+		return false;
+
+	return true;
+}
+
 TObjectPtr<CAsset> CAssetManager::CreateAsset(FAssetClass* type, const FString& p, const FString& m /*= L""*/)
 {
 	FString path = p;

@@ -206,6 +206,7 @@ void CMaterial::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 		if (t.tex)
 			t.tex->Load(lodLevel);
 	}
+	SetLodLevel(lodLevel, true);
 }
 
 void CMaterial::Unload(uint8 lodLevel)

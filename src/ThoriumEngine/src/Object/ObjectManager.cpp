@@ -125,6 +125,8 @@ void CObjectManager::Update()
 
 void CObjectManager::Shutdown()
 {
+	Update();
+
 	for (auto it = ObjectsToDelete.rbegin(); it != ObjectsToDelete.rend(); it++)
 		delete *it;
 

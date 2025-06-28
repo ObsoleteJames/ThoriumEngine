@@ -76,7 +76,8 @@ public:
 
 	void PushData() override
 	{
-		tex->curMipMapLevel = currentMipMap;
+		//tex->curMipMapLevel = currentMipMap;
+		tex->streamingUpdateMipLevel(currentMipMap);
 		if (data && targetTex)
 			targetTex->UpdateData(data, currentMipMap);
 		//CONSOLE_LogInfo("Updated Texture with MipMap: " + FString::ToString(currentMipMap));
@@ -213,6 +214,7 @@ void CTexture::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 	if (gGHI)
 		tex = gGHI->CreateTexture2D(data, width, height, ToTextureFormat(format), filteringType);
 	curMipMapLevel = 0;
+	SetLodLevel(lodLevel, true);
 }
 
 void CTexture::Unload(uint8 lodLevel)
@@ -429,6 +431,12 @@ CTexture* CTexture::CreateFromImage(const FString& file)
 uint8 CTexture::GetFileVersion() const
 {
 	return THTEX_VERSION;
+}
+
+void CTexture::streamingUpdateMipLevel(int mip)
+{
+	curMipMapLevel = mip;
+	SetLodLevel((uint8)mip, true);
 }
 
 bool CTexture::IsLoaded(uint8 lod) const

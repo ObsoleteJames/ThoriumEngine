@@ -9,7 +9,7 @@ CWorld* CEntityComponent::GetWorld() const
 
 bool CEntityComponent::IsVisible() const
 {
-	return ent ? (ent->bIsVisible && bIsVisible) : bIsVisible;
+	return ent ? (ent->bIsEnabled && ent->bIsVisible && bIsVisible) : bIsVisible;
 }
 
 void CEntityComponent::OnDelete()

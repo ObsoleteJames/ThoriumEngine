@@ -201,6 +201,13 @@ void CWorld::LoadScene(CScene* ptr)
 			stream->Read(data.Data(), dataSize);
 
 			it->second->Load(data);
+
+			// incase the entity is static we remove it from the dynamic entity list, as it is added by CreateEntity()
+			if (it->second->GetType() == ENTITY_STATIC)
+				RemoveDynamicEntity(it->second);
+
+			if (!gIsEditor && it->second->bEditorOnly)
+				it->second->Delete();
 		}
 		else
 			stream->Seek(dataSize, SEEK_CUR);
