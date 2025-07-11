@@ -325,6 +325,8 @@ IShader* DirectXInterface::LoadShader(CShaderSource* source, EShaderType type, F
 	if (!source)
 		return nullptr;
 
+	if (type & ShaderType_VertexSkinned)
+		return new DirectXSkinnedVertexShader(source, file);
 	if (type & ShaderType_Vertex)
 		return new DirectXVertexShader(source, file);
 	if (type & ShaderType_Fragment)
@@ -336,6 +338,11 @@ IShader* DirectXInterface::LoadShader(CShaderSource* source, EShaderType type, F
 }
 
 IVertexBuffer* DirectXInterface::CreateVertexBuffer(const TArray<FVertex>& vertices)
+{
+	return new DirectXVertexBuffer(vertices);
+}
+
+IVertexBuffer* DirectXInterface::CreateVertexBuffer(const TArray<FSkinnedVertex>& vertices)
 {
 	return new DirectXVertexBuffer(vertices);
 }
@@ -501,9 +508,9 @@ void DirectXInterface::DrawMesh(FDrawMeshCmd* info)
 	FMesh* mesh = info->mesh;
 	info->material->UpdateGpuBuffer();
 
-	deviceContext->IASetInputLayout(((DirectXVertexShader*)info->material->GetVsShader(0))->inputLayout);
+	deviceContext->IASetInputLayout(((DirectXVertexShader*)info->material->GetShader(info->mesh->bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex))->inputLayout);
 
-	uint vertexData[2] = { sizeof(FVertex), 0 };
+	uint vertexData[2] = { info->mesh->bSkinnedMesh ? sizeof(FSkinnedVertex) : sizeof(FVertex), 0 };
 	if (mesh->vertexBuffer)
 		deviceContext->IASetVertexBuffers(0, 1, &((DirectXVertexBuffer*)&*mesh->vertexBuffer)->buffer, &vertexData[0], &vertexData[1]);
 	if (mesh->indexBuffer)
@@ -566,9 +573,9 @@ void DirectXInterface::DrawMesh(FMeshBuilder::FRenderMesh* data)
 	FMesh* mesh = &data->mesh;
 	data->mat->UpdateGpuBuffer();
 
-	deviceContext->IASetInputLayout(((DirectXVertexShader*)data->mat->GetVsShader(0))->inputLayout);
+	deviceContext->IASetInputLayout(((DirectXVertexShader*)data->mat->GetShader(data->mesh.bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex))->inputLayout);
 
-	uint vertexData[2] = { sizeof(FVertex), 0 };
+	uint vertexData[2] = { data->mesh.bSkinnedMesh ? sizeof(FSkinnedVertex) : sizeof(FVertex), 0 };
 	if (mesh->vertexBuffer)
 		deviceContext->IASetVertexBuffers(0, 1, &((DirectXVertexBuffer*)&*mesh->vertexBuffer)->buffer, &vertexData[0], &vertexData[1]);
 	if (mesh->indexBuffer)

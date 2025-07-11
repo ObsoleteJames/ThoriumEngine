@@ -8,4 +8,11 @@
 		rotation: "0.000000,0.000000,0.000000"
 		scale: "1.000000,1.000000,1.000000"
 	}
+	playerstart_dance.glb_0
+	{
+		file: "F:\stuff\playerstart\playerstart_dance.glb"
+		position: "0.000000,0.000000,0.000000"
+		rotation: "0.000000,0.000000,0.000000"
+		scale: "1.000000,1.000000,1.000000"
+	}
 }

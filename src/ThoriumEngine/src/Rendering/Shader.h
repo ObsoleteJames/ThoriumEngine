@@ -65,7 +65,8 @@ enum EShaderType
 	ShaderType_Fragment = 1 << 1,
 	ShaderType_Geometry = 1 << 2,
 	ShaderType_ForwardPass = 1 << 3,
-	ShaderType_DeferredPass = 1 << 4
+	ShaderType_DeferredPass = 1 << 4,
+	ShaderType_VertexSkinned = 1 << 5
 };
 typedef int EShaderType_;
 

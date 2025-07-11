@@ -14,7 +14,16 @@ struct FVertex
 	FVector color;
 	float uv1[2];
 	float uv2[2];
+};
 
+struct FSkinnedVertex
+{
+	FVector position;
+	FVector normal;
+	FVector tangent;
+	FVector color;
+	float uv1[2];
+	float uv2[2];
 	int bones[4];
 	float boneInfluence[4];
 };
@@ -37,6 +46,8 @@ public:
 	uint32 materialIndex = 0;
 
 	uint8 topologyType = TOPOLOGY_TRIANGLES;
+	bool bSkinnedMesh = false;
+
 	FString meshName;
 
 	FBounds bounds;

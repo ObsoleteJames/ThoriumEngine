@@ -92,13 +92,24 @@ void FMeshBuilder::DrawCircle(const FVector& pos, float radius /*= 1.f*/, const 
 	meshes.Add(rm);
 }
 
-void FMeshBuilder::DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform, const TArray<FMatrix>& skeletonMatrix /*= TArray<FMatrix>()*/)
+void FMeshBuilder::DrawSkinnedMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform, const TArray<FMatrix>& skeletonMatrix /*= TArray<FMatrix>()*/)
+{
+	if (!mat)
+		return;
+
+	THORIUM_ASSERT(mesh.bSkinnedMesh, "Cannot draw unskinned mesh as skinned mesh!");
+
+	ERenderPass rp = mat->GetRenderPass();
+	meshes.Add({ mesh, mat, transform, skeletonMatrix, rp });
+}
+
+void FMeshBuilder::DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform)
 {
 	if (!mat)
 		return;
 
 	ERenderPass rp = mat->GetRenderPass();
-	meshes.Add({ mesh, mat, transform, skeletonMatrix, rp });
+	meshes.Add({ mesh, mat, transform, {}, rp });
 }
 
 // https://bruop.github.io/frustum_culling/

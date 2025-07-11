@@ -712,9 +712,9 @@ bool FFile::SetExtension(const FString& e)
 	return true;
 }
 
-CFStream FFile::GetSdkStream(const char* mode)
+CFStream FFile::GetSdkStream(const char* ext, const char* mode)
 {
-	FString sdkPath = GetSdkPath();
+	FString sdkPath = GetSdkPath(ext);
 	if (sdkPath.IsEmpty())
 		return CFStream();
 	return CFStream(sdkPath, mode);

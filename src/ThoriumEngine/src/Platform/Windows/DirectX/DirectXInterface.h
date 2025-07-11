@@ -19,6 +19,7 @@ public:
 	virtual IShader* LoadShader(CShaderSource* source, EShaderType type, FString file);
 
 	virtual IVertexBuffer* CreateVertexBuffer(const TArray<FVertex>& vertices);
+	virtual IVertexBuffer* CreateVertexBuffer(const TArray<FSkinnedVertex>& vertices);
 	virtual IIndexBuffer* CreateIndexBuffer(const TArray<uint>& indices);
 
 	virtual IVertexBuffer* CreateVertexBuffer(SizeType bufferSize);

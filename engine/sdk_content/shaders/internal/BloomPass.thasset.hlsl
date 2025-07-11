@@ -45,7 +45,7 @@ PS
 
 	float4 Main(PS_Input input) : SV_TARGET
 	{
-		float3 col = SampleTexture2D(vColor, input.vTextureCoords).xyz;
+		float3 col = SampleTexture2D(vColor, input.vTextureCoords * vFrameBufferScale).xyz;
 		//col = 0;
 		//float intensity = 0.25f;
 
@@ -57,7 +57,7 @@ PS
 		col += bloom / 4;
 		col = pow(abs(col), abs(float3(1 / vGamma, 1 / vGamma, 1 / vGamma)));
 #else
-		col += SampleTexture2D(vBloom1, input.vTextureCoords).xyz * vBloomIntensity;
+		col += SampleTexture2D(vBloom1, input.vTextureCoords * vFrameBufferScale).xyz * vBloomIntensity;
 		col = pow(abs(col), abs(float3(1 / vGamma, 1 / vGamma, 1 / vGamma)));
 #endif
 

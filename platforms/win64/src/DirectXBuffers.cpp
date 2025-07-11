@@ -22,6 +22,23 @@ DirectXVertexBuffer::DirectXVertexBuffer(const TArray<FVertex>& vertices)
 	IRenderer::UnlockGPU();
 }
 
+DirectXVertexBuffer::DirectXVertexBuffer(const TArray<FSkinnedVertex>& vertices)
+{
+	D3D11_BUFFER_DESC meshBufferInfo{};
+	meshBufferInfo.Usage = D3D11_USAGE_DEFAULT;
+	meshBufferInfo.ByteWidth = (uint)(vertices.Size() * sizeof(FSkinnedVertex));
+	meshBufferInfo.StructureByteStride = sizeof(FSkinnedVertex);
+	meshBufferInfo.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+
+	D3D11_SUBRESOURCE_DATA meshData{};
+	meshData.pSysMem = vertices.Data();
+
+	IRenderer::LockGPU();
+	HRESULT hr = GetDirectXRenderer()->device->CreateBuffer(&meshBufferInfo, &meshData, &buffer);
+	THORIUM_ASSERT(SUCCEEDED(hr), "Failed to create DirectX vertex buffer");
+	IRenderer::UnlockGPU();
+}
+
 DirectXVertexBuffer::DirectXVertexBuffer(SizeType bufferSize)
 {
 	D3D11_BUFFER_DESC meshBufferInfo{};

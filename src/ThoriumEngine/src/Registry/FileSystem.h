@@ -118,9 +118,9 @@ public:
 		return new CFStream(mod->Path() + "/" + Path(), mode);
 	}
 
-	CFStream GetSdkStream(const char* mode);
+	CFStream GetSdkStream(const char* ext, const char* mode);
 
-	inline FString GetSdkPath() const { if (mod->HasSdkContent()) { return mod->GetSdkPath() + "/" + Path() + ".meta"; } return FString(); }
+	inline FString GetSdkPath(const char* extension) const { if (mod->HasSdkContent()) { return mod->GetSdkPath() + "/" + Path() + extension; } return FString(); }
 
 private:
 	FString name;

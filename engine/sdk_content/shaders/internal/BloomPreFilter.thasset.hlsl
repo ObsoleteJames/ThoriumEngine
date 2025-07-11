@@ -34,7 +34,7 @@ PS
 
 	float4 Main(PS_Input input) : SV_TARGET
 	{
-		float3 col = SampleTexture2D(vColor, input.vTextureCoords).xyz;
+		float3 col = SampleTexture2D(vColor, input.vTextureCoords * vFrameBufferScale).xyz;
 		float brightness = max(col.x, max(col.y, col.z));
 
 		float soft = brightness - vBloomThreshold + vBloomKnee;

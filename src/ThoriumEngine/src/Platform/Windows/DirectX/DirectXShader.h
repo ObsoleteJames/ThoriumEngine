@@ -25,3 +25,15 @@ public:
 	ID3D11InputLayout* inputLayout;
 
 };
+
+class ENGINE_API DirectXSkinnedVertexShader : public IShader
+{
+public:
+	DirectXSkinnedVertexShader(CShaderSource* shader, FString path);
+	virtual ~DirectXSkinnedVertexShader();
+
+public:
+	ID3D11VertexShader* shader;
+	ID3D11InputLayout* inputLayout;
+
+};

@@ -24,6 +24,8 @@ struct ENGINE_API FKeyframe
 	GENERATED_BODY()
 
 public:
+	float time;
+
 	FTransform keyBone;
 
 	// 8 byte variable for object properties
@@ -46,8 +48,7 @@ public:
 	// for properties the format is: "variableName", "structName.variableName", "componentName.variableName", e.g. "root.position.x"
 	FString targetName;
 
-	// frame - key
-	TMap<int, FKeyframe> keyframes;
+	TArray<FKeyframe> keyframes;
 };
 
 CLASS(Extension = ".thanim", ImportableAs = ".fbx;.gltf;.glb")
@@ -62,11 +63,18 @@ public:
 	inline void SetFrameRate(float f) { frameRate = f; }
 
 	inline int FrameCount() const { return numFrames; }
+	inline float Length() const { return length; }
 
 	// add a new channel, returns null if it already exists
 	FAnimChannel* AddChannel(const FString& key);
 	FAnimChannel* GetChannel(const FString& key) const;
 	inline const FAnimChannel* GetChannel(int index) const { return &channels[index]; }
+
+	void ClearChannels();
+
+	int GetKeyframeIndex(const FAnimChannel* channel, float time);
+	int GetNextKeyframeIndex(const FAnimChannel* channel, float time);
+	int GetNextKeyframeIndex(const FAnimChannel* channel, int prevIndex);
 
 	inline SizeType NumChannels() const { return channels.Size(); }
 
@@ -80,6 +88,7 @@ protected:
 
 private:
 	float frameRate = 30.f;
+	float length = 0;
 	int numFrames = 0;
 
 	TArray<FAnimChannel> channels;

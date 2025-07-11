@@ -117,6 +117,7 @@ void CAssetManager::OnAssetFileMoved(FFile* file)
 
 	assetPaths.erase(oldPath);
 	assetPaths[file->Path()] = id;
+
 	//auto data = availableResources[oldPath];
 	//availableResources.erase(oldPath);
 	//availableResources[file->Path()] = data;

@@ -371,7 +371,7 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 	for (auto& mp : mipMaps)
 		free(mp.Key);
 
-	CFStream sdkStream = File()->GetSdkStream("wb");
+	CFStream sdkStream = File()->GetSdkStream(".meta", "wb");
 	if (sdkStream.IsOpen())
 	{
 		sdkStream << file;

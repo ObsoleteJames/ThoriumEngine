@@ -102,7 +102,7 @@ bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitive
 	for (auto* p : primitives)
 	{
 		FMeshBuilder mb;
-		p->GetDynamicMeshes(mb);
+		p->GetSkinnedMeshes(mb);
 
 		// bounds raycast output
 		FVector bPos;
@@ -129,9 +129,9 @@ bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitive
 				if (i0 > mesh.numVertexData)
 					continue;
 
-				FVector v0 = mesh.vertexData[i0].position;
-				FVector v1 = mesh.vertexData[i1].position;
-				FVector v2 = mesh.vertexData[i2].position;
+				FVector v0 = ((FSkinnedVertex*)mesh.vertexData)[i0].position;
+				FVector v1 = ((FSkinnedVertex*)mesh.vertexData)[i1].position;
+				FVector v2 = ((FSkinnedVertex*)mesh.vertexData)[i2].position;
 
 				// Transform the vertices
 				v0 = v0 * m.transform;
@@ -192,7 +192,7 @@ bool CRenderScene::RayCastBounds(const FRay& ray, FPrimitiveHitInfo* outHit, flo
 	for (auto* p : primitives)
 	{
 		FMeshBuilder mb;
-		p->GetDynamicMeshes(mb);
+		p->GetSkinnedMeshes(mb);
 
 		FBounds b = p->Bounds();
 		if (b.Size().Magnitude() == 0.f)

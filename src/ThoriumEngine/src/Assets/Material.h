@@ -97,6 +97,8 @@ public:
 	inline IShader* GetPsShader(EShaderType_ pass) { return shader->GetShader(ShaderType_Fragment | pass); }
 	inline IShader* GetGeoShader(EShaderType_ pass) { return shader->GetShader(ShaderType_Geometry | pass); }
 
+	inline IShader* GetShader(EShaderType_ type) { return shader->GetShader(type); }
+
 	inline IShaderBuffer* GetGpuBuffer() const { return gpuBuffer; }
 
 	inline bool DoDepthTest() const { return bDepthTest; }

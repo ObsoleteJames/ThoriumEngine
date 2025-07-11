@@ -21,6 +21,51 @@ FAnimChannel* CAnimation::GetChannel(const FString& key) const
 	return nullptr;
 }
 
+void CAnimation::ClearChannels()
+{
+	channels.Clear();
+}
+
+int CAnimation::GetKeyframeIndex(const FAnimChannel* channel, float time)
+{
+	for (int i = 0; i < channel->keyframes.Size(); i++)
+	{
+		if (i + 1 < channel->keyframes.Size())
+		{
+			if (time >= channel->keyframes[i].time && time < channel->keyframes[i + 1].time)
+				return i;
+		}
+		else if (time >= channel->keyframes[i].time)
+			return i;
+	}
+
+	return 0;
+}
+
+int CAnimation::GetNextKeyframeIndex(const FAnimChannel* channel, float time)
+{
+	for (int i = 0; i < channel->keyframes.Size(); i++)
+	{
+		if (time >= channel->keyframes[i].time)
+		{
+			i++;
+			if (i >= channel->keyframes.Size())
+				return 0;
+			return i;
+		}
+	}
+
+	return 0;
+}
+
+int CAnimation::GetNextKeyframeIndex(const FAnimChannel* channel, int prevIndex)
+{
+	prevIndex++;
+	if (prevIndex >= channel->keyframes.Size())
+		return 0;
+	return prevIndex;
+}
+
 void CAnimation::OnInit(IBaseFStream* stream)
 {
 	uint numChannels = 0;
@@ -28,6 +73,7 @@ void CAnimation::OnInit(IBaseFStream* stream)
 	*stream >> &numChannels;
 	*stream >> &frameRate;
 	*stream >> &numFrames;
+	*stream >> &length;
 
 	for (int i = 0; i < numChannels; i++)
 	{
@@ -53,11 +99,9 @@ void CAnimation::OnInit(IBaseFStream* stream)
 
 		for (int ii = 0; ii < frames; ii++)
 		{
-			int frame;
-			
-			*stream >> &frame;
-
-			FKeyframe& keyframe = channel->keyframes[frame];
+			channel->keyframes.Add();
+			FKeyframe& keyframe = *channel->keyframes.last();
+			*stream >> &keyframe.time;
 			*stream >> &keyframe.keyBone;
 			*stream >> &keyframe.keyProperty;
 		}
@@ -72,6 +116,7 @@ void CAnimation::OnSave(IBaseFStream* stream)
 	*stream << &numChannels;
 	*stream << &frameRate;
 	*stream << &numFrames;
+	*stream << &length;
 
 	for (auto& ch : channels)
 	{
@@ -84,16 +129,15 @@ void CAnimation::OnSave(IBaseFStream* stream)
 		*stream << ch.targetName;
 		*stream << &ch.behaviour;
 
-		uint frames = ch.keyframes.size();
+		uint frames = ch.keyframes.Size();
 		*stream << &frames;
 		
 		for (auto& f : ch.keyframes)
 		{
-			int frame = f.first;
-			*stream << &frame;
+			*stream << &f.time;
 
-			*stream << &f.second.keyBone;
-			*stream << &f.second.keyProperty;
+			*stream << &f.keyBone;
+			*stream << &f.keyProperty;
 		}
 	}
 }
@@ -108,10 +152,17 @@ void CAnimation::CalculateFrameCount()
 	numFrames = 0;
 	for (auto& ch : channels)
 	{
-		for (auto it = ch.keyframes.cbegin(); it != ch.keyframes.cend(); it++)
+		if (ch.keyframes.Size() > numFrames)
+			numFrames = ch.keyframes.Size();
+	}
+
+	length = 0;
+	for (auto& ch : channels)
+	{
+		for (auto it = ch.keyframes.begin(); it != ch.keyframes.end(); it++)
 		{
-			if (it->first > numFrames)
-				numFrames = it->first;
+			if (it->time > length)
+				length = it->time;
 		}
 	}
 }

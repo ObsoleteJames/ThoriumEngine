@@ -10,6 +10,11 @@ FTransform::FTransform(const FQuaternion& rot) : rotation(rot)
 {
 }
 
+FTransform::FTransform(const FMatrix& matrix)
+{
+	matrix.Decompose(position, scale, rotation);
+}
+
 FTransform FTransform::operator*(const FTransform& t) const
 {
 	FTransform r;

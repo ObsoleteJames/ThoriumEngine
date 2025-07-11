@@ -12,6 +12,7 @@ class ENGINE_API FTransform
 
 public:
 	FTransform() = default;
+	FTransform(const FMatrix& matrix);
 	FTransform(const FVector& pos, const FQuaternion& rot = FQuaternion(), const FVector& s = FVector(1.f));
 	FTransform(const FQuaternion& rot);
 

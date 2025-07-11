@@ -238,7 +238,7 @@ void CShaderSource::OnDelete()
 bool CShaderSource::Compile()
 {
 	FShaderSourceFile shader;
-	bool result = ParseShaderSourceFile(file->GetSdkPath(), shader);
+	bool result = ParseShaderSourceFile(file->GetSdkPath(".hlsl"), shader);
 	THORIUM_ASSERT(result, FString("Failed to parse shader file '") + ToFString(file->Path()) + "'!");
 	
 	bHasVS = 0;
@@ -255,6 +255,8 @@ bool CShaderSource::Compile()
 		SizeType size;
 
 		if (sh.Key & ShaderType_Vertex)
+			gGHI->CompileShader(shader.global + sh.Value, IShader::VFX_VS, &data, &size);
+		if (sh.Key & ShaderType_VertexSkinned)
 			gGHI->CompileShader(shader.global + sh.Value, IShader::VFX_VS, &data, &size);
 		if (sh.Key & ShaderType_Fragment)
 			gGHI->CompileShader(shader.global + sh.Value, IShader::VFX_PS, &data, &size);
@@ -402,7 +404,7 @@ CShaderSource* CShaderSource::GetShaderSource(const FString& name)
 IShader* CShaderSource::GetShader(EShaderType_ in)
 {
 	int pass = (int)in & (ShaderType_DeferredPass | ShaderType_ForwardPass);
-	int type = (int)in & (ShaderType_Fragment | ShaderType_Vertex | ShaderType_Geometry);
+	int type = (int)in & (ShaderType_Fragment | ShaderType_Vertex | ShaderType_Geometry | ShaderType_VertexSkinned);
 
 	for (auto& sh : shaders)
 	{
@@ -418,6 +420,8 @@ FString CShaderSource::GetShaderName(EShaderType_ type)
 
 	if (type & ShaderType_Vertex)
 		shaderName = "vs";
+	if (type & ShaderType_VertexSkinned)
+		shaderName = "vs.skinned";
 	if (type & ShaderType_Fragment)
 		shaderName = "ps";
 	if (type & ShaderType_Geometry)

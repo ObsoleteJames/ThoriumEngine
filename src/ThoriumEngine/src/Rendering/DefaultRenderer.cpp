@@ -288,7 +288,9 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 	sceneBuffer->Update(sizeof(FSceneInfoBuffer), &sceneInfo);
 
 	static TArray<TPair<CPrimitiveProxy*, FMeshBuilder>> dynamicMeshes;
+	static TArray<TPair<CPrimitiveProxy*, FMeshBuilder>> staticMeshes;
 	dynamicMeshes.Clear();
+	staticMeshes.Clear();
 
 	for (auto* primitive : scene->GetPrimitives())
 	{
@@ -301,8 +303,20 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		dynamicMeshes.Add({ primitive, FMeshBuilder() });
 		FMeshBuilder& dynamic = dynamicMeshes.last()->Value;
 
-		primitive->GetDynamicMeshes(dynamic);
-		gRenderStats.drawPrimitives++;
+		primitive->GetSkinnedMeshes(dynamic);
+		if (dynamic.GetMeshes().Size() == 0)
+			dynamicMeshes.Erase(dynamicMeshes.last());
+		else
+			gRenderStats.drawPrimitives++;
+
+		staticMeshes.Add({ primitive, FMeshBuilder() });
+		FMeshBuilder& staticM = staticMeshes.last()->Value;
+
+		primitive->GetStaticMeshes(staticM);
+		if (staticM.GetMeshes().Size() == 0)
+			staticMeshes.Erase(staticMeshes.last());
+		else
+			gRenderStats.drawPrimitives++;
 	}
 
 	// List of all meshes to be drawn during a pass.
@@ -316,6 +330,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		GetRenderCommands(R_DEFERRED_PASS, scene->GetRenderQueue(), curCommands);
 
 		curMeshes.Clear();
+		GetMeshesToDraw(R_DEFERRED_PASS, staticMeshes, curMeshes);
 		GetMeshesToDraw(R_DEFERRED_PASS, dynamicMeshes, curMeshes);
 
 		gGHI->SetBlendMode(EBlendMode::BLEND_DISABLED);
@@ -354,7 +369,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 			memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min((int)rc.Value->skeletonMatrices.Size(), 48) * sizeof(FMatrix));
 			objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
 
-			IShader* _shader = rc.Value->mat->GetVsShader(ShaderType_DeferredPass);
+			IShader* _shader = rc.Value->mat->GetShader((rc.Value->mesh.bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex) | ShaderType_DeferredPass);
 			if (_shader != curVsShader)
 			{
 				curVsShader = _shader;
@@ -378,7 +393,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 			FObjectInfoBuffer objectInfo{ { FMatrix(1.f) }, rc.drawMesh.transform, FVector(), 0 };
 			objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
 
-			gGHI->SetVsShader(rc.drawMesh.material->GetVsShader(ShaderType_DeferredPass));
+			gGHI->SetVsShader(rc.drawMesh.material->GetShader((rc.drawMesh.mesh->bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex) | ShaderType_DeferredPass));
 			gGHI->SetPsShader(rc.drawMesh.material->GetPsShader(ShaderType_DeferredPass));
 
 			gGHI->DrawMesh(&rc.drawMesh);
@@ -470,6 +485,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		GetRenderCommands(R_FORWARD_PASS, scene->GetRenderQueue(), curCommands);
 
 		curMeshes.Clear();
+		GetMeshesToDraw(R_FORWARD_PASS, staticMeshes, curMeshes);
 		GetMeshesToDraw(R_FORWARD_PASS, dynamicMeshes, curMeshes);
 
 		LockGPU();
@@ -506,7 +522,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 			CreateForwardLightBuffer(objectInfo.position, scene->GetLights(), lights);
 			forwardLightsBuffer->Update(sizeof(FForwardLightsBuffer), &lights);
 
-			gGHI->SetVsShader(rc.Value->mat->GetVsShader(ShaderType_ForwardPass));
+			gGHI->SetVsShader(rc.Value->mat->GetShader((rc.Value->mesh.bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex) | ShaderType_ForwardPass));
 			if (!overridePsShader)
 				gGHI->SetPsShader(rc.Value->mat->GetPsShader(ShaderType_ForwardPass));
 
@@ -540,6 +556,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		GetRenderCommands(R_TRANSPARENT_PASS, scene->GetRenderQueue(), curCommands);
 
 		curMeshes.Clear();
+		GetMeshesToDraw(R_TRANSPARENT_PASS, staticMeshes, curMeshes);
 		GetMeshesToDraw(R_TRANSPARENT_PASS, dynamicMeshes, curMeshes);
 
 		LockGPU();
@@ -615,7 +632,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 				CreateForwardLightBuffer(objectInfo.position, scene->GetLights(), lights);
 				forwardLightsBuffer->Update(sizeof(FForwardLightsBuffer), &lights);
 
-				gGHI->SetVsShader(rc.Value->mat->GetVsShader(ShaderType_ForwardPass));
+				gGHI->SetVsShader(rc.Value->mat->GetShader((rc.Value->mesh.bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex) | ShaderType_ForwardPass));
 				if (!overridePsShader)
 					gGHI->SetPsShader(rc.Value->mat->GetPsShader(ShaderType_ForwardPass));
 
@@ -948,7 +965,8 @@ void CDefaultRenderer::RenderShadowMaps(CRenderScene* scene)
 		//dynamicMeshes.Add({ primitive, FMeshBuilder() });
 		//FMeshBuilder& dynamic = dynamicMeshes.last()->Value;
 		FMeshBuilder dynamic;
-		primitive->GetDynamicMeshes(dynamic);
+		primitive->GetStaticMeshes(dynamic);
+		primitive->GetSkinnedMeshes(dynamic);
 
 		for (int i = 0; i < dynamic.GetMeshes().Size(); i++)
 		{

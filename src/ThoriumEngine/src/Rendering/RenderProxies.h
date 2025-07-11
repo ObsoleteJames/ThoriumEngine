@@ -67,7 +67,8 @@ public:
 public:
 	void DrawLine(const FVector& begin, const FVector& end, const FVector& color = { 255, 255, 255 }, bool bDepthTest = true);
 	void DrawCircle(const FVector& pos, float radius = 1.f, const FVector& rot = FVector(), const FVector & color = { 255, 255, 255 }, int vertices = 16, bool bDepthTest = true);
-	void DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform, const TArray<FMatrix>& skeletonMatrix = TArray<FMatrix>());
+	void DrawSkinnedMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform, const TArray<FMatrix>& skeletonMatrix);
+	void DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform);
 
 	inline const TArray<FRenderMesh>& GetMeshes() const { return meshes; }
 
@@ -92,7 +93,7 @@ public:
 	virtual void FetchData() = 0;
 	virtual void ClearFethedData() {}
 
-	virtual void GetDynamicMeshes(FMeshBuilder& out) {}
+	virtual void GetSkinnedMeshes(FMeshBuilder& out) {}
 	virtual void GetStaticMeshes(FMeshBuilder& out) {}
 
 	virtual bool DoFrustumCull(const FMatrix& projection);

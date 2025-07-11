@@ -1,7 +1,7 @@
 
 Shader
 {
-	Name = "GaussianBlurH";
+	Name = "GaussianBlurV";
 	Type = SHADER_INTERNAL;
 }
 
@@ -30,7 +30,8 @@ PS
 
 	float4 Main(PS_Input input) : SV_TARGET
 	{
-		float3 col = SampleTexture2D(vColor, input.vTextureCoords).xyz * weight[0];
+		float2 uv = input.vTextureCoords * vFrameBufferScale;
+		float3 col = SampleTexture2D(vColor, uv).xyz * weight[0];
 
 		uint texWidth;
 		uint texHeight;
@@ -39,8 +40,8 @@ PS
 
 		for (int i = 1; i < 5; i++)
 		{
-			col += SampleTexture2D(vColor, input.vTextureCoords + (float2(offset[i], 0) / float(texWidth))) * weight[i];
-			col += SampleTexture2D(vColor, input.vTextureCoords - (float2(offset[i], 0) / float(texWidth))) * weight[i];
+			col += SampleTexture2D(vColor, uv + (float2(0, offset[i] * 1.25f) / float(texHeight))) * weight[i];
+			col += SampleTexture2D(vColor, uv - (float2(0, offset[i] * 1.25f) / float(texHeight))) * weight[i];
 		}
 
 		return float4(col, 1.f);

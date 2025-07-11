@@ -35,7 +35,7 @@ void CBillboardComponent::Init()
 			bounds = comp->Bounds();
 		}
 
-		void GetDynamicMeshes(FMeshBuilder& out) override
+		void GetStaticMeshes(FMeshBuilder& out) override
 		{
 			FMesh mesh{};
 			mesh.numVertices = 6;

@@ -61,12 +61,27 @@ public:
 		}
 	}
 
-	void GetDynamicMeshes(FMeshBuilder& out) override
+	void GetSkinnedMeshes(FMeshBuilder& out) override
 	{
 		for (auto& m : meshes)
 		{
+			if (!m.bSkinnedMesh)
+				continue;
+
 			TObjectPtr<CMaterial> mat = (m.materialIndex < materials.Size() && materials[m.materialIndex]) ? materials[m.materialIndex] : CAssetManager::GetAsset<CMaterial>("materials/error.thasset");
-			out.DrawMesh(m, mat, matrix, skeletonMatrices);
+			out.DrawSkinnedMesh(m, mat, matrix, skeletonMatrices);
+		}
+	}
+
+	void GetStaticMeshes(FMeshBuilder& out) override
+	{
+		for (auto& m : meshes)
+		{
+			if (m.bSkinnedMesh)
+				continue;
+
+			TObjectPtr<CMaterial> mat = (m.materialIndex < materials.Size() && materials[m.materialIndex]) ? materials[m.materialIndex] : CAssetManager::GetAsset<CMaterial>("materials/error.thasset");
+			out.DrawMesh(m, mat, matrix);
 		}
 	}
 

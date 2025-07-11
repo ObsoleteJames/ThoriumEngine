@@ -9,6 +9,7 @@ class DirectXVertexBuffer : public IVertexBuffer
 {
 public:
 	DirectXVertexBuffer(const TArray<FVertex>& vertices);
+	DirectXVertexBuffer(const TArray<FSkinnedVertex>& vertices);
 	DirectXVertexBuffer(SizeType bufferSize);
 	virtual ~DirectXVertexBuffer();
 

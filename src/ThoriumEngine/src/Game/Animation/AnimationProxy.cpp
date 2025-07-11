@@ -17,10 +17,10 @@ void CAnimationProxy::Update(double dt)
 {
 	frame += dt * animfile->FrameRate();
 
-	float frameDelta = FMath::Mod(frame, 1.f);
+	//float frameDelta = FMath::Mod(frame, 1.f);
 
-	int frame1 = (int)FMath::Floor(frame) % animfile->FrameCount();
-	int frame2 = (int)FMath::Ceil(frame) % animfile->FrameCount();
+	//int frame1 = (int)FMath::Floor(frame) % animfile->FrameCount();
+	//int frame2 = (int)FMath::Ceil(frame) % animfile->FrameCount();
 
 	for (int i = 0; i < animfile->NumChannels(); i++)
 	{
@@ -33,21 +33,32 @@ void CAnimationProxy::Update(double dt)
 
 		if (channel->behaviour == KEYFRAME_INTERP_LINEAR)
 		{
-			const FKeyframe& key1 = channel->keyframes.lower_bound(frame1 % channel->keyframes.size())->second;
-			const FKeyframe& key2 = channel->keyframes.lower_bound(frame2 % channel->keyframes.size())->second;
-			
+			//const FKeyframe& key1 = channel->keyframes.lower_bound(frame1 % channel->keyframes.size())->second;
+			//const FKeyframe& key2 = channel->keyframes.lower_bound(frame2 % channel->keyframes.size())->second;
+			int kfIndex = animfile->GetKeyframeIndex(channel, frame);
+			int kf2Index = animfile->GetNextKeyframeIndex(channel, kfIndex);
+
+			const FKeyframe& key1 = channel->keyframes[kfIndex];
+			const FKeyframe& key2 = channel->keyframes[kf2Index];
+
+			float frameDelta = (key2.time - key1.time);
+
 			FTransform boneT = FTransform::Lerp(key1.keyBone, key2.keyBone, frameDelta);
 			boneT.position = FVector::zero;
-			boneT.rotation = boneT.rotation.Conjugate();
+			boneT.rotation = boneT.rotation;
+			auto& b = mdl->GetSkeleton().bones[skeletonLut[i]];
+
+			//skeleton->bones[skeletonLut[i]].position = boneT.position;
+			//skeleton->bones[skeletonLut[i]].rotation = boneT.rotation;
 			skeleton->bones[skeletonLut[i]] = boneT;
 		}
 		else
-			skeleton->bones[skeletonLut[i]] = channel->keyframes.at(frame1).keyBone;
+			skeleton->bones[skeletonLut[i]] = channel->keyframes[animfile->GetKeyframeIndex(channel, frame)].keyBone;
 	}
 
 	// loop animation
-	if (frame > animfile->FrameCount())
-		frame -= (float)animfile->FrameCount();
+	if (frame > animfile->Length())
+		frame -= (float)animfile->Length();
 }
 
 void CAnimationProxy::BuildSkeletonLUT()

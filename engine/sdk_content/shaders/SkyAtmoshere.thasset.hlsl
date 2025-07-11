@@ -9,11 +9,6 @@ Global
 {
 	#include "common/common.hlsl"
 
-	struct VS_Input
-	{
-		#include "common/vertex_input.hlsl"
-	};
-
 	struct PS_Input
 	{
 		#include "common/pixel_input.hlsl"
@@ -23,12 +18,16 @@ Global
 	Property<float3> horizonColor(Name = "Horizon Color", UiGroup = "Atmosphere", UiType = COLOR);
 	Property<float3> sunCol(Name = "Sun Color", UiGroup = "Atmosphere", UiType = COLOR);
 	Property<float> horizonFalloff(Name = "Falloff", UiGroup = "Atmosphere");
-
 }
 
 VS
 {
 	#include "common/vertex.hlsl"
+
+	struct VS_Input
+	{
+		#include "common/vertex_input.hlsl"
+	};
 
 	PS_Input Main(VS_Input input)
 	{
@@ -37,6 +36,24 @@ VS
 		FinalizeVertex(input, output);
 		return output;
 	}
+}
+
+VS_SKINNED
+{
+	#include "common/vertex_skinned.hlsl"
+	
+	struct VS_Input
+	{
+		#include "common/vertex_input_skinned.hlsl"
+	};
+
+    PS_Input Main(VS_Input input)
+    {
+		PS_Input output = ProcessVertex(input);
+
+		FinalizeVertex(input, output);
+		return output;
+    }
 }
 
 PS
