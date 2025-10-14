@@ -11,7 +11,9 @@ class CRenderScene;
 class CDebugRenderer;
 class CModelAsset;
 
-extern ENGINE_API CDebugRenderer* gDebugRenderer;
+//extern ENGINE_API CDebugRenderer* gDebugRenderer;
+
+#define gDebugRenderer (gWorld->GetRenderScene()->DebugRenderer())
 
 enum EDebugDrawType_
 {
@@ -85,11 +87,14 @@ private:
 
 	FMesh lineMesh;
 	FMesh lineOverlayMesh;
+	FMesh textMesh;
 	TObjectPtr<CModelAsset> cube;
 	TObjectPtr<CModelAsset> sphere;
 
 	TArray<FVertex> lineDrawVertices;
 	TArray<FVertex> lineDrawOverlayVertices;
+
+	TArray<FVertex> textDrawVertices;
 
 	TObjectPtr<CMaterial> matDebugLine;
 

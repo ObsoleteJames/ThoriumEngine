@@ -210,8 +210,8 @@ void IRenderer::renderAll()
 	if (!bInitialized)
 		return;
 
-	if (gDebugRenderer)
-		gDebugRenderer->Render();
+	//if (gDebugRenderer)
+	//	gDebugRenderer->Render();
 
 	TArray<CRenderScene*>& renderQueue = gRenderer->renderScenes;
 
@@ -224,6 +224,9 @@ void IRenderer::renderAll()
 	for (auto scene : renderQueue)
 	{
 		gRenderer->curScene = scene;
+		if (scene->DebugRenderer())
+			scene->DebugRenderer()->Render();
+
 		RenderShadowMaps(scene);
 
 		for (auto* cam : scene->cameras)

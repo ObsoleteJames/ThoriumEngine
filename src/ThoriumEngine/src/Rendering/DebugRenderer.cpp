@@ -7,7 +7,7 @@
 #include "RenderScene.h"
 #include "Game/World.h"
 
-CDebugRenderer* gDebugRenderer;
+//CDebugRenderer* gDebugRenderer;
 
 #define DR_VERTEX_LINEBUFFER_SIZE sizeof(FVertex) * 512
 
@@ -16,9 +16,11 @@ CDebugRenderer::CDebugRenderer()
 	lineMesh.numVertices = 0;
 	lineMesh.vertexBuffer = gGHI->CreateVertexBuffer(DR_VERTEX_LINEBUFFER_SIZE);
 	lineMesh.topologyType = FMesh::TOPOLOGY_LINES;
+	lineMesh.bSkinnedMesh = false;
 	lineOverlayMesh.numVertices = 0;
 	lineOverlayMesh.vertexBuffer = gGHI->CreateVertexBuffer(DR_VERTEX_LINEBUFFER_SIZE);
 	lineOverlayMesh.topologyType = FMesh::TOPOLOGY_LINES;
+	lineOverlayMesh.bSkinnedMesh = false;
 
 	cube = CAssetManager::GetAsset<CModelAsset>("models/Cube.thasset");
 	sphere = CAssetManager::GetAsset<CModelAsset>("models/Sphere.thasset");
@@ -36,6 +38,9 @@ CDebugRenderer::CDebugRenderer()
 
 void CDebugRenderer::DrawLine(const FVector& begin, const FVector& end, const FColor& color, float time /*= 0.f*/, bool bOverlay /*= false*/)
 {
+	_Line(begin, end, color, nullptr, bOverlay);
+	return;
+
 	//FVertex v1{};
 	//FVertex v2{};
 
@@ -329,24 +334,24 @@ void CDebugRenderer::Render()
 		}
 	}
 
-	//lineMesh.vertexBuffer->Update(lineDrawVertices.Size(), lineDrawVertices.Data());
-	//lineMesh.numVertices = lineDrawVertices.Size();
-	//lineDrawVertices.Clear();
+	lineMesh.vertexBuffer->Update(lineDrawVertices.Size(), lineDrawVertices.Data());
+	lineMesh.numVertices = lineDrawVertices.Size();
+	lineDrawVertices.Clear();
 
-	//lineOverlayMesh.vertexBuffer->Update(lineDrawOverlayVertices.Size(), lineDrawOverlayVertices.Data());
-	//lineOverlayMesh.numVertices = lineDrawVertices.Size();
-	//lineDrawOverlayVertices.Clear();
+	lineOverlayMesh.vertexBuffer->Update(lineDrawOverlayVertices.Size(), lineDrawOverlayVertices.Data());
+	lineOverlayMesh.numVertices = lineDrawVertices.Size();
+	lineDrawOverlayVertices.Clear();
 
-	//FDrawMeshCmd cmd{};
-	//cmd.mesh = &lineMesh;
-	//cmd.material = matDebugLine;
-	//cmd.drawType = MESH_DRAW_PRIMITIVE_LINES;
-	//cmd.transform = FMatrix(1.f);
+	FDrawMeshCmd cmd{};
+	cmd.mesh = &lineMesh;
+	cmd.material = matDebugLine;
+	cmd.drawType = MESH_DRAW_PRIMITIVE_LINES;
+	cmd.transform = FMatrix(1.f);
 
-	//scene->PushCommand(FRenderCommand(cmd, R_DEBUG_PASS));
+	scene->PushCommand(FRenderCommand(cmd, R_DEBUG_PASS));
 
-	//cmd.mesh = &lineOverlayMesh;
-	//scene->PushCommand(FRenderCommand(cmd, R_DEBUG_OVERLAY_PASS));
+	cmd.mesh = &lineOverlayMesh;
+	scene->PushCommand(FRenderCommand(cmd, R_DEBUG_OVERLAY_PASS));
 }
 
 CRenderScene* CDebugRenderer::GetScene()

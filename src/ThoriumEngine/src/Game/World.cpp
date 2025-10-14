@@ -437,6 +437,14 @@ void CWorld::OnDelete()
 	for (CWorld* w : subWorlds)
 		w->Delete();
 
+	// make a copy of the entities list.
+	// on occasions when deleting the entities the iterators would throw an error and this prevents that.
+	auto ents = entities;
+	for (auto ent = ents.rbegin(); ent != ents.rend(); ent++)
+		ent->second->Delete();
+
+	entities.clear();
+
 	delete renderScene;
 	renderScene = nullptr;
 
@@ -447,14 +455,6 @@ void CWorld::OnDelete()
 	if (gamemode)
 		gamemode->Delete();
 
-	// make a copy of the entities list.
-	// on occasions when deleting the entities the iterators would throw an error and this prevents that.
-	auto ents = entities;
-	for (auto ent = ents.rbegin(); ent != ents.rend(); ent++)
-		ent->second->Delete();
-
-	entities.clear();
-	
 	if (physicsWorld)
 	{
 		gPhysicsApi->DestroyWorld(physicsWorld);

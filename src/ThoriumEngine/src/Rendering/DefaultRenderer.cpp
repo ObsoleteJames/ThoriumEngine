@@ -157,7 +157,7 @@ void CDefaultRenderer::Init()
 
 		delete sunLightShadows;
 		sunLightShadows = gGHI->CreateDepthBuffer(sunDepth);
-		});
+	});
 
 	FDepthBufferInfo sunDepth{};
 	sunDepth.width = shadowTexSize * 4;
@@ -175,9 +175,7 @@ void CDefaultRenderer::Init()
 	// check if *most* assets are present.
 	bInitialized = meshIcoSphere && debugUnlit && debugNormalForward;
 
-	if (bInitialized)
-		gDebugRenderer = new CDebugRenderer();
-	else
+	if (!bInitialized)
 		CONSOLE_LogError("IRenderer", "Failed to initialize! rendering is disabled");
 }
 
@@ -204,6 +202,8 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 	SizeType queueLastIndex = 0;
 
 	IFrameBuffer* renderTarget = camera->renderTarget ? camera->renderTarget : scene->frameBuffer;
+	if (!renderTarget)
+		return;
 
 	curCamera = camera;
 
@@ -222,6 +222,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		scene->ResizeBuffers(viewWidth, viewHeight);
 
 	gGHI->SetViewport(0.f, 0.f, (float)viewWidth * sp, (float)viewHeight * sp);
+	gGHI->SetWireframe(false);
 
 	camera->CalculateMatrix((float)viewWidth / (float)viewHeight);
 
@@ -297,7 +298,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		if (!primitive->IsVisible())
 			continue;
 
-		if (!primitive->DoFrustumCull(sceneInfo.camMatrix))
+		if (!camera->bOrthographic && !primitive->DoFrustumCull(sceneInfo.camMatrix))
 			continue;
 
 		dynamicMeshes.Add({ primitive, FMeshBuilder() });
@@ -361,6 +362,9 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		IShader* curVsShader = nullptr;
 		IShader* curPsShader = nullptr;
 
+		if (camera->bDrawWireframe)
+			gGHI->SetWireframe(true);
+
 		for (auto& rc : curMeshes)
 		{
 			FObjectInfoBuffer objectInfo;
@@ -398,6 +402,9 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 			gGHI->DrawMesh(&rc.drawMesh);
 		}
+		
+		if (camera->bDrawWireframe)
+			gGHI->SetWireframe(false);
 
 		PreDeferredLightSetup(scene);
 
@@ -493,7 +500,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 		gGHI->SetFrameBuffer(scene->colorBuffer, scene->depth);
 		gGHI->SetShaderBuffer(sceneBuffer, 1);
-		gGHI->SetShaderBuffer(forwardLightsBuffer, 2);
+		gGHI->SetShaderBuffer(forwardLightsBuffer, 2);	
 		gGHI->SetShaderBuffer(objectBuffer, 3);
 		gGHI->SetShaderBuffer(shadowDataBuffer, 4);
 
@@ -508,6 +515,9 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 		if (overridePsShader)
 			gGHI->SetPsShader(overridePsShader);
+
+		if (camera->bDrawWireframe)
+			gGHI->SetWireframe(true);
 
 		for (auto& rc : curMeshes)
 		{
@@ -543,6 +553,9 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 			gGHI->DrawMesh(&rc.drawMesh);
 		}
+
+		if (camera->bDrawWireframe)
+			gGHI->SetWireframe(false);
 
 		UnlockGPU();
 	}
@@ -827,6 +840,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 		curMeshes.Clear();
 		GetMeshesToDraw(pass == 0 ? R_DEBUG_PASS : R_DEBUG_OVERLAY_PASS, dynamicMeshes, curMeshes);
+		GetMeshesToDraw(pass == 0 ? R_DEBUG_PASS : R_DEBUG_OVERLAY_PASS, staticMeshes, curMeshes);
 
 		LockGPU();
 		gGHI->SetBlendMode(EBlendMode::BLEND_ADDITIVE);

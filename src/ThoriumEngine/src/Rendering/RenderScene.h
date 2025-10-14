@@ -12,6 +12,7 @@ class CCameraComponent;
 class CPrimitiveProxy;
 class CCameraProxy;
 class CPostProcessVolumeProxy;
+class CDebugRenderer;
 
 struct FPrimitiveHitInfo
 {
@@ -86,6 +87,8 @@ public:
 
 	void ResizeBuffers(int width, int height);
 
+	inline CDebugRenderer* DebugRenderer() const { return debugRender; }
+
 private:
 	TArray<FRenderCommand> renderQueue;
 
@@ -104,6 +107,8 @@ private:
 	float screenPercentage = 100.f;
 
 	int bufferWidth, bufferHeight;
+
+	CDebugRenderer* debugRender;
 
 public:
 	// the position of the primary camera that was used for rendering the sun light shadow map,

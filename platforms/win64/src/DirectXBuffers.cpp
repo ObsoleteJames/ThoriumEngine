@@ -44,6 +44,7 @@ DirectXVertexBuffer::DirectXVertexBuffer(SizeType bufferSize)
 	D3D11_BUFFER_DESC meshBufferInfo{};
 	meshBufferInfo.Usage = D3D11_USAGE_DYNAMIC;
 	meshBufferInfo.ByteWidth = (uint)bufferSize;
+	meshBufferInfo.StructureByteStride = sizeof(FVertex);
 	meshBufferInfo.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	meshBufferInfo.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
@@ -70,7 +71,7 @@ DirectXVertexBuffer::~DirectXVertexBuffer()
 void DirectXVertexBuffer::Update(SizeType amount, void* data, SizeType offset /* = 0 */)
 {
 	D3D11_MAPPED_SUBRESOURCE target;
-	GetDirectXRenderer()->deviceContext->Map(buffer, 0, D3D11_MAP_WRITE, 0, &target);
+	GetDirectXRenderer()->deviceContext->Map(buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &target);
 	memcpy((void*)((SizeType)target.pData + offset), data, amount);
 	GetDirectXRenderer()->deviceContext->Unmap(buffer, 0);
 }

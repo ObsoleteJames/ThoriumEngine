@@ -67,6 +67,7 @@ public:
 	virtual void SetBlendMode(EBlendMode mode) = 0;
 
 	virtual void SetFaceCulling(bool bBack) = 0;
+	virtual void SetWireframe(bool value) = 0;
 
 	virtual void Present() = 0;
 

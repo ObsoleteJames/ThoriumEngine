@@ -205,6 +205,23 @@ void DirectXInterface::Init()
 
 		device->CreateRasterizerState(&desc, &rasterCullOff);
 	}
+
+	// Rasterizer state Wireframe
+	{
+		D3D11_RASTERIZER_DESC desc{};
+		desc.FillMode = D3D11_FILL_WIREFRAME;
+		desc.CullMode = D3D11_CULL_BACK;
+		desc.FrontCounterClockwise = false;
+		desc.DepthBias = false;
+		desc.DepthBiasClamp = 0;
+		desc.SlopeScaledDepthBias = 0;
+		desc.DepthClipEnable = true;
+		desc.ScissorEnable = false;
+		desc.MultisampleEnable = false;
+		desc.AntialiasedLineEnable = false;
+
+		device->CreateRasterizerState(&desc, &rasterWireframe);
+	}
 }
 
 void DirectXInterface::InitImGui(IBaseWindow* wnd)
@@ -489,6 +506,8 @@ void DirectXInterface::DrawMesh(FMesh* mesh)
 	if (mesh->indexBuffer)
 		deviceContext->IASetIndexBuffer(((DirectXIndexBuffer*)&*mesh->indexBuffer)->buffer, DXGI_FORMAT_R32_UINT, 0);
 
+	deviceContext->IASetInputLayout(curVertexShader->inputLayout);
+
 	deviceContext->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	deviceContext->OMSetDepthStencilState(nullptr, 0);
 	
@@ -508,7 +527,8 @@ void DirectXInterface::DrawMesh(FDrawMeshCmd* info)
 	FMesh* mesh = info->mesh;
 	info->material->UpdateGpuBuffer();
 
-	deviceContext->IASetInputLayout(((DirectXVertexShader*)info->material->GetShader(info->mesh->bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex))->inputLayout);
+	//deviceContext->IASetInputLayout(((DirectXVertexShader*)info->material->GetShader(info->mesh->bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex))->inputLayout);
+	deviceContext->IASetInputLayout(curVertexShader->inputLayout);
 
 	uint vertexData[2] = { info->mesh->bSkinnedMesh ? sizeof(FSkinnedVertex) : sizeof(FVertex), 0 };
 	if (mesh->vertexBuffer)
@@ -573,7 +593,8 @@ void DirectXInterface::DrawMesh(FMeshBuilder::FRenderMesh* data)
 	FMesh* mesh = &data->mesh;
 	data->mat->UpdateGpuBuffer();
 
-	deviceContext->IASetInputLayout(((DirectXVertexShader*)data->mat->GetShader(data->mesh.bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex))->inputLayout);
+	//deviceContext->IASetInputLayout(((DirectXVertexShader*)data->mat->GetShader(data->mesh.bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex))->inputLayout);
+	deviceContext->IASetInputLayout(curVertexShader->inputLayout);
 
 	uint vertexData[2] = { data->mesh.bSkinnedMesh ? sizeof(FSkinnedVertex) : sizeof(FVertex), 0 };
 	if (mesh->vertexBuffer)
@@ -648,6 +669,7 @@ void DirectXInterface::SetMaterial(CMaterial* mat)
 void DirectXInterface::SetVsShader(IShader* shader)
 {
 	deviceContext->VSSetShader(shader != nullptr ? (ID3D11VertexShader*)((DirectXShader*)shader)->shader : nullptr, nullptr, 0);
+	curVertexShader = (DirectXVertexShader*)shader;
 }
 
 void DirectXInterface::SetPsShader(IShader* shader)
@@ -746,6 +768,14 @@ void DirectXInterface::SetFaceCulling(bool bEnabled)
 		deviceContext->RSSetState(nullptr);
 	else
 		deviceContext->RSSetState(rasterCullOff);
+}
+
+void DirectXInterface::SetWireframe(bool value)
+{
+	if (value)
+		deviceContext->RSSetState(rasterWireframe);
+	else
+		deviceContext->RSSetState(nullptr);
 }
 
 void DirectXInterface::BindGBuffer()

@@ -6,6 +6,8 @@
 #include "Renderer.h"
 #include "Rendering/Texture.h"
 
+#include "DebugRenderer.h"
+
 static const int bloomScaleLUT[] = {
 	2, 4, 8, 16, 32, 64
 };
@@ -39,6 +41,11 @@ CRenderScene::CRenderScene(int fbWidth /*= 1280*/, int fbHeight /*= 720*/) : pri
 	depth = gGHI->CreateDepthBuffer({ widthB, heightB, TH_DBF_D24_S8, 1, false });
 
 	depthTex = gGHI->CreateTexture2D(nullptr, widthB, heightB, TEXTURE_FORMAT_R24G8, THTX_FILTER_POINT);
+
+#if IS_DEV
+	debugRender = new CDebugRenderer();
+	debugRender->SetScene(this);
+#endif
 }
 
 CRenderScene::~CRenderScene()
@@ -59,6 +66,10 @@ CRenderScene::~CRenderScene()
 
 	delete depth;
 	delete depthTex;
+
+#if IS_DEV
+	delete debugRender;
+#endif
 }
 
 void CRenderScene::ResizeBuffers(int width, int height)

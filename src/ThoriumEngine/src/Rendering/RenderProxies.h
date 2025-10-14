@@ -45,6 +45,8 @@ public:
 	float nearPlane = 0.1f;
 	float farPlane = 10000.f;
 
+	bool bDrawWireframe = false;
+
 	bool bEnabled;
 };
 
@@ -213,7 +215,7 @@ public:
 	// Wether this cubemap affects everything.
 	bool bGlobal;
 
-	// Wether this cubemap should also be used as an IBL source.
+	// Wether this cubemap should also be used as an ambient diffuse lighting source.
 	bool bAffectDiffuse;
 
 	// Wether this cubemap re-renders at runtime.

@@ -6,6 +6,7 @@
 #pragma comment(lib, "d3d11.lib")
 
 class DirectXInterface;
+class DirectXVertexShader;
 extern DirectXInterface* GetDirectXRenderer();
 
 class ENGINE_API DirectXInterface : public IGraphicsInterface
@@ -70,6 +71,7 @@ public:
 	virtual void SetBlendMode(EBlendMode mode);
 
 	virtual void SetFaceCulling(bool bEnabled);
+	virtual void SetWireframe(bool value);
 
 	virtual void BindGBuffer();
 
@@ -107,6 +109,8 @@ public:
 
 	ID3D11RasterizerState* rasterCullOff;
 	ID3D11RasterizerState* rasterWireframe;
+
+	DirectXVertexShader* curVertexShader;
 
 	//IDXGISwapChain* swapchain;
 	//ID3D11RenderTargetView* renderTarget;
