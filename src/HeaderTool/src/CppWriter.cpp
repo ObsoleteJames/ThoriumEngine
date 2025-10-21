@@ -122,12 +122,14 @@ void CParser::WriteModuleCpp()
 	//stream << "\n#include \"Module.h\"\n\nCModule " << projectName.c_str() << "_module(\"" << projectName.c_str() << "\");\n";
 
 	stream << "\n#include \"Module.h\"\n\n"
-		<< "CModule& GetModule_" << projectName.c_str() << "()\n{\n"
-		<< "\tstatic CModule _module(\"" << projectName.c_str() << "\");\n"
-		<< "\treturn _module;\n"
-		<< "}\n";
+			<< "extern CModule& GetModule_" << projectName.c_str() << "();\n";
 
-	if (ProjectType != ENGINE_DLL)
+	//	<< "CModule& GetModule_" << projectName.c_str() << "()\n{\n"
+	//	<< "\tstatic CModule _module(\"" << projectName.c_str() << "\");\n"
+	//	<< "\treturn _module;\n"
+	//	<< "}\n";
+
+	//if (ProjectType != ENGINE_DLL)
 		stream << std::endl << "extern \"C\" __declspec(dllexport) CModule* __GetModuleInstance() { return &GetModule_" << projectName.c_str() << "(); }\n";
 
 	stream.close();

@@ -105,6 +105,14 @@ void CEntity::RemoveComponent(CEntityComponent* comp)
 	}
 }
 
+void CEntity::SetEntityId(SizeType id)
+{
+	world->entities.erase(entityId);
+	world->entities[id] = this;
+	
+	entityId = id;
+}
+
 FOutputBinding& CEntity::AddOutput()
 {
 	boundOutputs.Add();

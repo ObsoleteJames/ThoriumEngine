@@ -110,6 +110,8 @@ int CModuleManager::LoadModule(const FString& path, CModule** outPtr)
 
 	m->path = path;
 	modules.Add(m);
+
+	m->OnInit();
 	return 0;
 }
 
@@ -128,10 +130,10 @@ bool CModuleManager::UnloadModule(const FString& name)
 	if (it == modules.end())
 		return false;
 
+	it->OnExit();
 	modules.Erase(it);
 
 	FreeLibrary((HMODULE)it->handle);
-
 	return true;
 }
 
@@ -139,6 +141,8 @@ bool CModuleManager::UnloadModule(CModule* module)
 {
 	if (module->name == "Engine")
 		return false;
+
+	module->OnExit();
 
 	FreeLibrary((HMODULE)module->handle);
 
@@ -176,6 +180,8 @@ void CModuleManager::Cleanup()
 {
 	for (auto m : modules)
 	{
+		m->OnExit();
+
 		if (m->handle)
 		{
 			FreeLibrary((HMODULE)m->handle);

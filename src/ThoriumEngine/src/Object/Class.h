@@ -18,9 +18,7 @@ struct FBaseField
 {
 	FString name;
 	FString cppName;
-#if defined(INCLUDE_EDITOR_DATA)
 	FString description;
-#endif
 };
 
 struct ENGINE_API FPropertyMeta

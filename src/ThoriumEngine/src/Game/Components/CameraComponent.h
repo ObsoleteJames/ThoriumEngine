@@ -2,6 +2,7 @@
 
 #include "SceneComponent.h"
 #include "Game/World.h"
+#include "Rendering/RenderLayer.h"
 #include "CameraComponent.generated.h"
 
 class IBaseWindow;
@@ -50,6 +51,9 @@ public:
 
 	PROPERTY(Editable)
 	EProjectionType projection;
+
+	PROPERTY(Editable, Category = Rendering)
+	ERenderLayer renderLayers = R_LAYER_DEFAULT;
 
 private:
 	FMatrix viewMat;

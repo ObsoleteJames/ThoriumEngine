@@ -8,6 +8,9 @@ class FStruct;
 class FEnum;
 class FAssetClass;
 
+#define REGISTER_MODULE(Type, Target) CModule& GetModule_##Target () { static Type _module(#Target); return _module; }
+#define REGISTER_DEFAULT_MODULE(Target) CModule& GetModule_##Target () { static CModule _module(#Target); return _module; }
+
 // Generic OS library (e.g. DLL)
 class ENGINE_API FLibrary
 {
@@ -38,6 +41,9 @@ class ENGINE_API CModule : public FLibrary
 
 public:
 	CModule(const char* _name) { name = _name; }
+
+	virtual void OnInit() {}
+	virtual void OnExit() {}
 
 	inline void RegisterFClass(FClass* c) { Classes.Add(c); }
 	inline void RegisterFStruct(FStruct* c) { Structures.Add(c); }

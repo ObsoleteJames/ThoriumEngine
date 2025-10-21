@@ -57,6 +57,9 @@ public:
 	PROPERTY(Editable, Category = Physics, EditCondition = "bStaticBody")
 	bool bEnableGravity = true;
 
+	PROPERTY(Editable, Category = Rendering)
+	ERenderLayer renderLayer = R_LAYER_DEFAULT;
+
 protected:
 	TObjectPtr<IPhysicsBody> physicsBody;
 	bool bHasParentBody = false;

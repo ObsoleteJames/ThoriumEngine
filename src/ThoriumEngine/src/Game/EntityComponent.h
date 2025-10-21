@@ -29,6 +29,7 @@ public:
 	inline bool IsUserCreated() const { return bUserCreated; }
 
 	inline SizeType ComponentId() const { return compId; }
+	void SetComponentId(SizeType id);
 
 protected:
 	virtual void OnDelete();

@@ -206,8 +206,10 @@ void CWorld::LoadScene(CScene* ptr)
 			if (it->second->GetType() == ENTITY_STATIC)
 				RemoveDynamicEntity(it->second);
 
+#if INCLUDE_EDITOR_DATA
 			if (!gIsEditor && it->second->bEditorOnly)
 				it->second->Delete();
+#endif
 		}
 		else
 			stream->Seek(dataSize, SEEK_CUR);
@@ -387,10 +389,12 @@ void CWorld::Update(double dt)
 				if (ent->type == ENTITY_DYNAMIC)
 					ent->Update(dt);
 			}
+#if INCLUDE_EDITOR_DATA
 			else if (ent->bEditorEntity)
 			{
 				ent->Update(dt);
 			}
+#endif
 		}
 	}
 	else if (bActive)

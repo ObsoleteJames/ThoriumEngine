@@ -38,7 +38,8 @@
 
 #define RENDER_MULTITHREADED 0
 
-CModule& GetModule_Engine();
+//CModule& GetModule_Engine();
+REGISTER_DEFAULT_MODULE(Engine)
 
 CEngine* gEngine = nullptr;
 

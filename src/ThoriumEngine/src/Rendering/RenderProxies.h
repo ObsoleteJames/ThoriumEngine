@@ -3,6 +3,7 @@
 #include "Object/Object.h"
 #include "RenderCommands.h"
 #include "Assets/ModelAsset.h"
+#include "RenderLayer.h"
 #include "RenderProxies.generated.h"
 
 class CRenderScene;
@@ -12,6 +13,17 @@ class IFrameBuffer;
 
 class ENGINE_API CCameraProxy
 {
+public:
+	enum EViewMode
+	{
+		VIEW_LIT, // standard fully shaded view.
+		VIEW_UNLIT, // render diffuse colour with basic shading.
+		VIEW_DIFFUSE, // render only diffuse colour.
+		VIEW_WIREFRAME,
+		VIEW_NORMAL, // render normal map.
+		VIEW_REFLECTIONS // reflections only
+	};
+
 public:
 	CCameraProxy() = default;
 	virtual ~CCameraProxy() = default;
@@ -44,6 +56,9 @@ public:
 	float fov = 70.f;
 	float nearPlane = 0.1f;
 	float farPlane = 10000.f;
+
+	ERenderLayer layers = R_LAYER_DEFAULT;
+	EViewMode viewMode = VIEW_LIT;
 
 	bool bDrawWireframe = false;
 
@@ -127,6 +142,8 @@ protected:
 	FTransform transform;
 	FMatrix matrix;
 	TArray<FMatrix> skeletonMatrices;
+
+	ERenderLayer layers = R_LAYER_DEFAULT;
 
 	bool bHasLod;
 	bool bVisible;

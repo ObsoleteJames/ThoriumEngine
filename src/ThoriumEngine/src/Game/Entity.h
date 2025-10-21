@@ -8,6 +8,7 @@
 #include "Math/Bounds.h"
 #include "Game/Components/SceneComponent.h"
 #include "Object/ObjectHandle.h"
+#include "Rendering/RenderLayer.h"
 #include "Entity.generated.h"
 
 class CEntityComponent;
@@ -82,6 +83,13 @@ public:
 	}
 
 	template<typename T>
+	inline T* GetComponent(SizeType id)
+	{
+		static_assert(std::is_base_of<CEntityComponent, T>::value);
+		return Cast<T>(GetComponent(id));
+	}
+
+	template<typename T>
 	void GetComponents(TArray<T*>& arr)
 	{
 		arr.Clear();
@@ -105,6 +113,7 @@ public:
 	inline CSceneComponent* RootComponent() const { return rootComponent; }
 
 	inline SizeType EntityId() const { return entityId; }
+	void SetEntityId(SizeType id);
 
 	FUNCTION()
 	inline void SetWorldPosition(const FVector& p) { rootComponent->SetWorldPosition(p); }
@@ -180,26 +189,26 @@ public:
 	bool bIsEnabled = true;
 
 	PROPERTY(Editable, Category = Rendering)
-	bool bOwnerOnlySee;
+	bool bOwnerOnlySee = false;
 
 	PROPERTY(Editable, Category = Rendering)
-	bool bOwnerCantSee;
+	bool bOwnerCantSee = false;
 
 #if INCLUDE_EDITOR_DATA
 	// Wether this entity should only be loaded in the editor.
 	PROPERTY(Editable)
-	bool bEditorOnly;
+	bool bEditorOnly = false;
 
 	// Wether this entity was created by the editor.
 	// if true, this entity will not be serialized and will only be visible in the editor.
-	bool bEditorEntity;
+	bool bEditorEntity = false;
 #endif
 
 	PROPERTY(Editable , Category = Health)
 	bool bCanBeDamaged = false;
 
 	PROPERTY(Editable, Category = Health)
-	float health;
+	float health = 100.0f;
 
 protected:
 	FGuid entityId;
@@ -208,7 +217,7 @@ protected:
 	EEntityType type = ENTITY_DYNAMIC;
 
 private:
-	CWorld* world;
+	CWorld* world = nullptr;
 	TObjectPtr<CSceneComponent> rootComponent;
 
 	PROPERTY()
@@ -216,6 +225,6 @@ private:
 
 	TMap<SizeType, TObjectPtr<CEntityComponent>> components;
 
-	bool bIsInitialized;
+	bool bIsInitialized = false;
 
 };
