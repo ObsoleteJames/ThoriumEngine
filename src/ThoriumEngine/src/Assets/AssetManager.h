@@ -82,6 +82,9 @@ public:
 
 	template<class T>
 	inline static TObjectPtr<T> GetAsset(const FString& path) { return (TObjectPtr<T>)CAssetManager::GetAsset((FAssetClass*)T::StaticClass(), path); }
+	
+	template<class T>
+	inline static TObjectPtr<T> GetAsset(SizeType id) { return (TObjectPtr<T>)CAssetManager::GetAsset((FAssetClass*)T::StaticClass(), id); }
 
 	static TObjectPtr<CAsset> GetAsset(FAssetClass* type, const FString& path);
 	static TObjectPtr<CAsset> GetAsset(FAssetClass* type, SizeType assetId);

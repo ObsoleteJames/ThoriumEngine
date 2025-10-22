@@ -9,6 +9,8 @@ class CWorld;
 #define CSCENE_VERSION 0x0002
 #define CSCENE_SIGNITURE 0xD3AFB1C8
 
+#define CSCENE_VERSION_02 0x0002
+
 ASSET(Extension = ".thscene")
 class ENGINE_API CScene : public CAsset
 {

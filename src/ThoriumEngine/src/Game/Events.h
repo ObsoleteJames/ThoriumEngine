@@ -10,6 +10,7 @@ public:
 	static TDelegate<> PostUpdate;
 
 	static TDelegate<> OnRender;
+	static TDelegate<> PostRender;
 	
 	static TDelegate<> LevelChange;
 	static TDelegate<> PostLevelChange;

@@ -279,6 +279,8 @@ int CEngine::Run()
 			gameWindow->swapChain->GetDepthBuffer()->Clear();
 			gGHI->ImGuiRender();
 
+			Events::PostRender.Invoke();
+
 			gameWindow->Present(userConfig.bVSync, 0);
 		}
 

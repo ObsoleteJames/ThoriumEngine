@@ -34,21 +34,115 @@ CWorld::CWorld() : bInitialized(0), bActive(0), time(0.f), bLoaded(false), bLoad
 	uint32 sig;
 	uint8 version;
 
-	// add some scene settings here.
+	FString gamemodeClass;
+
+	uint32 numSubScenes;
+	FSubScene subScenes[numSubScenes];
 
 	uint64 numEnts;
 	SerializedEntity entities[numEnts];
 */
 
-void CWorld::SetNewWorld(CWorld* world)
+void CWorld::AddSubScene(SizeType scene)
 {
-	if (bInWorldUpdate > 0)
+	if (IsChildWorld())
+	{
+		CONSOLE_LogError("CWorld", "AddSubScene(), Cannot add a sub scene to a sub scene!");
+		return;
+	}
+
+	if (!CAssetManager::GetAsset<CScene>(scene))
+	{
+		CONSOLE_LogError("CWorld", "AddSubScene(), Invalid asset id, asset does not exist!");
+		return;
+	}
+
+	for (auto& sub : subScenes)
+	{
+		if (sub.sceneAssetId == scene)
+		{
+			CONSOLE_LogError("CWorld", "AddSubScene(), Attempted to add already registered sub scene to world!");
+			return;
+		}
+	}
+
+	subScenes.Add({ scene , false, true, nullptr });
+}
+
+void CWorld::RemoveSubScene(SizeType scene)
+{
+	if (IsChildWorld())
 		return;
 
-	if (gWorld)
-		gWorld->Delete();
+	for (auto it = subScenes.begin(); it != subScenes.end(); it++)
+	{
+		if (it->sceneAssetId == scene)
+			continue;
 
-	gWorld = world;
+		if (it->world)
+			UnloadSubScene(scene);
+
+		subScenes.Erase(it);
+	}
+}
+
+void CWorld::LoadSubScene(SizeType scene, bool bAsync)
+{
+	if (IsChildWorld())
+	{
+		CONSOLE_LogError("CWorld", "LoadSubScene(), Cannot load a sub scene in a sub scene!");
+		return;
+	}
+
+	FSubScene* sub = nullptr;
+	for (auto& s : subScenes)
+		if (s.sceneAssetId == scene)
+			sub = &s;
+
+	if (!sub)
+		return;
+
+	if (!bAsync)
+	{
+		CWorld* world = CreateObject<CWorld>();
+		world->parent = this;
+		world->InitWorld(InitializeInfo());
+		world->MakeIndestructible();
+
+		CScene* sceneObj = CAssetManager::GetAsset<CScene>(scene);
+
+		CONSOLE_LogInfo("CEngine", "Loading sub scene '" + sceneObj->Name() + "'");
+
+		world->LoadScene(sceneObj);
+		sub->world = world;
+
+		if (bActive)
+			world->Start();
+
+		OnSubSceneLoaded.Invoke(*sub);
+	}
+}
+
+void CWorld::UnloadSubScene(SizeType scene)
+{
+	if (IsChildWorld())
+		return;
+
+	FSubScene* sub = nullptr;
+	for (auto& s : subScenes)
+		if (s.sceneAssetId == scene)
+			sub = &s;
+	
+	if (!sub)
+		return;
+
+	if (sub->world->bActive)
+		sub->world->Stop();
+
+	sub->world->Delete();
+	subWorlds.Erase(subWorlds.Find(sub->world));
+
+	sub->world = nullptr;
 }
 
 bool CWorld::IsInUpdate()
@@ -107,7 +201,7 @@ void CWorld::LoadScene(CScene* ptr)
 
 	*stream >> &sig;
 
-	if (sig != CSCENE_SIGNITURE || version != CSCENE_VERSION)
+	if (sig != CSCENE_SIGNITURE || (version != CSCENE_VERSION && version != CSCENE_VERSION_02))
 	{
 		CONSOLE_LogError("CWorld", "Invalid scene file '" + scene->File()->Path() + "'");
 		return;
@@ -119,6 +213,21 @@ void CWorld::LoadScene(CScene* ptr)
 	scene->gamemodeClass = gamemodeType;
 	if (!scene->gamemodeClass.Get())
 		scene->gamemodeClass = CGameMode::StaticClass();
+
+	if (version <= CSCENE_VERSION_02)
+	{
+		int numSubScenes;
+		*stream >> &numSubScenes;
+
+		subScenes.Resize(numSubScenes);
+
+		for (int i = 0; i < numSubScenes; i++)
+		{
+			FSubScene& scene = subScenes[i];
+			*stream >> &scene;
+			scene.world = nullptr;
+		}
+	}
 
 	SizeType numEnts;
 	*stream >> &numEnts;
@@ -229,6 +338,12 @@ void CWorld::LoadScene(CScene* ptr)
 
 	for (auto ent : entities)
 		ent.second->PostInit();
+
+	for (auto& subScene : subScenes)
+	{
+		if (subScene.bLoadOnStart)
+			LoadSubScene(subScene.sceneAssetId);
+	}
 	
 	bLoading = false;
 	bLoaded = true;
@@ -414,8 +529,6 @@ void CWorld::Render()
 	if (!renderScene)
 		return;
 
-	renderScene->SetTime((float)CurTime());
-
 	for (auto* c : cameras)
 		c->FetchData();
 
@@ -428,12 +541,47 @@ void CWorld::Render()
 	for (auto* p : ppVolumes)
 		p->FetchData();
 
+	renderScene->SetTime((float)CurTime());
+
 	renderScene->SetPrimitives(primitives);
 	renderScene->SetLights(lights);
 	renderScene->SetPostProcessVolumes(ppVolumes);
 
 	renderScene->SetCameras(cameras);
 	renderScene->SetPrimaryCamera(primaryCamera);
+
+	if (subWorlds.Size() > 0)
+		RenderSubWorlds();
+}
+
+void CWorld::RenderSubWorlds()
+{
+	for (auto world : subWorlds)
+	{
+		for (auto* c : world->cameras)
+		{
+			c->FetchData();
+			renderScene->RegisterCamera(c);
+		}
+
+		for (auto* p : world->primitives)
+		{
+			p->FetchData();
+			renderScene->RegisterPrimitive(p);
+		}
+
+		for (auto* l : world->lights)
+		{
+			l->FetchData();
+			renderScene->RegisterLight(l);
+		}
+
+		for (auto* p : world->ppVolumes)
+		{
+			p->FetchData();
+			renderScene->UnregisterPPVolume(p);
+		}
+	}
 }
 
 void CWorld::OnDelete()

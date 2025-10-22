@@ -41,6 +41,15 @@ public:
 	float time;
 };
 
+struct FSubScene
+{
+	SizeType sceneAssetId;
+	bool bLoadAsync;
+	bool bLoadOnStart;
+
+	CWorld* world; // the world object, if loaded.
+};
+
 class CEntityIOManager
 {
 public:
@@ -97,14 +106,11 @@ public:
 
 public:
 	CWorld();
-	
-	//static FSceneLoadResult LoadScene(const FString& name);
-	//static void LoadSceneAsync(const FString& name, std::function<void(FSceneLoadResult)> onComplete);
 
-	//static FSceneLoadResult LoadSubScene(const FString& name);
-	//static void LoadSubSceneAsync(const FString& name, std::function<void(FSceneLoadResult)> onComplete);
-
-	static void SetNewWorld(CWorld* world);
+	void AddSubScene(SizeType sceneAssetId);
+	void RemoveSubScene(SizeType sceneAssetId);
+	void LoadSubScene(SizeType sceneAssetId, bool bAsync = false);
+	void UnloadSubScene(SizeType sceneAssetId);
 
 	static bool IsInUpdate();
 
@@ -137,11 +143,12 @@ public:
 
 	inline bool IsPrimary() const { return this == gWorld; }
 	inline bool IsChildWorld() const { return parent != nullptr; }
+	inline CWorld* ParentWorld() const { return parent; }
 
 	inline void SetRenderScene(CRenderScene* scene) { renderScene = scene; }
-	inline CRenderScene* GetRenderScene() const { return renderScene; }
+	inline CRenderScene* GetRenderScene() const { if (parent) return parent->renderScene; return renderScene; }
 
-	inline IPhysicsWorld* GetPhysicsWorld() const { return physicsWorld; }
+	inline IPhysicsWorld* GetPhysicsWorld() const { if (parent) return parent->physicsWorld; return physicsWorld; }
 
 	inline void SetRenderWindow(IBaseWindow* wnd) { renderWindow = wnd; }
 	inline IBaseWindow* GetRenderWindow() const { return renderWindow; }
@@ -187,15 +194,20 @@ protected:
 	void RegisterDynamicEntity(CEntity* ent);
 	void RemoveDynamicEntity(CEntity* ent);
 
+	void RenderSubWorlds();
+
 public: // Events
 	TDelegate<CEntity*> OnEntityCreated;
 	TDelegate<CEntity*> OnEntityDeleted;
+
+	TDelegate<FSubScene> OnSubSceneLoaded;
 
 protected:
 	InitializeInfo initInfo;
 
 	CWorld* parent = nullptr;
-	TArray<CWorld*> subWorlds;
+	TArray<CWorld*> subWorlds; // list of active/loaded sub scenes
+	TArray<FSubScene> subScenes;
 
 	//   EntityId, EntityPtr
 	TMap<SizeType, TObjectPtr<CEntity>> entities;

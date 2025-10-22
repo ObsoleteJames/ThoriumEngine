@@ -18,6 +18,12 @@ void CScene::OnSave(IBaseFStream* stream)
 	else
 		*stream << FString("");
 
+	uint32 numSubScenes = world->subScenes.Size();
+	*stream << &numSubScenes;
+
+	for (uint32 i = 0; i < numSubScenes; i++)
+		*stream << &world->subScenes[i];
+
 	TMap<SizeType, TObjectPtr<CEntity>>& ents = world->entities;
 	SizeType numEntsOffset = stream->Tell();
 	SizeType numEnts = 0;
