@@ -214,7 +214,7 @@ void CWorld::LoadScene(CScene* ptr)
 	if (!scene->gamemodeClass.Get())
 		scene->gamemodeClass = CGameMode::StaticClass();
 
-	if (version <= CSCENE_VERSION_02)
+	if (version > CSCENE_VERSION_02)
 	{
 		int numSubScenes;
 		*stream >> &numSubScenes;
