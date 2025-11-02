@@ -202,6 +202,8 @@ public: // Events
 
 	TDelegate<FSubScene> OnSubSceneLoaded;
 
+	TDelegate<double> OnUpdate;
+
 protected:
 	InitializeInfo initInfo;
 

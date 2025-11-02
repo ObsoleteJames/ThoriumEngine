@@ -493,6 +493,8 @@ void CWorld::Update(double dt)
 			physicsWorld->Update(dt);
 			physicsWorld->ResolveCollisions();
 		}
+
+		OnUpdate.Invoke(dt);
 	}
 
 	if (gIsEditor)
@@ -512,14 +514,14 @@ void CWorld::Update(double dt)
 #endif
 		}
 	}
-	else if (bActive)
-	{
-		for (auto& ent : dynamicEntities)
-		{
-			if (ent->type == ENTITY_DYNAMIC)
-				ent->Update(dt);
-		}
-	}
+	//else if (bActive)
+	//{
+	//	for (auto& ent : dynamicEntities)
+	//	{
+	//		if (ent->type == ENTITY_DYNAMIC)
+	//			ent->Update(dt);
+	//	}
+	//}
 
 	bInWorldUpdate--;
 }

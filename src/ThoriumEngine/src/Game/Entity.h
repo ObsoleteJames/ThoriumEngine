@@ -216,6 +216,9 @@ protected:
 	PROPERTY()
 	EEntityType type = ENTITY_DYNAMIC;
 
+	// set this to true in the constructor to enable the Update function.
+	bool bRequireUpdate = false;
+
 private:
 	CWorld* world = nullptr;
 	TObjectPtr<CSceneComponent> rootComponent;

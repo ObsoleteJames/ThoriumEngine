@@ -145,6 +145,8 @@ void CEntity::MakeDynamic()
 void CEntity::Init()
 {
 	rootComponent = AddComponent<CSceneComponent>("root");
+	if (bRequireUpdate)
+		world->OnUpdate.Bind(this, &CEntity::Update);
 }
 
 void CEntity::PostInit()
@@ -252,6 +254,9 @@ void CEntity::OnDelete()
 
 	if (type == ENTITY_DYNAMIC)
 		world->RemoveDynamicEntity(this);
+
+	if (bRequireUpdate)
+		world->OnUpdate.RemoveAll(this);
 
 	FWorldRegisterer::UnregisterEntity(world, this);
 }
