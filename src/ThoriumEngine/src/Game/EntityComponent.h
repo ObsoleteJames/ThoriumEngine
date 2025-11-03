@@ -16,7 +16,7 @@ class ENGINE_API CEntityComponent : public CObject
 	friend class CWorld;
 
 public:
-	virtual void Init() {}
+	virtual void Init();
 
 	virtual void OnStart() {}
 	virtual void Update(double dt) {}
@@ -46,6 +46,8 @@ protected:
 
 	PROPERTY()
 	bool bUserCreated = false;
+
+	bool bRequireUpdate = false;
 
 	FGuid compId;
 

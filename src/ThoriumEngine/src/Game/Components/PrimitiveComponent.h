@@ -12,7 +12,7 @@ class ENGINE_API CPrimitiveComponent : public CSceneComponent
 	GENERATED_BODY()
 
 public:
-	CPrimitiveComponent() = default;
+	CPrimitiveComponent();
 
 	void Update(double dt) override;
 

@@ -2,6 +2,11 @@
 #include "PrimitiveComponent.h"
 #include "Physics/PhysicsBody.h"
 
+CPrimitiveComponent::CPrimitiveComponent()
+{
+	bRequireUpdate = true;
+}
+
 void CPrimitiveComponent::SetVelocity(const FVector& v)
 {
 	if (physicsBody)

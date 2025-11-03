@@ -145,8 +145,9 @@ void CEntity::MakeDynamic()
 void CEntity::Init()
 {
 	rootComponent = AddComponent<CSceneComponent>("root");
+
 	if (bRequireUpdate)
-		world->OnUpdate.Bind(this, &CEntity::Update);
+		world->OnUpdate.Bind(this, [=](double dt) { this->Update(dt); });
 }
 
 void CEntity::PostInit()
@@ -168,8 +169,8 @@ void CEntity::OnStop()
 
 void CEntity::Update(double dt)
 {
-	for (auto& comp : components)
-		comp.second->Update(dt);
+	//for (auto& comp : components)
+	//	comp.second->Update(dt);
 }
 
 void CEntity::Serialize(FMemStream& out)

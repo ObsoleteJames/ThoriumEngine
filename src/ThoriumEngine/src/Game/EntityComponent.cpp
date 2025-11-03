@@ -2,6 +2,12 @@
 #include "EntityComponent.h"
 #include "Game/Entity.h"
 
+void CEntityComponent::Init()
+{
+	if (bRequireUpdate)
+		GetWorld()->OnUpdate.Bind(this, [=](double dt) { this->Update(dt); });
+}
+
 CWorld* CEntityComponent::GetWorld() const
 {
 	return ent->GetWorld();
