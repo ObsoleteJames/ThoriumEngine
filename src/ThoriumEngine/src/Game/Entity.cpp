@@ -147,7 +147,7 @@ void CEntity::Init()
 	rootComponent = AddComponent<CSceneComponent>("root");
 
 	if (bRequireUpdate)
-		world->OnUpdate.Bind(this, [=](double dt) { this->Update(dt); });
+		world->OnUpdate.Bind(this, &CEntity::DoUpdate);
 }
 
 void CEntity::PostInit()
@@ -274,4 +274,10 @@ void CEntity::FireOutput(const FString& output)
 			GetWorld()->GetEntityIOManager()->FireEvent(this, i);
 		}
 	}
+}
+
+void CEntity::DoUpdate(double dt)
+{
+	if (bIsEnabled)
+		Update(dt);
 }

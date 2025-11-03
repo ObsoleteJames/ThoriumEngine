@@ -5,7 +5,7 @@
 void CEntityComponent::Init()
 {
 	if (bRequireUpdate)
-		GetWorld()->OnUpdate.Bind(this, [=](double dt) { this->Update(dt); });
+		GetWorld()->OnUpdate.Bind(this, &CEntityComponent::DoUpdate);
 }
 
 CWorld* CEntityComponent::GetWorld() const
@@ -30,4 +30,18 @@ void CEntityComponent::OnDelete()
 {
 	if (ent) 
 		ent->RemoveComponent(this);
+
+	if (bRequireUpdate)
+		GetWorld()->OnUpdate.RemoveAll(this);
+}
+
+void CEntityComponent::DoUpdate(double dt)
+{
+	if (ent)
+	{
+		if (ent->bIsEnabled)
+			Update(dt);
+	}
+	else
+		Update(dt);
 }

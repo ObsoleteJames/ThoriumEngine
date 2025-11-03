@@ -181,6 +181,9 @@ protected:
 
 	void FireOutput(const FString& output);
 
+private:
+	void DoUpdate(double dt);
+
 public:
 	PROPERTY(Editable, Category = Rendering)
 	bool bIsVisible = true;

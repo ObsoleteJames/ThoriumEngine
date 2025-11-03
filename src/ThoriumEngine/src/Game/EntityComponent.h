@@ -34,6 +34,9 @@ public:
 protected:
 	virtual void OnDelete();
 	
+private:
+	void DoUpdate(double dt);
+
 public:
 	PROPERTY(Editable, Category = Rendering)
 	bool bIsVisible = true;
