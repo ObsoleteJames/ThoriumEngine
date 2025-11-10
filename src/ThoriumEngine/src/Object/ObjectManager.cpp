@@ -154,6 +154,9 @@ void CObjectManager::Shutdown()
 
 		delete it->second;
 	}
+
+	ObjectsToDelete.Clear();
+	Objects.clear();
 }
 
 void CObjectManager::DeleteObjectsFromModule(CModule* module)

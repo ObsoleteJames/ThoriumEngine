@@ -33,6 +33,7 @@ protected:
 	TObjectPtr<IShaderBuffer> objectBuffer;
 	TObjectPtr<IShaderBuffer> forwardLightsBuffer;
 	TObjectPtr<IShaderBuffer> shadowDataBuffer;
+	TObjectPtr<IShaderBuffer> bloomInfoBuffer;
 
 	TObjectPtr<IShaderBuffer> deferredLightBuffer;
 

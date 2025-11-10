@@ -83,7 +83,7 @@ TIterator<FRenderCommand> IRenderer::__getRenderCommands(ERenderPass currentPass
 	return end;
 }
 
-static TObjectPtr<IShaderBuffer> blitDataBuffer = nullptr;
+//static TObjectPtr<IShaderBuffer> blitDataBuffer = nullptr;
 
 void IRenderer::Blit(IFrameBuffer* a, IFrameBuffer* b)
 {

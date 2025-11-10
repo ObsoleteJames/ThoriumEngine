@@ -713,7 +713,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 			UnlockGPU();
 
 			// Bloom Pass
-			static TObjectPtr<IShaderBuffer> bloomInfoBuffer;
+			//static TObjectPtr<IShaderBuffer> bloomInfoBuffer;
 			if (!bloomInfoBuffer)
 				bloomInfoBuffer = gGHI->CreateShaderBuffer(nullptr, sizeof(FBloomSettings));
 

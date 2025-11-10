@@ -570,6 +570,7 @@ void CEngine::OnExit()
 	SaveUserConfig();
 
 	gWorld->Delete();
+	gWorld = nullptr;
 	delete gameWindow;
 
 	gPhysicsApi->Shutdown();
@@ -583,7 +584,9 @@ void CEngine::OnExit()
 	(*(TArray<TObjectPtr<CShaderSource>>*)&CShaderSource::GetAllShaders()).Clear();
 
 	gRenderer->Delete();
+	gRenderer = nullptr;
 	delete gGHI;
+	gGHI = nullptr;
 
 	if (!bIsTerminal)
 		CWindow::Shutdown();

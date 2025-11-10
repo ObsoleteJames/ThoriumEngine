@@ -270,11 +270,11 @@ public:
 	inline CCameraProxy* CurrentCamera() const { return curCamera; }
 
 public:
-	static void Blit(IFrameBuffer* source, IFrameBuffer* destination);
-	static void Blit(IFrameBuffer* source, IFrameBuffer* destination, int destinationMip);
+	void Blit(IFrameBuffer* source, IFrameBuffer* destination);
+	void Blit(IFrameBuffer* source, IFrameBuffer* destination, int destinationMip);
 
-	static void Blit(IFrameBuffer* source, IFrameBuffer* destination, FVector2 viewportPos, FVector2 viewportScale);
-	static void Blit(IFrameBuffer* source, IFrameBuffer* destination, int destinationMip, FVector2 viewportPos, FVector2 viewportScale);
+	void Blit(IFrameBuffer* source, IFrameBuffer* destination, FVector2 viewportPos, FVector2 viewportScale);
+	void Blit(IFrameBuffer* source, IFrameBuffer* destination, int destinationMip, FVector2 viewportPos, FVector2 viewportScale);
 
 protected:
 	virtual void Init();
@@ -302,6 +302,8 @@ protected:
 
 	TObjectPtr<CShaderSource> shaderScreenPlane;
 	TObjectPtr<CShaderSource> shaderBlit;
+
+	TObjectPtr<IShaderBuffer> blitDataBuffer;
 
 	static std::mutex gpuMutex;
 };
