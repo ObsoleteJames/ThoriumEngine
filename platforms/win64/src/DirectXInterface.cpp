@@ -354,34 +354,39 @@ IShader* DirectXInterface::LoadShader(CShaderSource* source, EShaderType type, F
 	return nullptr;
 }
 
-IVertexBuffer* DirectXInterface::CreateVertexBuffer(const TArray<FVertex>& vertices)
-{
-	return new DirectXVertexBuffer(vertices);
-}
+//IVertexBuffer* DirectXInterface::CreateVertexBuffer(const TArray<FVertex>& vertices)
+//{
+//	return new DirectXVertexBuffer(vertices);
+//}
+//
+//IVertexBuffer* DirectXInterface::CreateVertexBuffer(const TArray<FSkinnedVertex>& vertices)
+//{
+//	return new DirectXVertexBuffer(vertices);
+//}
+//
+//IVertexBuffer* DirectXInterface::CreateVertexBuffer(SizeType bufferSize)
+//{
+//	return new DirectXVertexBuffer(bufferSize);
+//}
+//
+//IIndexBuffer* DirectXInterface::CreateIndexBuffer(const TArray<uint>& indices)
+//{
+//	return new DirectXIndexBuffer(indices);
+//}
+//
+//IIndexBuffer* DirectXInterface::CreateIndexBuffer(SizeType bufferSize)
+//{
+//	return new DirectXIndexBuffer(bufferSize);
+//}
+//
+//IShaderBuffer* DirectXInterface::CreateShaderBuffer(void* data, SizeType size)
+//{
+//	return new DirectXShaderBuffer(data, size);
+//}
 
-IVertexBuffer* DirectXInterface::CreateVertexBuffer(const TArray<FSkinnedVertex>& vertices)
+IGBuffer* DirectXInterface::CreateBuffer(const FBufferDescriptor& desc)
 {
-	return new DirectXVertexBuffer(vertices);
-}
-
-IVertexBuffer* DirectXInterface::CreateVertexBuffer(SizeType bufferSize)
-{
-	return new DirectXVertexBuffer(bufferSize);
-}
-
-IIndexBuffer* DirectXInterface::CreateIndexBuffer(const TArray<uint>& indices)
-{
-	return new DirectXIndexBuffer(indices);
-}
-
-IIndexBuffer* DirectXInterface::CreateIndexBuffer(SizeType bufferSize)
-{
-	return new DirectXIndexBuffer(bufferSize);
-}
-
-IShaderBuffer* DirectXInterface::CreateShaderBuffer(void* data, SizeType size)
-{
-	return new DirectXShaderBuffer(data, size);
+	return new DirectXBuffer(desc);
 }
 
 ISwapChain* DirectXInterface::CreateSwapChain(IBaseWindow* window)
@@ -389,7 +394,7 @@ ISwapChain* DirectXInterface::CreateSwapChain(IBaseWindow* window)
 	return new DirectXSwapChain(window);
 }
 
-IDepthBuffer* DirectXInterface::CreateDepthBuffer(FDepthBufferInfo depthInfo)
+IDepthBuffer* DirectXInterface::CreateDepthBuffer(FDepthBufferDesc depthInfo)
 {
 	return new DirectXDepthBuffer(depthInfo);
 }
@@ -500,11 +505,14 @@ void DirectXInterface::CopyResource(IDepthBuffer* source, IFrameBuffer* destinat
 
 void DirectXInterface::DrawMesh(FMesh* mesh)
 {
-	uint vertexData[2] = { sizeof(FVertex), 0 };
+	DirectXBuffer* vertexBuffer = (DirectXBuffer*)&*mesh->vertexBuffer;
+	DirectXBuffer* indexBuffer = (DirectXBuffer*)&*mesh->indexBuffer;
+
+	uint vertexData[2] = { vertexBuffer ? vertexBuffer->Descriptor().dataStride : sizeof(FVertex), 0};
 	if (mesh->vertexBuffer)
-		deviceContext->IASetVertexBuffers(0, 1, &((DirectXVertexBuffer*)&*mesh->vertexBuffer)->buffer, &vertexData[0], &vertexData[1]);
+		deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer->buffer, &vertexData[0], &vertexData[1]);
 	if (mesh->indexBuffer)
-		deviceContext->IASetIndexBuffer(((DirectXIndexBuffer*)&*mesh->indexBuffer)->buffer, DXGI_FORMAT_R32_UINT, 0);
+		deviceContext->IASetIndexBuffer(indexBuffer->buffer, DXGI_FORMAT_R32_UINT, 0);
 
 	deviceContext->IASetInputLayout(curVertexShader->inputLayout);
 
@@ -527,14 +535,17 @@ void DirectXInterface::DrawMesh(FDrawMeshCmd* info)
 	FMesh* mesh = info->mesh;
 	info->material->UpdateGpuBuffer();
 
+	DirectXBuffer* vertexBuffer = (DirectXBuffer*)&*mesh->vertexBuffer;
+	DirectXBuffer* indexBuffer = (DirectXBuffer*)&*mesh->indexBuffer;
+
 	//deviceContext->IASetInputLayout(((DirectXVertexShader*)info->material->GetShader(info->mesh->bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex))->inputLayout);
 	deviceContext->IASetInputLayout(curVertexShader->inputLayout);
 
-	uint vertexData[2] = { info->mesh->bSkinnedMesh ? sizeof(FSkinnedVertex) : sizeof(FVertex), 0 };
+	uint vertexData[2] = { vertexBuffer ? vertexBuffer->Descriptor().dataStride : sizeof(FVertex), 0 };
 	if (mesh->vertexBuffer)
-		deviceContext->IASetVertexBuffers(0, 1, &((DirectXVertexBuffer*)&*mesh->vertexBuffer)->buffer, &vertexData[0], &vertexData[1]);
+		deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer->buffer, &vertexData[0], &vertexData[1]);
 	if (mesh->indexBuffer)
-		deviceContext->IASetIndexBuffer(((DirectXIndexBuffer*)&*mesh->indexBuffer)->buffer, DXGI_FORMAT_R32_UINT, 0);
+		deviceContext->IASetIndexBuffer(indexBuffer->buffer, DXGI_FORMAT_R32_UINT, 0);
 
 	D3D10_PRIMITIVE_TOPOLOGY topologyType = D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	if (info->drawType & MESH_DRAW_PRIMITIVE_LINES)
@@ -544,7 +555,7 @@ void DirectXInterface::DrawMesh(FDrawMeshCmd* info)
 
 	deviceContext->IASetPrimitiveTopology(topologyType);
 
-	DirectXShaderBuffer* matBuff = (DirectXShaderBuffer*)info->material->GetGpuBuffer();
+	DirectXBuffer* matBuff = (DirectXBuffer*)info->material->GetGpuBuffer();
 	deviceContext->VSSetConstantBuffers(6, 1, &matBuff->buffer);
 	deviceContext->PSSetConstantBuffers(6, 1, &matBuff->buffer);
 	deviceContext->GSSetConstantBuffers(6, 1, &matBuff->buffer);
@@ -593,14 +604,17 @@ void DirectXInterface::DrawMesh(FMeshBuilder::FRenderMesh* data)
 	FMesh* mesh = &data->mesh;
 	data->mat->UpdateGpuBuffer();
 
+	DirectXBuffer* vertexBuffer = (DirectXBuffer*)&*mesh->vertexBuffer;
+	DirectXBuffer* indexBuffer = (DirectXBuffer*)&*mesh->indexBuffer;
+
 	//deviceContext->IASetInputLayout(((DirectXVertexShader*)data->mat->GetShader(data->mesh.bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex))->inputLayout);
 	deviceContext->IASetInputLayout(curVertexShader->inputLayout);
 
-	uint vertexData[2] = { data->mesh.bSkinnedMesh ? sizeof(FSkinnedVertex) : sizeof(FVertex), 0 };
+	uint vertexData[2] = { vertexBuffer ? vertexBuffer->Descriptor().dataStride : sizeof(FVertex), 0};
 	if (mesh->vertexBuffer)
-		deviceContext->IASetVertexBuffers(0, 1, &((DirectXVertexBuffer*)&*mesh->vertexBuffer)->buffer, &vertexData[0], &vertexData[1]);
+		deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer->buffer, &vertexData[0], &vertexData[1]);
 	if (mesh->indexBuffer)
-		deviceContext->IASetIndexBuffer(((DirectXIndexBuffer*)&*mesh->indexBuffer)->buffer, DXGI_FORMAT_R32_UINT, 0);
+		deviceContext->IASetIndexBuffer(indexBuffer->buffer, DXGI_FORMAT_R32_UINT, 0);
 
 	D3D10_PRIMITIVE_TOPOLOGY topologyType = D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 	if (mesh->topologyType == FMesh::TOPOLOGY_LINES)
@@ -610,7 +624,7 @@ void DirectXInterface::DrawMesh(FMeshBuilder::FRenderMesh* data)
 
 	deviceContext->IASetPrimitiveTopology(topologyType);
 
-	DirectXShaderBuffer* matBuff = (DirectXShaderBuffer*)data->mat->GetGpuBuffer();
+	DirectXBuffer* matBuff = (DirectXBuffer*)data->mat->GetGpuBuffer();
 	deviceContext->VSSetConstantBuffers(6, 1, &matBuff->buffer);
 	deviceContext->PSSetConstantBuffers(6, 1, &matBuff->buffer);
 	deviceContext->GSSetConstantBuffers(6, 1, &matBuff->buffer);
@@ -647,7 +661,7 @@ void DirectXInterface::SetMaterial(CMaterial* mat)
 {
 	mat->UpdateGpuBuffer();
 
-	DirectXShaderBuffer* matBuff = (DirectXShaderBuffer*)mat->GetGpuBuffer();
+	DirectXBuffer* matBuff = (DirectXBuffer*)mat->GetGpuBuffer();
 	deviceContext->VSSetConstantBuffers(6, 1, &matBuff->buffer);
 	deviceContext->PSSetConstantBuffers(6, 1, &matBuff->buffer);
 	deviceContext->GSSetConstantBuffers(6, 1, &matBuff->buffer);
@@ -677,11 +691,11 @@ void DirectXInterface::SetPsShader(IShader* shader)
 	deviceContext->PSSetShader(shader != nullptr ? (ID3D11PixelShader*)((DirectXShader*)shader)->shader : nullptr, nullptr, 0);
 }
 
-void DirectXInterface::SetShaderBuffer(IShaderBuffer* buffer, int _register)
+void DirectXInterface::SetShaderBuffer(IGBuffer* buffer, int _register)
 {
-	deviceContext->VSSetConstantBuffers(_register, 1, &((DirectXShaderBuffer*)&*buffer)->buffer);
-	deviceContext->PSSetConstantBuffers(_register, 1, &((DirectXShaderBuffer*)&*buffer)->buffer);
-	deviceContext->GSSetConstantBuffers(_register, 1, &((DirectXShaderBuffer*)&*buffer)->buffer);
+	deviceContext->VSSetConstantBuffers(_register, 1, &((DirectXBuffer*)&*buffer)->buffer);
+	deviceContext->PSSetConstantBuffers(_register, 1, &((DirectXBuffer*)&*buffer)->buffer);
+	deviceContext->GSSetConstantBuffers(_register, 1, &((DirectXBuffer*)&*buffer)->buffer);
 }
 
 void DirectXInterface::SetShaderResource(IBaseTexture* texture, int _register)

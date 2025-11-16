@@ -29,13 +29,13 @@ protected:
 	TObjectPtr<CShaderSource> shaderBloomPreFilter;
 	TObjectPtr<CShaderSource> shaderBloomPass;
 
-	TObjectPtr<IShaderBuffer> sceneBuffer;
-	TObjectPtr<IShaderBuffer> objectBuffer;
-	TObjectPtr<IShaderBuffer> forwardLightsBuffer;
-	TObjectPtr<IShaderBuffer> shadowDataBuffer;
-	TObjectPtr<IShaderBuffer> bloomInfoBuffer;
+	TObjectPtr<IGBuffer> sceneBuffer;
+	TObjectPtr<IGBuffer> objectBuffer;
+	TObjectPtr<IGBuffer> forwardLightsBuffer;
+	TObjectPtr<IGBuffer> shadowDataBuffer;
+	TObjectPtr<IGBuffer> bloomInfoBuffer;
 
-	TObjectPtr<IShaderBuffer> deferredLightBuffer;
+	TObjectPtr<IGBuffer> deferredLightBuffer;
 
 	TObjectPtr<CModelAsset> meshIcoSphere;
 

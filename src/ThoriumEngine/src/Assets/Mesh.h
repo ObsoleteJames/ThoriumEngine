@@ -3,8 +3,8 @@
 #include "Math/Vectors.h"
 #include "Math/Bounds.h"
 
-class IVertexBuffer;
-class IIndexBuffer;
+class IGBuffer;
+//class IIndexBuffer;
 
 struct FVertex
 {
@@ -38,8 +38,8 @@ struct ENGINE_API FMesh
 	};
 
 public:
-	TObjectPtr<IVertexBuffer> vertexBuffer;
-	TObjectPtr<IIndexBuffer> indexBuffer;
+	TObjectPtr<IGBuffer> vertexBuffer;
+	TObjectPtr<IGBuffer> indexBuffer;
 
 	uint32 numIndices = 0;
 	uint32 numVertices = 0;

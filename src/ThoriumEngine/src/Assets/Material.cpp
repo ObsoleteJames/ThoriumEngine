@@ -133,7 +133,7 @@ void CMaterial::OnInit(IBaseFStream* stream)
 	if (shader)
 	{
 		if (gRenderer)
-			gpuBuffer = gGHI->CreateShaderBuffer(nullptr, shader->bufferSize);
+			gpuBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, (uint)shader->bufferSize, nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
 
 		Validate();
 		bInitialized = true;
@@ -245,7 +245,8 @@ void CMaterial::SetShader(const FString& shaderName)
 	}
 
 	if (gRenderer)
-		gpuBuffer = gGHI->CreateShaderBuffer(nullptr, shader->bufferSize);
+		gpuBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, (uint)shader->bufferSize, nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
+		//gpuBuffer = gGHI->CreateShaderBuffer(nullptr, shader->bufferSize);
 
 	Validate();
 

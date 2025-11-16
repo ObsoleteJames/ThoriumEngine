@@ -19,17 +19,19 @@ public:
 	
 	virtual IShader* LoadShader(CShaderSource* source, EShaderType type, FString file);
 
-	virtual IVertexBuffer* CreateVertexBuffer(const TArray<FVertex>& vertices);
-	virtual IVertexBuffer* CreateVertexBuffer(const TArray<FSkinnedVertex>& vertices);
-	virtual IIndexBuffer* CreateIndexBuffer(const TArray<uint>& indices);
+	//virtual IVertexBuffer* CreateVertexBuffer(const TArray<FVertex>& vertices);
+	//virtual IVertexBuffer* CreateVertexBuffer(const TArray<FSkinnedVertex>& vertices);
+	//virtual IIndexBuffer* CreateIndexBuffer(const TArray<uint>& indices);
 
-	virtual IVertexBuffer* CreateVertexBuffer(SizeType bufferSize);
-	virtual IIndexBuffer* CreateIndexBuffer(SizeType bufferSize);
+	//virtual IVertexBuffer* CreateVertexBuffer(SizeType bufferSize);
+	//virtual IIndexBuffer* CreateIndexBuffer(SizeType bufferSize);
 
-	virtual IShaderBuffer* CreateShaderBuffer(void* data, SizeType size);
+	//virtual IShaderBuffer* CreateShaderBuffer(void* data, SizeType size);
+
+	virtual IGBuffer* CreateBuffer(const FBufferDescriptor& desc);
 
 	virtual ISwapChain* CreateSwapChain(IBaseWindow* window);
-	virtual IDepthBuffer* CreateDepthBuffer(FDepthBufferInfo depthInfo);
+	virtual IDepthBuffer* CreateDepthBuffer(FDepthBufferDesc depthInfo);
 	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, ETextureFormat format, ETextureFilter filter);
 	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, int numMipMaps, ETextureFormat format, ETextureFilter filter = THTX_FILTER_LINEAR);
 
@@ -56,7 +58,7 @@ public:
 	virtual void SetVsShader(IShader* shader);
 	virtual void SetPsShader(IShader* shader);
 
-	virtual void SetShaderBuffer(IShaderBuffer* buffer, int _register);
+	virtual void SetShaderBuffer(IGBuffer* buffer, int _register);
 
 	virtual void SetShaderResource(IBaseTexture* texture, int _register);
 	//virtual void SetShaderResource(IFrameBuffer* fb, int _register);

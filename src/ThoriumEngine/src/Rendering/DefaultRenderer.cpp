@@ -134,12 +134,12 @@ void CDefaultRenderer::Init()
 	if (shaderGaussianBlurH)
 		shaderGaussianBlurH->LoadShaderObjects();
 
-	sceneBuffer = gGHI->CreateShaderBuffer(nullptr, sizeof(FSceneInfoBuffer));
-	objectBuffer = gGHI->CreateShaderBuffer(nullptr, sizeof(FObjectInfoBuffer));
-	forwardLightsBuffer = gGHI->CreateShaderBuffer(nullptr, sizeof(FForwardLightsBuffer));
-	shadowDataBuffer = gGHI->CreateShaderBuffer(nullptr, sizeof(FShadowDataBuffer));
+	sceneBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, sizeof(FSceneInfoBuffer), nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
+	objectBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, sizeof(FObjectInfoBuffer), nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
+	forwardLightsBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, sizeof(FForwardLightsBuffer), nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
+	shadowDataBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, sizeof(FShadowDataBuffer), nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
 
-	deferredLightBuffer = gGHI->CreateShaderBuffer(nullptr, sizeof(FSpotLightData));
+	deferredLightBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, sizeof(FSpotLightData), nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
 
 	int shadowQuality = cvRenderShadowQuality.AsInt() + 1;
 	shadowTexSize = 512 * (shadowQuality < 5 ? shadowQuality : 8);
@@ -148,7 +148,7 @@ void CDefaultRenderer::Init()
 		int shadowQuality = int(v) + 1;
 		shadowTexSize = 512 * (shadowQuality < 5 ? shadowQuality : 8);
 
-		FDepthBufferInfo sunDepth{};
+		FDepthBufferDesc sunDepth{};
 		sunDepth.width = shadowTexSize * 4;
 		sunDepth.height = shadowTexSize;
 		sunDepth.bShaderResource = true;
@@ -159,7 +159,7 @@ void CDefaultRenderer::Init()
 		sunLightShadows = gGHI->CreateDepthBuffer(sunDepth);
 	});
 
-	FDepthBufferInfo sunDepth{};
+	FDepthBufferDesc sunDepth{};
 	sunDepth.width = shadowTexSize * 4;
 	sunDepth.height = shadowTexSize;
 	sunDepth.bShaderResource = true;
@@ -715,7 +715,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 			// Bloom Pass
 			//static TObjectPtr<IShaderBuffer> bloomInfoBuffer;
 			if (!bloomInfoBuffer)
-				bloomInfoBuffer = gGHI->CreateShaderBuffer(nullptr, sizeof(FBloomSettings));
+				bloomInfoBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, sizeof(FBloomSettings), nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
 
 			FBloomSettings bloomSettings{ cvRenderBloomIntensity.AsFloat(), cvRenderBloomThreshold.AsFloat(), cvRenderBloomKnee.AsFloat() };
 			if (ppVolumeA)

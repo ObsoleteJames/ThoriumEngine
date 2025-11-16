@@ -14,17 +14,19 @@ public:
 
 	virtual IShader* LoadShader(CShaderSource* source, EShaderType type, FString file) = 0;
 
-	virtual IVertexBuffer* CreateVertexBuffer(const TArray<FVertex>& vertices) = 0; // static buffer
-	virtual IVertexBuffer* CreateVertexBuffer(const TArray<FSkinnedVertex>& vertices) = 0; // static buffer
-	virtual IIndexBuffer* CreateIndexBuffer(const TArray<uint>& indices) = 0;
+	//virtual IVertexBuffer* CreateVertexBuffer(const TArray<FVertex>& vertices) = 0; // static buffer
+	//virtual IVertexBuffer* CreateVertexBuffer(const TArray<FSkinnedVertex>& vertices) = 0; // static buffer
+	//virtual IIndexBuffer* CreateIndexBuffer(const TArray<uint>& indices) = 0;
 
-	virtual IVertexBuffer* CreateVertexBuffer(SizeType bufferSize) = 0; // dynamic buffer
-	virtual IIndexBuffer* CreateIndexBuffer(SizeType bufferSize) = 0;
+	//virtual IVertexBuffer* CreateVertexBuffer(SizeType bufferSize) = 0; // dynamic buffer
+	//virtual IIndexBuffer* CreateIndexBuffer(SizeType bufferSize) = 0;
 
-	virtual IShaderBuffer* CreateShaderBuffer(void* data, SizeType size) = 0;
+	//virtual IShaderBuffer* CreateShaderBuffer(void* data, SizeType size) = 0;
+
+	virtual IGBuffer* CreateBuffer(const FBufferDescriptor& desc) = 0;
 
 	virtual ISwapChain* CreateSwapChain(IBaseWindow* window) = 0;
-	virtual IDepthBuffer* CreateDepthBuffer(FDepthBufferInfo depthInfo) = 0;
+	virtual IDepthBuffer* CreateDepthBuffer(FDepthBufferDesc depthInfo) = 0;
 	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, ETextureFormat format, ETextureFilter filter = THTX_FILTER_LINEAR) = 0;
 	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, int numMipMaps, ETextureFormat format, ETextureFilter filter = THTX_FILTER_LINEAR) = 0;
 
@@ -50,7 +52,7 @@ public:
 	virtual void SetVsShader(IShader* shader) = 0;
 	virtual void SetPsShader(IShader* shader) = 0;
 
-	virtual void SetShaderBuffer(IShaderBuffer* buffer, int _register) = 0;
+	virtual void SetShaderBuffer(IGBuffer* buffer, int _register) = 0;
 
 	virtual void SetShaderResource(IBaseTexture* texture, int _register) = 0;
 	virtual void SetShaderResource(IDepthBuffer* depthTex, int _register) = 0;

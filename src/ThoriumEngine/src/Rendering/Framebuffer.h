@@ -19,7 +19,7 @@ enum EDepthBufferFormat
 	TH_DBF_D24_S8
 };
 
-struct ENGINE_API FDepthBufferInfo
+struct ENGINE_API FDepthBufferDesc
 {
 	int width;
 	int height;
@@ -36,10 +36,11 @@ public:
 	virtual void Resize(int width, int height) = 0;
 	virtual void Clear(float a = 1.f) = 0;
 
-	inline void GetSize(int& w, int& h) const { w = info.width; h = info.height; }
+	inline void GetSize(int& w, int& h) const { w = desc.width; h = desc.height; }
+	inline const FDepthBufferDesc& Descriptor() const { return desc; }
 
 protected:
-	FDepthBufferInfo info;
+	FDepthBufferDesc desc;
 };
 
 class ENGINE_API ISwapChain

@@ -305,7 +305,7 @@ protected:
 	TObjectPtr<CShaderSource> shaderScreenPlane;
 	TObjectPtr<CShaderSource> shaderBlit;
 
-	TObjectPtr<IShaderBuffer> blitDataBuffer;
+	TObjectPtr<IGBuffer> blitDataBuffer;
 
 	static std::mutex gpuMutex;
 };

@@ -8,7 +8,7 @@
 
 struct FFile;
 class IShader;
-class IShaderBuffer;
+//class IShaderBuffer;
 
 struct ENGINE_API FShaderProperty
 {

@@ -98,7 +98,7 @@ void IRenderer::Blit(IFrameBuffer* a, IFrameBuffer* b)
 	float sizeScalar[4] = { 0, 0, (float)widthB / float(w), (float)heightB / float(h) };
 
 	if (!blitDataBuffer)
-		blitDataBuffer = gGHI->CreateShaderBuffer(nullptr, sizeof(float) * 4);
+		blitDataBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, sizeof(float) * 4, nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
 	
 	blitDataBuffer->Update(sizeof(float) * 4, sizeScalar);
 
@@ -125,7 +125,7 @@ void IRenderer::Blit(IFrameBuffer* a, IFrameBuffer* b, FVector2 viewportPos, FVe
 	float sizeScalar[4] = { viewportPos.x, viewportPos.y, viewportScale.x, viewportScale.y };
 
 	if (!blitDataBuffer)
-		blitDataBuffer = gGHI->CreateShaderBuffer(nullptr, sizeof(float) * 4);
+		blitDataBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, sizeof(float) * 4, nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
 
 	blitDataBuffer->Update(sizeof(float) * 4, sizeScalar);
 
@@ -152,7 +152,7 @@ void IRenderer::Blit(IFrameBuffer* a, IFrameBuffer* b, int destinationMip)
 	float sizeScalar[4] = { 0, 0, (float)widthB / float(w), (float)heightB / float(h) };
 
 	if (!blitDataBuffer)
-		blitDataBuffer = gGHI->CreateShaderBuffer(nullptr, sizeof(float) * 4);
+		blitDataBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, sizeof(float) * 4, nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
 
 	blitDataBuffer->Update(sizeof(float) * 4, sizeScalar);
 
@@ -179,7 +179,7 @@ void IRenderer::Blit(IFrameBuffer* a, IFrameBuffer* b, int destinationMip, FVect
 	float sizeScalar[4] = { viewportPos.x, viewportPos.y, viewportScale.x, viewportScale.y };
 
 	if (!blitDataBuffer)
-		blitDataBuffer = gGHI->CreateShaderBuffer(nullptr, sizeof(float) * 4);
+		blitDataBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, sizeof(float) * 4, nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
 
 	blitDataBuffer->Update(sizeof(float) * 4, sizeScalar);
 

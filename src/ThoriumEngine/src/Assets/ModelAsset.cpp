@@ -383,7 +383,14 @@ void CModelAsset::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 			for (SizeType i = 0; i < numVertices; i++)
 				*stream >> &vertices[i];
 
-			meshes[it].vertexBuffer = gGHI->CreateVertexBuffer(vertices);
+			FBufferDescriptor desc{};
+			desc.bufferSize = vertices.Size() * sizeof(FSkinnedVertex);
+			desc.data = vertices.Data();
+			desc.dataStride = sizeof(FSkinnedVertex);
+			desc.flags = 0;
+			desc.type = TH_BUFFER_TYPE_VERTEX_BUFFER;
+			
+			meshes[it].vertexBuffer = gGHI->CreateBuffer(desc);
 
 			if (gIsEditor)
 			{
@@ -401,7 +408,14 @@ void CModelAsset::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 			for (SizeType i = 0; i < numVertices; i++)
 				*stream >> &vertices[i];
 
-			meshes[it].vertexBuffer = gGHI->CreateVertexBuffer(vertices);
+			FBufferDescriptor desc{};
+			desc.bufferSize = vertices.Size() * sizeof(FVertex);
+			desc.data = vertices.Data();
+			desc.dataStride = sizeof(FVertex);
+			desc.flags = 0;
+			desc.type = TH_BUFFER_TYPE_VERTEX_BUFFER;
+
+			meshes[it].vertexBuffer = gGHI->CreateBuffer(desc);
 
 			if (gIsEditor)
 			{
@@ -417,7 +431,16 @@ void CModelAsset::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 		for (SizeType i = 0; i < numIndices; i++)
 			*stream >> &indices[i];
 
-		meshes[it].indexBuffer = gGHI->CreateIndexBuffer(indices);
+		{
+			FBufferDescriptor desc{};
+			desc.bufferSize = indices.Size() * sizeof(uint);
+			desc.data = indices.Data();
+			desc.dataStride = sizeof(uint);
+			desc.flags = 0;
+			desc.type = TH_BUFFER_TYPE_INDEX_BUFFER;
+
+			meshes[it].indexBuffer = gGHI->CreateBuffer(desc);
+		}
 		meshes[it].numVertices = (uint)numVertices;
 		meshes[it].numIndices = (uint)numIndices;
 

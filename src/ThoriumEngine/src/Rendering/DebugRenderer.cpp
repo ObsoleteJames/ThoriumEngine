@@ -13,12 +13,19 @@
 
 CDebugRenderer::CDebugRenderer()
 {
+	FBufferDescriptor desc{};
+	desc.bufferSize = DR_VERTEX_LINEBUFFER_SIZE;
+	desc.data = nullptr;
+	desc.dataStride = sizeof(FVertex);
+	desc.flags = TH_BUFFER_FLAGS_CPU_WRITE;
+	desc.type = TH_BUFFER_TYPE_VERTEX_BUFFER;
+
+	lineMesh.vertexBuffer = gGHI->CreateBuffer(desc);
 	lineMesh.numVertices = 0;
-	lineMesh.vertexBuffer = gGHI->CreateVertexBuffer(DR_VERTEX_LINEBUFFER_SIZE);
 	lineMesh.topologyType = FMesh::TOPOLOGY_LINES;
 	lineMesh.bSkinnedMesh = false;
 	lineOverlayMesh.numVertices = 0;
-	lineOverlayMesh.vertexBuffer = gGHI->CreateVertexBuffer(DR_VERTEX_LINEBUFFER_SIZE);
+	lineOverlayMesh.vertexBuffer = gGHI->CreateBuffer(desc);
 	lineOverlayMesh.topologyType = FMesh::TOPOLOGY_LINES;
 	lineOverlayMesh.bSkinnedMesh = false;
 

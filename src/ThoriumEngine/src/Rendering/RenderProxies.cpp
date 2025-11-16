@@ -33,7 +33,15 @@ void FMeshBuilder::DrawLine(const FVector& begin, const FVector& end, const FVec
 
 	FMesh mesh;
 	mesh.numVertices = 2;
-	mesh.vertexBuffer = gGHI->CreateVertexBuffer(verts);
+
+	FBufferDescriptor desc{};
+	desc.bufferSize = mesh.numVertices * sizeof(FVertex);
+	desc.data = verts.Data();
+	desc.dataStride = sizeof(FVertex);
+	desc.flags = 0;
+	desc.type = TH_BUFFER_TYPE_VERTEX_BUFFER;
+
+	mesh.vertexBuffer = gGHI->CreateBuffer(desc);
 	mesh.topologyType = FMesh::TOPOLOGY_LINES;
 	
 	FRenderMesh rm;
@@ -79,7 +87,15 @@ void FMeshBuilder::DrawCircle(const FVector& pos, float radius /*= 1.f*/, const 
 
 	FMesh mesh;
 	mesh.numVertices = verts.Size();
-	mesh.vertexBuffer = gGHI->CreateVertexBuffer(verts);
+
+	FBufferDescriptor desc{};
+	desc.bufferSize = mesh.numVertices * sizeof(FVertex);
+	desc.data = verts.Data();
+	desc.dataStride = sizeof(FVertex);
+	desc.flags = 0;
+	desc.type = TH_BUFFER_TYPE_VERTEX_BUFFER;
+
+	mesh.vertexBuffer = gGHI->CreateBuffer(desc);
 	mesh.topologyType = FMesh::TOPOLOGY_LINES;
 
 	FRenderMesh rm;
