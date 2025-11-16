@@ -21,6 +21,8 @@ std::mutex IRenderer::gpuMutex;
 
 std::thread renderThread;
 
+CConVar cvRenderApi("r.renderapi", "config/graphics.cfg", 0, 0, (int)EGraphicsApi::DEFAULT);
+
 // 0 = None, 1 = Unlit, 2 = Normal, 3 = Material
 CConVar cvRenderMaterialMode("r.materialmode", 0, CConVar::SERVER_CHEAT);
 

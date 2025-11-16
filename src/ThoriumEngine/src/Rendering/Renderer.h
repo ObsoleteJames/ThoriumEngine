@@ -33,6 +33,8 @@ extern ENGINE_API IGraphicsInterface* gGHI;
 
 extern ENGINE_API FRenderStatistics gRenderStats;
 
+extern ENGINE_API CConVar cvRenderApi;
+
 // 0 = None, 1 = Unlit, 2 = Normal, 3 = Material
 extern ENGINE_API CConVar cvRenderMaterialMode;
 

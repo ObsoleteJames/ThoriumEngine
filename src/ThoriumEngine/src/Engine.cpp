@@ -100,7 +100,10 @@ void CEngine::Init()
 
 	gameWindow = new CWindow(userConfig.windowWidth, userConfig.windowHeight, userConfig.windowPosX, userConfig.windowPosY, activeGame.title);
 
-	gGHI = GetGraphicsInterface();
+	EGraphicsApi api = (EGraphicsApi)cvRenderApi.AsInt();
+	if (api == EGraphicsApi::NONE)
+		api = EGraphicsApi::DEFAULT;
+	gGHI = GetGraphicsInterface(api);
 	gGHI->Init();
 
 	gRenderer = CreateObject<CDefaultRenderer>();
