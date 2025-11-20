@@ -1,0 +1,20 @@
+
+QTextEdit
+{
+    background: #3E4637;
+    border: 1px solid;
+    border-top-color: #282E22;
+    border-left-color: #282E22;
+    border-bottom-color: #808080;
+    border-right-color: #808080;
+}
+
+QLineEdit
+{
+    background: #3E4637;
+    border: 1px solid;
+    border-top-color: #282E22;
+    border-left-color: #282E22;
+    border-bottom-color: #808080;
+    border-right-color: #808080;
+}

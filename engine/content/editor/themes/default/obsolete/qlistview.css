@@ -1,0 +1,31 @@
+
+QListView
+{
+    outline: 0;
+}
+
+QListView::item
+{
+	border: 1px solid transparent;
+	border-radius: 2px;
+    padding-bottom: 4px;
+}
+
+QListView::item:hover
+{
+    background: rgb(49, 58, 75);
+    border: 1px solid;
+    border-color: rgb(74, 88, 116);
+}
+
+QListView::item:selected
+{
+    background: rgb(49, 66, 99);
+    border: 1px solid;
+    border-color: rgb(74, 88, 116);
+}
+
+QListView::item:selected:!active
+{
+    color: #CCC;
+}

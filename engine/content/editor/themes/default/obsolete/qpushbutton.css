@@ -1,0 +1,139 @@
+
+QPushButton
+{
+	border-radius: 3px;
+	padding: 5px 10px;
+	background-color: #383838;
+	border: 1px solid #444;
+	color: #ccc;
+}
+
+QPushButton[type="primary"]
+{
+	background-color: #3472E6;
+	border: 1px solid #4883f1;
+	color: #fff;
+}
+
+QPushButton[type="critical"]
+{
+	background-color: transparent;
+	border: 0px;
+	color: #fff;
+}
+
+QPushButton[type="header"]
+{
+	color: #ccc;
+	background-color: #383838;
+	image: url(:/icons/triangle-right.svg);
+  	image-position: left;
+	border-radius: 0px;
+	border: 0px;
+	border-bottom: 1px solid #1A1A1A;
+}
+QPushButton[type="header2"]
+{
+	color: #ccc;
+	background-color: #242424;
+	image: url(:/icons/triangle-right.svg);
+  	image-position: left;
+	border-radius: 0px;
+	border: 0px;
+	border-bottom: 1px solid #1A1A1A;
+}
+QPushButton[collapsed="false"]
+{
+	/* border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 0px; */
+	image: url(:/icons/triangle-down.svg);
+}
+/* QPushButton[type="header"][collapsed="true"]
+{
+	border-bottom-left-radius: 3px;
+	border-bottom-right-radius: 3px;
+}*/
+
+QPushButton[type="clear"]
+{
+	background-color: transparent;
+	border: 0px solid transparent;
+	opacity: 0.4;
+}
+
+QPushButton:hover
+{
+	border: 1px solid #555;
+	color: #fff;
+}
+
+QPushButton:pressed
+{
+	padding: 1.5px 0px 0px 3px;
+}
+
+QPushButton:pressed[type="header"],
+QPushButton:pressed[type="header2"]
+{
+	padding: 4px 10px;
+}
+
+QPushButton[type="primary"]:hover
+{
+	background-color: #3472E6;
+	border: 1px solid #fff;
+	color: #fff;
+}
+
+QPushButton[type="critical"]:hover
+{
+	background-color: #5f1111;
+	border: 1px solid #8f4141;
+	color: #fff;
+}
+
+QPushButton[type="clear"]:hover
+{
+	background-color: rgba(255, 255, 255, 0.1);
+	border: 0px solid transparent;
+	color: #fff;
+}
+
+QPushButton:hover[type="header"]
+{
+	background-color: #474747;
+	color: #eee;
+	border: 0px;
+	border-bottom: 1px solid #1A1A1A;
+}
+
+QPushButton:hover[type="header2"]
+{
+	background-color: #2B2B2B;
+	color: #eee;
+	border: 0px;
+	border-bottom: 1px solid #1A1A1A;
+}
+
+/* QPushButton:hover[type="header"][collapsed="false"]
+{
+	background-color: #474747;
+	color: #eee;
+	border: 0px;
+	border-bottom: 1px solid #1A1A1A;
+} */
+
+QPushButton:disabled
+{
+	background-color: #111;
+	padding: 5px 10px;
+	border: 0;
+	color: #555;
+}
+
+QPushButton[type="clear"]:disabled
+{
+	background-color: transparent;
+	border: 0;
+	color: #555;
+}

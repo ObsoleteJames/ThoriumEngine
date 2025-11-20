@@ -1,0 +1,83 @@
+
+QStatusBar
+{
+	background-color: #323233;
+	min-height: 25px;
+	color: #ddd;
+}
+
+QStatusBar > QLabel
+{
+	margin: 4px;
+	color: #ddd;
+	font-size: 11px;
+	background: transparent;
+}
+
+QStatusBar::item
+{
+	border: 0px;
+}
+
+QStatusBar > QPushButton
+{
+	max-height: 16px;
+	min-height: 16px;
+	padding: 2px;
+	icon-size: 15px;
+	background-color: QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #505052, stop: 0.2 #404043, stop: 0.8 #404043, stop: 1.0 #3a3a3d );
+	border: 1px solid #222;
+	border-radius: 3px;
+}
+
+QStatusBar > QComboBox
+{
+	background-color: #201f21;
+	max-height: 16px;
+	min-height: 16px;
+}
+
+QStatusBar QComboBox:hover
+{
+	background-color: #201f21;
+}
+
+QStatusBar > QComboBox
+{
+	padding: 2px 8px;
+}
+
+QStatusBar > QPushButton:checked
+{
+	background-color: #315283;
+	border: 1px solid #333;
+}
+
+QStatusBar > QComboBox::drop-down 
+{
+	border-left-width: 0px;
+}
+
+
+#HammerStatusBar
+{
+	min-height: 30px;
+}
+#HammerStatusBar QLabel
+{
+	margin: 0px;
+}
+#HammerStatusBar QComboBox
+{
+	min-height: 0px;
+}
+
+#HammerStatusBar QToolBar
+{
+	padding: 0px;
+	min-height: 0px;
+}
+#HammerStatusBar QToolButton
+{
+	padding: 0px 4px;
+}
