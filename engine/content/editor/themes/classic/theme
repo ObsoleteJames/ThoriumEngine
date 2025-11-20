@@ -1,9 +1,0 @@
-{
-	name:	"Classic"
-	
-	include [
-		"qwindow.css",
-		"qtextedit.css",
-		"qtreeview.css"
-	]
-}
