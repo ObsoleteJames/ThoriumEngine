@@ -13,6 +13,9 @@
 
 CDebugRenderer::CDebugRenderer()
 {
+	lineDrawVertices.Reserve(DR_VERTEX_LINEBUFFER_SIZE);
+	lineDrawOverlayVertices.Reserve(DR_VERTEX_LINEBUFFER_SIZE);
+
 	FBufferDescriptor desc{};
 	desc.bufferSize = DR_VERTEX_LINEBUFFER_SIZE;
 	desc.data = nullptr;
@@ -85,11 +88,11 @@ void CDebugRenderer::DrawLine(const FVector& begin, const FVector& end, const FC
 
 void CDebugRenderer::DrawPlane(const FTransform& t, const FColor& col, EDebugDrawType drawType, float time /*= 0.f*/)
 {
-	CMaterial* mat = CreateObject<CMaterial>();
-	mat->SetName("DebugDrawPlane");
-	mat->SetShader("Tools");
-	mat->SetInt("vType", 4);
-	mat->SetColor("vColorTint", col);
+	//CMaterial* mat = CreateObject<CMaterial>();
+	//mat->SetName("DebugDrawPlane");
+	//mat->SetShader("Tools");
+	//mat->SetInt("vType", 4);
+	//mat->SetColor("vColorTint", col);
 
 	FDebugDrawCmd cmd{
 		FDebugDrawCmd::PLANE,
@@ -100,18 +103,18 @@ void CDebugRenderer::DrawPlane(const FTransform& t, const FColor& col, EDebugDra
 		0, 0,
 		time != 0.f ? time + GetScene()->GetTime() : 0.f,
 		GetScene(),
-		mat
+		nullptr
 	};
 	drawCalls.Add(cmd);
 }
 
 void CDebugRenderer::DrawBox(const FTransform& t, const FColor& col, EDebugDrawType drawType, float time /*= 0.f*/)
 {
-	CMaterial* mat = CreateObject<CMaterial>();
-	mat->SetName("DebugDrawBox");
-	mat->SetShader("Tools");
-	mat->SetInt("vType", 4);
-	mat->SetColor("vColorTint", col);
+	//CMaterial* mat = CreateObject<CMaterial>();
+	//mat->SetName("DebugDrawBox");
+	//mat->SetShader("Tools");
+	//mat->SetInt("vType", 4);
+	//mat->SetColor("vColorTint", col);
 
 	FDebugDrawCmd cmd{
 		FDebugDrawCmd::BOX,
@@ -122,7 +125,7 @@ void CDebugRenderer::DrawBox(const FTransform& t, const FColor& col, EDebugDrawT
 		0, 0,
 		time != 0.f ? time + GetScene()->GetTime() : 0.f,
 		GetScene(),
-		mat
+		nullptr
 	};
 	drawCalls.Add(cmd);
 }
@@ -341,11 +344,11 @@ void CDebugRenderer::Render()
 		}
 	}
 
-	lineMesh.vertexBuffer->Update(lineDrawVertices.Size(), lineDrawVertices.Data());
+	lineMesh.vertexBuffer->Update(DR_VERTEX_LINEBUFFER_SIZE, lineDrawVertices.Data());
 	lineMesh.numVertices = lineDrawVertices.Size();
 	lineDrawVertices.Clear();
 
-	lineOverlayMesh.vertexBuffer->Update(lineDrawOverlayVertices.Size(), lineDrawOverlayVertices.Data());
+	lineOverlayMesh.vertexBuffer->Update(DR_VERTEX_LINEBUFFER_SIZE, lineDrawOverlayVertices.Data());
 	lineOverlayMesh.numVertices = lineDrawVertices.Size();
 	lineDrawOverlayVertices.Clear();
 
@@ -392,14 +395,6 @@ void CDebugRenderer::_Line(const FVector& begin, const FVector& end, const FColo
 		lineDrawVertices.Add(v1);
 		lineDrawVertices.Add(v2);
 	}
-
-	/*FDrawMeshCmd cmd{};
-	cmd.mesh = &lineMesh;
-	cmd.material = mat;
-	cmd.drawType = MESH_DRAW_PRIMITIVE_LINES;
-	cmd.transform = FMatrix(1.f).Translate(begin).Scale((end - begin).Magnitude()) * FQuaternion::LookRotation((end - begin).Normalize(), FVector::up);
-
-	scene->PushCommand(FRenderCommand(cmd, bOverlay ? R_DEBUG_OVERLAY_PASS : R_DEBUG_PASS));*/
 }
 
 void CDebugRenderer::_Line(const FTransform& t, CMaterial* mat, CRenderScene* scene, bool bOverlay)
