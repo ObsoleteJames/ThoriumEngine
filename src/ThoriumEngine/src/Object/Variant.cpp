@@ -324,3 +324,35 @@ FVariant& FVariant::operator=(const FVariant& other)
 
 	return *this;
 }
+
+bool FVariant::operator==(const FVariant& other) const
+{
+	if (other.type != type)
+		return false;
+
+	switch (type)
+	{
+	case INTEGER:
+		return uInteger == other.uInteger;
+	case BOOL:
+		return uBool == other.uBool;
+	case FLOAT:
+		return uFloat == other.uFloat;
+	case DOUBLE:
+		return uDouble == other.uDouble;
+	case SIZETYPE:
+		return uSizeType == other.uSizeType;
+	case OBJ_POINTER:
+		return uObjPointer == other.uObjPointer;
+	case VECTOR:
+		return uVector == other.uVector;
+	case COLOR:
+		return uColor == other.uColor;
+	case STRING:
+		return uString == other.uString;
+	case CLASS:
+		return uClass == other.uClass;
+	}
+
+	return false;
+}

@@ -4,7 +4,7 @@
 #include "Math/Color.h"
 #include <Util/Core.h>
 
-class FVariant
+class ENGINE_API FVariant
 {
 public:
 	enum EType
@@ -57,6 +57,9 @@ public:
 
 public:
 	FVariant& operator=(const FVariant&);
+
+	bool operator==(const FVariant&) const;
+	inline bool operator!=(const FVariant& other) const { return !(*this == other); }
 
 	template<typename T>
 	FVariant& operator=(const T& other)
