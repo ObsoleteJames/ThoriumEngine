@@ -112,7 +112,8 @@ bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitive
 	// TODO: partition the primitives for optimization.
 	for (auto* p : primitives)
 	{
-		FMeshBuilder mb;
+		TArray<FMeshBuilder::FRenderMesh> meshes;
+		FMeshBuilder mb(&meshes);
 		p->GetSkinnedMeshes(mb);
 
 		// bounds raycast output
@@ -202,7 +203,8 @@ bool CRenderScene::RayCastBounds(const FRay& ray, FPrimitiveHitInfo* outHit, flo
 
 	for (auto* p : primitives)
 	{
-		FMeshBuilder mb;
+		TArray<FMeshBuilder::FRenderMesh> meshes;
+		FMeshBuilder mb(&meshes);
 		p->GetSkinnedMeshes(mb);
 
 		FBounds b = p->Bounds();

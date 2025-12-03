@@ -48,7 +48,7 @@ public:
 	uint8 topologyType = TOPOLOGY_TRIANGLES;
 	bool bSkinnedMesh = false;
 
-	FString meshName;
+	//FString meshName;
 
 	FBounds bounds;
 

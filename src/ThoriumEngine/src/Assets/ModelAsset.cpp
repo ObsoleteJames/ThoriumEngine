@@ -48,6 +48,7 @@ void CModelAsset::OnInit(IBaseFStream* stream)
 	}
 
 	meshes.Resize(numMeshes);
+	meshNames.Resize(numMeshes);
 	materials.Resize(numMaterials);
 	bodyGroups.Resize(numBodyGroups);
 
@@ -59,7 +60,7 @@ void CModelAsset::OnInit(IBaseFStream* stream)
 		*stream >> &nextMesh;
 
 		if (version > THMDL_VERSION_5)
-			*stream >> meshes[i].meshName;
+			*stream >> meshNames[i];
 
 		if (version > THMDL_VERSION_7)
 			*stream >> &meshes[i].bSkinnedMesh;
@@ -207,14 +208,17 @@ void CModelAsset::OnSave(IBaseFStream* stream)
 
 	*stream << &numMeshes << &numMaterials << &numLODs << &numBodyGroups << &numColliders << &numConvexMeshes;
 
-	for (auto& mesh : meshes)
+	//for (auto& mesh : meshes)
+	for (int i = 0; i < meshes.Size(); i++)
 	{
+		auto& mesh = meshes[i];
+
 		SizeType prevOffset = stream->Tell();
 		*stream << &prevOffset; // just write anything for now.
 
 		mesh.meshDataOffset = prevOffset;
 
-		*stream << mesh.meshName;
+		*stream << meshNames[i];
 
 		*stream << &mesh.bSkinnedMesh;
 		*stream << &mesh.numVertexData << & mesh.numIndexData;

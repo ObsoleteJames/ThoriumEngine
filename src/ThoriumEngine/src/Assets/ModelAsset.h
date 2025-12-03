@@ -130,6 +130,8 @@ protected:
 	TArray<FMaterial> materials;
 	FSkeleton skeleton;
 
+	TArray<FString> meshNames;
+
 	TArray<FMesh> collisionMeshes;
 	TArray<FMesh> complexCollisionMeshes;
 };

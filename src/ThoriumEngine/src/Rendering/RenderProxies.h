@@ -73,7 +73,9 @@ public:
 		FMesh mesh;
 		CMaterial* mat;
 		FMatrix transform;
-		TArray<FMatrix> skeletonMatrices;
+		//TArray<FMatrix> skeletonMatrices;
+		FMatrix* skeletonMatrices;
+		SizeType skeletonMatricesSize;
 		ERenderPass rp;
 
 		int lightmapId;
@@ -82,15 +84,17 @@ public:
 	};
 
 public:
+	FMeshBuilder(TArray<FRenderMesh>* output);
+
 	void DrawLine(const FVector& begin, const FVector& end, const FVector& color = { 255, 255, 255 }, bool bDepthTest = true);
 	void DrawCircle(const FVector& pos, float radius = 1.f, const FVector& rot = FVector(), const FVector & color = { 255, 255, 255 }, int vertices = 16, bool bDepthTest = true);
 	void DrawSkinnedMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform, const TArray<FMatrix>& skeletonMatrix);
 	void DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform);
 
-	inline const TArray<FRenderMesh>& GetMeshes() const { return meshes; }
+	inline const TArray<FRenderMesh>& GetMeshes() const { return *meshes; }
 
 protected:
-	TArray<FRenderMesh> meshes;
+	TArray<FRenderMesh>* meshes;
 
 };
 

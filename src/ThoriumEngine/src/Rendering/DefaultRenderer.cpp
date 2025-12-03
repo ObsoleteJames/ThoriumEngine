@@ -22,17 +22,15 @@ void GetRenderCommands(ERenderPass renderPass, const TArray<FRenderCommand>& cmd
 	}
 }
 
-void GetMeshesToDraw(ERenderPass rp, const TArray<TPair<CPrimitiveProxy*, FMeshBuilder>>& meshes, TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh*>>& out)
+void GetMeshesToDraw(ERenderPass rp, const TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh>>& meshes, TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh*>>& out)
 {
 	for (auto& m : meshes)
 	{
-		for (auto& mesh : m.Value.GetMeshes())
-		{
-			if (mesh.rp != rp)
-				continue;
+		auto& mesh = m.Value;
+		if (mesh.rp != rp)
+			continue;
 
-			out.Add({ m.Key, &mesh });
-		}
+		out.Add({ m.Key, &mesh });
 	}
 }
 
@@ -288,8 +286,8 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 	};
 	sceneBuffer->Update(sizeof(FSceneInfoBuffer), &sceneInfo);
 
-	static TArray<TPair<CPrimitiveProxy*, FMeshBuilder>> dynamicMeshes;
-	static TArray<TPair<CPrimitiveProxy*, FMeshBuilder>> staticMeshes;
+	static TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh>> dynamicMeshes;
+	static TArray<TPair<CPrimitiveProxy*, FMeshBuilder::FRenderMesh>> staticMeshes;
 	dynamicMeshes.Clear();
 	staticMeshes.Clear();
 
@@ -301,23 +299,29 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		if (!camera->bOrthographic && !primitive->DoFrustumCull(sceneInfo.camMatrix))
 			continue;
 
-		dynamicMeshes.Add({ primitive, FMeshBuilder() });
-		FMeshBuilder& dynamic = dynamicMeshes.last()->Value;
+		static TArray<FMeshBuilder::FRenderMesh> meshes;
+
+		FMeshBuilder dynamic(&meshes);
 
 		primitive->GetSkinnedMeshes(dynamic);
-		if (dynamic.GetMeshes().Size() == 0)
-			dynamicMeshes.Erase(dynamicMeshes.last());
-		else
-			gRenderStats.drawPrimitives++;
 
-		staticMeshes.Add({ primitive, FMeshBuilder() });
-		FMeshBuilder& staticM = staticMeshes.last()->Value;
+		for (auto& m : meshes)
+		{
+			dynamicMeshes.Add({ primitive, std::move(m) });
+			gRenderStats.drawPrimitives++;
+		}
+		meshes.Clear();
+
+		FMeshBuilder staticM(&meshes);
 
 		primitive->GetStaticMeshes(staticM);
-		if (staticM.GetMeshes().Size() == 0)
-			staticMeshes.Erase(staticMeshes.last());
-		else
+
+		for (auto& m : meshes)
+		{
+			staticMeshes.Add({ primitive, std::move(m) });
 			gRenderStats.drawPrimitives++;
+		}
+		meshes.Clear();
 	}
 
 	// List of all meshes to be drawn during a pass.
@@ -370,7 +374,8 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 			FObjectInfoBuffer objectInfo;
 			objectInfo.transform = rc.Value->transform;
 			objectInfo.position = rc.Key->GetPosition();
-			memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min((int)rc.Value->skeletonMatrices.Size(), 48) * sizeof(FMatrix));
+			if (rc.Value->skeletonMatrices)
+				memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices, FMath::Min((int)rc.Value->skeletonMatricesSize, 48) * sizeof(FMatrix));
 			objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
 
 			IShader* _shader = rc.Value->mat->GetShader((rc.Value->mesh.bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex) | ShaderType_DeferredPass);
@@ -525,7 +530,8 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 			FObjectInfoBuffer objectInfo;
 			objectInfo.transform = rc.Value->transform;
 			objectInfo.position = rc.Key->GetPosition();
-			memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min((int)rc.Value->skeletonMatrices.Size(), 48) * sizeof(FMatrix));
+			if (rc.Value->skeletonMatrices)
+				memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices, FMath::Min((int)rc.Value->skeletonMatricesSize, 48) * sizeof(FMatrix));
 			objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
 
 			FForwardLightsBuffer lights{};
@@ -638,7 +644,8 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 				FObjectInfoBuffer objectInfo;
 				objectInfo.transform = rc.Value->transform;
 				objectInfo.position = rc.Key->GetPosition();
-				memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min((int)rc.Value->skeletonMatrices.Size(), 48) * sizeof(FMatrix));
+				if (rc.Value->skeletonMatrices)
+					memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices, FMath::Min((int)rc.Value->skeletonMatricesSize, 48) * sizeof(FMatrix));
 				objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
 
 				FForwardLightsBuffer lights{};
@@ -912,7 +919,8 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 				FObjectInfoBuffer objectInfo;
 				objectInfo.transform = rc.Value->transform;
-				memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices.Data(), FMath::Min((int)rc.Value->skeletonMatrices.Size(), 48));
+				if (rc.Value->skeletonMatrices)
+					memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices, FMath::Min((int)rc.Value->skeletonMatricesSize, 48));
 				objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
 
 				gGHI->SetVsShader(rc.Value->mat->GetVsShader(0));
@@ -978,13 +986,16 @@ void CDefaultRenderer::RenderShadowMaps(CRenderScene* scene)
 
 		//dynamicMeshes.Add({ primitive, FMeshBuilder() });
 		//FMeshBuilder& dynamic = dynamicMeshes.last()->Value;
-		FMeshBuilder dynamic;
+		static TArray<FMeshBuilder::FRenderMesh> meshes;
+		meshes.Clear();
+
+		FMeshBuilder dynamic(&meshes);
 		primitive->GetStaticMeshes(dynamic);
 		primitive->GetSkinnedMeshes(dynamic);
 
-		for (int i = 0; i < dynamic.GetMeshes().Size(); i++)
+		for (int i = 0; i < meshes.Size(); i++)
 		{
-			const FMeshBuilder::FRenderMesh& mesh = dynamic.GetMeshes()[i];
+			const FMeshBuilder::FRenderMesh& mesh = meshes[i];
 			if (mesh.rp != R_FORWARD_PASS && mesh.rp != R_DEFERRED_PASS)
 				continue;
 
@@ -1042,7 +1053,8 @@ void CDefaultRenderer::RenderShadowMaps(CRenderScene* scene)
 				FObjectInfoBuffer objectInfo;
 				objectInfo.transform = rc.Value.transform;
 				objectInfo.position = rc.Key->GetPosition();
-				memcpy(objectInfo.skeletonMatrices, rc.Value.skeletonMatrices.Data(), FMath::Min((int)rc.Value.skeletonMatrices.Size(), 48) * sizeof(FMatrix));
+				if (rc.Value.skeletonMatrices)
+					memcpy(objectInfo.skeletonMatrices, rc.Value.skeletonMatrices, FMath::Min((int)rc.Value.skeletonMatricesSize, 48) * sizeof(FMatrix));
 				objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
 
 				gGHI->SetVsShader(rc.Value.mat->GetVsShader(0));

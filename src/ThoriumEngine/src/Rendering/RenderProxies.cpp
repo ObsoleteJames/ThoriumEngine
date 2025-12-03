@@ -21,6 +21,10 @@ void CCameraProxy::CalculateMatrix(float aspectRatio)
 		projection = FMatrix::Orthographic(-(fov * aspectRatio), fov * aspectRatio, -(fov), fov, nearPlane, farPlane);
 }
 
+FMeshBuilder::FMeshBuilder(TArray<FRenderMesh>* output) : meshes(output)
+{
+}
+
 void FMeshBuilder::DrawLine(const FVector& begin, const FVector& end, const FVector& color /*= { 255, 255, 255 }*/, bool bDepthTest)
 {
 	TArray<FVertex> verts(2);
@@ -51,7 +55,7 @@ void FMeshBuilder::DrawLine(const FVector& begin, const FVector& end, const FVec
 	rm.transform = FMatrix(1.f);
 	rm.rp = rm.mat->GetRenderPass();
 
-	meshes.Add(rm);
+	meshes->Add(rm);
 }
 
 void FMeshBuilder::DrawCircle(const FVector& pos, float radius /*= 1.f*/, const FVector& rot /*= FVector()*/, const FVector& color /*= { 255, 255, 255 }*/, int vertices, bool bDepthTest)
@@ -105,7 +109,7 @@ void FMeshBuilder::DrawCircle(const FVector& pos, float radius /*= 1.f*/, const 
 	rm.transform = FMatrix(1.f);
 	rm.rp = rm.mat->GetRenderPass();
 
-	meshes.Add(rm);
+	meshes->Add(rm);
 }
 
 void FMeshBuilder::DrawSkinnedMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform, const TArray<FMatrix>& skeletonMatrix /*= TArray<FMatrix>()*/)
@@ -116,7 +120,7 @@ void FMeshBuilder::DrawSkinnedMesh(const FMesh& mesh, CMaterial* mat, const FMat
 	THORIUM_ASSERT(mesh.bSkinnedMesh, "Cannot draw unskinned mesh as skinned mesh!");
 
 	ERenderPass rp = mat->GetRenderPass();
-	meshes.Add({ mesh, mat, transform, skeletonMatrix, rp });
+	meshes->Add({ mesh, mat, transform, (FMatrix*)skeletonMatrix.Data(), skeletonMatrix.Size(), rp});
 }
 
 void FMeshBuilder::DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform)
@@ -125,7 +129,7 @@ void FMeshBuilder::DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& tr
 		return;
 
 	ERenderPass rp = mat->GetRenderPass();
-	meshes.Add({ mesh, mat, transform, {}, rp });
+	meshes->Add({ mesh, mat, transform, nullptr, 0, rp });
 }
 
 // https://bruop.github.io/frustum_culling/
