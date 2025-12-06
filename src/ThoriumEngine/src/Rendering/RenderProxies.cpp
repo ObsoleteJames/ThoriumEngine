@@ -132,42 +132,55 @@ void FMeshBuilder::DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& tr
 	meshes->Add({ mesh, mat, transform, nullptr, 0, rp });
 }
 
-// https://bruop.github.io/frustum_culling/
 bool CPrimitiveProxy::DoFrustumCull(const FMatrix& projection)
 {
 	FVector min = bounds.Min();
 	FVector max = bounds.Max();
 
-	glm::vec4 corners[8] = {
-		{min.x, min.y, min.z, 1.0}, // x y z
-		{max.x, min.y, min.z, 1.0}, // X y z
-		{min.x, max.y, min.z, 1.0}, // x Y z
-		{max.x, max.y, min.z, 1.0}, // X Y z
+	glm::mat4& m = *(glm::mat4*)&projection;
 
-		{min.x, min.y, max.z, 1.0}, // x y Z
-		{max.x, min.y, max.z, 1.0}, // X y Z
-		{min.x, max.y, max.z, 1.0}, // x Y Z
-		{max.x, max.y, max.z, 1.0}, // X Y Z
+	glm::vec4 row0 = glm::vec4(m[0][0], m[1][0], m[2][0], m[3][0]);
+	glm::vec4 row1 = glm::vec4(m[0][1], m[1][1], m[2][1], m[3][1]);
+	glm::vec4 row2 = glm::vec4(m[0][2], m[1][2], m[2][2], m[3][2]);
+	glm::vec4 row3 = glm::vec4(m[0][3], m[1][3], m[2][3], m[3][3]);
+
+	// frustum planes
+	glm::vec4 planes[6] = {
+		row3 + row0, // left
+		row3 - row0, // right
+		row3 + row1, // bottom
+		row3 - row1, // top
+		row3 + row2, // near
+		row3 - row2, // far
 	};
 
-	bool bInside = false;
-
-	glm::mat4& t = *(glm::mat4*)&projection;
-
-	for (int i = 0; i < 8; i++)
+	for (int i = 0; i < 6; ++i)
 	{
-		glm::vec4 corner = t * corners[i];
-
-		bInside = bInside || 
-			(corner.x > -corner.w && corner.x < corner.w) &&
-			(corner.y > -corner.w && corner.y < corner.w) &&
-			(corner.z > 0 && corner.z < corner.w);
-
-		if (bInside)
-			return true;
+		glm::vec3 n = glm::vec3(planes[i]);
+		float len = glm::length(n);
+		if (len > 0.0f)
+			planes[i] /= len;
 	}
 
-	return false;
+	// AABB vs frustum-plane test using the "positive vertex" method.
+	for (int i = 0; i < 6; ++i)
+	{
+		glm::vec3 n = glm::vec3(planes[i]);
+		float d = planes[i].w;
+
+		// Choose the vertex of the AABB that is most likely to be outside (positive vertex)
+		glm::vec3 p;
+		p.x = (n.x >= 0.0f) ? max.x : min.x;
+		p.y = (n.y >= 0.0f) ? max.y : min.y;
+		p.z = (n.z >= 0.0f) ? max.z : min.z;
+
+		// If the positive vertex is outside this plane, the whole AABB is outside.
+		if (glm::dot(n, p) + d < 0.0f)
+			return false;
+	}
+
+	// Not outside any plane -> visible / intersects frustum
+	return true;
 }
 
 bool CPostProcessVolumeProxy::IsCameraInsideVolume(CCameraProxy* proxy) const

@@ -95,7 +95,6 @@ struct CppFunction : public CppField
 
 	FMacro macro;
 
-	// TODO: Change this to CppProperty
 	TArray<CppProperty> Arguments;
 
 	EType type;

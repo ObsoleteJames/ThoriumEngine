@@ -27,9 +27,7 @@ void CInputManager::SetInputWindow(IBaseWindow* window)
 
 	inputWindow = window;
 
-	// TODO: Fix crashing when in editor.
-	//if (!gIsEditor)
-		window->OnKeyEvent.Bind(this, &CInputManager::KeyEvent);
+	window->OnKeyEvent.Bind(this, &CInputManager::KeyEvent);
 
 	window->OnCharEvent.Bind(this, &CInputManager::OnCharEvent);
 	window->OnCursorMove.Bind(this, &CInputManager::OnCursorMove);
