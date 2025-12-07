@@ -7,7 +7,7 @@
 template<typename... TArgs>
 struct FDelegateBinding
 {
-	FObjectHandle receiver;
+	void* receiver;
 	void** funcPtr;
 	std::function<void(TArgs...)> func;
 };
@@ -46,13 +46,13 @@ public:
 	{
 		for (auto it = bindings.rbegin(); it != bindings.rend(); it++)
 		{
-			if (it->receiver.Get() != nullptr && it->func)
+			if (it->func)
 				it->func(args...);
 		}
 	}
 
 	template<typename TFunc>
-	void Remove(CObject* obj, TFunc func)
+	void Remove(void* obj, TFunc func)
 	{
 		void** funcPtr = reinterpret_cast<void**>(&func);
 		for (auto it = bindings.begin(); it != bindings.end(); it++)
@@ -65,7 +65,7 @@ public:
 		}
 	}
 
-	void RemoveAll(CObject* obj)
+	void RemoveAll(void* obj)
 	{
 		/*for (auto it = bindings.rbegin(); it != bindings.rend(); it++)
 		{
