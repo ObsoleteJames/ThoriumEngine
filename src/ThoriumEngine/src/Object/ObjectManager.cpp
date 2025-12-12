@@ -4,11 +4,16 @@
 #include "Console.h"
 #include "Module.h"
 
+#include <mutex>
+
 TMap<FGuid, CObject*> CObjectManager::Objects;
 TArray<CObject*> CObjectManager::ObjectsToDelete;
 
+static std::mutex objMutex;
+
 CObject* CObjectManager::FindObject(const FString& name)
 {
+	const std::lock_guard<std::mutex> lock(objMutex);
 	for (auto obj : Objects)
 		if (obj.second->Name() == name)
 			return obj.second;
@@ -18,6 +23,7 @@ CObject* CObjectManager::FindObject(const FString& name)
 
 CObject* CObjectManager::FindObject(SizeType id)
 {
+	const std::lock_guard<std::mutex> lock(objMutex);
 	auto it = Objects.find(id);
 	if (it == Objects.end())
 		return nullptr;
@@ -27,6 +33,7 @@ CObject* CObjectManager::FindObject(SizeType id)
 
 CObject* CObjectManager::FindObject(FClass* type)
 {
+	const std::lock_guard<std::mutex> lock(objMutex);
 	for (auto obj : Objects)
 		if (obj.second->GetClass() == type)
 			return obj.second;
@@ -36,6 +43,7 @@ CObject* CObjectManager::FindObject(FClass* type)
 
 TArray<CObject*> CObjectManager::FindObjects(FClass* type)
 {
+	const std::lock_guard<std::mutex> lock(objMutex);
 	TArray<CObject*> r;
 	for (auto obj : Objects)
 		if (obj.second->GetClass() == type)
@@ -46,6 +54,7 @@ TArray<CObject*> CObjectManager::FindObjects(FClass* type)
 
 void CObjectManager::IdChanged(CObject* obj, SizeType oldId)
 {
+	const std::lock_guard<std::mutex> lock(objMutex);
 	auto it = Objects.find(oldId);
 	
 	THORIUM_ASSERT(it != Objects.end(), "Failed to change object ID, original ID index couldn't be located!");
@@ -59,6 +68,9 @@ bool CObjectManager::DeleteObject(CObject* obj, bool bNoErase)
 	if (obj->bMarkedForDeletion)
 		return false;
 
+	obj->bMarkedForDeletion = true;
+	obj->OnDelete();
+
 	if (!bNoErase)
 	{
 		auto it = Objects.find(obj->id);
@@ -70,9 +82,6 @@ bool CObjectManager::DeleteObject(CObject* obj, bool bNoErase)
 		}
 		Objects.erase(it);
 	}
-	obj->bMarkedForDeletion = true;
-
-	obj->OnDelete();
 
 	if (obj->users == 0)
 	{
@@ -86,6 +95,7 @@ bool CObjectManager::DeleteObject(CObject* obj, bool bNoErase)
 
 void CObjectManager::RegisterObject(CObject* obj)
 {
+	const std::lock_guard<std::mutex> lock(objMutex);
 	for (auto it = Objects.find(obj->Id()); it != Objects.end(); it = Objects.find(obj->Id()))
 		obj->id = FGuid();
 
@@ -94,6 +104,7 @@ void CObjectManager::RegisterObject(CObject* obj)
 
 void CObjectManager::Update()
 {
+	const std::lock_guard<std::mutex> lock(objMutex);
 	for (auto it = ObjectsToDelete.rbegin(); it != ObjectsToDelete.rend(); it++)
 	{
 		if (it->users == 0)

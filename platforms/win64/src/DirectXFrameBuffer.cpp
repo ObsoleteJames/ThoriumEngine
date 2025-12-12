@@ -259,6 +259,7 @@ DirectXSwapChain::DirectXSwapChain(IBaseWindow* window)
 	swapchainInfo.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	swapchainInfo.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
+	IRenderer::LockGPU();
 	HRESULT hr = GetDirectXRenderer()->factory->CreateSwapChainForHwnd(
 		GetDirectXRenderer()->device,
 		(HWND)window->GetNativeHandle(),
@@ -266,6 +267,7 @@ DirectXSwapChain::DirectXSwapChain(IBaseWindow* window)
 		nullptr,
 		nullptr,
 		&swapchain);
+	IRenderer::UnlockGPU();
 
 	THORIUM_ASSERT(SUCCEEDED(hr), "Failed to create DirectX SwapChain!");
 

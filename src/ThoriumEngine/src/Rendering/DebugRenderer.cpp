@@ -27,8 +27,8 @@ CDebugRenderer::CDebugRenderer()
 	lineMesh.numVertices = 0;
 	lineMesh.topologyType = FMesh::TOPOLOGY_LINES;
 	lineMesh.bSkinnedMesh = false;
-	lineOverlayMesh.numVertices = 0;
 	lineOverlayMesh.vertexBuffer = gGHI->CreateBuffer(desc);
+	lineOverlayMesh.numVertices = 0;
 	lineOverlayMesh.topologyType = FMesh::TOPOLOGY_LINES;
 	lineOverlayMesh.bSkinnedMesh = false;
 
