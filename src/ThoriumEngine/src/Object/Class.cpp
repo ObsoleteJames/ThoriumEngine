@@ -24,7 +24,7 @@ FString FEnum::GetNameByValue(int64 val)
 
 const FFunction* FClass::GetFunction(const FString& name)
 {
-	for (const FFunction* func = FunctionList; func != nullptr; func = FunctionList->next)
+	for (const FFunction* func = FunctionList; func != nullptr; func = func->next)
 		if (func->cppName == name)
 			return func;
 

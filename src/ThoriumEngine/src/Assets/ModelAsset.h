@@ -100,6 +100,7 @@ public:
 	inline const FLODGroup* GetLODs() const { return LODs; }
 	inline const TArray<FBodyGroup>& GetBodyGroups() const { return bodyGroups; }
 	inline const TArray<FMesh>& GetMeshes() const { return meshes; }
+	inline const TArray<FString>& GetMeshNames() const { return meshNames; }
 	inline const TArray<FMaterial>& GetMaterials() const { return materials; }
 	inline const TArray<FModelCollider>& GetColliders() const { return colliders; }
 	inline const TArray<TArray<FVector>>& GetConvexMeshes() const { return convexMeshes; }

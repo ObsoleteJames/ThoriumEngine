@@ -10,7 +10,7 @@ int SSystem::Execute(const char* cmd, bool bDetached)
 	STARTUPINFO si{};
 	si.cb = sizeof(si);
 	int r = CreateProcessA(NULL, (char*)cmd, nullptr, nullptr, false, 0, nullptr, nullptr, &si, &ht);
-	if (r != 0)
+	if (!r)
 		return r;
 
 	if (!bDetached)
