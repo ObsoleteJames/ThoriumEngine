@@ -62,6 +62,8 @@ public:
 	bool IsValid();
 	bool IsValid() const;
 
+	inline T* Get() const { return (T*)ptr; }
+
 	inline operator T*() const { return (T*)ptr; }
 	inline TObjectPtr<T>& operator=(T*);
 	inline TObjectPtr<T>& operator=(const TObjectPtr<T>&);
