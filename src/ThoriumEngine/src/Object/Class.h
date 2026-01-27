@@ -168,6 +168,8 @@ public:
 	inline const FProperty* GetPropertyList() const { return PropertyList; }
 	inline bool IsClass() const { return bIsClass; }
 
+	const FProperty* GetProperty(const FString& name) const;
+
 protected:
 	SizeType size;
 
@@ -189,7 +191,8 @@ public:
 	inline uint32 NumFunctions() const { return numFunctions; }
 	inline const FFunction* GetFunctionList() const { return FunctionList; }
 
-	const FFunction* GetFunction(const FString& name);
+	const FProperty* GetProperty(const FString& name) const;
+	const FFunction* GetFunction(const FString& name) const;
 
 	inline uint Flags() const { return flags; }
 	inline bool HasFlag(uint f) const { return (flags & f); }
@@ -199,16 +202,7 @@ public:
 	bool HasTag(const FString& tag);
 	FString TagValue(const FString& key);
 
-	bool CanCast(FClass* castTo)
-	{
-		if (castTo == this)
-			return true;
-
-		if (BaseClass)
-			return BaseClass->CanCast(castTo);
-
-		return false;
-	}
+	bool CanCast(FClass* castTo);
 
 protected:
 	FClass* BaseClass = nullptr;

@@ -22,7 +22,25 @@ FString FEnum::GetNameByValue(int64 val)
 	return FString();
 }
 
-const FFunction* FClass::GetFunction(const FString& name)
+const FProperty* FStruct::GetProperty(const FString& name) const
+{
+	for (const FProperty* prop = PropertyList; prop != nullptr; prop = prop->next)
+		if (prop->cppName == name)
+			return prop;
+
+	return nullptr;
+}
+
+const FProperty* FClass::GetProperty(const FString& name) const
+{
+	for (const FProperty* prop = PropertyList; prop != nullptr; prop = prop->next)
+		if (prop->cppName == name)
+			return prop;
+
+	return BaseClass ? BaseClass->GetProperty(name) : nullptr;
+}
+
+const FFunction* FClass::GetFunction(const FString& name) const
 {
 	for (const FFunction* func = FunctionList; func != nullptr; func = func->next)
 		if (func->cppName == name)
@@ -47,6 +65,17 @@ FString FClass::TagValue(const FString& key)
 			return tags[i].Value;
 
 	return FString();
+}
+
+inline bool FClass::CanCast(FClass* castTo)
+{
+	if (castTo == this)
+		return true;
+
+	if (BaseClass)
+		return BaseClass->CanCast(castTo);
+
+	return false;
 }
 
 FString FPropertyMeta::FlagValue(const FString& key)
