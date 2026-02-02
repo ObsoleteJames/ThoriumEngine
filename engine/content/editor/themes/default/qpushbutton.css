@@ -7,6 +7,7 @@ QPushButton
 	background-color: qlineargradient(x1:0, y1:1, x2:0, y2:0, stop:0 #383838, stop:1 #505050);
 	border: 1px solid #444;
 	color: #ccc;
+  	image-position: left;
 }
 
 QPushButton[type="primary"]
@@ -27,7 +28,7 @@ QPushButton[type="header"]
 {
 	color: #ccc;
 	background-color: #383838;
-	background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0, y2:1, stop:1 #383838, stop:0 #424242);
+	background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:1 #383838, stop:0 #424242);
 	image: url(:/icons/triangle-right.svg);
   	image-position: left;
 	border-radius: 0px;
@@ -50,11 +51,12 @@ QPushButton[collapsed="false"]
 	border-bottom-right-radius: 0px; */
 	image: url(:/icons/triangle-down.svg);
 }
-/* QPushButton[type="header"][collapsed="true"]
+QPushButton[collapsed="true"]
 {
-	border-bottom-left-radius: 3px;
-	border-bottom-right-radius: 3px;
-}*/
+	image: url(:/icons/triangle-right.svg);
+  	image-position: left;
+
+}
 
 QPushButton[type="clear"]
 {

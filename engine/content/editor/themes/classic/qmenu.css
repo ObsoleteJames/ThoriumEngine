@@ -1,0 +1,89 @@
+
+QMenuBar
+{
+	background: transparent;
+	padding: 0px;
+    margin-bottom: 2px;
+	color: #444444;
+	border: 0px;
+	padding-left: 4px;
+}
+
+QMenuBar:active
+{
+	color: #222222;
+}
+
+QMenuBar::item 
+{
+    padding: 6px 6px;
+    background: transparent;
+}
+
+QMenuBar::item:selected 
+{
+	background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0, y2:1, stop:1 #969696, stop:0 #737373);
+    color: black;
+}
+
+QMenuBar::item:pressed 
+{
+    background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0, y2:1, stop:1 #5BA5D5, stop:0 #5BA5D5);
+	color: black;
+}
+
+QMenu
+{
+    background-color: #D3D3D3;
+	border: 1px;
+    padding: 0px;
+    margin: 0px;
+	color: #333333;
+}
+
+QMenu::icon, QMenu::indicator
+{
+    left: 10px;
+}
+
+QMenu::item 
+{
+    background-color: #CCCCCC;
+    padding: 5px 8px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border: 0px;
+    min-width: 10px;
+}
+
+QMenu::item:selected 
+{
+    background: #5BA5D5;
+    background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0, y2:1, stop:1 #5BA5D5, stop:0 #5BA5D5);
+	color: black;
+}
+
+QMenu::item:disabled
+{
+    color: #999999;
+}
+
+QMenu::item:disabled:selected
+{
+    color: #888888;
+    background: transparent;
+}
+
+QMenu::separator 
+{
+    height: 1px;
+    background: #F1F1F1;
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+QMenu::indicator 
+{
+    width: 13px;
+    height: 13px;
+}

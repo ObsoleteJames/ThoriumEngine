@@ -2,8 +2,23 @@
 	name:	"Classic"
 	
 	include [
+		"common.css",
+		"ads.css",
 		"qwindow.css",
+		"qmenu.css",
+		"qcheckbox.css",
+		"qstatusbar.css",
+		"qtabbar.css",
+		"qdockwidget.css",
+		"qscrollbar.css",
 		"qtextedit.css",
-		"qtreeview.css"
+		"qtoolbar.css",
+		"qtreeview.css",
+		"qgroupbox.css",
+		"qpushbutton.css",
+		"qheaderview.css",
+		"qlistview.css",
+		"cobjectselector.css",
+		"qlabel.css"
 	]
 }
