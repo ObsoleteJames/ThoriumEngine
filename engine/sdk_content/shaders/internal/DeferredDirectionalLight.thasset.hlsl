@@ -151,8 +151,13 @@ PS
 		float3 kD = float3(1, 1, 1) - kS;
 		kD = mul((1.0 - metallic), kD);
 		float NdotL = max(dot(normal, dirLight.direction), 0);
+		float NdotV = max(dot(normal, V), 0);
 
-		float3 color = (kD * diffuse / PI + specular) * radiance * NdotL;
+		// Burley diffuse shading
+		float fd90 = 0.5 + 2.0 * roughness * roughness * dot(dirLight.direction, H);
+		float burleyDiffuse = (1 + (fd90 - 1) * pow(1 - NdotL, 5)) * (1 + (fd90 - 1) * pow(1 - NdotV, 5));
+
+		float3 color = (kD * diffuse / PI * burleyDiffuse + specular) * radiance * NdotL;
 
 		return float4(color * (1-shadow), 1.f);
 	}

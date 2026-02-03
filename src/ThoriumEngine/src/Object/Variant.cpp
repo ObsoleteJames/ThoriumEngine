@@ -58,6 +58,8 @@ FVariant::FVariant(const FColor& v) : uColor(v), type(COLOR) {}
 
 FVariant::FVariant(const FString& v) : uString(v), type(STRING) {}
 
+FVariant::FVariant(const char* v) : uString(v), type(STRING) {}
+
 FVariant::FVariant(FClass* v) : uClass(v), type(CLASS) {}
 
 FVariant::~FVariant()

@@ -36,6 +36,7 @@ public:
 	explicit FVariant(const FVector& v);
 	explicit FVariant(const FColor& v);
 	explicit FVariant(const FString& v);
+	explicit FVariant(const char* v);
 	explicit FVariant(FClass* v);
 
 	int AsInt() const;
