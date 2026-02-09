@@ -212,7 +212,7 @@ void CAssetManager::Update()
 	//	delete obj;
 	//}
 
-	resourceMutex.unlock();
+	//resourceMutex.unlock();
 }
 
 void CAssetManager::StreamAssets()
