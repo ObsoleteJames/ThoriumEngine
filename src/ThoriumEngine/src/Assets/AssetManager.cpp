@@ -11,6 +11,7 @@
 
 #include <thread>
 #include <mutex>
+#include <shared_mutex>
 #include <atomic>
 #include <chrono>
 
@@ -25,7 +26,7 @@ TUnorderedMap<FString, SizeType> CAssetManager::assetPaths;
 
 TArray<IAssetStreamingProxy*> CAssetManager::streamingAssets;
 
-static std::mutex resourceMutex;
+static std::shared_mutex resourceMutex;
 static std::thread resourceThread;
 static std::atomic<bool> bResourceRunning;
 
@@ -90,6 +91,7 @@ int CAssetManager::ScanDir(FDirectory* dir)
 
 void CAssetManager::OnAssetDeleted(CAsset* asset)
 {
+	std::unique_lock<std::shared_mutex> lock(resourceMutex);
 	auto it = allocatedAssets.find(asset->AssetId());
 	if (it == allocatedAssets.end())
 		return;
@@ -99,12 +101,13 @@ void CAssetManager::OnAssetDeleted(CAsset* asset)
 
 void CAssetManager::OnAssetFileMoved(FFile* file)
 {
+	std::unique_lock<std::shared_mutex> lock(resourceMutex);
 	FString oldPath;
 	SizeType id;
 	for (auto& r : assetPaths)
 	{
 		const FAssetData* data = GetAssetData(r.second);
-		if (data->file == file)
+		if (data && data->file == file)
 		{
 			id = data->id;
 			oldPath = r.first;
@@ -132,30 +135,27 @@ void CAssetManager::OnAssetFileMoved(FFile* file)
 
 void CAssetManager::OnAssetFileDeleted(FFile* file)
 {
-	auto* data = GetAssetData(file->Path());
+	std::unique_lock<std::shared_mutex> lock(resourceMutex);
+	const FAssetData* data = GetAssetData(file->Path());
 	if (!data)
 		return;
 
-	if (auto it = allocatedAssets.find(data->id); it != allocatedAssets.end())
+	SizeType dataId = data->id;
+
+	if (auto it = allocatedAssets.find(dataId); it != allocatedAssets.end())
 	{
 		it->second->Delete();
-		allocatedAssets.erase(data->id);
+		allocatedAssets.erase(dataId);
 	}
 
-	/*if (auto it = allocatedResources.find(file->Path()); it != allocatedResources.end())
-	{
-		it->second->Delete();
-		allocatedResources.erase(file->Path());
-	}*/
-
-	if (availableAssets.find(data->id) != availableAssets.end())
-		availableAssets.erase(data->id);
+	if (availableAssets.find(dataId) != availableAssets.end())
+		availableAssets.erase(dataId);
 
 	if (assetPaths.find(file->Path()) != assetPaths.end())
 		assetPaths.erase(file->Path());
 
-	if (genericAssets.find(data->id) != genericAssets.end())
-		genericAssets.erase(data->id);
+	if (genericAssets.find(dataId) != genericAssets.end())
+		genericAssets.erase(dataId);
 }
 
 void CAssetManager::Init()
@@ -182,10 +182,10 @@ void CAssetManager::Shutdown()
 
 void CAssetManager::Update()
 {
-	resourceMutex.lock();
+	std::unique_lock<std::shared_mutex> lock(resourceMutex);
 	if (streamingAssets.Size() == 0)
 	{
-		resourceMutex.unlock();
+		lock.unlock();
 		return;
 	}
 
@@ -221,10 +221,10 @@ void CAssetManager::StreamAssets()
 	int index = 0;
 	while (bResourceRunning)
 	{
-		resourceMutex.lock();
+		std::shared_lock<std::shared_mutex> lock(resourceMutex);
 		if (streamingAssets.Size() == 0)
 		{
-			resourceMutex.unlock();
+			lock.unlock();
 			std::this_thread::sleep_for(1ms);
 			continue;
 		}
@@ -232,7 +232,7 @@ void CAssetManager::StreamAssets()
 		IAssetStreamingProxy* obj = streamingAssets[index];
 		index++;
 		index %= streamingAssets.Size();
-		resourceMutex.unlock();
+		lock.unlock();
 
 		if (obj->bFinished)
 		{
@@ -281,6 +281,8 @@ void CAssetManager::LoadGenericAssets(FMod* mod)
 	if (!kv.IsOpen())
 		return;
 
+	std::unique_lock<std::shared_mutex> lock(resourceMutex);
+
 	for (auto& v : kv.GetCategories())
 	{
 		SizeType id = std::stoull(v->GetName().c_str());
@@ -316,6 +318,8 @@ void CAssetManager::LoadGenericAssets(FMod* mod)
 
 void CAssetManager::SaveAssetListBin(FMod* mod)
 {
+	std::shared_lock<std::shared_mutex> lock(resourceMutex);
+
 	FString binPath = mod->Path() + "/asset_list.bin";
 	FKeyValue kv(binPath);
 
@@ -333,6 +337,8 @@ void CAssetManager::SaveAssetListBin(FMod* mod)
 		numAssets++;
 	}
 
+	lock.unlock();
+
 	if (numAssets > 0)
 		kv.Save();
 }
@@ -342,6 +348,8 @@ void CAssetManager::ScanMod(FMod* mod)
 	int numFiles = ScanDir(&mod->root);
 
 	CONSOLE_LogInfo("CAssetManager", FString("Found ") + std::to_string(numFiles).c_str() + " assets in '" + mod->Name() + "'");
+
+	std::unique_lock<std::shared_mutex> lock(resourceMutex);
 
 	for (auto& it : availableAssets)
 	{
@@ -355,19 +363,29 @@ void CAssetManager::ScanMod(FMod* mod)
 				CAsset* asset = AllocateAsset(Class, it.first);
 				asset->file = it.second.file;
 				asset->SetName(asset->file->Name() + asset->file->Extension());
+				lock.unlock();
 				asset->Init();
+				lock.lock();
 			}
 		}
 	}
+
+	lock.unlock();
 
 	LoadGenericAssets(mod);
 }
 
 void CAssetManager::DeleteAssetsFromMod(FMod* mod)
 {
+	std::unique_lock<std::shared_mutex> lock(resourceMutex);
+
 	auto ar = availableAssets;
 
+	lock.unlock();
+
 	SaveAssetListBin(mod);
+
+	lock.lock();
 
 	for (auto& it : ar)
 	{
@@ -384,6 +402,8 @@ void CAssetManager::DeleteAssetsFromMod(FMod* mod)
 
 void CAssetManager::ConvertToAsset(FFile* file, FAssetClass* type)
 {
+	std::unique_lock<std::shared_mutex> lock(resourceMutex);
+
 	SizeType id = FMath::Random64();
 
 	FAssetData data{};
@@ -425,6 +445,8 @@ TObjectPtr<CAsset> CAssetManager::GetAsset(FAssetClass* type, const FString& pat
 
 TObjectPtr<CAsset> CAssetManager::GetAsset(FAssetClass* type, SizeType assetId)
 {
+	std::unique_lock<std::shared_mutex> lock(resourceMutex);
+
 	CAsset* asset = nullptr;
 	auto it = allocatedAssets.find(assetId);
 	if (it == allocatedAssets.end())
@@ -445,7 +467,10 @@ TObjectPtr<CAsset> CAssetManager::GetAsset(FAssetClass* type, SizeType assetId)
 		asset = AllocateAsset(file->second.type, assetId);
 		asset->file = file->second.file;
 		asset->SetName(asset->file->Name() + asset->file->Extension());
+		
+		lock.unlock();
 		asset->Init();
+		return asset;
 	}
 	else
 	{
@@ -462,11 +487,9 @@ TObjectPtr<CAsset> CAssetManager::GetAsset(FAssetClass* type, SizeType assetId)
 
 bool CAssetManager::IsAssetLoaded(SizeType id)
 {
+	std::shared_lock<std::shared_mutex> lock(resourceMutex);
 	auto it = allocatedAssets.find(id);
-	if (it == allocatedAssets.end())
-		return false;
-
-	return true;
+	return it != allocatedAssets.end();
 }
 
 TObjectPtr<CAsset> CAssetManager::CreateAsset(FAssetClass* type, const FString& p, const FString& m /*= L""*/)
@@ -508,19 +531,22 @@ TObjectPtr<CAsset> CAssetManager::CreateAsset(FAssetClass* type, const FString& 
 
 	SizeType assetId = FMath::Random64();
 
+	std::unique_lock<std::shared_mutex> lock(resourceMutex);
 	availableAssets[assetId] = { file, assetId, CASSET_VERSION, type };
-
 	assetPaths[file->Path()] = assetId;
-	
+
 	CAsset* asset = AllocateAsset(type, assetId);
 	asset->file = file;
 	asset->SetName(asset->file->Name());
-	//asset->Init();
+	lock.unlock();
+
 	return asset;
 }
 
 void CAssetManager::LoadAssets(FAssetClass* type)
 {
+	std::shared_lock<std::shared_mutex> lock(resourceMutex);
+
 	for (auto it : availableAssets)
 	{
 		if (it.second.type == type)
@@ -528,10 +554,12 @@ void CAssetManager::LoadAssets(FAssetClass* type)
 			auto obj = allocatedAssets.find(it.first);
 			if (obj == allocatedAssets.end())
 			{
+				lock.unlock();
 				CAsset* asset = AllocateAsset(type, it.first);
 				asset->file = it.second.file;
 				asset->SetName(asset->file->Name());
 				asset->Init();
+				lock.lock();
 			}
 		}
 	}
@@ -573,21 +601,22 @@ bool CAssetManager::RegisterNewAsset(CAsset* asset, const FString& p, const FStr
 	asset->assetVersion = CASSET_VERSION;
 
 	FFile* file = mod->CreateFile(path);
+
+	std::unique_lock<std::shared_mutex> lock(resourceMutex);
 	availableAssets[assetId] = { file, assetId, CASSET_VERSION, (FAssetClass*)asset->GetClass() };
-
 	assetPaths[file->Path()] = assetId;
-
 	asset->file = file;
 	allocatedAssets[assetId] = asset;
+	lock.unlock();
+
 	asset->bRegistered = true;
 	return true;
 }
 
 void CAssetManager::StreamAsset(IAssetStreamingProxy* proxy)
 {
-	resourceMutex.lock();
+	std::unique_lock<std::shared_mutex> lock(resourceMutex);
 	streamingAssets.Add(proxy);
-	resourceMutex.unlock();
 }
 
 CAsset* CAssetManager::AllocateAsset(FAssetClass* type, SizeType id)
