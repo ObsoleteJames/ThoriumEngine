@@ -440,7 +440,7 @@ void CMaterial::Validate()
 	for (auto it = properties.rbegin(); it != properties.rend(); it++)
 	{
 		bool bExists = GetShaderProperty(*it) != nullptr;
-		
+
 		if (!bExists)
 			properties.Erase(it);
 	}

@@ -86,6 +86,7 @@ bool CObjectManager::DeleteObject(CObject* obj, bool bNoErase)
 
 	if (obj->users == 0)
 	{
+		lock.unlock();
 		delete obj;
 		return true;
 	}

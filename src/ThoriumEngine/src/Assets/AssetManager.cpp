@@ -27,6 +27,7 @@ TUnorderedMap<FString, SizeType> CAssetManager::assetPaths;
 TArray<IAssetStreamingProxy*> CAssetManager::streamingAssets;
 
 static std::shared_mutex resourceMutex;
+static std::mutex streamMutex;
 static std::thread resourceThread;
 static std::atomic<bool> bResourceRunning;
 
@@ -182,10 +183,10 @@ void CAssetManager::Shutdown()
 
 void CAssetManager::Update()
 {
-	std::unique_lock<std::shared_mutex> lock(resourceMutex);
+	streamMutex.lock();
 	if (streamingAssets.Size() == 0)
 	{
-		lock.unlock();
+		streamMutex.unlock();
 		return;
 	}
 
@@ -212,7 +213,7 @@ void CAssetManager::Update()
 	//	delete obj;
 	//}
 
-	//resourceMutex.unlock();
+	streamMutex.unlock();
 }
 
 void CAssetManager::StreamAssets()
@@ -221,10 +222,10 @@ void CAssetManager::StreamAssets()
 	int index = 0;
 	while (bResourceRunning)
 	{
-		std::shared_lock<std::shared_mutex> lock(resourceMutex);
+		streamMutex.lock();
 		if (streamingAssets.Size() == 0)
 		{
-			lock.unlock();
+			streamMutex.unlock();
 			std::this_thread::sleep_for(1ms);
 			continue;
 		}
@@ -232,7 +233,7 @@ void CAssetManager::StreamAssets()
 		IAssetStreamingProxy* obj = streamingAssets[index];
 		index++;
 		index %= streamingAssets.Size();
-		lock.unlock();
+		streamMutex.unlock();
 
 		if (obj->bFinished)
 		{
@@ -393,7 +394,11 @@ void CAssetManager::DeleteAssetsFromMod(FMod* mod)
 		{
 			auto allocated = allocatedAssets.find(it.first);
 			if (allocated != allocatedAssets.end())
+			{
+				lock.unlock();
 				allocated->second->Delete();
+				lock.lock();
+			}
 			
 			availableAssets.erase(it.first);
 		}
@@ -447,7 +452,7 @@ TObjectPtr<CAsset> CAssetManager::GetAsset(FAssetClass* type, SizeType assetId)
 {
 	std::unique_lock<std::shared_mutex> lock(resourceMutex);
 
-	CAsset* asset = nullptr;
+	TObjectPtr<CAsset> asset = nullptr;
 	auto it = allocatedAssets.find(assetId);
 	if (it == allocatedAssets.end())
 	{
