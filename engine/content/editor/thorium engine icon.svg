@@ -7,7 +7,7 @@
    viewBox="0 0 135.46666 135.46666"
    version="1.1"
    id="svg5"
-   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
    sodipodi:docname="thorium engine icon.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -26,26 +26,103 @@
      showgrid="false"
      units="px"
      height="210mm"
-     inkscape:zoom="1.5554293"
-     inkscape:cx="242.37682"
-     inkscape:cy="249.44882"
-     inkscape:window-width="1705"
-     inkscape:window-height="1226"
-     inkscape:window-x="409"
-     inkscape:window-y="101"
-     inkscape:window-maximized="0"
-     inkscape:current-layer="layer1" />
+     inkscape:zoom="1.3408873"
+     inkscape:cx="234.54618"
+     inkscape:cy="269.22471"
+     inkscape:window-width="1912"
+     inkscape:window-height="1002"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     inkscape:showpageshadow="2"
+     inkscape:deskcolor="#d1d1d1">
+    <inkscape:grid
+       id="grid2"
+       units="mm"
+       originx="0"
+       originy="0"
+       spacingx="0.99999995"
+       spacingy="0.99999995"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       enabled="true"
+       visible="false" />
+  </sodipodi:namedview>
   <defs
      id="defs2">
+    <linearGradient
+       id="linearGradient65"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:0.50617284;"
+         offset="0"
+         id="stop65" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:0;"
+         offset="1"
+         id="stop66" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient58"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop58" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:0.54320985;"
+         offset="1"
+         id="stop59" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient55"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop55" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:0.47325101;"
+         offset="1"
+         id="stop56" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop4" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:0;"
+         offset="1"
+         id="stop5" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1;"
+         offset="0"
+         id="stop2" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:0;"
+         offset="1"
+         id="stop3" />
+    </linearGradient>
     <linearGradient
        inkscape:collect="always"
        id="linearGradient6690">
       <stop
-         style="stop-color:#1a428f;stop-opacity:1"
+         style="stop-color:#390d72;stop-opacity:1;"
          offset="0"
          id="stop6686" />
       <stop
-         style="stop-color:#6f59cf;stop-opacity:1"
+         style="stop-color:#54a7f1;stop-opacity:1;"
          offset="1"
          id="stop6688" />
     </linearGradient>
@@ -72,44 +149,143 @@
        x2="101.8863"
        y2="120.12508"
        gradientUnits="userSpaceOnUse" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2"
+       id="radialGradient3"
+       cx="67.73333"
+       cy="11.737111"
+       fx="67.73333"
+       fy="11.737111"
+       r="61.102772"
+       gradientTransform="matrix(0.80646444,0,0,0.79170728,13.10883,-5.97535)"
+       gradientUnits="userSpaceOnUse" />
+    <mask
+       maskUnits="userSpaceOnUse"
+       id="mask7">
+      <ellipse
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.40217;stroke-linejoin:round;stroke-miterlimit:4.7;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers fill stroke"
+         id="ellipse8"
+         ry="52.897488"
+         rx="51.949501"
+         cy="67.73333"
+         cx="67.73333" />
+    </mask>
+    <mask
+       maskUnits="userSpaceOnUse"
+       id="mask10">
+      <ellipse
+         style="fill:url(#radialGradient11);fill-opacity:1;stroke-width:0.264583"
+         id="ellipse11"
+         cx="67.73333"
+         cy="125.36597"
+         rx="43.206184"
+         ry="36.742268" />
+    </mask>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4"
+       id="radialGradient11"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1,0,0,0.85039372,0,23.239831)"
+       cx="67.73333"
+       cy="120.09278"
+       fx="67.73333"
+       fy="120.09278"
+       r="43.206184" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient55"
+       id="radialGradient56"
+       cx="67.733333"
+       cy="58.88309"
+       fx="70.101166"
+       fy="18.725998"
+       r="30.894246"
+       gradientTransform="matrix(-2.5456385,1.1267828e-8,-4.5768249e-8,-1.1505416,240.85753,61.883382)"
+       gradientUnits="userSpaceOnUse" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient58"
+       id="radialGradient59"
+       cx="69.548065"
+       cy="64.607475"
+       fx="69.548065"
+       fy="64.607475"
+       r="30.861375"
+       gradientTransform="matrix(-1.6329478,0,0,-0.95221001,183.11642,144.99697)"
+       gradientUnits="userSpaceOnUse" />
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient65"
+       id="radialGradient66"
+       cx="79.456673"
+       cy="117.93721"
+       fx="79.456673"
+       fy="117.93721"
+       r="51.949501"
+       gradientTransform="matrix(1.4026194,-0.53935804,0.36546431,0.95040267,-68.070621,51.580048)"
+       gradientUnits="userSpaceOnUse" />
   </defs>
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
     <ellipse
-       style="fill:url(#linearGradient6692);fill-opacity:1;fill-rule:evenodd;stroke:#ffffff;stroke-width:1.4894;stroke-linejoin:round;stroke-miterlimit:4.7;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers fill stroke"
+       style="fill:url(#linearGradient6692);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.4894;stroke-linejoin:round;stroke-miterlimit:4.7;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers fill stroke"
        id="path50491"
        ry="56.188423"
        rx="55.181461"
        cy="67.73333"
        cx="67.73333" />
+    <ellipse
+       style="mix-blend-mode:normal;fill:#ffffff;fill-opacity:0.03448276;fill-rule:evenodd;stroke:none;stroke-width:1.40217;stroke-linejoin:round;stroke-miterlimit:4.7;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers fill stroke"
+       id="ellipse10"
+       ry="52.897488"
+       rx="51.949501"
+       cy="67.73333"
+       cx="67.73333" />
+    <ellipse
+       style="fill:url(#radialGradient3);stroke:none;stroke-width:0.411192"
+       id="path2"
+       mask="url(#mask7)"
+       ry="48.375511"
+       rx="107.88112"
+       cy="3.3170073"
+       cx="67.73333" />
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:57.2592px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';text-align:center;text-anchor:middle;stroke:#ffffff;stroke-width:2.38581;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="font-size:14.523px;line-height:0;font-family:sans-serif;text-align:center;text-anchor:middle;fill:url(#radialGradient59);fill-opacity:1;stroke-width:0.363074"
+       x="68.270203"
+       y="94.460358"
+       id="text17983"><tspan
+         sodipodi:role="line"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1.05;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI Italic';fill:url(#radialGradient59);fill-opacity:1;stroke-width:0.363074"
+         x="68.270203"
+         y="94.460358"
+         id="tspan1">THORIUM</tspan><tspan
+         sodipodi:role="line"
+         style="font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1.05;font-family:'Segoe UI';-inkscape-font-specification:'Segoe UI Italic';fill:url(#radialGradient59);fill-opacity:1;stroke-width:0.363074"
+         x="68.270203"
+         y="109.7095"
+         id="tspan2">ENGINE</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:57.2592px;line-height:1.25;font-family:sans-serif;-inkscape-font-specification:'sans-serif Bold';text-align:center;text-anchor:middle;stroke:none;stroke-width:2.386;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;fill:url(#radialGradient56);fill-opacity:1"
        x="68.99147"
        y="79.37674"
        id="text2612"><tspan
          sodipodi:role="line"
          id="tspan2610"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:57.2592px;font-family:'Microsoft Sans Serif';-inkscape-font-specification:'Microsoft Sans Serif';fill:#ffffff;fill-opacity:1;stroke:#ffffff;stroke-width:2.38581;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:57.2592px;font-family:'Microsoft Sans Serif';-inkscape-font-specification:'Microsoft Sans Serif';fill:url(#radialGradient56);fill-opacity:1;stroke:none;stroke-width:2.386;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
          x="68.99147"
          y="79.37674">Th</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:14.523px;line-height:0;font-family:sans-serif;text-align:center;text-anchor:middle;fill:#ffffff;fill-opacity:1;stroke-width:0.363074"
-       x="68.270203"
-       y="94.460358"
-       id="text17983"><tspan
-         sodipodi:role="line"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1.05;font-family:Consolas;-inkscape-font-specification:Consolas;fill:#ffffff;fill-opacity:1;stroke-width:0.363074"
-         x="68.270203"
-         y="94.460358"
-         id="tspan19411">THORIUM</tspan><tspan
-         sodipodi:role="line"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:1.05;font-family:Consolas;-inkscape-font-specification:Consolas;fill:#ffffff;fill-opacity:1;stroke-width:0.363074"
-         x="68.270203"
-         y="109.7095"
-         id="tspan1419">ENGINE</tspan></text>
+    <ellipse
+       style="mix-blend-mode:normal;fill:url(#radialGradient66);fill-opacity:0.03448276;fill-rule:evenodd;stroke:none;stroke-width:1.40217;stroke-linejoin:round;stroke-miterlimit:4.7;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:markers fill stroke"
+       id="ellipse64"
+       ry="52.897488"
+       rx="51.949501"
+       cy="67.73333"
+       cx="67.73333" />
   </g>
 </svg>
