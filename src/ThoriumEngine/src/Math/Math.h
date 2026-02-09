@@ -18,6 +18,8 @@ public:
 	static uint Random(uint range);
 	static uint Random(uint min, uint max);
 
+	static inline double Pi() { return 3.1415926535897931; }
+
 	template<typename T>
 	static inline T Lerp(T a, T b, T t) { return ((T)1.0 - t) * a + t * b; }
 

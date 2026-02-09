@@ -931,6 +931,7 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 		UnlockGPU();
 	}
+
 	Blit(scene->colorBuffer, renderTarget, FVector2(), FVector2((float)viewWidth / (float)scene->GetFrameBufferWidth(), (float)viewHeight / (float)scene->GetFrameBufferHeight()));
 }
 

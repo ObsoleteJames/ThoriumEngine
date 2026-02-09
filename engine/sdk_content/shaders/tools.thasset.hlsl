@@ -108,7 +108,7 @@ PS
 			 r = DrawGizmo(input);
 			break;
 		case TYPE_SOLID:
-			r = float4(input.vVertexColor, 1);
+			r = float4(input.vVertexColor, clamp(input.vTextureCoords.x, 0, 1));
 			break;
 		}
 		if (r.a == 0.f)
