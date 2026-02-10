@@ -267,21 +267,31 @@ FFile* FMod::CreateFile(const FString& path)
 	return file;
 }
 
-bool FMod::MoveFile(FFile* file, const FString& destination)
+bool FMod::RenameFile(FFile* file, const FString& newPath)
 {
 	if (!file)
 		return false;
 
-	FDirectory* newDir = destination.IsEmpty() ? &root : FindDirectory(destination);
-	if (!newDir)
+	FString newDir = newPath;
+	FString newName = newPath;
+	if (SizeType i = newPath.FindLastOf("\\/"); i != -1)
+	{
+		newDir.Erase(newDir.begin() + i, newDir.end());
+		newName.Erase(newName.begin(), newName.begin() + i + 1);
+	}
+	if (newName.FindLastOf('.') != -1)
+		newName.Erase(newName.begin() + newName.FindLastOf('.'), newName.end());
+
+	FDirectory* parentDir = newDir.IsEmpty() ? &root : FindDirectory(newDir);
+	if (!parentDir)
 	{
 		CONSOLE_LogWarning("CFileSystem", "Failed to move file, destination does not exist!");
 		return false;
 	}
 	
-	for (auto* f : newDir->files)
+	for (auto* f : parentDir->files)
 	{
-		if (f->name == file->name && f->extension == file->extension)
+		if (f->name == newName && f->extension == file->extension)
 		{
 			CONSOLE_LogWarning("CFileSystem", "Failed to move file, file with the same name already exists in destination!");
 			return false;
@@ -292,41 +302,91 @@ bool FMod::MoveFile(FFile* file, const FString& destination)
 
 	FDirectory* oldDir = file->dir;
 	oldDir->files.Erase(oldDir->files.Find(file));
-	newDir->files.Add(file);
+	parentDir->files.Add(file);
 
-	file->dir = newDir;
+	file->dir = parentDir;
+	file->name = newName;
 
 	std::filesystem::rename(oldPath.c_str(), file->FullPath().c_str());
 	CAssetManager::OnAssetFileMoved(file);
 	return true;
 }
 
-bool FMod::MoveDirectory(FDirectory* dir, const FString& destination)
+bool FMod::RenameDir(FDirectory* dir, const FString& newPath)
 {
 	if (!dir)
 		return false;
 
-	FDirectory* newDir = destination.IsEmpty() ? &root : FindDirectory(destination);
-	for (auto* d : newDir->directories)
+	FString newDir = newPath;
+	FString newName = newPath;
+	if (SizeType i = newPath.FindLastOf("\\/"); i != -1)
 	{
-		if (d->name == dir->name)
+		newDir.Erase(newDir.begin() + i, newDir.end());
+		newName.Erase(newName.begin(), newName.begin() + i + 1);
+	}
+	else
+		newDir.Clear();
+
+	FDirectory* parentDir = newDir.IsEmpty() ? &root : FindDirectory(newDir);
+	if (!parentDir)
+	{
+		CONSOLE_LogWarning("CFileSystem", "Failed to rename directory, destination folder does not exist!");
+		return false;
+	}
+
+	for (auto* d : parentDir->directories)
+	{
+		if (d->name == newName)
 		{
-			CONSOLE_LogWarning("CFileSystem", "Failed to move directory, directory with the same name already exsists in destination!");
+			CONSOLE_LogWarning("CFileSystem", "Failed to rename directory, directory with the same name already exists in destination!");
 			return false;
 		}
 	}
 
 	FString oldPath = Path() + "/" + dir->GetPath();
 	dir->parent->directories.Erase(dir->parent->directories.Find(dir));
-	newDir->directories.Add(dir);
+	parentDir->directories.Add(dir);
 
-	dir->parent = newDir;
-
+	dir->parent = parentDir;
+	dir->name = newName;
 	std::filesystem::rename(oldPath.c_str(), (Path() + "/" + dir->GetPath()).c_str());
 
 	dir->OnMoved();
 	return true;
 }
+
+//bool FMod::MoveDirectory(FDirectory* dir, const FString& destination)
+//{
+//	if (!dir)
+//		return false;
+//
+//	FDirectory* newDir = destination.IsEmpty() ? &root : FindDirectory(destination);
+//	if (!newDir)
+//	{
+//		CONSOLE_LogWarning("CFileSystem", "Failed to move directory, destination does not exist!");
+//		return false;
+//	}
+//
+//	for (auto* d : newDir->directories)
+//	{
+//		if (d->name == dir->name)
+//		{
+//			CONSOLE_LogWarning("CFileSystem", "Failed to move directory, directory with the same name already exsists in destination!");
+//			return false;
+//		}
+//	}
+//
+//	FString oldPath = Path() + "/" + dir->GetPath();
+//	dir->parent->directories.Erase(dir->parent->directories.Find(dir));
+//	newDir->directories.Add(dir);
+//
+//	dir->parent = newDir;
+//
+//	std::filesystem::rename(oldPath.c_str(), (Path() + "/" + dir->GetPath()).c_str());
+//
+//	dir->OnMoved();
+//	return true;
+//}
 
 FFile* CFileSystem::FindFile(const FString& path)
 {

@@ -65,12 +65,14 @@ public:
 	FFile* FindFile(const FString& path) const;
 	FFile* CreateFile(const FString& path);
 
-	bool MoveFile(FFile* file, const FString& destination);
-	inline bool MoveFile(const FString& file, const FString& destination) { return MoveFile(FindFile(file), destination); }
+	// Rename the file. does not change file extention.
+	bool RenameFile(FFile* file, const FString& newPath);
+	inline bool RenameFile(const FString& file, const FString& newPath) { return RenameFile(FindFile(file), newPath); }
 
-	bool MoveDirectory(FDirectory* dir, const FString& destination);
-	inline bool MoveDirectory(const FString& dir, const FString& destination) { return MoveDirectory(FindDirectory(dir), destination); }
-	
+	// rename the specfied Directory, will move the directory if the new path is in a different location.
+	bool RenameDir(FDirectory* dir, const FString& newPath);
+	inline bool RenameDir(const FString& dir, const FString& newPath) { return RenameDir(FindDirectory(dir), newPath); }
+
 	inline FDirectory* GetRootDir() { return &root; }
 
 	inline const FString& GetSdkPath() const { return sdkPath; }
