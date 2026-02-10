@@ -236,12 +236,15 @@ CConCmd* CConsole::GetConCmd(const FString& name)
 
 void CConsole::_log(const FConsoleMsg& _msg)
 {
-	FConsoleMsg& prev = *logArray.last();
-	if (prev.type == _msg.type && prev.module == _msg.module && prev.msg == _msg.msg)
+	if (logArray.Size() > 0)
 	{
-		prev.repeats++;
-		prev.time = (SizeType)time(nullptr);
-		return;
+		FConsoleMsg& prev = *logArray.last();
+		if (prev.type == _msg.type && prev.module == _msg.module && prev.msg == _msg.msg)
+		{
+			prev.repeats++;
+			prev.time = (SizeType)time(nullptr);
+			return;
+		}
 	}
 
 	FConsoleMsg msg = _msg;

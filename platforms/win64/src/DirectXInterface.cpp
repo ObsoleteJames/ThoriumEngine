@@ -513,6 +513,10 @@ void DirectXInterface::DrawMesh(FMesh* mesh)
 		deviceContext->IASetVertexBuffers(0, 1, &vertexBuffer->buffer, &vertexData[0], &vertexData[1]);
 	if (mesh->indexBuffer)
 		deviceContext->IASetIndexBuffer(indexBuffer->buffer, DXGI_FORMAT_R32_UINT, 0);
+	
+	// Prevents a crash when the shader hasn't been loaded yet.
+	if (!curVertexShader)
+		return;
 
 	deviceContext->IASetInputLayout(curVertexShader->inputLayout);
 
@@ -537,8 +541,10 @@ void DirectXInterface::DrawMesh(FDrawMeshCmd* info)
 
 	DirectXBuffer* vertexBuffer = (DirectXBuffer*)&*mesh->vertexBuffer;
 	DirectXBuffer* indexBuffer = (DirectXBuffer*)&*mesh->indexBuffer;
-
-	//deviceContext->IASetInputLayout(((DirectXVertexShader*)info->material->GetShader(info->mesh->bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex))->inputLayout);
+	
+	if (!curVertexShader)
+		return;
+	
 	deviceContext->IASetInputLayout(curVertexShader->inputLayout);
 
 	uint vertexData[2] = { vertexBuffer ? vertexBuffer->Descriptor().dataStride : sizeof(FVertex), 0 };
@@ -607,7 +613,9 @@ void DirectXInterface::DrawMesh(FMeshBuilder::FRenderMesh* data)
 	DirectXBuffer* vertexBuffer = (DirectXBuffer*)&*mesh->vertexBuffer;
 	DirectXBuffer* indexBuffer = (DirectXBuffer*)&*mesh->indexBuffer;
 
-	//deviceContext->IASetInputLayout(((DirectXVertexShader*)data->mat->GetShader(data->mesh.bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex))->inputLayout);
+	if (!curVertexShader)
+		return;
+
 	deviceContext->IASetInputLayout(curVertexShader->inputLayout);
 
 	uint vertexData[2] = { vertexBuffer ? vertexBuffer->Descriptor().dataStride : sizeof(FVertex), 0};
