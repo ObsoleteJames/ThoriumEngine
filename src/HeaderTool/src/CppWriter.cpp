@@ -263,14 +263,18 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 		//stream  << "\t\t};\n";
 		stream << "\t\tname = \"" << name.c_str() << "\";\n"
 			<< "\t\tcppName = \"" << Enum.name.c_str() << "\";\n"
-			<< "\t\tsize = sizeof(" << Enum.name.c_str() << ");\n"
-			<< "\t\tflags = EnumFlag_NONE";
+			<< "\t\tsize = sizeof(" << Enum.name.c_str() << ");\n";
+			//<< "\t\tflags = EnumFlag_NONE";
+
+		std::string flags = "EnumFlag_NONE";
 
 		for (auto& mf : Enum.macro.Arguments)
 		{
-			if (mf.Key == "IsFlag")
-				stream << " | EnumFlag_IS_FLAG";
+			if (mf.Key == "IsFlag" || mf.Key == "Flags")
+				flags =  "EnumFlag_IS_FLAG";
 		}
+
+		stream << "\t\tflags = " << flags.c_str() << ";\n";
 
 		stream << ";\n";
 		stream << "\t\t" << moduleGetter.c_str() << ".RegisterFEnum(this);\n\t}\n};\n";

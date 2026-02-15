@@ -266,6 +266,6 @@ public:
 	float v[16] = { 0.f };
 };
 
-FVector operator*(const FVector& a, const FMatrix& b);
+ENGINE_API FVector operator*(const FVector& a, const FMatrix& b);
 inline FMatrix operator*(const FMatrix& a, const FMatrix& b) { return FMatrix(a) *= b; }
 inline FMatrix operator*(const FMatrix& a, const FQuaternion& b) { return FMatrix(a) *= b; }

@@ -17,6 +17,7 @@ Global
 	struct PS_Input
 	{
 		#include "common/pixel_input.hlsl"
+		float2 vLightmapUv : TEXCOORD6;
 	};
 	
 	//Property<float> vRoughness(Name = "Roughness", UiGroup = "Specular");
@@ -41,7 +42,7 @@ VS
 
     PS_Input Main(VS_Input input)
     {
-		PS_Input output = ProcessVertex(input);
+		PS_Input output = { ProcessVertexB(input), input.texCoords2 };
 
 		FinalizeVertex(input, output);
 		return output;
@@ -59,7 +60,7 @@ VS_SKINNED
 
     PS_Input Main(VS_Input input)
     {
-		PS_Input output = ProcessVertex(input);
+		PS_Input output = { ProcessVertexB(input), input.texCoords2 };
 
 		FinalizeVertex(input, output);
 		return output;
@@ -188,6 +189,9 @@ PS_DEFERRED
 		#include "common/deferred_output.hlsl"
 	};
 
+	Texture2D vLightmap : TEXTURE : register(t4);
+	SamplerState vLightmapSampler : SAMPLER : register(s4);
+
 	PS_Output Main(PS_Input input)
 	{
 		float distanceFromCam = length(vCameraPos - input.vPositionWs);
@@ -199,6 +203,13 @@ PS_DEFERRED
 		float rough = SampleTexture2D(vRoughness, input.vTextureCoords).r;
 		float metallic = SampleTexture2D(vMetallic, input.vTextureCoords).r;
 		float ao = SampleTexture2D(vAmbientOcclusion, input.vTextureCoords).r;
+
+		if (length(vLightmapScale) > 0)
+		{
+			float2 lightmapUV = input.vLightmapUv * vLightmapScale + vLightmapOffset;
+			emission.xyz *= SampleTexture2D(vLightmap, lightmapUV).xyz;
+			//emission.xy = input.vLightmapUv;
+		}
 
 		if (diffuse.a < 0.5)
 			discard;

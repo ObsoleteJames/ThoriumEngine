@@ -6,6 +6,7 @@
 #include "SunLightComponent.generated.h"
 
 class CLightProxy;
+enum ELightBakeMode;
 
 CLASS(Name = "Sun Light")
 class ENGINE_API CSunLightComponent : public CSceneComponent
@@ -28,6 +29,9 @@ public:
 
 	PROPERTY(Editable, Name = "Shadow Bias", UIStepSize = 0.000001, UIFormat = "%.5f")
 	float shadowBias = 0.0002f;
+
+	PROPERTY(Editable)
+	ELightBakeMode bakingMode;
 
 private:
 	CLightProxy* lightProxy;

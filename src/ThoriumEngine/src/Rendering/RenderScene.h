@@ -77,6 +77,9 @@ public:
 	inline const TArray<CCubeMapProxy*>& GetCubeMaps() const { return cubemaps; }
 	inline void SetCubeMaps(const TArray<CCubeMapProxy*>& arr) { cubemaps = arr; }
 
+	inline void SetLightmaps(const TArray<ITexture2D*>& arr) { lightmaps = arr; }
+	inline const TArray<ITexture2D*>& GetLightmaps() const { return lightmaps; }
+
 	inline void SetScreenPercentage(float f) { screenPercentage = f; }
 	inline float ScreenPercentage() const { return screenPercentage; }
 
@@ -98,7 +101,7 @@ private:
 	TArray<CPostProcessVolumeProxy*> ppVolumes;
 	TArray<CCubeMapProxy*> cubemaps;
 
-	//TArray<CTexture*> lightmaps;
+	TArray<ITexture2D*> lightmaps;
 
 	CCameraProxy* primaryCamera = nullptr;
 

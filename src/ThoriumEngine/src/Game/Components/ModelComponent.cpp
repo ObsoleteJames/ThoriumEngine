@@ -30,6 +30,8 @@ public:
 		CRenderScene* scene = Cast<CModelComponent>(owner)->GetWorld()->GetRenderScene();
 		CCameraProxy* camera = scene ? scene->GetPrimaryCamera() : nullptr;
 
+		lightmapInfo = model->lightmapInfo;
+
 		float distanceFromCamera = FVector::Distance(camera ? camera->position : FVector(), model->GetWorldPosition());
 		//float distanceFromCamera = 0;
 		int lodLevel = model->GetModel()->GetLodFromDistance(distanceFromCamera);
@@ -75,13 +77,27 @@ public:
 
 	void GetStaticMeshes(FMeshBuilder& out) override
 	{
-		for (auto& m : meshes)
+		for (int i = 0; i < meshes.Size(); i++)
 		{
+			auto& m = meshes[i];
 			if (m.bSkinnedMesh)
 				continue;
 
+			FLightmapInfo* lightmap = nullptr;
+			for (auto& l : lightmapInfo)
+			{
+				if (l.meshIndex == i)
+				{
+					lightmap = &l;
+					break;
+				}
+			}
+
 			TObjectPtr<CMaterial> mat = (m.materialIndex < materials.Size() && materials[m.materialIndex]) ? materials[m.materialIndex] : CAssetManager::GetAsset<CMaterial>("materials/error.thasset");
-			out.DrawMesh(m, mat, matrix);
+			if (lightmap)
+				out.DrawMesh(m, mat, matrix, lightmap->lightmapIndex, lightmap->lightmapOffset, lightmap->lightmapScale);
+			else
+				out.DrawMesh(m, mat, matrix);
 		}
 	}
 
@@ -90,6 +106,7 @@ public:
 
 	TArray<TObjectPtr<CMaterial>> materials;
 	TArray<FMesh> meshes;
+	TArray<FLightmapInfo> lightmapInfo;
 	//FMatrix transform;
 	//TArray<FMatrix> skeletonMatrices;
 

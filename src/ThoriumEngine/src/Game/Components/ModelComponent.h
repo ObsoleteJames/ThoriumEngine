@@ -18,6 +18,14 @@ enum EModelCompAnimator
 	MODEL_ANIMATE_ANIMGRAPH META(Name = "Animation Graph")
 };
 
+struct FLightmapInfo
+{
+	SizeType meshIndex;
+	int lightmapIndex;
+	FVector2 lightmapOffset;
+	FVector2 lightmapScale;
+};
+
 CLASS()
 class ENGINE_API CModelComponent : public CPrimitiveComponent
 {
@@ -107,6 +115,9 @@ private:
 	FSkeletonInstance skeleton;
 
 	TArray<FMatrix> boneMatrices; // cache for skeletal animation
+
+	// Info for lightmap data. data is provided by the owning world.
+	TArray<FLightmapInfo> lightmapInfo;
 
 	TArray<TObjectPtr<IPhysicsBody>> physBodies;
 

@@ -371,12 +371,17 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 
 		for (auto& rc : curMeshes)
 		{
-			FObjectInfoBuffer objectInfo;
+			FObjectInfoBuffer objectInfo{};
 			objectInfo.transform = rc.Value->transform;
 			objectInfo.position = rc.Key->GetPosition();
+			objectInfo.lightmapOffset = rc.Value->lightmapPos;
+			objectInfo.lightmapScale = rc.Value->lightmapScale;
 			if (rc.Value->skeletonMatrices)
 				memcpy(objectInfo.skeletonMatrices, rc.Value->skeletonMatrices, FMath::Min((int)rc.Value->skeletonMatricesSize, 48) * sizeof(FMatrix));
 			objectBuffer->Update(sizeof(FObjectInfoBuffer), &objectInfo);
+
+			if (rc.Value->lightmapId != -1)
+				gGHI->SetShaderResource(curScene->GetLightmaps()[rc.Value->lightmapId], 4);
 
 			IShader* _shader = rc.Value->mat->GetShader((rc.Value->mesh.bSkinnedMesh ? ShaderType_VertexSkinned : ShaderType_Vertex) | ShaderType_DeferredPass);
 			if (_shader != curVsShader)
@@ -961,7 +966,7 @@ void CDefaultRenderer::RenderShadowMaps(CRenderScene* scene)
 		if (!light->CastShadows())
 			continue;
 
-		if (light->bakingMode > CLightProxy::BAKE_INDIRECT)
+		if (light->bakingMode > LIGHT_BAKE_INDIRECT)
 			continue;
 
 		if (light->type == CLightProxy::DIRECTIONAL_LIGHT && !sunLight)

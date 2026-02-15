@@ -123,6 +123,8 @@ struct FObjectInfoBuffer
 	FMatrix transform;
 	FVector position;
 	int padding_position;
+	FVector2 lightmapOffset;
+	FVector2 lightmapScale;
 };
 
 struct FDirectionalLightData
@@ -234,7 +236,7 @@ struct FRenderStatistics
 // 1 : Point Light Shadows
 // 2 : Sun Shadow
 // 3 : Prev-Pass Frame Buffer
-// 4 : Unused
+// 4 : Lightmap
 // 5 : Base Color
 // 6 : Normal Map
 // 7-20 : Material Textures

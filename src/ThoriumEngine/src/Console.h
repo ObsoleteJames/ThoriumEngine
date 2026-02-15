@@ -113,6 +113,7 @@ public:
 	static void Update();
 	static void Shutdown();
 
+	static void SaveConfig();
 	static void LoadConfig();
 
 	static void EnableStdio();
@@ -145,6 +146,9 @@ private:
 	static void _log(const FConsoleMsg& msg);
 
 	static void _logCout(const FConsoleMsg& msg);
+
+public:
+	static bool bLoggingEnabled; // if disabled logs will not be stored nor printed to the terminal.
 
 private:
 	static TEvent<const FConsoleMsg&> onMsgLogged;

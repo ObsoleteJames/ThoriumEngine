@@ -129,6 +129,7 @@ PS
 			discard;
 
 		//float3 sss = ScreenSpaceShadow(worldPos, dirLight);
+		//return float4(sss.r, 0.0f, 1.0f - sss.r, 1.0f);
 		//if (sss.r > 0.f)
 		//	shadow = sss;
 

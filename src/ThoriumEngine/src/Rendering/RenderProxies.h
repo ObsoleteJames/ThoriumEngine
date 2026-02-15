@@ -78,7 +78,7 @@ public:
 		SizeType skeletonMatricesSize;
 		ERenderPass rp;
 
-		int lightmapId;
+		int lightmapId = -1;
 		FVector2 lightmapPos;
 		FVector2 lightmapScale;
 	};
@@ -90,6 +90,7 @@ public:
 	void DrawCircle(const FVector& pos, float radius = 1.f, const FVector& rot = FVector(), const FVector & color = { 255, 255, 255 }, int vertices = 16, bool bDepthTest = true);
 	void DrawSkinnedMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform, const TArray<FMatrix>& skeletonMatrix);
 	void DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform);
+	void DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform, int lightmapId, const FVector2& lightmapPos, const FVector2& lightmapScale);
 
 	inline const TArray<FRenderMesh>& GetMeshes() const { return *meshes; }
 
@@ -157,6 +158,15 @@ protected:
 	EMoveType moveType;
 };
 
+ENUM()
+enum ELightBakeMode
+{
+	LIGHT_BAKE_NONE		META(Name = "No Baking"),
+	LIGHT_BAKE_INDIRECT	META(Name = "Indirect Only"),
+	LIGHT_BAKE_DIRECT	META(Name = "Direct Only"),
+	LIGHT_BAKE_ALL		META(Name = "Direct & Indirect")
+};
+
 class ENGINE_API CLightProxy
 {
 	friend class IRenderer;
@@ -167,14 +177,6 @@ public:
 		POINT_LIGHT = 1,
 		SPOT_LIGHT,
 		DIRECTIONAL_LIGHT
-	};
-
-	enum EBakeMode
-	{
-		BAKE_NONE,
-		BAKE_INDIRECT,
-		BAKE_DIRECT,
-		BAKE_ALL
 	};
 
 public:
@@ -188,7 +190,7 @@ public:
 
 public:
 	EType type;
-	EBakeMode bakingMode = BAKE_NONE;
+	ELightBakeMode bakingMode = LIGHT_BAKE_NONE;
 
 	FVector position;
 	FVector direction;

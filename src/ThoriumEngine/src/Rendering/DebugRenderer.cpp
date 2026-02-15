@@ -539,17 +539,21 @@ void CDebugRenderer::Render()
 	cmd.drawType = MESH_DRAW_PRIMITIVE_LINES;
 	cmd.transform = FMatrix(1.f);
 
-	scene->PushCommand(FRenderCommand(cmd, R_DEBUG_PASS));
+	if (cmd.mesh->numVertices > 0)
+		scene->PushCommand(FRenderCommand(cmd, R_DEBUG_PASS));
 
 	cmd.mesh = &lineOverlayMesh;
-	scene->PushCommand(FRenderCommand(cmd, R_DEBUG_OVERLAY_PASS));
+	if (cmd.mesh->numVertices > 0)
+		scene->PushCommand(FRenderCommand(cmd, R_DEBUG_OVERLAY_PASS));
 
 	cmd.mesh = &solidMesh;
 	cmd.drawType = MESH_DRAW_NONE;
-	scene->PushCommand(FRenderCommand(cmd, R_DEBUG_PASS));
+	if (cmd.mesh->numVertices > 0)
+		scene->PushCommand(FRenderCommand(cmd, R_DEBUG_PASS));
 
 	cmd.mesh = &solidOverlayMesh;
-	scene->PushCommand(FRenderCommand(cmd, R_DEBUG_OVERLAY_PASS));
+	if (cmd.mesh->numVertices > 0)
+		scene->PushCommand(FRenderCommand(cmd, R_DEBUG_OVERLAY_PASS));
 }
 
 CRenderScene* CDebugRenderer::GetScene()

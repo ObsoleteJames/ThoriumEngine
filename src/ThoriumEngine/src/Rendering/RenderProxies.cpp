@@ -132,6 +132,15 @@ void FMeshBuilder::DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& tr
 	meshes->Add({ mesh, mat, transform, nullptr, 0, rp });
 }
 
+void FMeshBuilder::DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform, int lightmapId, const FVector2& lightmapPos, const FVector2& lightmapScale)
+{
+	if (!mat)
+		return;
+
+	ERenderPass rp = mat->GetRenderPass();
+	meshes->Add({ mesh, mat, transform, nullptr, 0, rp, lightmapId, lightmapPos, lightmapScale });
+}
+
 bool CPrimitiveProxy::DoFrustumCull(const FMatrix& projection)
 {
 	FVector min = bounds.Min();

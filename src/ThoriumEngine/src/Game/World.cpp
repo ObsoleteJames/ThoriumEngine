@@ -15,6 +15,8 @@
 #include "Physics/PhysicsWorld.h"
 #include "Console.h"
 #include "Object/ObjectHandle.h"
+#include "Rendering/GraphicsInterface.h"
+#include "Assets/TextureAsset.h"
 #include <Util/Assert.h>
 #include <Util/FStream.h>
 
@@ -324,17 +326,9 @@ void CWorld::LoadScene(CScene* ptr)
 			stream->Seek(dataSize, SEEK_CUR);
 	}
 
-	//for (auto& d : ents)
-	//{
-	//	d.Key->Load(d.Value);
 
-	//	// incase the entity is static we remove it from the dynamic entity list, as it is added by CreateEntity()
-	//	if (d.Key->GetType() == ENTITY_STATIC)
-	//		RemoveDynamicEntity(d.Key);
-
-	//	if (!gIsEditor && d.Key->bEditorOnly)
-	//		d.Key->Delete();
-	//}
+	if (!bIsTerminal)
+		LoadLightData();
 
 	for (auto ent : entities)
 		ent.second->PostInit();
@@ -423,6 +417,92 @@ void CWorld::SetGameMode(const TObjectPtr<CGameMode>& gm)
 	gamemode = gm;
 	gamemode->world = this;
 	gamemode->Init();
+}
+
+void CWorld::LoadLightData()
+{
+	if (!renderScene || !scene)
+		return;
+
+	const FString& sceneName = scene->File()->Name();
+
+	FFile* file = CFileSystem::FindFile(scene->File()->Dir()->GetPath() + "/" + sceneName + "_lightdata.bin");
+	if (!file)
+		return;
+
+	TUniquePtr<IBaseFStream> stream = file->GetStream("rb");
+	if (!stream || !stream->IsOpen())
+	{
+		CONSOLE_LogError("CWorld", FString("Failed to create file stream for '") + file->Path() + "'");
+		return;
+	}
+
+	uint32 sig;
+	*stream >> &sig;
+
+	uint16 version;
+	*stream >> &version;
+
+	uint16 unused;
+	*stream >> &unused;
+
+	uint32 atlasCount;
+	*stream >> &atlasCount;
+
+	uint32 meshCount;
+	*stream >> &meshCount;
+
+	for (uint32 i = 0; i < meshCount; i++)
+	{
+		SizeType entId, compId;
+		*stream >> &entId >> &compId;
+		uint32 meshId;
+		*stream >> &meshId;
+
+		int32 lightmapId;
+		*stream >> &lightmapId;
+
+		FVector2 lightmapOffset, lightmapScale;
+		*stream >> &lightmapOffset >> &lightmapScale;
+
+		CEntity* ent = GetEntity(entId);
+		if (!ent)
+			continue;
+
+		CModelComponent* model = ent->GetComponent<CModelComponent>(compId);
+		if (!model)
+			continue;
+
+		model->lightmapInfo.Add({ meshId, lightmapId, lightmapOffset, lightmapScale });
+	}
+
+	for (uint32 i = 0; i < atlasCount; i++)
+	{
+		uint32 width, height;
+		*stream >> &width >> &height;
+		uint32 texelCount;
+		*stream >> &texelCount;
+
+		uint16* data = new uint16[texelCount]; // half float format
+		stream->Read(data, texelCount * sizeof(uint16));
+
+		// Convert to RGBA format
+		uint16* rgbaData = (uint16*)malloc(width * height * 4 * sizeof(uint16));
+		for (uint32 j = 0, k = 0; j < texelCount; j += 3, k += 4)
+		{
+			rgbaData[k] = data[j];			// R
+			rgbaData[k + 1] = data[j + 1];	// G
+			rgbaData[k + 2] = data[j + 2];	// B
+			rgbaData[k + 3] = 0x3c00;		// A (1.0 in half float)
+		}
+
+		CTexture* lightmap = new CTexture();
+		lightmap->Init(rgbaData, width, height, THTX_FORMAT_RGBA16_FLOAT);
+		lightmaps.Add(lightmap);
+
+		delete[] data;
+		delete[] rgbaData;
+	}
 }
 
 void CWorld::Start()
@@ -551,6 +631,11 @@ void CWorld::Render()
 
 	renderScene->SetCameras(cameras);
 	renderScene->SetPrimaryCamera(primaryCamera);
+
+	TArray<ITexture2D*> lightmaps;
+	for (auto& lm : this->lightmaps)
+		lightmaps.Add((ITexture2D*)lm->GetTextureObject());
+	renderScene->SetLightmaps(lightmaps);
 
 	if (subWorlds.Size() > 0)
 		RenderSubWorlds();

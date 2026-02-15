@@ -2,6 +2,7 @@
 #include "Asset.h"
 #include "Math/Math.h"
 #include "Console.h"
+#include "Rendering/Renderer.h"
 
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -69,12 +70,13 @@ void CAsset::Save()
 
 	// remove the backup after we're done writing.
 	std::filesystem::remove((file->FullPath() + ".bak").c_str());
-
-	// TODO: calculate checksum.
 }
 
 void CAsset::Load(uint8 lodLevel)
 {
+	if (!gGHI) // don't load assets if we don't have a graphics interface.
+		return;
+
 	if (IsLoaded(lodLevel))
 		return;
 

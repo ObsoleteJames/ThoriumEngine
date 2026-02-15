@@ -17,9 +17,9 @@ DirectXTexture2D::DirectXTexture2D(void* data, int w, int h, ETextureFormat f, E
 	texd.Format = DirectXInterface::GetDXTextureFormat(format).Key;
 	texd.SampleDesc.Count = 1;
 	texd.SampleDesc.Quality = 0;
-	texd.Usage = data ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_DEFAULT;
+	texd.Usage = !data ? D3D11_USAGE_DYNAMIC : D3D11_USAGE_DEFAULT;
 	texd.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	texd.CPUAccessFlags = data ? D3D11_CPU_ACCESS_WRITE : 0;
+	texd.CPUAccessFlags = !data ? D3D11_CPU_ACCESS_WRITE : 0;
 	//texd.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
 	int pitch = width * DirectXInterface::GetDXTextureFormat(format).Value;

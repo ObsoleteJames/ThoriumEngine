@@ -51,6 +51,8 @@ bool gIsEditor = 0;
 bool gIsMainGaurded = 0;
 
 static CConCmd cmdLoadScene("scene.load", [](const TArray<FString>& args) { gEngine->LoadWorld(args[0]); });
+static CConCmd cmdLoadProj("project.load", [](const TArray<FString>& args) { gEngine->LoadProject(args[0]); });
+
 static CConCmd cmdQuit("quit", []() { gEngine->Exit(); });
 
 void CEngine::InitMinimal()
@@ -93,6 +95,10 @@ void CEngine::Init()
 {
 	InitMinimal();
 	THORIUM_ASSERT(LoadProject(), "Failed to load project!");
+
+	// Create default implementations for physics and audio.
+	CreatePhysicsApi(CModuleManager::FindClass("CJoltPhysicsApi"));
+	CreateAudioInterface(CModuleManager::FindClass("CSdlAudioInterface"));
 
 	CWindow::Init();
 
@@ -139,13 +145,22 @@ void CEngine::InitTerminal()
 	freopen_s(&temp, "CONIN$", "r", stdin);
 	freopen_s(&temp, "CONOUT$", "w", stderr);
 	freopen_s(&temp, "CONOUT$", "w", stdout);
+
+	HANDLE consoleHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (consoleHandle != INVALID_HANDLE_VALUE)
+	{
+		DWORD mode = 0;
+		if (GetConsoleMode(consoleHandle, &mode))
+			SetConsoleMode(consoleHandle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+	}
 #endif
 
 	bIsTerminal = true;
 	CConsole::EnableStdio();
 
 	InitMinimal();
-	THORIUM_ASSERT(LoadProject(), "Failed to load project!");
+	if (!LoadProject())
+		CONSOLE_LogError("CEngine", "Failed to load project in current directory!");
 
 	LoadWorld(activeGame.startupScene);
 }
@@ -198,9 +213,6 @@ void CEngine::LoadGame()
 
 void CEngine::LoadWorld(const FString& scene, bool bImmediate)
 {
-	if (!nextSceneName.IsEmpty())
-		return;
-
 	if (scene.IsEmpty())
 		return;
 
@@ -576,23 +588,31 @@ void CEngine::OnExit()
 	gWorld = nullptr;
 	delete gameWindow;
 
-	gPhysicsApi->Shutdown();
-	gPhysicsApi->Delete();
-	gPhysicsApi = nullptr;
+	if (gPhysicsApi)
+	{
+		gPhysicsApi->Shutdown();
+		gPhysicsApi->Delete();
+		gPhysicsApi = nullptr;
+	}
 
-	gameInstance->Delete();
-	gameInstance = nullptr;
+	if (gameInstance)
+	{
+		gameInstance->Delete();
+		gameInstance = nullptr;
+	}
 
 	// Clear Shader list
 	(*(TArray<TObjectPtr<CShaderSource>>*)&CShaderSource::GetAllShaders()).Clear();
 
-	gRenderer->Delete();
-	gRenderer = nullptr;
-	delete gGHI;
-	gGHI = nullptr;
-
 	if (!bIsTerminal)
+	{
+		gRenderer->Delete();
+		gRenderer = nullptr;
+		delete gGHI;
+		gGHI = nullptr;
+
 		CWindow::Shutdown();
+	}
 
 	CFileSystem::UnmountMod(engineMod);
 
@@ -818,9 +838,6 @@ void CEngine::LoadMandatoryAddons()
 {
 	LoadCoreAddon("jolt_physics");
 	LoadCoreAddon("sdl3");
-
-	CreatePhysicsApi(CModuleManager::FindClass("CJoltPhysicsApi"));
-	CreateAudioInterface(CModuleManager::FindClass("CSdlAudioInterface"));
 }
 
 void CEngine::UnloadWorld()
@@ -854,6 +871,9 @@ void CEngine::SaveUserConfig()
 
 void CEngine::SaveConsoleLog()
 {
+	if (!CConsole::bLoggingEnabled)
+		return;
+
 	CFStream stream("log.txt", "wb");
 	if (!stream.IsOpen())
 		return;

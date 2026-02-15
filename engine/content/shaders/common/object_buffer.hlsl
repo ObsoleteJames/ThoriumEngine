@@ -7,6 +7,8 @@ cbuffer ObjectInfo : register(b3)
     float4x4 vSkeletonMatrix[48];
     float4x4 vObjectMatrix;
     float3 vObjectPos;
+    float2 vLightmapOffset;
+    float2 vLightmapScale;
 }
 
 Texture2D vBaseColor : TEXTURE : register(t5);

@@ -114,6 +114,7 @@ bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitive
 		TArray<FMeshBuilder::FRenderMesh> meshes;
 		FMeshBuilder mb(&meshes);
 		p->GetSkinnedMeshes(mb);
+		//p->GetStaticMeshes(mb);
 
 		// bounds raycast output
 		FVector bPos;
@@ -202,10 +203,6 @@ bool CRenderScene::RayCastBounds(const FRay& ray, FPrimitiveHitInfo* outHit, flo
 
 	for (auto* p : primitives)
 	{
-		TArray<FMeshBuilder::FRenderMesh> meshes;
-		FMeshBuilder mb(&meshes);
-		p->GetSkinnedMeshes(mb);
-
 		FBounds b = p->Bounds();
 		if (b.Size().Magnitude() == 0.f)
 			continue;

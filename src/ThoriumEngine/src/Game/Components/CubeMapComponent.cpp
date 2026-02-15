@@ -35,14 +35,16 @@ void CCubeMapComponent::Init()
 	if (GetWorld())
 	{
 		proxy = new Proxy(this);
-		GetWorld()->GetRenderScene()->RegisterCubeMap(proxy);
+		if (GetWorld()->GetRenderScene())
+			GetWorld()->GetRenderScene()->RegisterCubeMap(proxy);
 	}
 }
 
 void CCubeMapComponent::OnDelete()
 {
 	BaseClass::OnDelete();
-	GetWorld()->GetRenderScene()->UnregisterCubeMap(proxy);
+	if (GetWorld()->GetRenderScene())
+		GetWorld()->GetRenderScene()->UnregisterCubeMap(proxy);
 	delete proxy;
 }
 

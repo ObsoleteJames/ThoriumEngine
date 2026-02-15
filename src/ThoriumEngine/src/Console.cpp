@@ -25,6 +25,7 @@ static SizeType beginIndex;
 static SizeType endIndex;
 static SizeType numLogs;
 
+bool CConsole::bLoggingEnabled = true;
 static bool bPrintToIO = false;
 
 std::mutex consoleInputMutex;
@@ -98,9 +99,14 @@ void CConsole::Shutdown()
 #endif
 
 	bPrintToIO = false;
-	//consoleInputThread.join();
 
 	// Save Config.
+	if (bLoggingEnabled)
+		SaveConfig();
+}
+
+void CConsole::SaveConfig()
+{
 	for (auto& var : consoleVars)
 	{
 		if (var->ConfigPath().IsEmpty())
@@ -236,6 +242,9 @@ CConCmd* CConsole::GetConCmd(const FString& name)
 
 void CConsole::_log(const FConsoleMsg& _msg)
 {
+	if (!bLoggingEnabled)
+		return;
+
 	if (logArray.Size() > 0)
 	{
 		FConsoleMsg& prev = *logArray.last();
@@ -298,19 +307,21 @@ static FString TimeToHmsString(time_t* time)
 
 void CConsole::_logCout(const FConsoleMsg &msg)
 {
-	const char* txtCol;
+	const char* prefixCol = "\033[0;32m";
+	const char* txtCol = "\033[0;37m";
 	if (msg.type == CONSOLE_PLAIN)
-		txtCol = "\033[0;40m\033[0;90m";
+		txtCol = "\033[0;90m";
 	else if (msg.type == CONSOLE_INFO)
-		txtCol = "\033[0;40m\033[0;37m";
+		txtCol = "\033[0;37m";
 	else if (msg.type == CONSOLE_WARNING)
-		txtCol = "\033[1;40m\033[0;33m";
+		txtCol = "\033[0;33m";
 	else if (msg.type == CONSOLE_ERROR)
-		txtCol = "\033[1;41m\033[0;37m";
+		txtCol = "\033[0;31m";
 
 	FString timeTxt = TimeToHmsString((time_t*)&msg.time);
 
-	std::cout << "\033[0;40m\033[0;32m[" << timeTxt.c_str() << "] " << msg.module.c_str() << " " << txtCol << msg.msg.c_str() << "\n";
+	std::cout << prefixCol << "[" << timeTxt.c_str() << "] " << msg.module.c_str()
+		<< " " << txtCol << msg.msg.c_str() << "\033[0m\n";
 }
 
 CConCmd::CConCmd(const FString& n, CmdFuncPtr f) : name(n)

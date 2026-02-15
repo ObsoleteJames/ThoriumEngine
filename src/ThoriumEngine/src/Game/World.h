@@ -20,6 +20,7 @@ class CRenderScene;
 class CGameMode;
 class CEntity;
 class IPhysicsWorld;
+class CTexture;
 
 extern ENGINE_API CWorld* gWorld;
 
@@ -159,6 +160,9 @@ public:
 	inline const TMap<SizeType, TObjectPtr<CEntity>>& GetEntities() const { return entities; }
 	inline const TArray<TObjectPtr<CEntity>>& GetDynamicEntities() const { return dynamicEntities; }
 
+	// Loads light data provided by LightBaker.exe, reloads the data if already loaded.
+	void LoadLightData();
+
 	void Start();
 	void Stop();
 	void Update(double dt);
@@ -230,6 +234,8 @@ protected:
 
 	TObjectPtr<CScene> scene;
 	CRenderScene* renderScene = nullptr;
+
+	TArray<TObjectPtr<CTexture>> lightmaps;
 
 	TObjectPtr<IPhysicsWorld> physicsWorld;
 
