@@ -7,7 +7,10 @@
 
 void CScene::OnSave(IBaseFStream* stream)
 {
-	uint sig = CSCENE_SIGNITURE;
+	world->OnSave(stream);
+
+	// Moved to CWorld::OnSave()
+	/*uint sig = CSCENE_SIGNITURE;
 
 	*stream << &sig;
 
@@ -70,7 +73,7 @@ void CScene::OnSave(IBaseFStream* stream)
 	}
 
 	stream->Seek(numEntsOffset, SEEK_SET);
-	*stream << &numEnts;
+	*stream << &numEnts;*/
 }
 
 uint8 CScene::GetFileVersion() const

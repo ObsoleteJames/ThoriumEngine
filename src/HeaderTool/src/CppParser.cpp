@@ -207,6 +207,7 @@ int CParser::ParseHeader(FHeaderData& data)
 	CurLine = 0;
 	readStage = 0;
 	bPublic = false;
+	int indent = 0;
 
 	std::string _line;
 	FComment lastComment;
@@ -271,6 +272,14 @@ int CParser::ParseHeader(FHeaderData& data)
 					lastComment.text = comment;
 				}
 			}
+		}
+
+		for (char ch : _line)
+		{
+			if (ch == '{')
+				indent++;
+			else if (ch == '}')
+				indent--;
 		}
 
 		// Handle inlcudes
@@ -427,7 +436,7 @@ int CParser::ParseHeader(FHeaderData& data)
 			{
 				CppClass& _class = *data.classes.last();
 
-				if (line.Find("};") != FString::npos)
+				if (line.Find("};") != FString::npos && indent <= 0)
 				{
 					rm = RM_HEADER_BASE;
 					continue;

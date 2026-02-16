@@ -6,9 +6,10 @@
 
 class CWorld;
 
-#define CSCENE_VERSION 0x0003
+#define CSCENE_VERSION 0x0004
 #define CSCENE_SIGNITURE 0xD3AFB1C8
 
+#define CSCENE_VERSION_03 0x0003
 #define CSCENE_VERSION_02 0x0002
 
 ASSET(Extension = ".thscene")
@@ -21,8 +22,6 @@ class ENGINE_API CScene : public CAsset
 public:
 	CScene() = default;
 
-	//void Save(CWorld* world);
-	
 protected:
 	void OnSave(IBaseFStream* stream);
 	void OnLoad(IBaseFStream* stream, uint8 lodLevel) {}
@@ -30,11 +29,12 @@ protected:
 	virtual uint8 GetFileVersion() const;
 
 public:
-	PROPERTY(Editable, Category = "Gamemode")
+	// Moved to FSceneSettings
+	/*PROPERTY(Editable, Category = "Gamemode")
 	TClassPtr<CGameMode> gamemodeClass = CGameMode::StaticClass();
 
 	PROPERTY(Editable, Category = "Physics")
-	float gravity = 9.81f;
+	float gravity = 9.81f;*/
 
 private:
 	CWorld* world;

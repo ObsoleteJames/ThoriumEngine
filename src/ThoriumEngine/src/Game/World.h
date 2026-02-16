@@ -5,6 +5,7 @@
 #include "EngineCore.h"
 #include "Object/Delegate.h"
 #include "Math/Vectors.h"
+#include "Rendering/Lightmap.h"
 #include <mutex>
 
 #include "World.generated.h"
@@ -21,6 +22,7 @@ class CGameMode;
 class CEntity;
 class IPhysicsWorld;
 class CTexture;
+class IBaseFStream;
 
 extern ENGINE_API CWorld* gWorld;
 
@@ -75,6 +77,22 @@ private:
 	TArray<FEntityOutputEvent> delayedEvents;
 };
 
+STRUCT()
+struct ENGINE_API FSceneSettings
+{
+	GENERATED_BODY()
+
+public:
+	PROPERTY(Editable, Category = "GameMode")
+	TClassPtr<CGameMode> gamemodeClass;
+
+	PROPERTY(Editable, Category = "Physics")
+	float gravity = 9.81f;
+
+	PROPERTY(Editable, Inline)
+	FLightmapSettings lightmap;
+};
+
 /*
  *	World Class
  */
@@ -90,6 +108,9 @@ class ENGINE_API CWorld : public CObject
 	friend class FWorldRegisterer;
 
 public:
+	PROPERTY(Editable, Inline)
+	FSceneSettings sceneSettings; // The header tool is currently broken so this must be put here.
+
 	struct InitializeInfo
 	{
 		InitializeInfo() : bCreatePhyiscsWorld(1), bCreateAISystems(1), bCreateRenderScene(1), bRegisterForRendering(1) {}
@@ -190,6 +211,7 @@ public:
 
 protected:
 	void OnDelete() override;
+	void OnSave(IBaseFStream* stream);
 
 	void RemoveEntity(CEntity* ent);
 

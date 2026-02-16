@@ -3,6 +3,7 @@
 #include "Util/Core.h"
 #include "Util/Guid.h"
 #include "Math/Vectors.h"
+#include "Rendering/Lightmap.h"
 
 class CWorld;
 
@@ -13,15 +14,16 @@ struct FLightmapAtlas
 	TArray<FVector> data;
 };
 
-struct FBakeSettings
-{
-	uint lightmapSize = 2048;
-	uint maxLightmapCount = 4;
-	uint directSamples = 64;
-	uint indirectSamples = 256;
-	uint maxBounces = 4;
-	float lightmapDensity = 16.f; // texels per unit
-};
+//struct FBakeSettings
+//{
+//	uint lightmapSize = 4096;
+//	uint maxLightmapCount = 4;
+//	uint directSamples = 64;
+//	uint indirectSamples = 256;
+//	uint maxBounces = 4;
+//	float lightmapDensity = 32.f; // texels per unit
+//	FVector skyColor = FVector(0.f, 0.56f, 1.f);
+//};
 
 struct FLightmapMeshRef
 {
@@ -45,7 +47,7 @@ class CLightBaker
 public:
 	CLightBaker(CWorld* world);
 
-	void BakeAll(const FBakeSettings& settings = FBakeSettings());
+	void BakeAll(const FLightmapSettings& settings = FLightmapSettings());
 
 	void BakeLightmaps();
 	void BakeLightProbes();
@@ -61,5 +63,5 @@ private:
 	CWorld* world;
 
 	FBakeResult result;
-	FBakeSettings settings;
+	FLightmapSettings settings;
 };

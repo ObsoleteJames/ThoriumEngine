@@ -16,6 +16,12 @@
 #include <limits>
 #include <iomanip>
 #include <iostream>
+#include <random>
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <vector>
+#include <algorithm>
 
 #define STBRP_STATIC
 #define STB_RECT_PACK_IMPLEMENTATION
@@ -25,6 +31,7 @@ static uint32 LIGHTDATA_MAGIC = 0x544C4442; // "TLDB"
 static uint16 LIGHTDATA_VERSION = 2;
 static float SHADOW_BIAS = 0.5f;
 static uint32 ATLAS_PADDING = 2;
+static uint32 LIGHTMAP_BLEED_PIXELS = 2;
 
 struct FLightDataHeader
 {
@@ -66,13 +73,15 @@ struct FBakeMeshTask
 	FVector2 lightmapScale = FVector2(1.0f);
 };
 
-static bool RayCastScene(CWorld* world, const FVector& raypos, const FVector& dir, FPrimitiveHitInfo* outHit, float maxDistance = 0.0)
+static bool RayCastScene(CWorld* world, const FVector& raypos, const FVector& dir, FPrimitiveHitInfo* outHit, float maxDistance = 0.0f, const CPrimitiveProxy* ignoreProxy = nullptr)
 {
 	float closesthit = maxDistance > 0.f ? maxDistance : FLT_MAX;
 	bool r = false;
 
 	for (auto* p : world->GetPrimitives())
 	{
+		if (ignoreProxy && p == ignoreProxy)
+			continue;
 		CModelComponent* modelComp = Cast<CModelComponent>(p->GetOwner());
 		if (modelComp && (modelComp->renderLayer & R_LAYER_LIGHTMAP) != 0)
 		{
@@ -151,7 +160,9 @@ static float TriangleArea2D(const FVector2& a, const FVector2& b, const FVector2
 
 static float Rand01()
 {
-	return (float)FMath::Random() / (float)std::numeric_limits<uint>::max();
+	thread_local std::mt19937 rng(std::random_device{}());
+	thread_local std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+	return dist(rng);
 }
 
 static void PrintProgress(const char* label, SizeType current, SizeType total)
@@ -264,7 +275,90 @@ static bool Barycentric2D(const FVector2& p, const FVector2& a, const FVector2& 
 	return (w0 >= 0.0f && w1 >= 0.0f && w2 >= 0.0f);
 }
 
-static FVector ComputeDirectLighting(const FVector& position, const FVector& normal, const TArray<FBakeLight>& lights, CWorld* scene)
+static void BleedAtlas(FLightmapAtlas& atlas, TArray<uint8>& coverage, uint32 bleedPixels)
+{
+	if (bleedPixels == 0 || atlas.data.Size() == 0)
+		return;
+
+	const uint32 width = atlas.width;
+	const uint32 height = atlas.height;
+
+	TArray<FVector> srcData = atlas.data;
+	TArray<uint8> srcCoverage = coverage;
+	TArray<FVector> dstData;
+	TArray<uint8> dstCoverage;
+	dstData.Resize(srcData.Size());
+	dstCoverage.Resize(srcCoverage.Size());
+
+	for (uint32 step = 0; step < bleedPixels; ++step)
+	{
+		bool anyFilled = false;
+		std::memcpy(dstData.Data(), srcData.Data(), srcData.Size() * sizeof(FVector));
+		std::memcpy(dstCoverage.Data(), srcCoverage.Data(), srcCoverage.Size() * sizeof(uint8));
+
+		for (uint32 y = 0; y < height; ++y)
+		{
+			for (uint32 x = 0; x < width; ++x)
+			{
+				SizeType idx = (SizeType)y * width + x;
+				if (srcCoverage[idx] != 0)
+					continue;
+
+				FVector sum(0.0f);
+				uint32 count = 0;
+				for (int32 oy = -1; oy <= 1; ++oy)
+				{
+					int32 ny = (int32)y + oy;
+					if (ny < 0 || ny >= (int32)height)
+						continue;
+					for (int32 ox = -1; ox <= 1; ++ox)
+					{
+						int32 nx = (int32)x + ox;
+						if (nx < 0 || nx >= (int32)width)
+							continue;
+						if (ox == 0 && oy == 0)
+							continue;
+
+						SizeType nidx = (SizeType)ny * width + (SizeType)nx;
+						if (srcCoverage[nidx] == 0)
+							continue;
+
+						sum += srcData[nidx];
+						++count;
+					}
+				}
+
+				if (count > 0)
+				{
+					dstData[idx] = sum / (float)count;
+					dstCoverage[idx] = 1;
+					anyFilled = true;
+				}
+			}
+		}
+
+		if (!anyFilled)
+			break;
+
+		srcData = dstData;
+		srcCoverage = dstCoverage;
+	}
+
+	atlas.data = srcData;
+	coverage = srcCoverage;
+}
+
+static bool BakeModeAllowsDirect(ELightBakeMode mode)
+{
+	return mode == LIGHT_BAKE_DIRECT || mode == LIGHT_BAKE_ALL;
+}
+
+static bool BakeModeAllowsIndirect(ELightBakeMode mode)
+{
+	return mode == LIGHT_BAKE_INDIRECT || mode == LIGHT_BAKE_ALL;
+}
+
+static FVector ComputeDirectLighting(const FVector& position, const FVector& normal, const TArray<FBakeLight>& lights, CWorld* scene, bool bIndirectBounce, const CPrimitiveProxy* ignoreProxy = nullptr)
 {
 	FVector sum(0.0f);
 	for (auto& light : lights)
@@ -273,6 +367,16 @@ static FVector ComputeDirectLighting(const FVector& position, const FVector& nor
 			continue;
 		if (light.bakeMode == LIGHT_BAKE_NONE)
 			continue;
+		if (bIndirectBounce)
+		{
+			if (!BakeModeAllowsIndirect(light.bakeMode))
+				continue;
+		}
+		else
+		{
+			if (!BakeModeAllowsDirect(light.bakeMode))
+				continue;
+		}
 
 		FVector dir;
 		float dist = 0.0f;
@@ -309,7 +413,7 @@ static FVector ComputeDirectLighting(const FVector& position, const FVector& nor
 		{
 			FPrimitiveHitInfo hit;
 			FVector start = position + normal * SHADOW_BIAS;
-			if (RayCastScene(scene, start, dir, &hit, dist - SHADOW_BIAS))
+			if (RayCastScene(scene, start, dir, &hit, dist - SHADOW_BIAS, ignoreProxy))
 			{
 				if (hit.distance > (SHADOW_BIAS * 2.0f))
 					continue;
@@ -323,7 +427,7 @@ static FVector ComputeDirectLighting(const FVector& position, const FVector& nor
 	return sum;
 }
 
-static FVector ComputeIndirectLighting(const FVector& position, const FVector& normal, const TArray<FBakeLight>& lights, CWorld* scene, uint32 samples, uint32 maxBounces)
+static FVector ComputeIndirectLighting(const FVector& position, const FVector& normal, const TArray<FBakeLight>& lights, CWorld* scene, const FVector& skyColor, uint32 samples, uint32 maxBounces)
 {
 	if (!scene || samples == 0 || maxBounces == 0)
 		return FVector(0.0f);
@@ -340,9 +444,12 @@ static FVector ComputeIndirectLighting(const FVector& position, const FVector& n
 			FVector rayDir = SampleHemisphereCosine(rayNormal);
 			FPrimitiveHitInfo hit;
 			if (!RayCastScene(scene, rayPos, rayDir, &hit, 0.0f))
+			{
+				sum += skyColor * throughput;
 				break;
+			}
 
-			FVector direct = ComputeDirectLighting(hit.position, hit.normal, lights, scene);
+			FVector direct = ComputeDirectLighting(hit.position, hit.normal, lights, scene, true, nullptr);
 			sum += direct * throughput;
 
 			throughput *= 0.5f;
@@ -358,7 +465,7 @@ CLightBaker::CLightBaker(CWorld* w) : world(w)
 {
 }
 
-void CLightBaker::BakeAll(const FBakeSettings& s)
+void CLightBaker::BakeAll(const FLightmapSettings& s)
 {
 	settings = s;
 	result.bSuccess = false;
@@ -561,21 +668,67 @@ void CLightBaker::BakeLightmaps()
 
 	SizeType degenerateUv2Count = 0;
 	SizeType degenerateUv1Count = 0;
+	std::atomic<SizeType> bakedVertsAtomic{ 0 };
+	std::atomic<SizeType> degenerateUv2CountAtomic{ 0 };
+	std::atomic<SizeType> degenerateUv1CountAtomic{ 0 };
 
-	for (auto& task : tasks)
+	TArray<SizeType> taskIndices;
+	taskIndices.Reserve(tasks.Size());
+	for (SizeType i = 0; i < tasks.Size(); ++i)
 	{
-		if (task.atlasIndex < 0)
-			continue;
+		if (tasks[i].atlasIndex >= 0)
+			taskIndices.Add(i);
+	}
 
+	TArray<TArray<uint8>> atlasCoverage;
+	atlasCoverage.Resize(result.lightmaps.Size());
+	for (SizeType i = 0; i < result.lightmaps.Size(); ++i)
+	{
+		FLightmapAtlas& atlas = result.lightmaps[i];
+		atlasCoverage[i].Resize((SizeType)atlas.width * atlas.height);
+		std::memset(atlasCoverage[i].Data(), 0, atlasCoverage[i].Size() * sizeof(uint8));
+	}
+
+	std::mutex progressMutex;
+	const SizeType reportStep = std::max<SizeType>(totalVerts / 100, 1);
+	std::atomic<SizeType> nextReport{ reportStep };
+
+	auto ReportBakeProgress = [&](SizeType current)
+	{
+		if (totalVerts == 0)
+			return;
+
+		SizeType target = nextReport.load(std::memory_order_relaxed);
+		while (current >= target)
+		{
+			if (nextReport.compare_exchange_weak(target, target + reportStep, std::memory_order_relaxed))
+			{
+				std::lock_guard<std::mutex> lock(progressMutex);
+				PrintProgress("[LightBaker] Baking", current, totalVerts);
+				break;
+			}
+		}
+	};
+
+	auto BakeTask = [&](FBakeMeshTask& task)
+	{
 		FLightmapAtlas& atlas = result.lightmaps[task.atlasIndex];
+		TArray<uint8>& atlasCover = atlasCoverage[task.atlasIndex];
 		TArray<uint8> coverage;
 		coverage.Resize(atlas.width * atlas.height);
-		for (SizeType i = 0; i < coverage.Size(); ++i)
-			coverage[i] = 0;
+		std::memset(coverage.Data(), 0, coverage.Size() * sizeof(uint8));
 
 		const FVertex* verts = task.mesh->vertexData;
 		const uint* indices = task.mesh->indexData;
 		uint32 faceCount = task.mesh->numIndexData / 3;
+
+		FVector invScale(
+			task.scale.x != 0.0f ? 1.0f / task.scale.x : 0.0f,
+			task.scale.y != 0.0f ? 1.0f / task.scale.y : 0.0f,
+			task.scale.z != 0.0f ? 1.0f / task.scale.z : 0.0f);
+
+		const float invW = 1.0f / (float)atlas.width;
+		const float invH = 1.0f / (float)atlas.height;
 
 		for (uint32 face = 0; face < faceCount; ++face)
 		{
@@ -585,8 +738,8 @@ void CLightBaker::BakeLightmaps()
 			if (i0 >= task.mesh->numVertexData || i1 >= task.mesh->numVertexData || i2 >= task.mesh->numVertexData)
 				continue;
 
-			bakedVerts += 3;
-			PrintProgress("[LightBaker] Baking", bakedVerts, totalVerts);
+			SizeType progress = bakedVertsAtomic.fetch_add(3, std::memory_order_relaxed) + 3;
+			ReportBakeProgress(progress);
 
 			FVector2 uv0(verts[i0].uv2[0], verts[i0].uv2[1]);
 			FVector2 uv1(verts[i1].uv2[0], verts[i1].uv2[1]);
@@ -602,11 +755,11 @@ void CLightBaker::BakeLightmaps()
 					uv0 = uv0Alt;
 					uv1 = uv1Alt;
 					uv2 = uv2Alt;
-					degenerateUv2Count++;
+					degenerateUv2CountAtomic.fetch_add(1, std::memory_order_relaxed);
 				}
 				else
 				{
-					degenerateUv1Count++;
+					degenerateUv1CountAtomic.fetch_add(1, std::memory_order_relaxed);
 					continue;
 				}
 			}
@@ -636,9 +789,9 @@ void CLightBaker::BakeLightmaps()
 			FVector p1 = verts[i1].position * task.transform;
 			FVector p2 = verts[i2].position * task.transform;
 
-			FVector n0 = task.rotation.Rotate(verts[i0].normal);
-			FVector n1 = task.rotation.Rotate(verts[i1].normal);
-			FVector n2 = task.rotation.Rotate(verts[i2].normal);
+			FVector n0 = task.rotation.Rotate(verts[i0].normal * invScale);
+			FVector n1 = task.rotation.Rotate(verts[i1].normal * invScale);
+			FVector n2 = task.rotation.Rotate(verts[i2].normal * invScale);
 
 			for (int y = y0; y <= y1; ++y)
 			{
@@ -648,7 +801,7 @@ void CLightBaker::BakeLightmaps()
 					if (coverage[idx] != 0)
 						continue;
 
-					FVector2 p((x + 0.5f) / (float)atlas.width, (y + 0.5f) / (float)atlas.height);
+					FVector2 p((x + 0.5f) * invW, (y + 0.5f) * invH);
 					float w0, w1, w2;
 					if (!Barycentric2D(p, a0, a1, a2, w0, w1, w2))
 						continue;
@@ -659,13 +812,62 @@ void CLightBaker::BakeLightmaps()
 					if (nLen > 0.0f)
 						normal /= nLen;
 
-					FVector direct = ComputeDirectLighting(pos, normal, lights, world);
-					FVector indirect = ComputeIndirectLighting(pos, normal, lights, world, settings.indirectSamples, settings.maxBounces);
+					FVector direct = ComputeDirectLighting(pos, normal, lights, world, false, task.modelComp->PrimitiveProxy());
+					FVector indirect = ComputeIndirectLighting(pos, normal, lights, world, settings.skyColor, settings.indirectSamples, settings.maxBounces);
 					atlas.data[idx] = direct + indirect;
 					coverage[idx] = 1;
+					atlasCover[idx] = 1;
 				}
 			}
 		}
+	};
+
+	SizeType taskCount = taskIndices.Size();
+	uint32 hwThreads = std::thread::hardware_concurrency();
+	uint32 workerCount = hwThreads > 0 ? hwThreads : 4;
+	workerCount = (uint32)std::min<SizeType>((SizeType)workerCount, taskCount);
+	if (workerCount == 0)
+		workerCount = 1;
+
+	std::atomic<SizeType> nextTask{ 0 };
+	std::vector<std::thread> workers;
+	if (workerCount > 1)
+		workers.reserve(workerCount - 1);
+
+	auto WorkerFn = [&]()
+	{
+		for (;;)
+		{
+			SizeType idx = nextTask.fetch_add(1, std::memory_order_relaxed);
+			if (idx >= taskCount)
+				break;
+			FBakeMeshTask& task = tasks[taskIndices[idx]];
+			BakeTask(task);
+		}
+	};
+
+	for (uint32 t = 1; t < workerCount; ++t)
+		workers.emplace_back(WorkerFn);
+
+	WorkerFn();
+	for (auto& worker : workers)
+		worker.join();
+
+	bakedVerts = bakedVertsAtomic.load(std::memory_order_relaxed);
+	degenerateUv2Count = degenerateUv2CountAtomic.load(std::memory_order_relaxed);
+	degenerateUv1Count = degenerateUv1CountAtomic.load(std::memory_order_relaxed);
+
+	if (bakedVerts >= totalVerts)
+		PrintProgress("[LightBaker] Baking", bakedVerts, totalVerts);
+
+	uint32 bleedPixels = (uint32)FMath::Min((int32)LIGHTMAP_BLEED_PIXELS, (int32)ATLAS_PADDING);
+	for (SizeType i = 0; i < result.lightmaps.Size(); ++i)
+		BleedAtlas(result.lightmaps[i], atlasCoverage[i], bleedPixels);
+
+	for (auto& task : tasks)
+	{
+		if (task.atlasIndex < 0)
+			continue;
 
 		FLightmapMeshRef ref;
 		TObjectPtr<CEntity> ent = task.modelComp->GetEntity();
@@ -678,9 +880,6 @@ void CLightBaker::BakeLightmaps()
 		ref.lightmapPos = task.lightmapPos;
 		ref.lightmapScale = task.lightmapScale;
 		result.meshRefs.Add(ref);
-
-		if (bakedVerts >= totalVerts)
-			PrintProgress("[LightBaker] Baking", bakedVerts, totalVerts);
 	}
 
 	for (auto* mdl : modelsToClear)
@@ -691,7 +890,7 @@ void CLightBaker::BakeLightmaps()
 
 void CLightBaker::BakeLightProbes()
 {
-	// TODO: Implement probe baking once probe volume + sampling is defined.
+	// TODO: Implement probe baking. 
 }
 
 void CLightBaker::SaveData()

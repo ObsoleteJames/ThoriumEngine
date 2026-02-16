@@ -203,7 +203,7 @@ void CWorld::LoadScene(CScene* ptr)
 
 	*stream >> &sig;
 
-	if (sig != CSCENE_SIGNITURE || (version != CSCENE_VERSION && version != CSCENE_VERSION_02))
+	if (sig != CSCENE_SIGNITURE || (version != CSCENE_VERSION && version != CSCENE_VERSION_02 && version != CSCENE_VERSION_03))
 	{
 		CONSOLE_LogError("CWorld", "Invalid scene file '" + scene->File()->Path() + "'");
 		return;
@@ -212,9 +212,15 @@ void CWorld::LoadScene(CScene* ptr)
 	FString gamemodeType;
 	*stream >> gamemodeType;
 
-	scene->gamemodeClass = gamemodeType;
-	if (!scene->gamemodeClass.Get())
-		scene->gamemodeClass = CGameMode::StaticClass();
+	sceneSettings.gamemodeClass = gamemodeType;
+	if (!sceneSettings.gamemodeClass.Get())
+		sceneSettings.gamemodeClass = CGameMode::StaticClass();
+	
+	if (version > CSCENE_VERSION_03)
+	{
+		*stream >> &sceneSettings.lightmap;
+		*stream >> &sceneSettings.gravity;
+	}
 
 	if (version > CSCENE_VERSION_02)
 	{
@@ -343,6 +349,76 @@ void CWorld::LoadScene(CScene* ptr)
 	bLoaded = true;
 
 	CONSOLE_LogInfo("CWorld", "Loaded scene with " + FString::ToString(numEnts) + " entities");
+}
+
+void CWorld::OnSave(IBaseFStream* stream)
+{
+	uint sig = CSCENE_SIGNITURE;
+
+	*stream << &sig;
+
+	if (sceneSettings.gamemodeClass.Get())
+	{
+		*stream << sceneSettings.gamemodeClass.Get()->GetInternalName();
+	}
+	else
+		*stream << FString();
+
+	*stream << &sceneSettings.lightmap << &sceneSettings.gravity;
+
+	uint32 numSubScenes = subScenes.Size();
+	*stream << &numSubScenes;
+
+	for (uint32 i = 0; i < numSubScenes; i++)
+		*stream << &subScenes[i];
+
+	TMap<SizeType, TObjectPtr<CEntity>>& ents = entities;
+	SizeType numEntsOffset = stream->Tell();
+	SizeType numEnts = 0;
+	*stream << &numEnts;
+
+	for (auto& ent : ents)
+	{
+		SizeType entId = ent.second->EntityId();
+		SizeType numComps = ent.second->GetAllComponents().size();
+
+#if INCLUDE_EDITOR_DATA
+		if (ent.second->bEditorEntity)
+			continue;
+#endif
+
+		* stream << ent.second->GetClass()->GetInternalName() << &entId << &numComps;
+
+		for (auto& comp : ent.second->GetAllComponents())
+		{
+			*stream << comp.second->GetClass()->GetInternalName();
+			*stream << comp.second->Name();
+
+			SizeType id = comp.first;
+			*stream << &id;
+
+			bool bUserCreated = comp.second->IsUserCreated();
+			*stream << &bUserCreated;
+		}
+	}
+
+	for (auto& ent : ents)
+	{
+		SizeType entId = ent.second->EntityId();
+		SizeType dataSize;
+
+		FMemStream data;
+		ent.second->Serialize(data);
+
+		dataSize = data.Size();
+		*stream << &entId << &dataSize;
+
+		stream->Write(data.Data(), data.Size());
+		numEnts++;
+	}
+
+	stream->Seek(numEntsOffset, SEEK_SET);
+	*stream << &numEnts;
 }
 
 void CWorld::Save()
@@ -511,7 +587,7 @@ void CWorld::Start()
 
 	if (!gamemode)
 	{
-		FClass* gmClass = (scene.IsValid() ? scene->gamemodeClass.Get() : CGameMode::StaticClass());
+		FClass* gmClass = (scene.IsValid() ? sceneSettings.gamemodeClass.Get() : CGameMode::StaticClass());
 		auto* gm = (CGameMode*)CreateObject(gmClass, FString());
 		SetGameMode(gm);
 	}

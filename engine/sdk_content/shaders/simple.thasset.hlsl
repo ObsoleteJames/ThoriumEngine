@@ -206,9 +206,9 @@ PS_DEFERRED
 
 		if (length(vLightmapScale) > 0)
 		{
-			float2 lightmapUV = input.vLightmapUv * vLightmapScale + vLightmapOffset;
-			emission.xyz *= SampleTexture2D(vLightmap, lightmapUV).xyz;
-			//emission.xy = input.vLightmapUv;
+			float2 lightmapUV = (input.vTextureCoords * vLightmapScale) + vLightmapOffset;
+			emission.xyz += SampleTexture2D(vLightmap, lightmapUV).xyz * 0.1f;
+			//emission.xy = lightmapUV;
 		}
 
 		if (diffuse.a < 0.5)

@@ -36,6 +36,7 @@ int main(int argc, char** argv)
 	FString projectPath;
 
 	auto& args = FCommandLine::GetArgs();
+
 	for (SizeType i = 0; i < args.Size(); i++)
 	{
 		if (args[i] == "-scene" && args.Size() > i + 1)
@@ -56,6 +57,20 @@ int main(int argc, char** argv)
 	CBakeEngine* bakeEngine = (CBakeEngine*)gEngine;
 	gEngine->InitTerminal();
 	CConsole::bLoggingEnabled = true;
+
+	if (args.Size() > 0 && args[0].Find(".thasset") != -1)
+	{
+		scenePath = args[0];
+		scenePath.ReplaceAll('\\', '/');
+		for (auto* m : CFileSystem::GetMods())
+		{
+			if (scenePath.Find(m->Path()) != -1)
+			{
+				scenePath.Erase(scenePath.begin(), scenePath.begin() + m->Path().Size() + 1);
+				break;
+			}
+		}
+	}
 
 	if (scenePath.IsEmpty())
 	{
