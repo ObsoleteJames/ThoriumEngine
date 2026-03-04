@@ -60,6 +60,7 @@ struct FEnumVariable
 struct CppEnum : public CppField
 {
 	FMacro macro;
+	FString base;
 
 	TArray<FEnumVariable> Values;
 };
@@ -67,18 +68,20 @@ struct CppEnum : public CppField
 struct CppProperty : public CppField
 {
 	FString typeName;
-	FString templateTypename;
-	FString nestedTemplateType;
+	//FString templateTypename;
+	//FString nestedTemplateType;
 	FMacro macro;
+
+	TArray<CppProperty> templateArgs;
 
 	FString fullTypename;
 
-	bool bPrivate : 1;
-	bool bPointer : 1;
-	bool bConst : 1;
-	bool bRef : 1;
-	bool bTemplateType : 1;
-	bool bStatic : 1;
+	bool bPrivate = 0;
+	bool bPointer = 0;
+	bool bConst = 0;
+	bool bRef = 0;
+	bool bTemplateType = 0;
+	bool bStatic = 0;
 };
 
 struct CppFunction : public CppField
@@ -96,11 +99,15 @@ struct CppFunction : public CppField
 	FMacro macro;
 
 	TArray<CppProperty> Arguments;
+	CppProperty returnValue;
 
 	EType type;
 
 	bool bPrivate : 1;
 	bool bStatic : 1;
+	bool bInline : 1;
+	bool bConst : 1;
+	bool bVirtual : 1;
 };
 
 struct CppClass : public CppField

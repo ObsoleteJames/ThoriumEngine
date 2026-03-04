@@ -20,6 +20,8 @@ public:
 
 	operator T* () { return ptr; }
 
+	operator bool() const { return ptr != nullptr; }
+
 	TUniquePtr<T>& operator=(T* newPtr)
 	{
 		if (ptr)
@@ -34,6 +36,8 @@ public:
 		other.ptr = nullptr;
 		return *this;
 	}
+
+	inline T* Get() const { return ptr; }
 
 private:
 	T* ptr = nullptr;

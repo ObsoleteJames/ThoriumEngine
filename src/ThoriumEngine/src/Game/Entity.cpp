@@ -84,11 +84,8 @@ CEntityComponent* CEntity::GetComponent(FClass* type, const FString& name)
 
 CEntityComponent* CEntity::GetComponent(SizeType id)
 {
-	for (auto& comp : components)
-	{
-		if (comp.first == id)
-			return comp.second;
-	}
+	if (auto& it = components.find(id); it != components.end())
+		return it->second;
 	return nullptr;
 }
 
@@ -119,7 +116,7 @@ FOutputBinding& CEntity::AddOutput()
 	return *boundOutputs.last();
 }
 
-FBounds CEntity::GetBounds()
+FBounds CEntity::GetBounds() const
 {
 	FBounds r;
 	for (auto comp : components)
@@ -173,9 +170,9 @@ void CEntity::Update(double dt)
 	//	comp.second->Update(dt);
 }
 
-void CEntity::Serialize(FMemStream& out)
+void CEntity::Serialize(FMemStream& out, const FSerializeSettings& settings)
 {
-	BaseClass::Serialize(out);
+	BaseClass::Serialize(out, settings);
 
 	SizeType numComponents = components.size();
 	out << &numComponents;
@@ -196,7 +193,7 @@ void CEntity::Serialize(FMemStream& out)
 		out << &id;
 
 		FMemStream compOut;
-		comp.second->Serialize(compOut);
+		comp.second->Serialize(compOut, settings);
 
 		SizeType compDataSize = compOut.Size();
 		out << &compDataSize;
@@ -249,7 +246,7 @@ void CEntity::Load(FMemStream& in)
 void CEntity::OnDelete()
 {
 	auto comps = components;
-	for (auto it = comps.rbegin(); it != comps.rend(); it++)
+	for (auto it = comps.begin(); it != comps.end(); it++)
 		it->second->Delete();
 	components.clear();
 

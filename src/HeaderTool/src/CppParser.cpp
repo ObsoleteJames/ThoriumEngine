@@ -521,7 +521,7 @@ int CParser::ParseHeader(FHeaderData& data)
 						return 3;
 					}
 
-					if (!property.templateTypename.IsEmpty())
+					/*if (!property.templateTypename.IsEmpty())
 					{
 						if (!TemplateSupportsSubTemplate(property.templateTypename))
 						{
@@ -532,7 +532,7 @@ int CParser::ParseHeader(FHeaderData& data)
 						property.nestedTemplateType = value;
 					}
 					else
-						property.templateTypename = value;
+						property.templateTypename = value;*/
 					property.bTemplateType = true;
 
 					bPrevWasSpace = false;
@@ -608,7 +608,7 @@ int CParser::ParseHeader(FHeaderData& data)
 
 			uint8 templateCount = 0;
 
-			if (!property.templateTypename.IsEmpty())
+			/*if (!property.templateTypename.IsEmpty())
 			{
 				property.fullTypename += property.templateTypename + "<";
 				templateCount++;
@@ -617,7 +617,7 @@ int CParser::ParseHeader(FHeaderData& data)
 			{
 				property.fullTypename += property.nestedTemplateType + "<";
 				templateCount++;
-			}
+			}*/
 
 			property.fullTypename += property.typeName;
 
@@ -690,7 +690,7 @@ int CParser::ParseHeader(FHeaderData& data)
 						std::cerr << "ERROR: Functions cannot contain template arguments! '" << _class.name.c_str() << "::" << func.name.c_str() << "\n";
 						break;
 					}
-					p.templateTypename = "TObjectPtr";
+					//p.templateTypename = "TObjectPtr";
 					p.bTemplateType = true;
 					continue;
 				}

@@ -1,5 +1,8 @@
 
 #include "Class.h"
+#include "Object.h"
+#include "PropertyHandler.h"
+#include "PropertyTypes.h"
 
 int64_t FEnum::GetValueByName(const FString& name)
 {
@@ -31,13 +34,43 @@ const FProperty* FStruct::GetProperty(const FString& name) const
 	return nullptr;
 }
 
+void* FStruct::GetDefaultObject()
+{
+	if (!defaultObject)
+	{
+		THORIUM_ASSERT((flags & CTAG_CLASS) == 0, "FStruct::GetDefaultValue cannot return object of type CObject!");
+
+		defaultObject = malloc(size);
+		if (constructor)
+			constructor((CObject*)defaultObject);
+		else
+			memset(defaultObject, 0, size);
+	}
+
+	return defaultObject;
+}
+
+CObject* FClass::GetDefaultObject()
+{
+	if (!defaultObject)
+	{
+		THORIUM_ASSERT((flags & CTAG_CLASS) != 0, "FClass::GetDefaultValue cannot return object of type struct!");
+
+		CObject* obj = CreateObject(this, "default_" + name);
+		if (obj)
+			obj->MakeIndestructible();
+		defaultObject = obj;
+	}
+	return (CObject*)defaultObject;
+}
+
 const FProperty* FClass::GetProperty(const FString& name) const
 {
 	for (const FProperty* prop = PropertyList; prop != nullptr; prop = prop->next)
 		if (prop->cppName == name)
 			return prop;
 
-	return BaseClass ? BaseClass->GetProperty(name) : nullptr;
+	return baseType ? baseType->GetProperty(name) : nullptr;
 }
 
 const FFunction* FClass::GetFunction(const FString& name) const
@@ -67,13 +100,13 @@ FString FClass::TagValue(const FString& key)
 	return FString();
 }
 
-inline bool FClass::CanCast(FClass* castTo)
+bool FClass::CanCast(FClass* castTo)
 {
 	if (castTo == this)
 		return true;
 
-	if (BaseClass)
-		return BaseClass->CanCast(castTo);
+	if (baseType)
+		return ((FClass*)baseType)->CanCast(castTo);
 
 	return false;
 }
@@ -94,4 +127,53 @@ bool FPropertyMeta::HasFlag(const FString& key)
 			return true;
 
 	return false;
+}
+
+IPropertyHandler* FProperty::GetHandler(void* obj) const
+{
+	switch (type)
+	{
+	case EVT_OBJECT_PTR:
+	case EVT_CLASS:
+		return new FObjectPtrPropertyHandler(obj, this);
+	case EVT_CLASS_PTR:
+		return new FClassPtrPropertyHandler(obj, this);
+	case EVT_STRING:
+		return new FStringPropertyHandler(obj, this);
+	case EVT_ARRAY:
+		return new FArrayPropertyHandler(obj, this);
+	case EVT_STRUCT:
+		return new FStructPropertyHandler(obj, this);
+	}
+
+	return new FDefaultPropertyHandler(obj, this);
+}
+
+IPropertyHandler* FProperty::GetHandler(CObject* obj) const
+{
+	if (type == EVT_CLASS || type == EVT_OBJECT_PTR)
+		return new FObjectPtrPropertyHandler(obj, this);
+
+	return GetHandler((void*)obj);
+}
+
+bool operator==(const FArgType& a, const FArgType& b)
+{
+	if (a.bConst == b.bConst && a.bPointer == b.bPointer && a.bRef == b.bRef && a.numTemplates == b.numTemplates && a.size == b.size && a.type == b.type)
+	{
+		if (a.typeName != b.typeName)
+			return false;
+		for (uint8 i = 0; i < a.numTemplates; i++)
+			if (!(a.templateType[i] == b.templateType[i]))
+				return false;
+		return true;
+	}
+
+	return false;
+}
+
+bool operator==(const FProperty& a, const FArgType& b)
+{
+	FArgType aType = { a.type, a.typeName, a.size, a.numTemplates, a.templateType, false, false, a.flags & VTAG_TYPE_POINTER };
+	return aType == b;
 }

@@ -7,9 +7,9 @@
 #include <filesystem>
 namespace fs = std::filesystem;
 
-void CAsset::Serialize(FMemStream& out)
+void CAsset::Serialize(FMemStream& out, const FSerializeSettings& settings)
 {
-	BaseClass::Serialize(out);
+	BaseClass::Serialize(out, settings);
 }
 
 bool CAsset::Init()

@@ -98,7 +98,7 @@ public:
 				arr.Add(comp.second);
 	}
 
-	inline const TMap<SizeType, TObjectPtr<CEntityComponent>>& GetAllComponents() const { return components; }
+	inline const TUnorderedMap<SizeType, TObjectPtr<CEntityComponent>>& GetAllComponents() const { return components; }
 
 	CEntityComponent* AddComponent(FClass* type, const FString& name);
 	CEntityComponent* GetComponent(FClass* type, const FString& name = "");
@@ -138,7 +138,7 @@ public:
 	inline const FOutputBinding& GetOutput(SizeType index) const { return boundOutputs[index]; }
 	FOutputBinding& AddOutput();
 
-	FBounds GetBounds();
+	FBounds GetBounds() const;
 
 	inline EEntityType GetType() const { return type; }
 
@@ -159,12 +159,12 @@ private:
 	FUNCTION(Name = "Disable")
 	inline void inputDisable() { bIsEnabled = false; }
 
-	FUNCTION(Name = "SetHealth")
-	inline void inputSetHealth(float health) { this->health = health; }
+	/*FUNCTION(Name = "SetHealth")
+	inline void inputSetHealth(float health) { this->health = health; }*/
 
 public:
-	virtual void Serialize(FMemStream& out);
-	virtual void Load(FMemStream& in);
+	void Serialize(FMemStream& out, const FSerializeSettings& settings) override;
+	void Load(FMemStream& in) override;
 
 protected:
 	// Called when entity is created.
@@ -207,11 +207,12 @@ public:
 	bool bEditorEntity = false;
 #endif
 
-	PROPERTY(Editable , Category = Health)
-	bool bCanBeDamaged = false;
+	// ---- DEPRICATED ----
+	// PROPERTY(Editable , Category = Health)
+	// bool bCanBeDamaged = false;
 
-	PROPERTY(Editable, Category = Health)
-	float health = 100.0f;
+	// PROPERTY(Editable, Category = Health)
+	// float health = 100.0f;
 
 protected:
 	FGuid entityId;
@@ -229,7 +230,7 @@ private:
 	PROPERTY()
 	TArray<FOutputBinding> boundOutputs;
 
-	TMap<SizeType, TObjectPtr<CEntityComponent>> components;
+	TUnorderedMap<SizeType, TObjectPtr<CEntityComponent>> components;
 
 	bool bIsInitialized = false;
 

@@ -13,8 +13,9 @@ void CDataAsset::OnInit(IBaseFStream* stream)
 void CDataAsset::OnSave(IBaseFStream* stream)
 {
 	FMemStream data;
-	for (FClass* c = GetClass(); c != CDataAsset::StaticClass(); c = c->GetBaseClass())
-		SerializeProperties(data, c, this);
+	//for (FClass* c = GetClass(); c != CDataAsset::StaticClass(); c = c->GetBaseClass())
+	//	SerializeProperties(data, c, this);
+	Serialize(data, FSerializeSettings());
 
 	SizeType size = data.Size();
 	*stream << &size;
@@ -32,8 +33,9 @@ void CDataAsset::OnLoad(IBaseFStream* stream, uint8)
 
 	stream->Read(data.Data(), dataSize);
 
-	for (FClass* c = GetClass(); c != CDataAsset::StaticClass(); c = c->GetBaseClass())
-		LoadProperties(data, c, this);
+	//for (FClass* c = GetClass(); c != CDataAsset::StaticClass(); c = c->GetBaseClass())
+	//	LoadProperties(data, c, this);
+	Load(data);
 }
 
 void CDataAsset::Unload(uint8)

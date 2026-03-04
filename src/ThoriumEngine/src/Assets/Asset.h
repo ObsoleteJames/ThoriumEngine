@@ -51,7 +51,7 @@ public:
 	inline void MarkAsDirty(bool value = true) { bDirty = value; }
 
 public:
-	void Serialize(FMemStream& out) final;
+	void Serialize(FMemStream& out, const FSerializeSettings& settings) final;
 	void Load(FMemStream& in) final;
 
 protected:

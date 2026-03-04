@@ -11,6 +11,28 @@ TArray<CObject*> CObjectManager::ObjectsToDelete;
 
 static std::shared_mutex objMutex;
 
+#define ALLOCATE_COBJECT(size, align) (CObject*)(malloc(size))
+
+ENGINE_API CObject* CreateObject(FClass* type, CObject* parent, const FString& _name)
+{
+	std::unique_lock<std::shared_mutex> lock(objMutex);
+	if (type->Flags() & CTAG_ABSTRACT)
+		return nullptr;
+
+	//CObject* obj = type->Instantiate();
+	CObject* obj = ALLOCATE_COBJECT(type->Size(), 8);
+	type->constructor(obj);
+
+	obj->SetOwner(parent);
+
+	FString name = _name;
+	if (name.IsEmpty())
+		name = GetUniqueObjectName(type);
+
+	obj->SetName(name);
+	return obj;
+}
+
 CObject* CObjectManager::FindObject(const FString& name)
 {
 	std::shared_lock<std::shared_mutex> lock(objMutex);
@@ -69,7 +91,7 @@ bool CObjectManager::DeleteObject(CObject* obj, bool bNoErase)
 		return false;
 
 	obj->bMarkedForDeletion = true;
-	obj->OnDelete();
+	obj->_ObjectDelete();
 
 	std::unique_lock<std::shared_mutex> lock(objMutex);
 	if (!bNoErase)
@@ -97,7 +119,7 @@ bool CObjectManager::DeleteObject(CObject* obj, bool bNoErase)
 
 void CObjectManager::RegisterObject(CObject* obj)
 {
-	std::unique_lock<std::shared_mutex> lock(objMutex);
+	//std::unique_lock<std::shared_mutex> lock(objMutex);
 	for (auto it = Objects.find(obj->Id()); it != Objects.end(); it = Objects.find(obj->Id()))
 		obj->id = FGuid();
 

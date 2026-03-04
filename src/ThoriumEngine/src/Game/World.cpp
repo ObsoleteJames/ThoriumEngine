@@ -408,7 +408,7 @@ void CWorld::OnSave(IBaseFStream* stream)
 		SizeType dataSize;
 
 		FMemStream data;
-		ent.second->Serialize(data);
+		ent.second->Serialize(data, FSerializeSettings());
 
 		dataSize = data.Size();
 		*stream << &entId << &dataSize;
@@ -552,6 +552,8 @@ void CWorld::LoadLightData()
 		model->lightmapInfo.Add({ meshId, lightmapId, lightmapOffset, lightmapScale });
 	}
 
+	lightmaps.Clear();
+
 	for (uint32 i = 0; i < atlasCount; i++)
 	{
 		uint32 width, height;
@@ -573,7 +575,7 @@ void CWorld::LoadLightData()
 		}
 
 		CTexture* lightmap = new CTexture();
-		lightmap->Init(rgbaData, width, height, THTX_FORMAT_RGBA16_FLOAT);
+		lightmap->Init(rgbaData, width, height, THTX_FORMAT_RGBA16_FLOAT, THTX_FILTER_LINEAR);
 		lightmaps.Add(lightmap);
 
 		delete[] data;

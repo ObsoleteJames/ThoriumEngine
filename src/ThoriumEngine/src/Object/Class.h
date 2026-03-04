@@ -5,21 +5,41 @@ class CObject;
 #include <Util/Core.h>
 #include "Misc/Script.h"
 #include "ObjectTypes.h"
-#include "PropertyTypes.h"
 #include "Module.h"
 
 #include "EngineCore.h"
 
 class FClass;
+class IPropertyHandler;
 
 typedef void(*FFunctionExecPtr)(CObject* target, FStack& stack);
 
-struct FBaseField
+struct ENGINE_API FBaseField
 {
 	FString name;
 	FString cppName;
 	FString description;
+
+	SizeType id;
 };
+
+struct ENGINE_API FArgType
+{
+	EVariableType type;
+	FString typeName;
+	SizeType size; // size of the type.
+
+	// number of template types.
+	uint8 numTemplates;
+	FArgType* templateType;
+
+	bool bConst;
+	bool bRef;
+	bool bPointer;
+};
+
+bool operator==(const FArgType& a, const FArgType& b);
+inline bool operator!=(const FArgType& a, const FArgType& b) { return !(a == b); }
 
 struct ENGINE_API FPropertyMeta
 {
@@ -28,48 +48,51 @@ public:
 	FString FlagValue(const FString& key);
 
 public:
-	FString uiMin;
-	FString uiMax;
 	FString category;
-	FString defaultValue;
-
-	//FFunctionExecPtr onEditFunc;
-
+	
 	SizeType numGenericFlags;
 	TPair<FString, FString>* genericFlags;
 };
 
-struct FProperty : public FBaseField
+struct ENGINE_API FProperty : public FBaseField
 {
+public:
+	IPropertyHandler* GetHandler(void* obj) const;
+	IPropertyHandler* GetHandler(CObject* obj) const;
+
+	template<class T>
+	T* GetHandler(void* obj) const { return (T*)GetHandler(obj); }
+
+public:
+	uint8 protectionLvl;
+
 	FString typeName;
 
-	uint type;
-	uint flags;
+	EVariableType type;
+
+	// number of template types.
+	uint8 numTemplates; 
+	FArgType* templateType;
+
+	EVariableFlags flags;
 	SizeType offset;
 	SizeType size;
 
 	FPropertyMeta* meta;
-	void* typeHelper;
+	void* typeHandler;
 	FProperty* next;
 };
 
-struct FFuncArg
+bool operator==(const FProperty& a, const FArgType& b);
+inline bool operator!=(const FProperty& a, const FArgType& b) { return !(a == b); }
+
+struct ENGINE_API FFuncArg
 {
 	FString name;
-	uint type;
-	uint8 flags;
-	void* classPtr;
+	FArgType type;
 };
 
-enum EFunctionFlags_
-{
-	FunctionFlags_NONE = 0,
-	FunctionFlags_ALLOW_AS_INPUT = 1 << 0, // can this function be called from entity IO.
-};
-
-typedef int EFunctionFlags;
-
-struct FFunction : public FBaseField
+struct ENGINE_API FFunction : public FBaseField
 {
 	enum EType
 	{
@@ -78,18 +101,22 @@ struct FFunction : public FBaseField
 		COMMAND,
 		SERVER_RPC,
 		CLIENT_RPC,
-		MULTICAST_RPC
+		MULTICAST_RPC,
+		OPERATOR
 	};
 
-	FFunctionExecPtr execFunc;
+	uint8 protectionLvl;
+
+	std::function<void(CObject*, FStack&)> execFunc;
 	EType type;
 
-	//TArray<FFuncArg> Arguments;
+	FArgType returnType;
+
 	SizeType numArguments;
 	FFuncArg* Arguments;
 
-	bool bStatic : 1;
 	EFunctionFlags flags;
+	FPropertyMeta* meta;
 	FFunction* next;
 };
 
@@ -166,14 +193,29 @@ public:
 	inline SizeType Size() const { return size; }
 	inline uint32 NumProperties() const { return numProperties; }
 	inline const FProperty* GetPropertyList() const { return PropertyList; }
-	inline bool IsClass() const { return bIsClass; }
+	inline bool IsClass() const { return flags & CTAG_CLASS; }
+
+	inline FStruct* GetBaseStruct() const { return baseType; }
+
+	inline uint Flags() const { return flags; }
+	inline bool HasFlag(uint f) const { return (flags & f); }
 
 	const FProperty* GetProperty(const FString& name) const;
 
+	// returns a pointer to the default object of this struct. 
+	// For classes, this is the CDO.
+	void* GetDefaultObject();
+
+public:
+	std::function<void(void*)> constructor;
+
 protected:
+	FStruct* baseType;
+	void* defaultObject;
+
 	SizeType size;
 
-	bool bIsClass;
+	uint flags;
 
 	uint32 numProperties;
 	const FProperty* PropertyList;
@@ -185,7 +227,8 @@ protected:
 class ENGINE_API FClass : public FStruct
 {
 public:
-	virtual CObject* Instantiate() = 0;
+	// this is no longer used. and will be removed in the future.
+	virtual CObject* Instantiate() { return nullptr; }
 
 public:
 	inline uint32 NumFunctions() const { return numFunctions; }
@@ -194,10 +237,9 @@ public:
 	const FProperty* GetProperty(const FString& name) const;
 	const FFunction* GetFunction(const FString& name) const;
 
-	inline uint Flags() const { return flags; }
-	inline bool HasFlag(uint f) const { return (flags & f); }
+	inline FClass* GetBaseClass() const { return (FClass*)baseType; }
 
-	inline FClass* GetBaseClass() const { return BaseClass; }
+	CObject* GetDefaultObject();
 
 	bool HasTag(const FString& tag);
 	FString TagValue(const FString& key);
@@ -205,12 +247,8 @@ public:
 	bool CanCast(FClass* castTo);
 
 protected:
-	FClass* BaseClass = nullptr;
-
 	uint32 numFunctions;
 	const FFunction* FunctionList;
-
-	uint flags;
 
 	uint32 numTags;
 	TPair<FString, FString>* tags;
@@ -219,18 +257,10 @@ protected:
 class ENGINE_API FAssetClass : public FClass
 {
 public:
-	inline const FString& GetExtension() const { return extension; }
 	inline uint AssetFlags() const { return assetFlags; }
 
-	inline const FString& ImportableAs() const { return importableAs; }
-
 protected:
-	FString extension;
 	uint assetFlags;
-
-	// List of file types that this asset can be convert from. example: ".fbx;.png;.obj;..."
-	FString importableAs; 
-
 };
 
 template<class T>

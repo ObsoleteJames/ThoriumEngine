@@ -51,5 +51,6 @@
         <file>icons/wnd_console.svg</file>
 		<file>icons/wnd_contentbrowser.svg</file>
 		<file>icons/wnd_outliner.svg</file>
+		<file>icons/field_revert.svg</file>
     </qresource>
 </RCC>

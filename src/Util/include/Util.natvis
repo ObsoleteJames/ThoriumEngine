@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?> 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
-<Type Name="TVector&lt;*&gt;">
+<Type Name="TArray&lt;*&gt;">
     <DisplayString>{Size={_size}}</DisplayString>
     <Expand>
       <Item Name="Size">_size</Item>
@@ -11,7 +11,7 @@
       </ArrayItems>
     </Expand>
 </Type>
-<Type Name="TStringBase&lt;wchar_t,*&gt;">
+<Type Name="FString&lt;wchar_t,*&gt;">
   <DisplayString>{_data,su}</DisplayString>
   <StringView>_data,su</StringView>
 </Type>

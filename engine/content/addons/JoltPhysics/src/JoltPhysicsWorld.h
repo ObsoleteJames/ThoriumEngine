@@ -45,10 +45,12 @@ public:
 		return JPH::BroadPhaseLayer(inLayer);
 	}
 
+#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
 	virtual const char* GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const override
 	{
 		return BPNames[inLayer.GetValue()].c_str();
 	}
+#endif
 
 	FString BPNames[(int)EPhysicsLayer::END];
 };
