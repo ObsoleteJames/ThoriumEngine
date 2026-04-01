@@ -52,5 +52,12 @@
 		<file>icons/wnd_contentbrowser.svg</file>
 		<file>icons/wnd_outliner.svg</file>
 		<file>icons/field_revert.svg</file>
+		<file>icons/grid.png</file>
+		<file>icons/snap-to-grid.png</file>
+		<file>icons/angle-snap.png</file>
+		<file>icons/bounding-box.png</file>
+		<file>icons/select-overlay.png</file>
+		<file>icons/view-gizmos.png</file>
+		<file>icons/translate-worldspace.png</file>
     </qresource>
 </RCC>

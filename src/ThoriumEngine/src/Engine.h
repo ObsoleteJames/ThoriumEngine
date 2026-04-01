@@ -138,6 +138,8 @@ public:
 	inline double GetUpdateTime() const { return updateTime; }
 	inline double GetRenderTime() const { return renderTime; }
 
+	inline double GetRuntime() const { return runtime; }
+
 	inline double DeltaTime() const { return deltaTime; }
 
 	inline FString GetGameConfigPath() const { return activeGame.name + "/config"; }
@@ -179,6 +181,7 @@ protected:
 	double _time;
 	double _prevTime;
 	double deltaTime;
+	double runtime;
 
 	double updateTime;
 	double renderTime;

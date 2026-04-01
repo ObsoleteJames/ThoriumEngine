@@ -76,6 +76,8 @@ FString GetVariableType(const FString& typeName)
 		return "EVT_OBJECT_PTR";
 	if (typeName == "TArray")
 		return "EVT_ARRAY";
+	if (typeName == "TClassPtr")
+		return "EVT_CLASS_PTR";
 	if (typeName == "TMap" || typeName == "TUnorderedMap")
 		return "EVT_MAP";
 	if (typeName == "void")

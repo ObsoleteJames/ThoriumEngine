@@ -19,7 +19,7 @@ class ENGINE_API CGameMode : public CObject
 	friend class CGameInstance;
 
 public:
-	CGameMode() = default;
+	CGameMode();
 
 	virtual void Init();
 

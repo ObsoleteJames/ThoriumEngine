@@ -14,6 +14,8 @@
 
 #define CONSOLE_MAX 512
 
+bool gWriteLogFile = false;
+
 static std::mutex consoleMutex;
 
 #if CONSOLE_USE_ARRAY

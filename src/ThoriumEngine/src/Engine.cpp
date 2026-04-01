@@ -88,6 +88,7 @@ void CEngine::InitMinimal()
 	LoadMandatoryAddons();
 
 	CONSOLE_LogInfo("CEngine", "Initialization complete");
+	Events::OnEngineInit.Invoke();
 	bInitialized = true;
 }
 
@@ -278,7 +279,6 @@ int CEngine::Run()
 
 			gWorld->renderScene->SetScreenPercentage(cvRenderScreenPercentage.AsFloat());
 			gWorld->renderScene->SetFrameBuffer(gameWindow->swapChain->GetFrameBuffer());
-			//gWorld->renderScene->SetDepthBuffer(gameWindow->swapChain->GetDepthBuffer());
 
 			gWorld->Render();
 			gRenderer->PushScene(gWorld->renderScene);
@@ -301,6 +301,7 @@ int CEngine::Run()
 
 		dtTimer.Stop();
 		deltaTime = dtTimer.GetSeconds();
+		runtime += deltaTime;
 
 		if ((gameWindow && gameWindow->WantsToClose()) || bWantsToExit)
 			gIsRunning = false;
@@ -617,11 +618,13 @@ void CEngine::OnExit()
 	CFileSystem::UnmountMod(engineMod);
 
 	CAssetManager::Shutdown();
-	CModuleManager::Cleanup();
-
 	CObjectManager::Shutdown();
 
-	SaveConsoleLog();
+	CModuleManager::Cleanup();
+
+	if (gWriteLogFile)
+		SaveConsoleLog();
+
 	CConsole::Shutdown();
 }
 

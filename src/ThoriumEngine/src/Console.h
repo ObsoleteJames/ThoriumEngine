@@ -6,6 +6,8 @@
 
 #define CONSOLE_USE_ARRAY 1
 
+extern ENGINE_API bool gWriteLogFile;
+
 enum EConsoleMsgType
 {
 	CONSOLE_PLAIN,

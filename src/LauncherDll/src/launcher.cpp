@@ -17,6 +17,9 @@ extern "C" __attribute__((visibility("default"))) int Launch(const char* cmdLine
 	if (FCommandLine::HasParam("-dedicated"))
 		bDedicated = true;
 
+	if (FCommandLine::HasParam("-writelog"))
+		gWriteLogFile = true;
+
 	gEngine = new CEngine();
 
 	try 

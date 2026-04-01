@@ -11,10 +11,14 @@
 
 #include "Game/Entities/PlayerStart.h"
 
-void CGameMode::Init()
+CGameMode::CGameMode()
 {
 	playerControllerClass = CPlayerController::StaticClass();
 	defaultPawnClass = CPawn::StaticClass();
+}
+
+void CGameMode::Init()
+{
 }
 
 void CGameMode::OnStart()

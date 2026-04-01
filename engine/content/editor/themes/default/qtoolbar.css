@@ -6,7 +6,7 @@ QToolBar
 	border: 0px;
 	padding: 2px;
 	spacing: 8px;
-	min-height: 32px;
+	min-height: 12;
 }
 
 QToolBar QLabel 
@@ -69,7 +69,7 @@ QToolBar#WidgetHeaderToolbar
 QToolBar::handle:vertical
 {
     background: #151515;
-	margin: 3px 1px;
+	margin: 0px 0px;
 	width: 4px;
 	height: 4px;
 	border-radius: 2px;
@@ -77,18 +77,29 @@ QToolBar::handle:vertical
 
 QToolBar::handle:horizontal
 {
-    background: #151515;
-	margin: 1px 3px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #151515, stop:1 #2f2f2f);
+	margin: 0px 3px;
 	width: 2px;
 }
 
-QToolBar::separator
+QToolBar::separator:horizontal
 {
-    background: #151515;
+    background: #181818;
 
-	width: 2px;
-	height: 2px;
+	width: 1px;
+	height: 1px;
+	margin: 4px 0px;
 }
+
+QToolBar::separator:vertical
+{
+    background: #181818;
+
+	width: 1px;
+	height: 1px;
+	margin: 0px 4px;
+}
+
 
 QToolBar LineEdit
 {
@@ -102,8 +113,11 @@ QToolButton
 	background: transparent;
 	color: white;
 	border-radius: 3px;
-	min-width: 24;
-	min-height: 24;
+	min-width: 16;
+	min-height: 16;
+	max-width: 24;
+	max-height: 24;
+	border: 1px solid transparent;
 }
 
 QToolButton:hover
@@ -115,6 +129,7 @@ QToolButton:hover
 QToolButton:checked
 {
 	padding: 0;
-    background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0, y2:1, stop:1 #1C2C35, stop:0 #2a5f7d);
 	background: #2a5f7d;
+    background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0, y2:1, stop:1 #1C2C35, stop:0 #2a5f7d);
+	border: 1px solid #3E5D70;
 }

@@ -6,6 +6,8 @@
 class ENGINE_API Events
 {
 public:
+	static TDelegate<> OnEngineInit;
+
 	static TDelegate<> OnUpdate;
 	static TDelegate<> PostUpdate;
 
