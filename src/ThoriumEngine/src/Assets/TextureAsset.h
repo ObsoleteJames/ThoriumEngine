@@ -77,6 +77,8 @@ public:
 private:
 	uint8 GetFileVersion() const override;
 
+	void streamingUpdateMipLevel(int mip);
+
 	bool IsLoaded(uint8 lod) const override;
 
 protected:

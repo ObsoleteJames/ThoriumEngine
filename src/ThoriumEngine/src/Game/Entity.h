@@ -8,6 +8,7 @@
 #include "Math/Bounds.h"
 #include "Game/Components/SceneComponent.h"
 #include "Object/ObjectHandle.h"
+#include "Rendering/RenderLayer.h"
 #include "Entity.generated.h"
 
 class CEntityComponent;
@@ -17,7 +18,7 @@ class CEntity;
 ENUM()
 enum EEntityType
 {
-	ENTITY_STATIC = 1	META(Name = "Static"),
+	ENTITY_STATIC = 1	META(Name = "Static"), // does not update during gameplay
 	ENTITY_DYNAMIC		META(Name = "Dynamic")
 };
 
@@ -82,15 +83,22 @@ public:
 	}
 
 	template<typename T>
+	inline T* GetComponent(SizeType id)
+	{
+		static_assert(std::is_base_of<CEntityComponent, T>::value);
+		return Cast<T>(GetComponent(id));
+	}
+
+	template<typename T>
 	void GetComponents(TArray<T*>& arr)
 	{
 		arr.Clear();
 		for (auto& comp : components)
 			if (comp.second->GetClass() == T::StaticClass())
-				arr.Add(comp);
+				arr.Add(comp.second);
 	}
 
-	inline const TMap<SizeType, TObjectPtr<CEntityComponent>>& GetAllComponents() const { return components; }
+	inline const TUnorderedMap<SizeType, TObjectPtr<CEntityComponent>>& GetAllComponents() const { return components; }
 
 	CEntityComponent* AddComponent(FClass* type, const FString& name);
 	CEntityComponent* GetComponent(FClass* type, const FString& name = "");
@@ -105,6 +113,7 @@ public:
 	inline CSceneComponent* RootComponent() const { return rootComponent; }
 
 	inline SizeType EntityId() const { return entityId; }
+	void SetEntityId(SizeType id);
 
 	FUNCTION()
 	inline void SetWorldPosition(const FVector& p) { rootComponent->SetWorldPosition(p); }
@@ -129,7 +138,12 @@ public:
 	inline const FOutputBinding& GetOutput(SizeType index) const { return boundOutputs[index]; }
 	FOutputBinding& AddOutput();
 
-	FBounds GetBounds();
+	FBounds GetBounds() const;
+
+	inline EEntityType GetType() const { return type; }
+
+	void MakeStatic();
+	void MakeDynamic();
 
 private:
 	FUNCTION(Output, Name = "OnStart")
@@ -145,12 +159,12 @@ private:
 	FUNCTION(Name = "Disable")
 	inline void inputDisable() { bIsEnabled = false; }
 
-	FUNCTION(Name = "SetHealth")
-	inline void inputSetHealth(float health) { this->health = health; }
+	/*FUNCTION(Name = "SetHealth")
+	inline void inputSetHealth(float health) { this->health = health; }*/
 
 public:
-	virtual void Serialize(FMemStream& out);
-	virtual void Load(FMemStream& in);
+	void Serialize(FMemStream& out, const FSerializeSettings& settings) override;
+	void Load(FMemStream& in) override;
 
 protected:
 	// Called when entity is created.
@@ -167,6 +181,9 @@ protected:
 
 	void FireOutput(const FString& output);
 
+private:
+	void DoUpdate(double dt);
+
 public:
 	PROPERTY(Editable, Category = Rendering)
 	bool bIsVisible = true;
@@ -175,42 +192,46 @@ public:
 	bool bIsEnabled = true;
 
 	PROPERTY(Editable, Category = Rendering)
-	bool bOwnerOnlySee;
+	bool bOwnerOnlySee = false;
 
 	PROPERTY(Editable, Category = Rendering)
-	bool bOwnerCantSee;
+	bool bOwnerCantSee = false;
 
 #if INCLUDE_EDITOR_DATA
 	// Wether this entity should only be loaded in the editor.
 	PROPERTY(Editable)
-	bool bEditorOnly;
+	bool bEditorOnly = false;
 
 	// Wether this entity was created by the editor.
 	// if true, this entity will not be serialized and will only be visible in the editor.
-	bool bEditorEntity;
+	bool bEditorEntity = false;
 #endif
 
-	PROPERTY(Editable)
-	EEntityType type = ENTITY_DYNAMIC;
+	// ---- DEPRICATED ----
+	// PROPERTY(Editable , Category = Health)
+	// bool bCanBeDamaged = false;
 
-	PROPERTY(Editable , Category = Health)
-	bool bCanBeDamaged = false;
-
-	PROPERTY(Editable, Category = Health)
-	float health;
+	// PROPERTY(Editable, Category = Health)
+	// float health = 100.0f;
 
 protected:
-	CWorld* world;
-	TObjectPtr<CSceneComponent> rootComponent;
-
 	FGuid entityId;
 
+	PROPERTY()
+	EEntityType type = ENTITY_DYNAMIC;
+
+	// set this to true in the constructor to enable the Update function.
+	bool bRequireUpdate = false;
+
 private:
+	CWorld* world = nullptr;
+	TObjectPtr<CSceneComponent> rootComponent;
+
 	PROPERTY()
 	TArray<FOutputBinding> boundOutputs;
 
-	TMap<SizeType, TObjectPtr<CEntityComponent>> components;
+	TUnorderedMap<SizeType, TObjectPtr<CEntityComponent>> components;
 
-	bool bIsInitialized;
+	bool bIsInitialized = false;
 
 };

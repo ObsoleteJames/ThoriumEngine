@@ -5,6 +5,7 @@
 #include "AssetManager.h"
 #include "Asset.generated.h"
 
+#define CASSET_VERSION_GENERIC_TYPE 0xFF
 #define CASSET_VERSION 0x01
 
 struct FAssetHeader
@@ -46,8 +47,11 @@ public:
 	inline uint8 Version() const { return version; }
 	inline uint8 AssetVersion() const { return assetVersion; }
 
+	inline bool IsDirty() const { return bDirty || !file; }
+	inline void MarkAsDirty(bool value = true) { bDirty = value; }
+
 public:
-	void Serialize(FMemStream& out) final;
+	void Serialize(FMemStream& out, const FSerializeSettings& settings) final;
 	void Load(FMemStream& in) final;
 
 protected:
@@ -65,6 +69,7 @@ protected:
 protected:
 	bool bInitialized : 1;
 	bool bRegistered : 1;
+	bool bDirty : 1;
 	
 	SizeType checksum;
 	SizeType assetId;

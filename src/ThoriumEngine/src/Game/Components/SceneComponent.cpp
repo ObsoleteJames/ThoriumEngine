@@ -162,3 +162,14 @@ void CSceneComponent::OnDelete()
 	if (parent)
 		Detach();
 }
+
+void CSceneComponent::Load(FMemStream& stream)
+{
+	BaseClass::Load(stream);
+
+	if (parent)
+	{
+		if (parent->children.Find(this) == parent->children.end())
+			parent->children.Add(this);
+	}
+}

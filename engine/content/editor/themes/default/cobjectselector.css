@@ -1,0 +1,28 @@
+
+CObjectSelectorWidget,
+CClassSelectorWidget
+{
+	color: #ccc;
+	background-color: #111;
+  
+	height: 20px;
+	padding-left: 6px;
+  
+	border-radius: 3px;
+	border: 1px solid #333;
+
+	text-align: left;
+}
+
+CObjectSelectorWidget:hover,
+CClassSelectorWidget:hover
+{
+	border-color: #555;
+}
+
+CObjectSelectorWidget:disabled,
+CClassSelectorWidget:disabled
+{
+	color: #555;
+	border-color: #222;
+}

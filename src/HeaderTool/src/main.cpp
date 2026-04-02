@@ -4,6 +4,8 @@
 #include <string>
 #include <Util/KeyValue.h>
 #include "CppParser.h"
+#include "Token.h"
+#include "TokenParser.h"
 
 #if _WIN32
 #include <windows.h>
@@ -96,6 +98,8 @@ int main(int argc, char** argv)
 
 	// Args.Erase(Args.begin());
 
+	int test = 0;
+
 	if (argc > 1)
 	{
 		targetPath = argv[1];
@@ -139,6 +143,16 @@ int main(int argc, char** argv)
 		if (arg == "-target" && i + 1 < argc)
 		{
 			projectName = argv[i + 1];
+			continue;
+		}
+		if (arg == "-test1")
+		{
+			test = 1;
+			continue;
+		}
+		if (arg == "-test2")
+		{
+			test = 2;
 			continue;
 		}
 	}
@@ -258,13 +272,12 @@ int main(int argc, char** argv)
 #endif
 
 		FKeyValue kv(targetPath + "/addon.cfg");
-		if (!kv.IsOpen())
+		if (kv.IsOpen())
 		{
-			std::cerr << "error: failed to open addon config!";
-			return 1;
+			projectName = *kv.GetValue("identity");
 		}
-
-		projectName = *kv.GetValue("identity");
+		else
+			std::cout << "warning: failed to open addon config!\n";
 
 		CParser::LoadModuleData(enginePath + "/build/include/engine");
 	}
@@ -293,17 +306,63 @@ int main(int argc, char** argv)
 			header.FileName = entry.path().stem().generic_string();
 			header.FilePath = entry.path().generic_string();
 
-			CParser::ParseHeader(header);
+			if (CTokenParser::ParseHeader(header) > 0)
+			{
+				std::cout << "Failed to parse header: " << header.FilePath.c_str() << std::endl;
+				continue;
+			}
 
 			if (!header.bEmpty)
 				Headers.Add(header);
 		}
 	}
-	catch (std::exception& e) { std::cerr << "error: " << e.what() << "\n"; }
+	catch (std::exception& e) { std::cerr << "warning: " << e.what() << "\n"; }
+
+	if (test == 1)
+	{
+		CTokenizer tokenizer;
+		std::vector<FToken> tokens;
+		if (!tokenizer.ParseFile(Headers[0].FilePath.c_str(), tokens))
+		{
+			std::cout << "Failed to parse file: " << Headers[0].FilePath.c_str() << std::endl;
+			return 0;
+		}
+
+		std::cout << "Recreated source code from tokens:\n";
+		int curLine = 0;
+		for (auto& t : tokens)
+		{
+			//std::cout << CTokenizer::TokenTypeToString(t.type) << ": '" << t.text.c_str() << "'\n";
+			if (curLine != t.line)
+			{
+				curLine = t.line;
+				std::cout << std::endl;
+			}
+
+			std::cout << t.text.c_str() << " ";
+		}
+
+		std::cout << "Tokens (" << tokens.size() << "):\n";
+		for (auto& t : tokens)
+			std::cout << "\t" << CTokenizer::TokenTypeToString(t.type) << ": '" << t.text.c_str() << "'\n";
+
+		return 0;
+	}
+
+	if (test == 2)
+	{
+		Headers[0].classes.Clear();
+		Headers[0].enums.Clear();
+		CTokenParser::ParseHeader(Headers[0]);
+
+		std::cout << Headers[0].classes.Size() << " class(es) found\n";
+	}
 
 	for (auto& h : Headers)
 	{
-		if (!bIgnoreTime && CParser::HeaderUpToDate(h))
+		bool bExist = std::filesystem::exists((GeneratedOutput + "/" + h.FileName + ".generated.h").c_str()) && std::filesystem::exists((GeneratedOutput + "/" + h.FileName + ".generated.cpp").c_str());
+
+		if (!bIgnoreTime && bExist && CParser::HeaderUpToDate(h))
 			continue;
 
 		CParser::WriteGeneratedHeader(h);

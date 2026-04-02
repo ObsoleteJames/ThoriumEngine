@@ -1,0 +1,135 @@
+
+QToolBar 
+{
+	background-color: #242424;
+    color: #888;
+	border: 0px;
+	padding: 2px;
+	spacing: 8px;
+	min-height: 12;
+}
+
+QToolBar QLabel 
+{
+	margin: 1px;
+	color: #ddd;
+}
+
+/* QToolBar QPushButton 
+{
+	padding: 0px; 
+	margin: 0px; 
+}
+
+QToolBar QToolButton, QToolBar QPushButton
+{
+	background-color: transparent;
+	margin : 0px;
+	padding: 2px;
+	border: 0px;
+	border-radius: 4px;
+	color: #ddd;
+}
+
+QToolBar QToolButton[popupMode="1"] 
+{ 
+	padding-right: 8px; 
+}
+
+QToolBar QComboBox::drop-down 
+{
+	border-width: 0px;
+	width: 0px;
+} 
+
+QToolBar QToolButton:checked, QToolBar QPushButton:checked
+{ 
+	background: #2a5f7d;
+	color: white;
+}
+
+QToolBar QToolButton:hover, QToolBar QPushButton:hover
+{ 
+	background: #306c8f;
+	color: white;
+}
+
+QToolBar QToolButton:pressed, QToolBar QPushButton:pressed
+{ 
+	background: white;
+	color: #2a5f7d;
+} */
+
+QToolBar#WidgetHeaderToolbar 
+{ 
+	border-top-right-radius: 5px;
+	border-top-left-radius: 5px;
+}
+
+QToolBar::handle:vertical
+{
+    background: #151515;
+	margin: 0px 0px;
+	width: 4px;
+	height: 4px;
+	border-radius: 2px;
+}
+
+QToolBar::handle:horizontal
+{
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #151515, stop:1 #2f2f2f);
+	margin: 0px 3px;
+	width: 2px;
+}
+
+QToolBar::separator:horizontal
+{
+    background: #181818;
+
+	width: 1px;
+	height: 1px;
+	margin: 4px 0px;
+}
+
+QToolBar::separator:vertical
+{
+    background: #181818;
+
+	width: 1px;
+	height: 1px;
+	margin: 0px 4px;
+}
+
+
+QToolBar LineEdit
+{
+	padding: 3px 5px;
+	border: 0px;
+	min-height: 18px;
+}
+
+QToolButton
+{
+	background: transparent;
+	color: white;
+	border-radius: 3px;
+	min-width: 16;
+	min-height: 16;
+	max-width: 24;
+	max-height: 24;
+	border: 1px solid transparent;
+}
+
+QToolButton:hover
+{
+	background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0, y2:1, stop:1 #2a2a2a, stop:0 #424242);
+
+}
+
+QToolButton:checked
+{
+	padding: 0;
+	background: #2a5f7d;
+    background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0, y2:1, stop:1 #1C2C35, stop:0 #2a5f7d);
+	border: 1px solid #3E5D70;
+}

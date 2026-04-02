@@ -1,6 +1,7 @@
 
 #include "ShaderParser.h"
 #include "Renderer.h"
+#include "GraphicsInterface.h"
 #include "Console.h"
 
 #include <Util/FStream.h>
@@ -231,13 +232,14 @@ void CShaderSource::OnSave(IBaseFStream* stream)
 void CShaderSource::OnDelete()
 {
 	BaseClass::OnDelete();
-	_shaders.Erase(_shaders.Find(this));
+	if (auto it = _shaders.Find(this); it != _shaders.end())
+		_shaders.Erase(it);
 }
 
 bool CShaderSource::Compile()
 {
 	FShaderSourceFile shader;
-	bool result = ParseShaderSourceFile(file->GetSdkPath(), shader);
+	bool result = ParseShaderSourceFile(file->GetSdkPath(".hlsl"), shader);
 	THORIUM_ASSERT(result, FString("Failed to parse shader file '") + ToFString(file->Path()) + "'!");
 	
 	bHasVS = 0;
@@ -254,11 +256,13 @@ bool CShaderSource::Compile()
 		SizeType size;
 
 		if (sh.Key & ShaderType_Vertex)
-			gRenderer->CompileShader(shader.global + sh.Value, IShader::VFX_VS, &data, &size);
+			gGHI->CompileShader(shader.global + sh.Value, IShader::VFX_VS, &data, &size);
+		if (sh.Key & ShaderType_VertexSkinned)
+			gGHI->CompileShader(shader.global + sh.Value, IShader::VFX_VS, &data, &size);
 		if (sh.Key & ShaderType_Fragment)
-			gRenderer->CompileShader(shader.global + sh.Value, IShader::VFX_PS, &data, &size);
+			gGHI->CompileShader(shader.global + sh.Value, IShader::VFX_PS, &data, &size);
 		if (sh.Key & ShaderType_Geometry)
-			gRenderer->CompileShader(shader.global + sh.Value, IShader::VFX_GEO, &data, &size);
+			gGHI->CompileShader(shader.global + sh.Value, IShader::VFX_GEO, &data, &size);
 
 		THORIUM_ASSERT(data, "Failed to compile shader!");
 
@@ -373,7 +377,7 @@ bool CShaderSource::Compile()
 
 void CShaderSource::LoadShaderObjects()
 {
-	if (!gRenderer || !bCompiled)
+	if (!gGHI || !bCompiled)
 		return;
 
 	//if (bHasVS && !vsShader)
@@ -385,7 +389,7 @@ void CShaderSource::LoadShaderObjects()
 	{
 		FString shaderName = GetShaderName((EShaderType)sh.Key);
 		FString p = file->Mod()->Path() + "/"  + file->Dir()->GetPath() + "/vfx/" + file->Name() + ".thcs." + shaderName;
-		sh.Value = gRenderer->LoadShader(this, (EShaderType)sh.Key, p);
+		sh.Value = gGHI->LoadShader(this, (EShaderType)sh.Key, p);
 	}
 }
 
@@ -401,7 +405,7 @@ CShaderSource* CShaderSource::GetShaderSource(const FString& name)
 IShader* CShaderSource::GetShader(EShaderType_ in)
 {
 	int pass = (int)in & (ShaderType_DeferredPass | ShaderType_ForwardPass);
-	int type = (int)in & (ShaderType_Fragment | ShaderType_Vertex | ShaderType_Geometry);
+	int type = (int)in & (ShaderType_Fragment | ShaderType_Vertex | ShaderType_Geometry | ShaderType_VertexSkinned);
 
 	for (auto& sh : shaders)
 	{
@@ -417,6 +421,8 @@ FString CShaderSource::GetShaderName(EShaderType_ type)
 
 	if (type & ShaderType_Vertex)
 		shaderName = "vs";
+	if (type & ShaderType_VertexSkinned)
+		shaderName = "vs.skinned";
 	if (type & ShaderType_Fragment)
 		shaderName = "ps";
 	if (type & ShaderType_Geometry)

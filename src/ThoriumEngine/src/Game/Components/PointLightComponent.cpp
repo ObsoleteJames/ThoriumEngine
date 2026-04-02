@@ -21,7 +21,7 @@ void CPointLightComponent::Init()
 			bEnabled = lightComp->IsVisible();
 			bCastShadows = lightComp->bCastShadows;
 
-			bakingMode = CLightProxy::BAKE_NONE;
+			bakingMode = lightComp->bakingMode;
 
 			position = lightComp->GetWorldPosition();
 			color = lightComp->color;

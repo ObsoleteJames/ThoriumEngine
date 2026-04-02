@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="64"
+   height="64"
+   viewBox="0 0 16.933333 16.933334"
+   version="1.1"
+   id="svg938"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   sodipodi:docname="consoleInfo.svg"
+   inkscape:export-filename="F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\editor\themes\default\icons\consoleInfo24.png"
+   inkscape:export-xdpi="36"
+   inkscape:export-ydpi="36"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview940"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     units="px"
+     inkscape:zoom="8"
+     inkscape:cx="23.0625"
+     inkscape:cy="31"
+     inkscape:window-width="2560"
+     inkscape:window-height="1372"
+     inkscape:window-x="1916"
+     inkscape:window-y="-4"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs935" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       id="rect1006"
+       style="fill:#e5e5e5;stroke-width:2.67319;paint-order:markers fill stroke"
+       d="M 1.4278198,0.57543262 C 0.86479699,0.5754326 0.41186115,1.0283685 0.41186115,1.5913913 v 9.6087157 c 0,0.563022 0.45293584,1.016475 1.01595865,1.016475 h 8.2780477 l 6.0647455,4.07417 c 0.333026,0.192547 0.74966,-0.04733 0.750342,-0.432015 v -4.632792 c 2.16e-4,-0.0087 5.17e-4,-0.01713 5.17e-4,-0.02584 V 1.5913913 c 0,-0.5630228 -0.452936,-1.01595868 -1.015959,-1.01595868 z M 2.5331787,3.0600355 H 14.400154 c 0.308112,0 0.556039,0.2479268 0.556039,0.5560383 v 5.167e-4 c 0,0.3081118 -0.247927,0.5560385 -0.556039,0.5560385 H 2.5331787 c -0.3081117,0 -0.5560384,-0.2479267 -0.5560384,-0.5560385 v -5.167e-4 c 0,-0.3081115 0.2479267,-0.5560383 0.5560384,-0.5560383 z m 0,2.9465899 H 14.400154 c 0.308112,0 0.556039,0.2479268 0.556039,0.5560386 v 5.167e-4 c 0,0.3081118 -0.247927,0.5560385 -0.556039,0.5560385 H 2.5331787 c -0.3081117,0 -0.5560384,-0.2479267 -0.5560384,-0.5560385 V 6.562664 c 0,-0.3081118 0.2479267,-0.5560383 0.5560384,-0.5560386 z m 0,2.8530561 H 14.400154 c 0.308112,0 0.556039,0.2479265 0.556039,0.5560382 v 5.168e-4 c 0,0.3081118 -0.247927,0.5560385 -0.556039,0.5560385 H 2.5331787 c -0.3081117,0 -0.5560384,-0.2479267 -0.5560384,-0.5560385 v -5.168e-4 c 0,-0.3081117 0.2479267,-0.5560382 0.5560384,-0.5560382 z"
+       sodipodi:nodetypes="ssssccccssssssssssssscssssssscsssssssss" />
+  </g>
+</svg>

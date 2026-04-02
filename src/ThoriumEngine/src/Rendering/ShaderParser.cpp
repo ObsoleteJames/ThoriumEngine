@@ -92,6 +92,14 @@ bool ParseShaderSourceFile(const FString& file, FShaderSourceFile& out)
 					value.Clear();
 					continue;
 				}
+				if (prevValue == "VS_SKINNED")
+				{
+					curBlock = EShaderBlock_VERTEX;
+					out.shaders.Add({ ShaderType_VertexSkinned | ShaderType_DeferredPass | ShaderType_ForwardPass });
+					curMode = 0;
+					value.Clear();
+					continue;
+				}
 				if (prevValue == "VS_FORWARD")
 				{
 					curBlock = EShaderBlock_VERTEX;
@@ -104,6 +112,22 @@ bool ParseShaderSourceFile(const FString& file, FShaderSourceFile& out)
 				{
 					curBlock = EShaderBlock_VERTEX;
 					out.shaders.Add({ ShaderType_Vertex | ShaderType_DeferredPass });
+					curMode = 0;
+					value.Clear();
+					continue;
+				}
+				if (prevValue == "VS_SKINNED_FORWARD")
+				{
+					curBlock = EShaderBlock_VERTEX;
+					out.shaders.Add({ ShaderType_VertexSkinned | ShaderType_ForwardPass });
+					curMode = 0;
+					value.Clear();
+					continue;
+				}
+				if (prevValue == "VS_SKINNED_DEFERRED")
+				{
+					curBlock = EShaderBlock_VERTEX;
+					out.shaders.Add({ ShaderType_VertexSkinned | ShaderType_DeferredPass });
 					curMode = 0;
 					value.Clear();
 					continue;

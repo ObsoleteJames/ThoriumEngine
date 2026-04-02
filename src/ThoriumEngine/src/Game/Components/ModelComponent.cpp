@@ -6,6 +6,8 @@
 #include "Physics/PhysicsBody.h"
 #include "Physics/PhysicsWorld.h"
 #include "Assets/Skeleton.h"
+#include "Assets/Animation.h"
+#include "Game/Animation/AnimationProxy.h"
 
 class CModelComponentProxy : public CPrimitiveProxy
 {
@@ -28,10 +30,14 @@ public:
 		CRenderScene* scene = Cast<CModelComponent>(owner)->GetWorld()->GetRenderScene();
 		CCameraProxy* camera = scene ? scene->GetPrimaryCamera() : nullptr;
 
+		lightmapInfo = model->lightmapInfo;
+
 		float distanceFromCamera = FVector::Distance(camera ? camera->position : FVector(), model->GetWorldPosition());
 		//float distanceFromCamera = 0;
 		int lodLevel = model->GetModel()->GetLodFromDistance(distanceFromCamera);
-		model->GetModel()->Load(lodLevel);
+
+		if (model->GetModel()->File())
+			model->GetModel()->Load(lodLevel);
 
 		transform.position = model->GetWorldPosition();
 		transform.rotation = model->GetWorldRotation();
@@ -57,12 +63,41 @@ public:
 		}
 	}
 
-	void GetDynamicMeshes(FMeshBuilder& out) override
+	void GetSkinnedMeshes(FMeshBuilder& out) override
 	{
 		for (auto& m : meshes)
 		{
+			if (!m.bSkinnedMesh)
+				continue;
+
 			TObjectPtr<CMaterial> mat = (m.materialIndex < materials.Size() && materials[m.materialIndex]) ? materials[m.materialIndex] : CAssetManager::GetAsset<CMaterial>("materials/error.thasset");
-			out.DrawMesh(m, mat, matrix, skeletonMatrices);
+			out.DrawSkinnedMesh(m, mat, matrix, skeletonMatrices);
+		}
+	}
+
+	void GetStaticMeshes(FMeshBuilder& out) override
+	{
+		for (int i = 0; i < meshes.Size(); i++)
+		{
+			auto& m = meshes[i];
+			if (m.bSkinnedMesh)
+				continue;
+
+			FLightmapInfo* lightmap = nullptr;
+			for (auto& l : lightmapInfo)
+			{
+				if (l.meshIndex == i)
+				{
+					lightmap = &l;
+					break;
+				}
+			}
+
+			TObjectPtr<CMaterial> mat = (m.materialIndex < materials.Size() && materials[m.materialIndex]) ? materials[m.materialIndex] : CAssetManager::GetAsset<CMaterial>("materials/error.thasset");
+			if (lightmap)
+				out.DrawMesh(m, mat, matrix, lightmap->lightmapIndex, lightmap->lightmapOffset, lightmap->lightmapScale);
+			else
+				out.DrawMesh(m, mat, matrix);
 		}
 	}
 
@@ -71,6 +106,7 @@ public:
 
 	TArray<TObjectPtr<CMaterial>> materials;
 	TArray<FMesh> meshes;
+	TArray<FLightmapInfo> lightmapInfo;
 	//FMatrix transform;
 	//TArray<FMatrix> skeletonMatrices;
 
@@ -145,7 +181,14 @@ void CModelComponent::SetModel(TObjectPtr<CModelAsset> m)
 
 void CModelComponent::SetAnimationGraph(CAnimationGraph* animGraph)
 {
+	animationType = MODEL_ANIMATE_ANIMGRAPH;
+	animationGraph = animGraph;
+}
 
+void CModelComponent::SetAnimation(CAnimation* anim)
+{
+	animationType = MODEL_ANIMATE_ANIMATION;
+	animationAsset = anim;
 }
 
 void CModelComponent::CalculateSkeletonMatrix()
@@ -236,6 +279,7 @@ void CModelComponent::Init()
 void CModelComponent::OnStart()
 {
 	SetupPhysics();
+	ResetAnimation();
 }
 
 void CModelComponent::OnDelete()
@@ -247,6 +291,9 @@ void CModelComponent::OnDelete()
 		delete renderProxy;
 		renderProxy = nullptr;
 	}
+
+	if (animProxy)
+		delete animProxy;
 
 	for (auto& p : physBodies)
 		p->Delete();
@@ -333,12 +380,33 @@ FTransform CModelComponent::GetBoneModelTransform(int bone) const
 	return r;
 }
 
+void CModelComponent::ResetAnimation()
+{
+	if (animProxy)
+		delete animProxy;
+	animProxy = nullptr;
+
+	if (animationType == MODEL_ANIMATE_ANIMATION && animationAsset)
+		animProxy = new CAnimationProxy(this, model, &skeleton, animationAsset);
+}
+
 void CModelComponent::Load(FMemStream& in)
 {
 	BaseClass::Load(in);
 
 	if (model)
 		SetModel(model);
+}
+
+void CModelComponent::Update(double dt)
+{
+	BaseClass::Update(dt);
+
+	if (animProxy)
+	{
+		animProxy->Update(dt);
+		UpdateSkeletonMatrix();
+	}
 }
 
 void CModelComponent::OnModelEdit()
@@ -357,7 +425,7 @@ void CModelComponent::SetupPhysics()
 			FPhysicsBodySettings bodySettings{};
 			bodySettings.component = this;
 			bodySettings.entity = GetEntity();
-			bodySettings.motionType = GetEntity()->type == ENTITY_STATIC ? PHBM_STATIC : (bStaticBody ? PHBM_KINEMATIC : PHBM_DYNAMIC);
+			bodySettings.motionType = GetEntity()->GetType() == ENTITY_STATIC ? PHBM_STATIC : (bStaticBody ? PHBM_KINEMATIC : PHBM_DYNAMIC);
 			if (bIsTrigger)
 				bodySettings.motionType = PHBM_STATIC;
 

@@ -12,19 +12,21 @@ class ENGINE_API CPrimitiveComponent : public CSceneComponent
 	GENERATED_BODY()
 
 public:
-	CPrimitiveComponent() = default;
+	CPrimitiveComponent();
 
 	void Update(double dt) override;
 
 	void SetVelocity(const FVector& v);
 	FVector GetVelocity();
 
-	inline bool IsKinematic() const { return GetEntity() ? (GetEntity()->type == ENTITY_DYNAMIC && bStaticBody) : bStaticBody; }
-	inline bool IsStatic() const { return GetEntity() ? GetEntity()->type == ENTITY_STATIC : bStaticBody; }
+	inline bool IsKinematic() const { return GetEntity() ? (GetEntity()->GetType() == ENTITY_DYNAMIC && bStaticBody) : bStaticBody; }
+	inline bool IsStatic() const { return GetEntity() ? GetEntity()->GetType() == ENTITY_STATIC : bStaticBody; }
 
 	void EnableCollision(bool bEnabled);
 
 	inline bool CollisionEnabled() const { return bEnableCollision; }
+
+	virtual CPrimitiveProxy* PrimitiveProxy() const { return nullptr; }
 
 protected:
 	virtual void UpdateWorldTransform();
@@ -54,6 +56,9 @@ public:
 
 	PROPERTY(Editable, Category = Physics, EditCondition = "bStaticBody")
 	bool bEnableGravity = true;
+
+	PROPERTY(Editable, Category = Rendering)
+	ERenderLayer renderLayer = R_LAYER_DEFAULT;
 
 protected:
 	TObjectPtr<IPhysicsBody> physicsBody;

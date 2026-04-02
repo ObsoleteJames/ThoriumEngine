@@ -21,6 +21,14 @@ TArray<T>::TArray(SizeType size) :  _data(nullptr)
 }
 
 template<typename T>
+TArray<T>::TArray(TArray<T>&& other) : _data(other._data), _size(other._size), _capacity(other._capacity)
+{
+	other._data = nullptr;
+	other._capacity = 0;
+	other._size = 0;
+}
+
+template<typename T>
 TArray<T>::TArray(const TArray<T>& other)
 {
 	Reserve(other._size > 1 ? other._size : 2);
@@ -58,6 +66,26 @@ TArray<T>::~TArray()
 }
 
 template<typename T>
+TArray<T>& TArray<T>::operator=(TArray<T>&& other)
+{
+	if (this != &other)
+	{
+		Clear();
+		free(_data);
+
+		this->_data = other._data;
+		this->_size = other._size;
+		this->_capacity = other._capacity;
+
+		other._data = 0;
+		other._capacity = 0;
+		other._size = 0;
+	}
+
+	return *this;
+}
+
+template<typename T>
 TArray<T>& TArray<T>::operator=(const TArray<T>& other)
 {
 	Clear();
@@ -81,6 +109,44 @@ TArray<T>& TArray<T>::operator=(const std::initializer_list<T>& list)
 	for (auto& obj : list)
 		this->Add(obj);
 
+	return *this;
+}
+
+template<typename T>
+TArray<T> TArray<T>::operator+(const TArray<T>& other) const
+{
+	TArray<T> r(*this);
+
+	SizeType offset = r.Size();
+	r.Reserve(r.Size() + other.Size());
+
+	for (SizeType i = 0; i < other._size; i++)
+	{
+		if constexpr (!std::is_pointer<T>::value && std::is_copy_constructible<T>::value)
+			new (&r._data[i + offset]) T(other._data[i]);
+		else
+			r._data[i + offset] = other[i];
+	}
+
+	r._size = offset + other.Size();
+	return r;
+}
+
+template<typename T>
+TArray<T>& TArray<T>::operator+=(const TArray<T>& other)
+{
+	SizeType offset = this->Size();
+	this->Reserve(offset + other.Size());
+
+	for (SizeType i = 0; i < other._size; i++)
+	{
+		if constexpr (!std::is_pointer<T>::value && std::is_copy_constructible<T>::value)
+			new (&_data[i + offset]) T(other._data[i]);
+		else
+			_data[i + offset] = other[i];
+	}
+
+	this->_size = offset + other.Size();
 	return *this;
 }
 
@@ -110,6 +176,29 @@ void TArray<T>::Add(const T& obj)
 		new (&_data[_size - 1]) T(obj);
 	else
 		*last() = obj;
+
+#if 1
+	// commented out sinse we use the copy constructor instead.
+	//_data[_size - 1] = obj;
+#else
+	memcpy((T*)last(), &obj, sizeof(T));
+#endif
+}
+
+template<typename T>
+void TArray<T>::Add(T&& obj)
+{
+	Reserve(_size + 1);
+	_size++;
+
+	//if (std::is_class<T>::value)
+	//	_data[_size - 1].T();
+
+	// Call the constructor on the newly added element.
+	if constexpr (!std::is_pointer<T>::value && std::is_move_constructible<T>::value)
+		new (&_data[_size - 1]) T(std::move(obj));
+	else
+		*last() = std::move(obj);
 
 #if 1
 	// commented out sinse we use the copy constructor instead.
@@ -168,8 +257,14 @@ void TArray<T>::Reserve(SizeType size, bool bCopy /*= true*/)
 	_data = (T*)malloc(_capacity * sizeof(T));
 	//_data = new T[_capacity]();
 
-	if (oldData && oldCap > 0 && bCopy)
-		memcpy(_data, oldData, oldCap * sizeof(T));
+	if (oldData && oldCap > 0 && _size > 0 && bCopy)
+	{
+		if constexpr (std::is_move_constructible<T>::value)
+			for (SizeType i = 0; i < _size; i++)
+				new (&_data[i]) T(std::move(oldData[i]));
+		else
+			memcpy(_data, oldData, _size * sizeof(T));
+	}
 	
 	if (oldData)
 		free(oldData);
@@ -183,8 +278,8 @@ void TArray<T>::Resize(SizeType size)
 
 	SizeType prevSize = _size;
 
+	Reserve(size);
 	_size = size;
-	Reserve(_size);
 
 	for (auto it = At(prevSize); it != end(); it++)
 		new (it.ptr) T(); // call the constructor for the newly added elements.
@@ -300,4 +395,40 @@ const TIterator<T> TArray<T>::Find(std::function<bool(const T& index)> check, Si
 			return TIterator<T>(&_data[i]);
 
 	return end();
+}
+
+template<typename T, typename T2>
+bool operator==(const TArray<T>& a, const TArray<T2>& b)
+{
+	if (a.Size() != b.Size())
+		return false;
+
+	if (a.Size() == 0)
+		return true;
+
+	for (SizeType i = 0; i < a.Size(); i++)
+	{
+		if (a[i] != b[i])
+			return false;
+	}
+
+	return true;
+}
+
+template<typename T, typename T2>
+bool operator!=(const TArray<T>& a, const TArray<T2>& b)
+{
+	if (a.Size() != b.Size())
+		return true;
+
+	if (a.Size() == 0)
+		return false;
+
+	for (SizeType i = 0; i < a.Size(); i++)
+	{
+		if (a[i] != b[i])
+			return true;
+	}
+
+	return false;
 }

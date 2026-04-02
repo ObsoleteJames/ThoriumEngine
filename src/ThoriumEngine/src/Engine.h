@@ -100,15 +100,20 @@ public:
 	void HotReloadModule(const FString& module);
 #endif
 
-	static FString OSGetEnginePath(const FString& version);
-	static FString OSGetDataPath();
-	static FString OSGetDocumentsPath();
+	//static FString OSGetEnginePath(const FString& version);
+	//static FString OSGetDataPath();
+	//static FString OSGetDocumentsPath();
 
-	static FString OpenFileDialog(const FString& filter = FString());
-	static FString SaveFileDialog(const FString& filter = FString());
-	static FString OpenFolderDialog();
+	//static FString OpenFileDialog(const FString& filter = FString());
+	//static TArray<FString> OpenFilesDialog(const FString& filter = FString()); // open multiple files
+	//static FString SaveFileDialog(const FString& filter = FString());
+	//static FString OpenFolderDialog();
 
-	static int ExecuteProgram(const FString& cmd, bool bWaitForExit = true);
+	//static int ExecuteProgram(const FString& cmd, bool bWaitForExit = true);
+
+	// quick hack to get a monitors size
+	// needs to be replaced with proper data structures at some point
+	static void GetMonitorSize(int monitor, int* w, int* h);
 
 public:
 	inline CWindow* GetGameWindow() const { return gameWindow; }
@@ -128,9 +133,12 @@ public:
 	CGameInstance* SetGameInstance(FClass* type);
 
 	void CreatePhysicsApi(FClass* type);
+	void CreateAudioInterface(FClass* type);
 
 	inline double GetUpdateTime() const { return updateTime; }
 	inline double GetRenderTime() const { return renderTime; }
+
+	inline double GetRuntime() const { return runtime; }
 
 	inline double DeltaTime() const { return deltaTime; }
 
@@ -173,6 +181,7 @@ protected:
 	double _time;
 	double _prevTime;
 	double deltaTime;
+	double runtime;
 
 	double updateTime;
 	double renderTime;

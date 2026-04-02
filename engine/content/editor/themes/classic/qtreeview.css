@@ -1,37 +1,69 @@
-
-QTreeView
+QTreeView 
 {
-    background: #3E4637;
-    border: 1px solid;
-    border-top-color: #282E22;
-    border-left-color: #282E22;
-    border-bottom-color: #808080;
-    border-right-color: #808080;
-
-    color: #aaa;
+    show-decoration-selected: 0;
+    padding: 0px;
+    color: #333333;
+    qproperty-indentation: 20;
     font-size: 12px;
+    background-color: #C0C0C0;
+    alternate-background-color: rgb(228, 228, 228);
+
+    outline: 0;
+    border: 0px indent #A0A0A0;
 }
 
 QTreeView::item 
 {
     padding: 2px 0px;
     padding-right: 5px;
+    outline: none;
 }
 
-QTreeView::item:hover 
+QTreeView::item:hover
 {
-    color: #ddd;
-    background-color: transparent;
+    color: #333333;
+    background-color: #838383;
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:1 #5BA5D5, stop:0 #5BA5D5);
 }
 
 QTreeView::item:selected
 {
-    color: #fff;
-    background-color:#91863C;
+    color: #333333;
+    background-color: #A0BCCF;
+    background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0, y2:1, stop:1 #5BA5D5, stop:0 #5BA5D5);
+    /* border-bottom: 1px solid #111; */
+    border-top: 1px solid #5BA5D5;
+    outline: none;
 }
 
-QHeaderView::section
+QTreeView::branch:open:has-children
 {
-    color: #BACCB9;
-    background: #4C5844;
+    image: url(":/icons/triangle-down.svg");
 }
+
+QTreeView::branch:closed:has-children
+{
+    image: url(":/icons/triangle-right.svg");
+}
+
+QTreeView::branch:selected
+{
+    /* background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0, y2:1, stop:1 #1C2C35, stop:0 #2a5f7d); */
+    /* border-bottom: 1px solid #111; */
+    border-top: 1px solid #5BA5D5;
+}
+
+/* 
+QTreeView::item QLineEdit
+{
+    background-color: transparent;
+    border: 0px;
+    font-size: 12px;
+}
+
+QTreeView::item QLineEdit:focus
+{
+    border: 0px solid #aaa;
+    background-color:rgba(49, 58, 75, 0.9);
+    color: white;
+} */

@@ -84,6 +84,10 @@ public:
 
 	FTransform GetBoneModelTransform(int bone) const;
 
+	// loads all materials present in the model asset.
+	// by default only the materials that are needed to render are loaded.
+	void LoadAllMaterials();
+
 public:
 	int GetLodFromDistance(float distance);
 
@@ -96,6 +100,7 @@ public:
 	inline const FLODGroup* GetLODs() const { return LODs; }
 	inline const TArray<FBodyGroup>& GetBodyGroups() const { return bodyGroups; }
 	inline const TArray<FMesh>& GetMeshes() const { return meshes; }
+	inline const TArray<FString>& GetMeshNames() const { return meshNames; }
 	inline const TArray<FMaterial>& GetMaterials() const { return materials; }
 	inline const TArray<FModelCollider>& GetColliders() const { return colliders; }
 	inline const TArray<TArray<FVector>>& GetConvexMeshes() const { return convexMeshes; }
@@ -125,6 +130,8 @@ protected:
 	TArray<FMesh> meshes;
 	TArray<FMaterial> materials;
 	FSkeleton skeleton;
+
+	TArray<FString> meshNames;
 
 	TArray<FMesh> collisionMeshes;
 	TArray<FMesh> complexCollisionMeshes;

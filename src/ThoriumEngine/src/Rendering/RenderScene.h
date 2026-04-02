@@ -12,6 +12,7 @@ class CCameraComponent;
 class CPrimitiveProxy;
 class CCameraProxy;
 class CPostProcessVolumeProxy;
+class CDebugRenderer;
 
 struct FPrimitiveHitInfo
 {
@@ -46,6 +47,7 @@ public:
 	inline void SetDepthBuffer(IDepthBuffer* depth) { }
 
 	inline void PushCommand(const FRenderCommand& cmd) { renderQueue.Add(cmd); }
+	inline const TArray<FRenderCommand>& GetRenderQueue() const { return renderQueue; }
 	
 	inline void RegisterPrimitive(CPrimitiveProxy* proxy) { primitives.Add(proxy); }
 	inline void UnregisterPrimitve(CPrimitiveProxy* proxy) { if (auto it = primitives.Find(proxy); it != primitives.end()) primitives.Erase(it); }
@@ -75,6 +77,9 @@ public:
 	inline const TArray<CCubeMapProxy*>& GetCubeMaps() const { return cubemaps; }
 	inline void SetCubeMaps(const TArray<CCubeMapProxy*>& arr) { cubemaps = arr; }
 
+	inline void SetLightmaps(const TArray<ITexture2D*>& arr) { lightmaps = arr; }
+	inline const TArray<ITexture2D*>& GetLightmaps() const { return lightmaps; }
+
 	inline void SetScreenPercentage(float f) { screenPercentage = f; }
 	inline float ScreenPercentage() const { return screenPercentage; }
 
@@ -85,6 +90,8 @@ public:
 
 	void ResizeBuffers(int width, int height);
 
+	inline CDebugRenderer* DebugRenderer() const { return debugRender; }
+
 private:
 	TArray<FRenderCommand> renderQueue;
 
@@ -94,11 +101,7 @@ private:
 	TArray<CPostProcessVolumeProxy*> ppVolumes;
 	TArray<CCubeMapProxy*> cubemaps;
 
-	// the position of the primary camera that was used for rendering the sun light shadow map,
-	FVector sunLightCamPos;
-	FVector sunLightCamDir;
-
-	//TArray<CTexture*> lightmaps;
+	TArray<ITexture2D*> lightmaps;
 
 	CCameraProxy* primaryCamera = nullptr;
 
@@ -107,6 +110,15 @@ private:
 	float screenPercentage = 100.f;
 
 	int bufferWidth, bufferHeight;
+
+	CDebugRenderer* debugRender;
+
+public:
+	// the position of the primary camera that was used for rendering the sun light shadow map,
+	FVector sunLightCamPos;
+	FVector sunLightCamDir;
+
+public:
 	IFrameBuffer* colorBuffer; // float16 output buffer
 	IFrameBuffer* GBufferA; // Normal
 	IFrameBuffer* GBufferB; // Material (red = metallic, green = roughness, blue = ao, alpha = specular)

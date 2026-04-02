@@ -7,7 +7,7 @@
 #include "Rendering/Renderer.h"
 #include "Material.generated.h"
 
-class IShaderBuffer;
+//class IShaderBuffer;
 struct FColor;
 
 enum EPreferredRenderPass
@@ -97,7 +97,9 @@ public:
 	inline IShader* GetPsShader(EShaderType_ pass) { return shader->GetShader(ShaderType_Fragment | pass); }
 	inline IShader* GetGeoShader(EShaderType_ pass) { return shader->GetShader(ShaderType_Geometry | pass); }
 
-	inline IShaderBuffer* GetGpuBuffer() const { return gpuBuffer; }
+	inline IShader* GetShader(EShaderType_ type) { return shader->GetShader(type); }
+
+	inline IGBuffer* GetGpuBuffer() const { return gpuBuffer; }
 
 	inline bool DoDepthTest() const { return bDepthTest; }
 	inline void EnableDepthTest(bool b) { bDepthTest = b; }
@@ -129,8 +131,8 @@ protected:
 	TArray<MatTexture> textures;
 	TArray<MatProperty> properties;
 
-	TObjectPtr<CShaderSource> shader;
+	CShaderSource* shader;
 
 	// Buffer for shader properties
-	TObjectPtr<IShaderBuffer> gpuBuffer;
+	TObjectPtr<IGBuffer> gpuBuffer;
 };

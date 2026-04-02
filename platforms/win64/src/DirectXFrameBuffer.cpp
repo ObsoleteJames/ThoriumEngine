@@ -75,7 +75,7 @@ void DirectXFrameBuffer::Generate(int w, int h, int mipmap, ETextureFormat f)
 	tex.Height = height;
 	tex.MipLevels = numMipMaps;
 	tex.ArraySize = 1;
-	tex.Format = DirectXRenderer::GetDXTextureFormat(format).Key;
+	tex.Format = DirectXInterface::GetDXTextureFormat(format).Key;
 	tex.SampleDesc.Count = 1;
 	tex.SampleDesc.Quality = 0;
 	tex.Usage = D3D11_USAGE_DEFAULT;
@@ -133,9 +133,9 @@ void DirectXFrameBuffer::Generate(int w, int h, int mipmap, ETextureFormat f)
 	IRenderer::UnlockGPU();
 }
 
-DirectXDepthBuffer::DirectXDepthBuffer(FDepthBufferInfo data)
+DirectXDepthBuffer::DirectXDepthBuffer(FDepthBufferDesc data)
 {
-	info = data;
+	desc = data;
 
 	Generate();
 }
@@ -154,7 +154,7 @@ DirectXDepthBuffer::~DirectXDepthBuffer()
 
 void DirectXDepthBuffer::Resize(int w, int h)
 {
-	if (w == info.width && h == info.height)
+	if (w == desc.width && h == desc.height)
 		return;
 
 	if (depthView)
@@ -166,29 +166,29 @@ void DirectXDepthBuffer::Resize(int w, int h)
 	if (sampler)
 		sampler->Release();
 
-	info.width = w;
-	info.height = h;
+	desc.width = w;
+	desc.height = h;
 	Generate();
 }
 
 void DirectXDepthBuffer::Clear(float a)
 {
-	GetDirectXRenderer()->deviceContext->ClearDepthStencilView(depthView, info.format == TH_DBF_D24_S8 ? D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL : D3D11_CLEAR_DEPTH, a, 0);
+	GetDirectXRenderer()->deviceContext->ClearDepthStencilView(depthView, desc.format == TH_DBF_D24_S8 ? D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL : D3D11_CLEAR_DEPTH, a, 0);
 }
 
 void DirectXDepthBuffer::Generate()
 {
 	D3D11_TEXTURE2D_DESC depthBuffInfo{};
-	depthBuffInfo.Width = info.width;
-	depthBuffInfo.Height = info.height;
+	depthBuffInfo.Width = desc.width;
+	depthBuffInfo.Height = desc.height;
 	depthBuffInfo.MipLevels = 1;
-	depthBuffInfo.ArraySize = info.arraySize;
-	depthBuffInfo.Format = info.format == TH_DBF_D24_S8 ? DXGI_FORMAT_D24_UNORM_S8_UINT : (info.format == TH_DBF_R32 ? DXGI_FORMAT_R32_TYPELESS : DXGI_FORMAT_R16_TYPELESS);
+	depthBuffInfo.ArraySize = desc.arraySize;
+	depthBuffInfo.Format = desc.format == TH_DBF_D24_S8 ? DXGI_FORMAT_D24_UNORM_S8_UINT : (desc.format == TH_DBF_R32 ? DXGI_FORMAT_R32_TYPELESS : DXGI_FORMAT_R16_TYPELESS);
 	//depthBuffInfo.Format = DXGI_FORMAT_R24G8_TYPELESS;
 	depthBuffInfo.SampleDesc.Count = 1;
 	depthBuffInfo.SampleDesc.Quality = 0;
 	depthBuffInfo.Usage = D3D11_USAGE_DEFAULT;
-	depthBuffInfo.BindFlags = info.bShaderResource ? D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE : D3D11_BIND_DEPTH_STENCIL;
+	depthBuffInfo.BindFlags = desc.bShaderResource ? D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE : D3D11_BIND_DEPTH_STENCIL;
 
 	IRenderer::LockGPU();
 
@@ -196,12 +196,12 @@ void DirectXDepthBuffer::Generate()
 	THORIUM_ASSERT(SUCCEEDED(hr), "Failed to create DirectX depth buffer");
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC depthViewDesc{};
-	depthViewDesc.Format = info.format == TH_DBF_D24_S8 ? DXGI_FORMAT_D24_UNORM_S8_UINT : (info.format == TH_DBF_R32 ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM);
-	depthViewDesc.ViewDimension = info.arraySize > 1 ? D3D11_DSV_DIMENSION_TEXTURE2DARRAY : D3D11_DSV_DIMENSION_TEXTURE2D;
-	if (info.arraySize > 1)
+	depthViewDesc.Format = desc.format == TH_DBF_D24_S8 ? DXGI_FORMAT_D24_UNORM_S8_UINT : (desc.format == TH_DBF_R32 ? DXGI_FORMAT_D32_FLOAT : DXGI_FORMAT_D16_UNORM);
+	depthViewDesc.ViewDimension = desc.arraySize > 1 ? D3D11_DSV_DIMENSION_TEXTURE2DARRAY : D3D11_DSV_DIMENSION_TEXTURE2D;
+	if (desc.arraySize > 1)
 	{
 		D3D11_TEX2D_ARRAY_DSV tdsv{};
-		tdsv.ArraySize = info.arraySize;
+		tdsv.ArraySize = desc.arraySize;
 		tdsv.FirstArraySlice = 0;
 		tdsv.MipSlice = 0;
 		depthViewDesc.Texture2DArray = tdsv;
@@ -212,10 +212,10 @@ void DirectXDepthBuffer::Generate()
 	hr = GetDirectXRenderer()->device->CreateDepthStencilView(depthBuffer, &depthViewDesc, &depthView);
 	THORIUM_ASSERT(SUCCEEDED(hr), "Failed to create DirectX depth view");
 
-	if (info.bShaderResource)
+	if (desc.bShaderResource)
 	{
 		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc{};
-		srvDesc.Format = info.format == TH_DBF_D24_S8 ? DXGI_FORMAT_D24_UNORM_S8_UINT : (info.format == TH_DBF_R32 ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM);
+		srvDesc.Format = desc.format == TH_DBF_D24_S8 ? DXGI_FORMAT_D24_UNORM_S8_UINT : (desc.format == TH_DBF_R32 ? DXGI_FORMAT_R32_FLOAT : DXGI_FORMAT_R16_UNORM);
 		srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 		srvDesc.Texture2D.MostDetailedMip = 0;
 		srvDesc.Texture2D.MipLevels = -1;
@@ -260,6 +260,7 @@ DirectXSwapChain::DirectXSwapChain(IBaseWindow* window)
 	swapchainInfo.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	swapchainInfo.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
+	IRenderer::LockGPU();
 	HRESULT hr = GetDirectXRenderer()->factory->CreateSwapChainForHwnd(
 		GetDirectXRenderer()->device,
 		(HWND)window->GetNativeHandle(),
@@ -267,6 +268,7 @@ DirectXSwapChain::DirectXSwapChain(IBaseWindow* window)
 		nullptr,
 		nullptr,
 		&swapchain);
+	IRenderer::UnlockGPU();
 
 	THORIUM_ASSERT(SUCCEEDED(hr), "Failed to create DirectX SwapChain!");
 
@@ -311,7 +313,7 @@ void DirectXSwapChain::CreateViewBuffers(int w, int h)
 	framebuffer = new DirectXFrameBuffer(backBuff, w, h);
 	backBuff->Release();
 
-	FDepthBufferInfo depthInfo{};
+	FDepthBufferDesc depthInfo{};
 	depthInfo.width = w;
 	depthInfo.height = h;
 	depthInfo.arraySize = 1;

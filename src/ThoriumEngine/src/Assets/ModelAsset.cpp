@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "ModelAsset.h"
 #include "Rendering/Renderer.h"
+#include "Rendering/GraphicsInterface.h"
 #include "Console.h"
 #include "Material.h"
 #include "Math/Math.h"
@@ -11,7 +12,8 @@
 #define THMDL_VERSION_4 0x0004
 #define THMDL_VERSION_5 0x0005
 #define THMDL_VERSION_6 0x0006
-#define THMDL_VERSION 0x0007
+#define THMDL_VERSION_7 0x0007
+#define THMDL_VERSION 0x0008
 
 #define THMDL_MAGIC_SIZE 27
 static const char* thmdlMagicStr = "\0\0ThoriumEngine Model File\0";
@@ -35,7 +37,7 @@ void CModelAsset::OnInit(IBaseFStream* stream)
 	uint numColliders = 0;
 	uint numConvexMeshes = 0;
 
-	*stream >> &numMeshes >> &numMaterials >> &numLODs >> &numBodyGroups;  
+	*stream >> &numMeshes >> &numMaterials >> &numLODs >> &numBodyGroups;
 
 	if (version > THMDL_VERSION_6)
 	{
@@ -46,6 +48,7 @@ void CModelAsset::OnInit(IBaseFStream* stream)
 	}
 
 	meshes.Resize(numMeshes);
+	meshNames.Resize(numMeshes);
 	materials.Resize(numMaterials);
 	bodyGroups.Resize(numBodyGroups);
 
@@ -57,7 +60,12 @@ void CModelAsset::OnInit(IBaseFStream* stream)
 		*stream >> &nextMesh;
 
 		if (version > THMDL_VERSION_5)
-			*stream >> meshes[i].meshName;
+			*stream >> meshNames[i];
+
+		if (version > THMDL_VERSION_7)
+			*stream >> &meshes[i].bSkinnedMesh;
+		else
+			meshes[i].bSkinnedMesh = true;
 
 		SizeType numVertices;
 		SizeType numIndices;
@@ -200,21 +208,33 @@ void CModelAsset::OnSave(IBaseFStream* stream)
 
 	*stream << &numMeshes << &numMaterials << &numLODs << &numBodyGroups << &numColliders << &numConvexMeshes;
 
-	for (auto& mesh : meshes)
+	//for (auto& mesh : meshes)
+	for (int i = 0; i < meshes.Size(); i++)
 	{
+		auto& mesh = meshes[i];
+
 		SizeType prevOffset = stream->Tell();
 		*stream << &prevOffset; // just write anything for now.
 
 		mesh.meshDataOffset = prevOffset;
 
-		*stream << mesh.meshName;
+		*stream << meshNames[i];
 
+		*stream << &mesh.bSkinnedMesh;
 		*stream << &mesh.numVertexData << & mesh.numIndexData;
 		*stream << &mesh.topologyType;
 		*stream << &mesh.bounds;
 
-		for (SizeType i = 0; i < mesh.numVertexData; i++)
-			*stream << &mesh.vertexData[i];
+		if (mesh.bSkinnedMesh)
+		{
+			for (SizeType i = 0; i < mesh.numVertexData; i++)
+				*stream << &((FSkinnedVertex*)mesh.vertexData)[i];
+		}
+		else
+		{
+			for (SizeType i = 0; i < mesh.numVertexData; i++)
+				*stream << &mesh.vertexData[i];
+		}
 
 		for (SizeType i = 0; i < mesh.numIndexData; i++)
 			*stream << &mesh.indexData[i];
@@ -339,7 +359,6 @@ void CModelAsset::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 
 		SizeType numVertices;
 		SizeType numIndices;
-		TArray<FVertex> vertices;
 		TArray<uint> indices;
 
 		*stream >> &nextOffset;
@@ -349,6 +368,9 @@ void CModelAsset::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 		if (version > THMDL_VERSION_5)
 			*stream >> tempName;
 
+		if (version > THMDL_VERSION_7)
+			*stream >> &meshes[it].bSkinnedMesh;
+
 		*stream >> &numVertices >> &numIndices;
 
 		if (version > THMDL_VERSION_5)
@@ -357,29 +379,84 @@ void CModelAsset::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 		if (version > THMDL_VERSION_3)
 			*stream >> &meshes[it].bounds;
 
-		vertices.Resize(numVertices);
 		indices.Resize(numIndices);
 
-		for (SizeType i = 0; i < numVertices; i++)
-			*stream >> &vertices[i];
+		if (meshes[it].bSkinnedMesh)
+		{
+			TArray<FSkinnedVertex> vertices(numVertices);
+			for (SizeType i = 0; i < numVertices; i++)
+				*stream >> &vertices[i];
+
+			FBufferDescriptor desc{};
+			desc.bufferSize = vertices.Size() * sizeof(FSkinnedVertex);
+			desc.data = vertices.Data();
+			desc.dataStride = sizeof(FSkinnedVertex);
+			desc.flags = 0;
+			desc.type = TH_BUFFER_TYPE_VERTEX_BUFFER;
+			
+			meshes[it].vertexBuffer = gGHI->CreateBuffer(desc);
+
+			if (gIsEditor)
+			{
+				if (meshes[it].vertexData == nullptr)
+				{
+					meshes[it].vertexData = (FVertex*)new FSkinnedVertex[vertices.Size()];
+					meshes[it].numVertexData = vertices.Size();
+					memcpy(meshes[it].vertexData, vertices.Data(), vertices.Size() * sizeof(FSkinnedVertex));
+				}
+			}
+		}
+		else
+		{
+			TArray<FVertex> vertices(numVertices);
+			for (SizeType i = 0; i < numVertices; i++)
+				*stream >> &vertices[i];
+
+			FBufferDescriptor desc{};
+			desc.bufferSize = vertices.Size() * sizeof(FVertex);
+			desc.data = vertices.Data();
+			desc.dataStride = sizeof(FVertex);
+			desc.flags = 0;
+			desc.type = TH_BUFFER_TYPE_VERTEX_BUFFER;
+
+			meshes[it].vertexBuffer = gGHI->CreateBuffer(desc);
+
+			if (gIsEditor)
+			{
+				if (meshes[it].vertexData == nullptr)
+				{
+					meshes[it].vertexData = new FVertex[vertices.Size()];
+					meshes[it].numVertexData = vertices.Size();
+					memcpy(meshes[it].vertexData, vertices.Data(), vertices.Size() * sizeof(FVertex));
+				}
+			}
+		}
 
 		for (SizeType i = 0; i < numIndices; i++)
 			*stream >> &indices[i];
 
-		meshes[it].vertexBuffer = Renderer::CreateVertexBuffer(vertices);
-		meshes[it].indexBuffer = Renderer::CreateIndexBuffer(indices);
+		{
+			FBufferDescriptor desc{};
+			desc.bufferSize = indices.Size() * sizeof(uint);
+			desc.data = indices.Data();
+			desc.dataStride = sizeof(uint);
+			desc.flags = 0;
+			desc.type = TH_BUFFER_TYPE_INDEX_BUFFER;
+
+			meshes[it].indexBuffer = gGHI->CreateBuffer(desc);
+		}
 		meshes[it].numVertices = (uint)numVertices;
 		meshes[it].numIndices = (uint)numIndices;
 
 		// keep vertex data loaded in ram if we're running the editor
 		if (gIsEditor)
 		{
-			if (meshes[it].vertexData == nullptr)
-			{
-				meshes[it].vertexData = new FVertex[vertices.Size()];
-				meshes[it].numVertexData = vertices.Size();
-				memcpy(meshes[it].vertexData, vertices.Data(), vertices.Size() * sizeof(FVertex));
-			}
+			//if (meshes[it].vertexData == nullptr)
+			//{
+			//	meshes[it].vertexData = new FVertex[vertices.Size()];
+			//	meshes[it].numVertexData = vertices.Size();
+			//	memcpy(meshes[it].vertexData, vertices.Data(), vertices.Size() * sizeof(FVertex));
+			//}
 
 			if (meshes[it].indexData == nullptr)
 			{
@@ -440,6 +517,9 @@ void CModelAsset::LoadMeshData()
 
 		if (version > THMDL_VERSION_5)
 			*stream >> tempName;
+
+		if (version > THMDL_VERSION_7)
+			*stream >> &mesh.bSkinnedMesh;
 		
 		*stream >> &numVertices >> &numIndices;
 
@@ -449,11 +529,23 @@ void CModelAsset::LoadMeshData()
 		if (version > THMDL_VERSION_3)
 			*stream >> &mesh.bounds;
 
-		FVertex* vertices = new FVertex[numVertices];
+		FVertex* vertices = nullptr;
 		uint* indices = new uint[numIndices];
 
-		for (SizeType i = 0; i < numVertices; i++)
-			*stream >> &vertices[i];
+		if (mesh.bSkinnedMesh)
+		{
+			auto* verts = new FSkinnedVertex[numVertices];
+			for (SizeType i = 0; i < numVertices; i++)
+				*stream >> &verts[i];
+
+			vertices = (FVertex*)verts;
+		}
+		else
+		{
+			vertices = new FVertex[numVertices];
+			for (SizeType i = 0; i < numVertices; i++)
+				*stream >> &vertices[i];
+		}
 
 		for (SizeType i = 0; i < numIndices; i++)
 			*stream >> &indices[i];
@@ -471,6 +563,7 @@ void CModelAsset::ClearMeshData()
 	{
 		if (mesh.vertexData)
 			delete[] mesh.vertexData;
+		
 		if (mesh.indexData)
 			delete[] mesh.indexData;
 
@@ -521,6 +614,12 @@ FTransform CModelAsset::GetBoneModelTransform(int bone) const
 	}
 
 	return r;
+}
+
+void CModelAsset::LoadAllMaterials()
+{
+	for (auto& mat : materials)
+		mat.obj = CAssetManager::GetAsset<CMaterial>(mat.path);
 }
 
 int CModelAsset::GetLodFromDistance(float distance)

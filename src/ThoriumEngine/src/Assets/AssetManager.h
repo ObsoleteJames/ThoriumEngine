@@ -61,6 +61,9 @@ public:
 
 	static void ScanMod(FMod* mod);
 	static void DeleteAssetsFromMod(FMod* mod);
+
+	// Converts file into generic asset type
+	static void ConvertToAsset(FFile* file, FAssetClass* type);
 	
 	/**
 	 * Registers a dependancy from 'source' to 'target'.
@@ -79,12 +82,18 @@ public:
 
 	template<class T>
 	inline static TObjectPtr<T> GetAsset(const FString& path) { return (TObjectPtr<T>)CAssetManager::GetAsset((FAssetClass*)T::StaticClass(), path); }
+	
+	template<class T>
+	inline static TObjectPtr<T> GetAsset(SizeType id) { return (TObjectPtr<T>)CAssetManager::GetAsset((FAssetClass*)T::StaticClass(), id); }
 
 	static TObjectPtr<CAsset> GetAsset(FAssetClass* type, const FString& path);
 	static TObjectPtr<CAsset> GetAsset(FAssetClass* type, SizeType assetId);
+
+	static bool IsAssetLoaded(SizeType id);
+	inline static bool IsAssetLoaded(const FString& path) { return IsAssetLoaded(GetAssetId(path)); }
 	
-	template<class T>
-	static void GetAssets(TArray<TObjectPtr<T>>& out);
+	//template<class T>
+	//static void GetAssets(TArray<TObjectPtr<T>>& out);
 
 	inline static const TUnorderedMap<SizeType, FAssetData>& GetAssetsData() { return availableAssets; }
 	static const FAssetData* GetAssetData(SizeType assetId) { if (auto it = availableAssets.find(assetId); it != availableAssets.end()) return &it->second; return nullptr; }
@@ -128,9 +137,14 @@ private:
 
 	static bool FetchAssetData(FFile* file, FAssetData& outData);
 
+	static void LoadGenericAssets(FMod* mod);
+	static void SaveAssetListBin(FMod* mod);
+
 private:
 	static TUnorderedMap<SizeType, CAsset*> allocatedAssets;
 	static TUnorderedMap<SizeType, FAssetData> availableAssets;
+
+	static TUnorderedMap<SizeType, FAssetData> genericAssets;
 
 	// map of asset paths and their IDs
 	static TUnorderedMap<FString, SizeType> assetPaths;
@@ -138,24 +152,24 @@ private:
 	static TArray<IAssetStreamingProxy*> streamingAssets;
 };
 
-template<typename T>
-void CAssetManager::GetAssets(TArray<TObjectPtr<T>>& out)
-{
-	FClass* c = T::StaticClass();
-	for (auto it : availableAssets)
-	{
-		if (it.second.type == c)
-		{
-			auto obj = allocatedAssets.find(it.second.file->Path());
-			if (obj == allocatedAssets.end())
-			{
-				CAsset* asset = AllocateAsset((FAssetClass*)c, it.second.file->Path());
-				asset->file = it.second.file;
-				asset->Init();
-				out.Add((T*)asset);
-			}
-			else
-				out.Add((T*)obj->second);
-		}
-	}
-}
+// template<typename T>
+// void CAssetManager::GetAssets(TArray<TObjectPtr<T>>& out)
+// {
+// 	FClass* c = T::StaticClass();
+// 	for (auto it : availableAssets)
+// 	{
+// 		if (it.second.type == c)
+// 		{
+// 			auto obj = allocatedAssets.find(it.second.file->Path());
+// 			if (obj == allocatedAssets.end())
+// 			{
+// 				CAsset* asset = AllocateAsset((FAssetClass*)c, it.second.file->Path());
+// 				asset->file = it.second.file;
+// 				asset->Init();
+// 				out.Add((T*)asset);
+// 			}
+// 			else
+// 				out.Add((T*)obj->second);
+// 		}
+// 	}
+// }

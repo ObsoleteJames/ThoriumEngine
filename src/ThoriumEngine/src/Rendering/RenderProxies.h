@@ -3,6 +3,7 @@
 #include "Object/Object.h"
 #include "RenderCommands.h"
 #include "Assets/ModelAsset.h"
+#include "RenderLayer.h"
 #include "RenderProxies.generated.h"
 
 class CRenderScene;
@@ -12,6 +13,17 @@ class IFrameBuffer;
 
 class ENGINE_API CCameraProxy
 {
+public:
+	enum EViewMode
+	{
+		VIEW_LIT, // standard fully shaded view.
+		VIEW_UNLIT, // render diffuse colour with basic shading.
+		VIEW_DIFFUSE, // render only diffuse colour.
+		VIEW_WIREFRAME,
+		VIEW_NORMAL, // render normal map.
+		VIEW_REFLECTIONS // reflections only
+	};
+
 public:
 	CCameraProxy() = default;
 	virtual ~CCameraProxy() = default;
@@ -45,6 +57,11 @@ public:
 	float nearPlane = 0.1f;
 	float farPlane = 10000.f;
 
+	ERenderLayer layers = R_LAYER_DEFAULT;
+	EViewMode viewMode = VIEW_LIT;
+
+	bool bDrawWireframe = false;
+
 	bool bEnabled;
 };
 
@@ -54,25 +71,31 @@ public:
 	struct FRenderMesh
 	{
 		FMesh mesh;
-		TObjectPtr<CMaterial> mat;
+		CMaterial* mat;
 		FMatrix transform;
-		TArray<FMatrix> skeletonMatrices;
+		//TArray<FMatrix> skeletonMatrices;
+		FMatrix* skeletonMatrices;
+		SizeType skeletonMatricesSize;
 		ERenderPass rp;
 
-		int lightmapId;
+		int lightmapId = -1;
 		FVector2 lightmapPos;
 		FVector2 lightmapScale;
 	};
 
 public:
+	FMeshBuilder(TArray<FRenderMesh>* output);
+
 	void DrawLine(const FVector& begin, const FVector& end, const FVector& color = { 255, 255, 255 }, bool bDepthTest = true);
 	void DrawCircle(const FVector& pos, float radius = 1.f, const FVector& rot = FVector(), const FVector & color = { 255, 255, 255 }, int vertices = 16, bool bDepthTest = true);
-	void DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform, const TArray<FMatrix>& skeletonMatrix = TArray<FMatrix>());
+	void DrawSkinnedMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform, const TArray<FMatrix>& skeletonMatrix);
+	void DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform);
+	void DrawMesh(const FMesh& mesh, CMaterial* mat, const FMatrix& transform, int lightmapId, const FVector2& lightmapPos, const FVector2& lightmapScale);
 
-	inline const TArray<FRenderMesh>& GetMeshes() const { return meshes; }
+	inline const TArray<FRenderMesh>& GetMeshes() const { return *meshes; }
 
 protected:
-	TArray<FRenderMesh> meshes;
+	TArray<FRenderMesh>* meshes;
 
 };
 
@@ -92,7 +115,7 @@ public:
 	virtual void FetchData() = 0;
 	virtual void ClearFethedData() {}
 
-	virtual void GetDynamicMeshes(FMeshBuilder& out) {}
+	virtual void GetSkinnedMeshes(FMeshBuilder& out) {}
 	virtual void GetStaticMeshes(FMeshBuilder& out) {}
 
 	virtual bool DoFrustumCull(const FMatrix& projection);
@@ -125,12 +148,23 @@ protected:
 	FMatrix matrix;
 	TArray<FMatrix> skeletonMatrices;
 
+	ERenderLayer layers = R_LAYER_DEFAULT;
+
 	bool bHasLod;
 	bool bVisible;
 	bool bCastShadows;
 	bool bReceiveShadows;
 
 	EMoveType moveType;
+};
+
+ENUM()
+enum ELightBakeMode
+{
+	LIGHT_BAKE_NONE		META(Name = "No Baking"),
+	LIGHT_BAKE_INDIRECT	META(Name = "Indirect Only"),
+	LIGHT_BAKE_DIRECT	META(Name = "Direct Only"),
+	LIGHT_BAKE_ALL		META(Name = "Direct & Indirect")
 };
 
 class ENGINE_API CLightProxy
@@ -145,14 +179,6 @@ public:
 		DIRECTIONAL_LIGHT
 	};
 
-	enum EBakeMode
-	{
-		BAKE_NONE,
-		BAKE_INDIRECT,
-		BAKE_DIRECT,
-		BAKE_ALL
-	};
-
 public:
 	CLightProxy() = default;
 	virtual ~CLightProxy() = default;
@@ -164,7 +190,7 @@ public:
 
 public:
 	EType type;
-	EBakeMode bakingMode = BAKE_NONE;
+	ELightBakeMode bakingMode = LIGHT_BAKE_NONE;
 
 	FVector position;
 	FVector direction;
@@ -212,7 +238,7 @@ public:
 	// Wether this cubemap affects everything.
 	bool bGlobal;
 
-	// Wether this cubemap should also be used as an IBL source.
+	// Wether this cubemap should also be used as an ambient diffuse lighting source.
 	bool bAffectDiffuse;
 
 	// Wether this cubemap re-renders at runtime.

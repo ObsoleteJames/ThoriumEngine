@@ -215,14 +215,6 @@ FQuaternion FQuaternion::LookRotation(const FVector& dir, const FVector& up)
 {
 	glm::quat q = glm::quatLookAtLH((glm::vec3)dir, (glm::vec3)up);
 	return q;
-	FVector right = FVector::Cross(dir, up);
-	FQuaternion r;
-	r.w = FMath::Sqrt(1.f + right.x + up.y + dir.z) * 0.5f;
-	float w4 = 1.f / (4.f / r.w);
-	r.x = (up.z - dir.y) * w4;
-	r.y = (dir.x - right.z) * w4;
-	r.z = (right.y - up.x) * w4;
-	return r;
 }
 
 FQuaternion FQuaternion::Slerp(const FQuaternion& a, const FQuaternion& b, float t)

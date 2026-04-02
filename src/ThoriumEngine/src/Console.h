@@ -6,6 +6,8 @@
 
 #define CONSOLE_USE_ARRAY 1
 
+extern ENGINE_API bool gWriteLogFile;
+
 enum EConsoleMsgType
 {
 	CONSOLE_PLAIN,
@@ -113,6 +115,7 @@ public:
 	static void Update();
 	static void Shutdown();
 
+	static void SaveConfig();
 	static void LoadConfig();
 
 	static void EnableStdio();
@@ -124,6 +127,8 @@ public:
 	static inline void LogError(const FString& msg, const FString& module, FConsoleMsgInfo info = {}) { _log({ msg, info, CONSOLE_ERROR, module, 0, nullptr }); }
 
 	static void Exec(const FString& input);
+
+	static bool GetValue(const FString& convar, float& out);
 
 #if CONSOLE_USE_ARRAY
 	static const TArray<FConsoleMsg>& GetMsgCache();
@@ -137,11 +142,15 @@ public:
 	inline static const TArray<CConCmd*>& GetConCmds() { return consoleCmds; }
 
 	static CConVar* GetConVar(const FString& name);
+	static CConCmd* GetConCmd(const FString& name);
 
 private:
 	static void _log(const FConsoleMsg& msg);
 
 	static void _logCout(const FConsoleMsg& msg);
+
+public:
+	static bool bLoggingEnabled; // if disabled logs will not be stored nor printed to the terminal.
 
 private:
 	static TEvent<const FConsoleMsg&> onMsgLogged;

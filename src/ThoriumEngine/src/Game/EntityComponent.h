@@ -13,9 +13,10 @@ class ENGINE_API CEntityComponent : public CObject
 	GENERATED_BODY()
 
 	friend class CEntity;
+	friend class CWorld;
 
 public:
-	virtual void Init() {}
+	virtual void Init();
 
 	virtual void OnStart() {}
 	virtual void Update(double dt) {}
@@ -28,10 +29,14 @@ public:
 	inline bool IsUserCreated() const { return bUserCreated; }
 
 	inline SizeType ComponentId() const { return compId; }
+	void SetComponentId(SizeType id);
 
 protected:
 	virtual void OnDelete();
 	
+private:
+	void DoUpdate(double dt);
+
 public:
 	PROPERTY(Editable, Category = Rendering)
 	bool bIsVisible = true;
@@ -44,6 +49,8 @@ protected:
 
 	PROPERTY()
 	bool bUserCreated = false;
+
+	bool bRequireUpdate = false;
 
 	FGuid compId;
 

@@ -21,16 +21,22 @@ QMainWindow > QToolBar
 
 */
 
+QDialog
+{
+	background: #C0C0C0;
+	border: 1px solid #A0A0A0;
+}
+
 QMainWindow
 {
-	background: #5a6850; 
-	border: 1px solid #222;
+	background: #BEBEBE; 
+	border: 1px solid #A0A0A0;
 }
 
 QMainWindow:active
 {
-	background: #4C5844; 
-	border: 1px solid #373737;
+	background: #D3D3D3; 
+	border: 1px solid #7D7D7D;
 }
 
 QMainWindow::separator
@@ -54,36 +60,52 @@ QSplitter
 QSplitter::handle:horizontal 
 { 
 	width: 4px; 
-	background-color: #1a191a; 
+	background-color: #B8B8B8; 
 }
 
 QSplitter::handle:vertical 
 { 
 	height:6px; 
-	background-color: #1a191a; 
+	background-color: #B8B8B8; 
 }
 
 QSplitter::handle:hover, QSplitter::handle:pressed
 {
-	background: #2a5f7d;
+	background: #2C80D3;
 }
 
 QToolTip
 {
-	background: #333;
-	color: #e0e0e0;
+	background: #A0A0A0;
+	color: #1F1F1F;
 }
 
-QStatusBar
+QFrame
 {
-	background-color: #464F3E;
-	min-height: 25px;
-	color: #ddd;
+	background: #D3D3D3;
+	background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0, y2:1, stop:0 #A9A9A9, stop:1 #BEBEBE);
+	
+	color: #333333;
+	border: 0px;
 }
 
-QStatusBar > QLabel
+QFrame[type="1"]
 {
-	margin: 4px;
-	color: #ddd;
-	font-size: 11px;
+	background: #A9A9A9;
+	color: #333333;
+	border: 0px;
+}
+
+QFrame[type="1"] QLabel
+{
+	background: #A9A9A9;
+}
+
+QFrame[type="2"]
+{
+	background: #A9A9A9;
+	background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0, y2:1, stop:0 #A9A9A9, stop:1 #B8B8B8);
+	color: #333333;
+	border: 0px;
+	border-bottom: 1px solid #A9A9A9;
 }

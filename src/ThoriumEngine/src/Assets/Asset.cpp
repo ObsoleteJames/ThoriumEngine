@@ -2,10 +2,14 @@
 #include "Asset.h"
 #include "Math/Math.h"
 #include "Console.h"
+#include "Rendering/Renderer.h"
 
-void CAsset::Serialize(FMemStream& out)
+#include <filesystem>
+namespace fs = std::filesystem;
+
+void CAsset::Serialize(FMemStream& out, const FSerializeSettings& settings)
 {
-	BaseClass::Serialize(out);
+	BaseClass::Serialize(out, settings);
 }
 
 bool CAsset::Init()
@@ -17,13 +21,16 @@ bool CAsset::Init()
 		return false;
 	}
 
-	FAssetHeader info;
-	*stream >> &info;
+	if (version != CASSET_VERSION_GENERIC_TYPE)
+	{
+		FAssetHeader info;
+		*stream >> &info;
 
-	checksum = info.checksum;
-	assetId = info.assetId;
-	version = info.fileVersion;
-	assetVersion = info.assetVersion;
+		checksum = info.checksum;
+		assetId = info.assetId;
+		version = info.fileVersion;
+		assetVersion = info.assetVersion;
+	}
 
 	OnInit(stream);
 
@@ -33,29 +40,43 @@ bool CAsset::Init()
 
 void CAsset::Save()
 {
-	TUniquePtr<IBaseFStream> stream = file->GetStream("wb");
-	if (!stream || !stream->IsOpen())
-	{
-		CONSOLE_LogError("CAsset", "Failed to create file stream for '" + file->Path() + "'!");
+	// we can't save generic asset files.
+	if (version == CASSET_VERSION_GENERIC_TYPE)
 		return;
+
+	// rename the file so we don't overwrite it.
+	// this is to prevent corruption in the event of a crash.
+	std::filesystem::rename(file->FullPath().c_str(), (file->FullPath() + ".bak").c_str());
+
+	{
+		TUniquePtr<IBaseFStream> stream = file->GetStream("wb");
+		if (!stream || !stream->IsOpen())
+		{
+			CONSOLE_LogError("CAsset", "Failed to create file stream for '" + file->Path() + "'!");
+			return;
+		}
+
+		FAssetHeader info{};
+		info.checksum = -1;
+		info.assetVersion = CASSET_VERSION;
+		info.fileVersion = GetFileVersion();
+		info.assetId = assetId;
+		memcpy(info.typeName, GetClass()->cppName.c_str(), FMath::Min(GetClass()->cppName.Size() + 1, 31ull));
+
+		*stream << &info;
+
+		OnSave(stream);
 	}
 
-	FAssetHeader info{};
-	info.checksum = -1;
-	info.assetVersion = CASSET_VERSION;
-	info.fileVersion = GetFileVersion();
-	info.assetId = assetId;
-	memcpy(info.typeName, GetClass()->cppName.c_str(), FMath::Min(GetClass()->cppName.Size() + 1, 31ull));
-
-	*stream << &info;
-
-	OnSave(stream);
-
-	// TODO: calculate checksum.
+	// remove the backup after we're done writing.
+	std::filesystem::remove((file->FullPath() + ".bak").c_str());
 }
 
 void CAsset::Load(uint8 lodLevel)
 {
+	if (!gGHI) // don't load assets if we don't have a graphics interface.
+		return;
+
 	if (IsLoaded(lodLevel))
 		return;
 

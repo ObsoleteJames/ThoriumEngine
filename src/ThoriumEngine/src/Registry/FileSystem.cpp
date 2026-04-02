@@ -209,6 +209,9 @@ FFile* FMod::FindFile(const FString& path) const
 
 FFile* FMod::CreateFile(const FString& path)
 {
+	if (CFileSystem::IsBlacklisted(path))
+		return nullptr;
+
 	FString dirPath = path;
 	if (dirPath[0] == '/' || dirPath[0] == '\\')
 		dirPath.Erase(dirPath.begin());
@@ -264,21 +267,31 @@ FFile* FMod::CreateFile(const FString& path)
 	return file;
 }
 
-bool FMod::MoveFile(FFile* file, const FString& destination)
+bool FMod::RenameFile(FFile* file, const FString& newPath)
 {
 	if (!file)
 		return false;
 
-	FDirectory* newDir = FindDirectory(destination);
-	if (!newDir)
+	FString newDir = newPath;
+	FString newName = newPath;
+	if (SizeType i = newPath.FindLastOf("\\/"); i != -1)
+	{
+		newDir.Erase(newDir.begin() + i, newDir.end());
+		newName.Erase(newName.begin(), newName.begin() + i + 1);
+	}
+	if (newName.FindLastOf('.') != -1)
+		newName.Erase(newName.begin() + newName.FindLastOf('.'), newName.end());
+
+	FDirectory* parentDir = newDir.IsEmpty() ? &root : FindDirectory(newDir);
+	if (!parentDir)
 	{
 		CONSOLE_LogWarning("CFileSystem", "Failed to move file, destination does not exist!");
 		return false;
 	}
 	
-	for (auto* f : newDir->files)
+	for (auto* f : parentDir->files)
 	{
-		if (f->name == file->name && f->extension == file->extension)
+		if (f->name == newName && f->extension == file->extension)
 		{
 			CONSOLE_LogWarning("CFileSystem", "Failed to move file, file with the same name already exists in destination!");
 			return false;
@@ -289,41 +302,91 @@ bool FMod::MoveFile(FFile* file, const FString& destination)
 
 	FDirectory* oldDir = file->dir;
 	oldDir->files.Erase(oldDir->files.Find(file));
-	newDir->files.Add(file);
+	parentDir->files.Add(file);
 
-	file->dir = newDir;
+	file->dir = parentDir;
+	file->name = newName;
 
 	std::filesystem::rename(oldPath.c_str(), file->FullPath().c_str());
 	CAssetManager::OnAssetFileMoved(file);
 	return true;
 }
 
-bool FMod::MoveDirectory(FDirectory* dir, const FString& destination)
+bool FMod::RenameDir(FDirectory* dir, const FString& newPath)
 {
 	if (!dir)
 		return false;
 
-	FDirectory* newDir = destination.IsEmpty() ? &root : FindDirectory(destination);
-	for (auto* d : newDir->directories)
+	FString newDir = newPath;
+	FString newName = newPath;
+	if (SizeType i = newPath.FindLastOf("\\/"); i != -1)
 	{
-		if (d->name == dir->name)
+		newDir.Erase(newDir.begin() + i, newDir.end());
+		newName.Erase(newName.begin(), newName.begin() + i + 1);
+	}
+	else
+		newDir.Clear();
+
+	FDirectory* parentDir = newDir.IsEmpty() ? &root : FindDirectory(newDir);
+	if (!parentDir)
+	{
+		CONSOLE_LogWarning("CFileSystem", "Failed to rename directory, destination folder does not exist!");
+		return false;
+	}
+
+	for (auto* d : parentDir->directories)
+	{
+		if (d->name == newName)
 		{
-			CONSOLE_LogWarning("CFileSystem", "Failed to move directory, directory with the same name already exsists in destination!");
+			CONSOLE_LogWarning("CFileSystem", "Failed to rename directory, directory with the same name already exists in destination!");
 			return false;
 		}
 	}
 
 	FString oldPath = Path() + "/" + dir->GetPath();
 	dir->parent->directories.Erase(dir->parent->directories.Find(dir));
-	newDir->directories.Add(dir);
+	parentDir->directories.Add(dir);
 
-	dir->parent = newDir;
-
+	dir->parent = parentDir;
+	dir->name = newName;
 	std::filesystem::rename(oldPath.c_str(), (Path() + "/" + dir->GetPath()).c_str());
 
 	dir->OnMoved();
 	return true;
 }
+
+//bool FMod::MoveDirectory(FDirectory* dir, const FString& destination)
+//{
+//	if (!dir)
+//		return false;
+//
+//	FDirectory* newDir = destination.IsEmpty() ? &root : FindDirectory(destination);
+//	if (!newDir)
+//	{
+//		CONSOLE_LogWarning("CFileSystem", "Failed to move directory, destination does not exist!");
+//		return false;
+//	}
+//
+//	for (auto* d : newDir->directories)
+//	{
+//		if (d->name == dir->name)
+//		{
+//			CONSOLE_LogWarning("CFileSystem", "Failed to move directory, directory with the same name already exsists in destination!");
+//			return false;
+//		}
+//	}
+//
+//	FString oldPath = Path() + "/" + dir->GetPath();
+//	dir->parent->directories.Erase(dir->parent->directories.Find(dir));
+//	newDir->directories.Add(dir);
+//
+//	dir->parent = newDir;
+//
+//	std::filesystem::rename(oldPath.c_str(), (Path() + "/" + dir->GetPath()).c_str());
+//
+//	dir->OnMoved();
+//	return true;
+//}
 
 FFile* CFileSystem::FindFile(const FString& path)
 {
@@ -384,6 +447,9 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 		if (!entry.is_regular_file())
 			continue;
 
+		if (IsBlacklisted(entry.path().filename().generic_string().c_str()))
+			continue;
+
 		if (entry.path().extension() == ".pak")
 			continue; // TDOO: Load pak file.
 
@@ -395,6 +461,100 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 		file->dir = dir;
 		dir->files.Add(file);
 	}
+}
+
+void CFileSystem::RefreshDir(FMod* mod, const FString& path, FDirectory* dir)
+{
+	FString _path = path;
+	if (*_path.last() == '\\' || *_path.last() == '/')
+		_path.Erase(_path.last());
+
+	// check for new files/folders
+	for (auto& entry : fs::directory_iterator(_path.c_str()))
+	{
+		if (entry.is_directory())
+		{
+			auto dirName = entry.path().stem();
+			
+			if (IsBlacklisted(dirName.generic_string().c_str()))
+				continue;
+
+			// check if this dir already exists
+			for (auto d : dir->directories)
+			{
+				if (d->GetName() == dirName.generic_string().c_str())
+				{
+					goto _DirExists;
+				}
+			}
+
+			dir->directories.Add(new FDirectory());
+			FDirectory* newDir = dir->directories.last();
+			newDir->name = dirName.generic_string().c_str();
+			newDir->parent = dir;
+			MountDir(mod, _path + "/" + newDir->GetName(), newDir);
+
+		_DirExists:
+			continue;
+		}
+
+		if (!entry.is_regular_file())
+			continue;
+
+		for (auto f : dir->files)
+		{
+			if (f->Name() + f->Extension() == entry.path().filename().generic_string().c_str())
+				goto _FileExists;
+		}
+
+		if (IsBlacklisted(entry.path().filename().generic_string().c_str()))
+			continue;
+
+		FFile* file = new FFile();
+		file->mod = mod;
+
+		file->name = entry.path().stem().generic_string().c_str();
+		file->extension = entry.path().extension().generic_string().c_str();
+		file->dir = dir;
+		dir->files.Add(file);
+	
+	_FileExists:;
+	}
+
+	{
+		TArray<FDirectory*> toRemove;
+		// delete old files/folders
+		for (auto* d : dir->directories)
+		{
+			if (!fs::exists((mod->Path() + "/" + d->GetPath()).c_str()))
+				toRemove.Add(d);
+		}
+
+		for (auto* d : toRemove)
+		{
+			d->parent->directories.Erase(d->parent->directories.Find(d));
+			delete d;
+		}
+	}
+
+	{
+		TArray<FFile*> toRemove;
+		// delete old files/folders
+		for (auto* f : dir->files)
+		{
+			if (!fs::exists(f->FullPath().c_str()))
+				toRemove.Add(f);
+		}
+
+		for (auto* f : toRemove)
+		{
+			f->dir->files.Erase(f->dir->files.Find(f));
+			delete f;
+		}
+	}
+
+	for (auto* d : dir->directories)
+		RefreshDir(mod, _path + "/" + d->GetName(), d);
 }
 
 FMod* CFileSystem::MountMod(const FString& modPath, const FString& mn, const FString& sdkPath)
@@ -420,7 +580,7 @@ FMod* CFileSystem::MountMod(const FString& modPath, const FString& mn, const FSt
 
 	FMod* mod = *Mods.last();
 	mod->name = modName;
-	mod->path = modPath;
+	mod->path = Absolute(modPath);
 	MountDir(mod, modPath, &mod->root);
 
 #ifdef IS_DEV
@@ -456,7 +616,7 @@ FMod* CFileSystem::MountMod(const FString& modPath, const FString& mn, const FSt
 
 bool CFileSystem::UnmountMod(FMod* mod)
 {
-	SizeType modIndex = 0;
+	SizeType modIndex = -1;
 	for (int i = 0; i < Mods.Size(); i++)
 	{
 		if (Mods[i] == mod)
@@ -466,7 +626,7 @@ bool CFileSystem::UnmountMod(FMod* mod)
 		}
 	}
 
-	if (!modIndex)
+	if (modIndex == -1)
 		return false;
 
 	CAssetManager::DeleteAssetsFromMod(mod);
@@ -476,15 +636,26 @@ bool CFileSystem::UnmountMod(FMod* mod)
 	return true;
 }
 
+void CFileSystem::Refresh()
+{
+	for (auto* m : Mods)
+	{
+		RefreshDir(m, m->Path(), &m->root);
+		CAssetManager::ScanMod(m);
+	}
+}
+
 bool CFileSystem::IsBlacklisted(const FString& path)
 {
 	const char* blackListedPaths[] = {
 		"config",
 		"addons",
 		"bin",
+		"asset_list.bin",
+		"asset_refs.bin"
 	};
 
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 5; i++)
 	{
 		if (path == blackListedPaths[i])
 			return true;
@@ -562,6 +733,12 @@ FString CFileSystem::GetCurrentPath()
 	GetCurrentDirectoryA(128, buff);
 	return buff;
 }
+
+FString CFileSystem::Absolute(const FString& p)
+{
+	return std::filesystem::absolute(p.c_str()).generic_string().c_str();
+}
+
 #endif
 
 FFile::~FFile()
@@ -595,9 +772,9 @@ bool FFile::SetExtension(const FString& e)
 	return true;
 }
 
-CFStream FFile::GetSdkStream(const char* mode)
+CFStream FFile::GetSdkStream(const char* ext, const char* mode)
 {
-	FString sdkPath = GetSdkPath();
+	FString sdkPath = GetSdkPath(ext);
 	if (sdkPath.IsEmpty())
 		return CFStream();
 	return CFStream(sdkPath, mode);

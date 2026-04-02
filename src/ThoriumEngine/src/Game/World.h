@@ -5,6 +5,7 @@
 #include "EngineCore.h"
 #include "Object/Delegate.h"
 #include "Math/Vectors.h"
+#include "Rendering/Lightmap.h"
 #include <mutex>
 
 #include "World.generated.h"
@@ -20,6 +21,8 @@ class CRenderScene;
 class CGameMode;
 class CEntity;
 class IPhysicsWorld;
+class CTexture;
+class IBaseFStream;
 
 extern ENGINE_API CWorld* gWorld;
 
@@ -39,6 +42,15 @@ public:
 
 	// activation time
 	float time;
+};
+
+struct FSubScene
+{
+	SizeType sceneAssetId;
+	bool bLoadAsync;
+	bool bLoadOnStart;
+
+	CWorld* world; // the world object, if loaded.
 };
 
 class CEntityIOManager
@@ -65,6 +77,22 @@ private:
 	TArray<FEntityOutputEvent> delayedEvents;
 };
 
+STRUCT()
+struct ENGINE_API FSceneSettings
+{
+	GENERATED_BODY()
+
+public:
+	PROPERTY(Editable, Category = "GameMode")
+	TClassPtr<CGameMode> gamemodeClass;
+
+	PROPERTY(Editable, Category = "Physics")
+	float gravity = 9.81f;
+
+	PROPERTY(Editable, Inline)
+	FLightmapSettings lightmap;
+};
+
 /*
  *	World Class
  */
@@ -80,6 +108,9 @@ class ENGINE_API CWorld : public CObject
 	friend class FWorldRegisterer;
 
 public:
+	PROPERTY(Editable, Inline)
+	FSceneSettings sceneSettings; // The header tool is currently broken so this must be put here.
+
 	struct InitializeInfo
 	{
 		InitializeInfo() : bCreatePhyiscsWorld(1), bCreateAISystems(1), bCreateRenderScene(1), bRegisterForRendering(1) {}
@@ -97,14 +128,11 @@ public:
 
 public:
 	CWorld();
-	
-	//static FSceneLoadResult LoadScene(const FString& name);
-	//static void LoadSceneAsync(const FString& name, std::function<void(FSceneLoadResult)> onComplete);
 
-	//static FSceneLoadResult LoadSubScene(const FString& name);
-	//static void LoadSubSceneAsync(const FString& name, std::function<void(FSceneLoadResult)> onComplete);
-
-	static void SetNewWorld(CWorld* world);
+	void AddSubScene(SizeType sceneAssetId);
+	void RemoveSubScene(SizeType sceneAssetId);
+	void LoadSubScene(SizeType sceneAssetId, bool bAsync = false);
+	void UnloadSubScene(SizeType sceneAssetId);
 
 	static bool IsInUpdate();
 
@@ -137,11 +165,12 @@ public:
 
 	inline bool IsPrimary() const { return this == gWorld; }
 	inline bool IsChildWorld() const { return parent != nullptr; }
+	inline CWorld* ParentWorld() const { return parent; }
 
 	inline void SetRenderScene(CRenderScene* scene) { renderScene = scene; }
-	inline CRenderScene* GetRenderScene() const { return renderScene; }
+	inline CRenderScene* GetRenderScene() const { if (parent) return parent->renderScene; return renderScene; }
 
-	inline IPhysicsWorld* GetPhysicsWorld() const { return physicsWorld; }
+	inline IPhysicsWorld* GetPhysicsWorld() const { if (parent) return parent->physicsWorld; return physicsWorld; }
 
 	inline void SetRenderWindow(IBaseWindow* wnd) { renderWindow = wnd; }
 	inline IBaseWindow* GetRenderWindow() const { return renderWindow; }
@@ -150,6 +179,10 @@ public:
 	TArray<TObjectPtr<T>> FindEntitiesOfType();
 
 	inline const TMap<SizeType, TObjectPtr<CEntity>>& GetEntities() const { return entities; }
+	inline const TArray<TObjectPtr<CEntity>>& GetDynamicEntities() const { return dynamicEntities; }
+
+	// Loads light data provided by LightBaker.exe, reloads the data if already loaded.
+	void LoadLightData();
 
 	void Start();
 	void Stop();
@@ -178,26 +211,39 @@ public:
 
 protected:
 	void OnDelete() override;
+	void OnSave(IBaseFStream* stream);
 
 	void RemoveEntity(CEntity* ent);
 
 	CEntityIOManager* GetEntityIOManager() const;
 
+	void RegisterDynamicEntity(CEntity* ent);
+	void RemoveDynamicEntity(CEntity* ent);
+
+	void RenderSubWorlds();
+
 public: // Events
 	TDelegate<CEntity*> OnEntityCreated;
 	TDelegate<CEntity*> OnEntityDeleted;
+
+	TDelegate<FSubScene> OnSubSceneLoaded;
+
+	TDelegate<double> OnUpdate;
 
 protected:
 	InitializeInfo initInfo;
 
 	CWorld* parent = nullptr;
-	TArray<CWorld*> subWorlds;
+	TArray<CWorld*> subWorlds; // list of active/loaded sub scenes
+	TArray<FSubScene> subScenes;
 
 	//   EntityId, EntityPtr
 	TMap<SizeType, TObjectPtr<CEntity>> entities;
 
 	// The window that this scene gets rendered to.
 	IBaseWindow* renderWindow = nullptr;
+
+	TArray<TObjectPtr<CEntity>> dynamicEntities;
 
 	TObjectPtr<CGameMode> gamemode;
 
@@ -210,6 +256,8 @@ protected:
 
 	TObjectPtr<CScene> scene;
 	CRenderScene* renderScene = nullptr;
+
+	TArray<TObjectPtr<CTexture>> lightmaps;
 
 	TObjectPtr<IPhysicsWorld> physicsWorld;
 

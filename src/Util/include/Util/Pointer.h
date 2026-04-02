@@ -5,9 +5,12 @@ class TUniquePtr
 {
 public:
 	TUniquePtr() = default;
-	TUniquePtr(T* obj) {
-		ptr = obj;
+	TUniquePtr(const TUniquePtr& other) : ptr(other.ptr) {
 	}
+	TUniquePtr(TUniquePtr&& other) : ptr(other.ptr) {
+		other.ptr = nullptr;
+	}
+	TUniquePtr(T* obj) : ptr(obj) {}
 	~TUniquePtr() {
 		delete ptr;
 	}
@@ -17,6 +20,8 @@ public:
 
 	operator T* () { return ptr; }
 
+	operator bool() const { return ptr != nullptr; }
+
 	TUniquePtr<T>& operator=(T* newPtr)
 	{
 		if (ptr)
@@ -25,6 +30,14 @@ public:
 		ptr = newPtr;
 		return *this;
 	}
+	TUniquePtr<T>& operator=(TUniquePtr<T>&& other)
+	{
+		this->ptr = other.ptr;
+		other.ptr = nullptr;
+		return *this;
+	}
+
+	inline T* Get() const { return ptr; }
 
 private:
 	T* ptr = nullptr;

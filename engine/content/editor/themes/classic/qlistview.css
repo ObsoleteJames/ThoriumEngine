@@ -1,0 +1,54 @@
+
+QListView
+{
+    outline: 0;
+    background-color: #C0C0C0;
+}
+
+QListView[type="2"]
+{
+    background-color: #C0C0C0;
+}
+
+QListView::item
+{
+	border: 1px solid transparent;
+	border-radius: 2px;
+    padding-bottom: 4px;
+}
+
+QListView::item:hover
+{
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:1 #CCCCCC, stop:0 #9F9F9F);
+    color: black;
+    /* border: 1px solid;
+    border-color: #2a5f7d; */
+}
+
+QListView[type="2"]::item:hover
+{
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:1 #5BA5D5, stop:0 #5BA5D5);
+    color: black;
+    border: 1px solid #5BA5D5;
+}
+
+QListView::item:selected
+{
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:1 #CCCCCC, stop:0 #838383);
+    /* border: 1px solid;
+    border-color: #2a5f7d; */
+    color: black;
+}
+
+QListView[type="2"]::item:selected
+{
+    background-color: qlineargradient(spread:reflect, x1:0, y1:0, x2:0, y2:1, stop:1 #5BA5D5, stop:0 #5BA5D5);
+    border: 1px solid;
+    border-color: #5BA5D5;
+    color: black;
+}
+
+QListView::item:selected:!active
+{
+    color: #333333;
+}

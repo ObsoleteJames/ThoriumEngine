@@ -1,6 +1,7 @@
 
 #include "CppParser.h"
 #include <Util/FStream.h>
+#include <Util/Map.h>
 
 #include <string>
 #include <iostream>
@@ -17,6 +18,28 @@ FString projectName;
 
 TArray<FTypeDefinition> PreRegisteredClasses;
 TArray<FHeaderData> Headers;
+
+struct FFlagVariable
+{
+	FString flag;
+	bool bInverse; // if true, then the flag is added if the property doesn't have the flag.
+};
+
+static TUnorderedMap<FString, FFlagVariable> sVariableFlags = {
+	{ "Editable", { "VTAG_EDITOR_EDITABLE", false }},
+	{ "EditorVisible", { "VTAG_EDITOR_VISIBLE", false } },
+	{ "Transient", { "VTAG_SERIALIZABLE", true } },
+	{ "DontSerialize", { "VTAG_SERIALIZABLE", true } },
+	{ "SaveGame", { "VTAG_SAVEGAME", false } },
+	{ "IgnoreDefault", { "VTAG_IGNORE_DEFAULT", false } },
+
+	{ "Replicated", { "VTAG_REPLICATED", false } },
+	{ "NetValidate", { "VTAG_VALIDATE", false } },
+	{ "ServerAuthority", { "VTAG_AUTH_SERVER", false } },
+	{ "OwnerAuthority", { "VTAG_AUTH_OWNER", false } },
+	{ "NoAuthority", { "VTAG_AUTH_ANY", false } },
+	{ "OnlyRelevantToOwner", { "VTAG_RELEVENT_TO_OWNER", false } },
+};
 
 const char* funcCommmandTypes[] = {
 	"GENERAL",
@@ -47,99 +70,82 @@ bool ClassExists(const FString& name)
 	return false;
 }
 
-FString GetVariableType(const CppProperty& property, bool bIgnoreTemplate = false)
+FString GetVariableType(const FString& typeName)
 {
-	if (property.bTemplateType && !bIgnoreTemplate)
-	{
-		if (property.templateTypename == "TArray")
-			return "EVT_ARRAY";
-		if (property.templateTypename == "TMap")
-			return "EVT_MAP";
-		if (property.templateTypename == "TObjectPtr")
-			return "EVT_OBJECT_PTR";
-		if (property.templateTypename == "TEnum")
-			return "EVT_ENUM";
-		if (property.templateTypename == "TClassPtr")
-			return "EVT_CLASS_PTR";
-	}
-	if (bIgnoreTemplate)
-	{
-		if (property.nestedTemplateType == "TEnum")
-			return "EVT_ENUM";
-		if (property.nestedTemplateType == "TObjectPtr")
-			return "EVT_OBJECT_PTR";
-	}
-
-	if (property.typeName == "void")
+	if (typeName == "TObjectPtr")
+		return "EVT_OBJECT_PTR";
+	if (typeName == "TArray")
+		return "EVT_ARRAY";
+	if (typeName == "TClassPtr")
+		return "EVT_CLASS_PTR";
+	if (typeName == "TMap" || typeName == "TUnorderedMap")
+		return "EVT_MAP";
+	if (typeName == "void")
 		return "EVT_VOID";
-
-	if (property.typeName == "FString" || property.typeName == "WString")
+	if (typeName == "FString" || typeName == "WString")
 		return "EVT_STRING";
-
-	if (property.typeName == "SizeType" || property.typeName == "size_t")
+	if (typeName == "SizeType" || typeName == "size_t")
 		return "EVT_UINT";
-
-	if (property.typeName == "float")
+	if (typeName == "float")
 		return "EVT_FLOAT";
-	if (property.typeName == "double")
+	if (typeName == "double")
 		return "EVT_DOUBLE";
-	if (property.typeName == "bool")
+	if (typeName.Find("int") == 0)
+		return "EVT_INT";
+	if (typeName.Find("uint") == 0)
+		return "EVT_UINT";
+	if (typeName == "bool")
 		return "EVT_BOOL";
 
-	if (property.typeName == "FOutput")
-		return "EVT_OUTPUT";
+	//if (typeName == "FOutput")
+	//	return "EVT_OUTPUT";
 
 	for (auto header : Headers)
 	{
 		for (auto Class : header.classes)
 		{
-			if (Class.name == property.typeName)
+			if (Class.name == typeName)
 				return Class.classMacro.type == FMacro::STRUCT ? "EVT_STRUCT" : "EVT_CLASS";
 		}
 		for (auto Enum : header.enums)
 		{
-			if (Enum.name == property.typeName)
+			if (Enum.name == typeName)
 				return "EVT_ENUM";
 		}
 	}
 
 	for (auto t : PreRegisteredClasses)
 	{
-		if (t.name == property.typeName)
+		if (t.name == typeName)
 			return t.type == 0 ? "EVT_STRUCT" : t.type == 1 ? "EVT_CLASS" : "EVT_ENUM";
 	}
 
-	if (property.typeName.Find("int") != -1)
-		return "EVT_INT";
-	if (property.typeName.Find("uint") != -1)
-		return "EVT_UINT";
-
-	return "EVT_NULL";
+	return "EVT_END";
 }
 
-SizeType GetTypeId(const CppProperty& p)
+const FString& GetFullTypename(CppProperty& p)
 {
-	for (auto header : Headers)
+	if (!p.fullTypename.IsEmpty())
+		return p.fullTypename;
+
+	p.fullTypename = p.typeName;
+	if (p.templateArgs.Size() > 0)
 	{
-		for (auto Class : header.classes)
-		{
-			if (Class.name == p.typeName)
-				return Class.id;
-		}
-		for (auto Enum : header.enums)
-		{
-			if (Enum.name == p.typeName)
-				Enum.id;
-		}
+		p.fullTypename += "<";
+		for (auto& arg : p.templateArgs)
+			p.fullTypename += GetFullTypename(arg) + ",";
+		p.fullTypename.Erase(p.fullTypename.end() - 1); // remove last comma
+		p.fullTypename += ">";
 	}
 
-	for (auto t : PreRegisteredClasses)
-	{
-		if (t.name == p.typeName)
-			return t.id;
-	}
+	if (p.bConst)
+		p.fullTypename = "const " + p.fullTypename;
+	if (p.bPointer)
+		p.fullTypename += '*';
+	if (p.bRef)
+		p.fullTypename += '&';
 
-	return 0;
+	return p.fullTypename;
 }
 
 void CParser::WriteModuleCpp()
@@ -151,12 +157,14 @@ void CParser::WriteModuleCpp()
 	//stream << "\n#include \"Module.h\"\n\nCModule " << projectName.c_str() << "_module(\"" << projectName.c_str() << "\");\n";
 
 	stream << "\n#include \"Module.h\"\n\n"
-		<< "CModule& GetModule_" << projectName.c_str() << "()\n{\n"
-		<< "\tstatic CModule _module(\"" << projectName.c_str() << "\");\n"
-		<< "\treturn _module;\n"
-		<< "}\n";
+			<< "extern CModule& GetModule_" << projectName.c_str() << "();\n";
 
-	if (ProjectType != ENGINE_DLL)
+	//	<< "CModule& GetModule_" << projectName.c_str() << "()\n{\n"
+	//	<< "\tstatic CModule _module(\"" << projectName.c_str() << "\");\n"
+	//	<< "\treturn _module;\n"
+	//	<< "}\n";
+
+	//if (ProjectType != ENGINE_DLL)
 		stream << std::endl << "extern \"C\" __declspec(dllexport) CModule* __GetModuleInstance() { return &GetModule_" << projectName.c_str() << "(); }\n";
 
 	stream.close();
@@ -249,6 +257,86 @@ static FString GetDisplayName(const FString& in)
 	return r;
 }
 
+void WriteMetaType(std::ofstream& stream, const FString& metaName, FMacro& macro)
+{
+	int catI = macro.ArgIndex("Category");
+
+	stream << "#if IS_DEV\n";
+
+	stream << "static TPair<FString, FString> " << metaName.c_str() << "_Tags[]" << "{\n";
+	for (auto& arg : macro.Arguments)
+		stream << "\t{ \"" << arg.Key.c_str() << "\", \"" << arg.Value.c_str() << "\" },\n";
+
+	stream << "};\n\n";
+
+	stream << "static FPropertyMeta " << metaName.c_str() << " {\n";
+	stream << "\t\"" << (catI != -1 ? macro.Arguments[catI].Value.c_str() : "") << "\",\n";
+
+	stream << "\t" << std::to_string(macro.Arguments.Size()) << ",\n";
+	stream << "\t" << metaName.c_str() << "_Tags\n";
+
+	stream << "};\n\n";
+
+	stream << "#define " << metaName.c_str() << "_Ptr &" << metaName.c_str() << "\n";
+	stream << "#else\n";
+	stream << "#define " << metaName.c_str() << "_Ptr nullptr\n";
+	stream << "#endif\n";
+}
+
+void WriteArgType(std::ofstream& stream, CppProperty& arg, const FString& templateArray = FString())
+{
+	stream << "{ ";
+	FString type = GetVariableType(arg.typeName);
+	stream << type.c_str() << ", ";
+	stream << "\"" << arg.typeName.c_str() << "\", ";
+	if (arg.typeName != "void" && type != "EVT_END")
+	{
+		if (type != "EVT_CLASS")
+			stream << "sizeof(" << GetFullTypename(arg).c_str() << "), ";
+		else
+			stream << "sizeof(" << GetFullTypename(arg).c_str() << "*), ";
+	}
+	else
+		stream << "0, ";
+	stream << arg.templateArgs.Size() << ", ";
+	stream << ((arg.templateArgs.Size() > 0) ? templateArray.c_str() : "nullptr") << ", ";
+	stream << (arg.bConst ? "true" : "false") << ", ";
+	stream << (arg.bRef ? "true" : "false") << ", ";
+	stream << (arg.bPointer ? "true" : "false") << " }";
+}
+
+void WriteArgTypeTemplateArray(std::ofstream& stream, CppProperty& p, const FString& arrayName, int index = 0, int layer = 0)
+{
+	// wether this argument has template arguments or not.
+	for (int i = 0; i < p.templateArgs.Size(); i++)
+	{
+		if (p.templateArgs[i].templateArgs.Size() > 0)
+			WriteArgTypeTemplateArray(stream, p.templateArgs[i], arrayName, i, layer + 1);
+	}
+
+	stream << "static FArgType " << arrayName.c_str();
+	//if (index > 0)
+	//	stream << "_" << index;
+	if (layer > 0)
+		stream << "_" << index << "_" << layer;
+
+	stream << "[] = {\n";
+
+	for (int i = 0; i < p.templateArgs.Size(); i++)
+	{
+		auto& arg = p.templateArgs[i];
+		FString templateArray;
+		if (arg.templateArgs.Size() > 0)
+			templateArray = arrayName + "_" + FString::ToString(i) + "_" + FString::ToString(layer + 1);
+
+		stream << "\t";
+		WriteArgType(stream, arg, templateArray);
+		stream << ",\n";
+	}
+	
+	stream << "};\n\n";
+}
+
 void CParser::WriteGeneratedCpp(const FHeaderData& data)
 {
 	std::ofstream stream((GeneratedOutput + "/" + data.FileName + ".generated.cpp").c_str(), std::ios::trunc | std::ios::out);
@@ -257,9 +345,10 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 
 	FString moduleGetter = FString("GetModule_") + projectName + "()";
 
-	stream << "\n#include <Util/Core.h>\n#include \"" << data.FilePath.c_str() << "\"\n#include \"Object/Class.h\"\n#include \"Object/PropertyTypes.h\"\n#include \"Script/Frame.h\"\n#include \"Module.h\"\n";
+	stream << "\n#include <Util/Core.h>\n#include \"" << data.FilePath.c_str() << "\"\n#include \"Object/Class.h\"\n#include \"Module.h\"\n";
+	stream << "\n#include \"Object/PropertyTypes.h\"\n";
 	//stream << "\nextern CModule " << projectName.c_str() << "_module;\n\n";
-	stream << "\nCModule& " << moduleGetter.c_str() << ";\n\n";
+	stream << "\nextern CModule& " << moduleGetter.c_str() << ";\n\n";
 
 	for (auto& Enum : data.enums)
 	{
@@ -290,27 +379,31 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 		//stream  << "\t\t};\n";
 		stream << "\t\tname = \"" << name.c_str() << "\";\n"
 			<< "\t\tcppName = \"" << Enum.name.c_str() << "\";\n"
-			<< "\t\tsize = sizeof(" << Enum.name.c_str() << ");\n"
-			<< "\t\tflags = EnumFlag_NONE";
+			<< "\t\tsize = sizeof(" << Enum.name.c_str() << ");\n";
+			//<< "\t\tflags = EnumFlag_NONE";
+
+		std::string flags = "EnumFlag_NONE";
 
 		for (auto& mf : Enum.macro.Arguments)
 		{
-			if (mf.Key == "IsFlag")
-				stream << " | EnumFlag_IS_FLAG";
+			if (mf.Key == "IsFlag" || mf.Key == "Flags")
+				flags =  "EnumFlag_IS_FLAG";
 		}
+
+		stream << "\t\tflags = " << flags.c_str() << ";\n";
 
 		stream << ";\n";
 		stream << "\t\t" << moduleGetter.c_str() << ".RegisterFEnum(this);\n\t}\n};\n";
 		stream << "FEnum_" << Enum.name.c_str() << " __FEnum_" << Enum.name.c_str() << "_Instance;\n\n";
 	}
 
-	for (auto Class : data.classes)
+	for (auto& Class : data.classes)
 	{
 		stream << "#undef CLASS_NEXT_PROPERTY\n#define CLASS_NEXT_PROPERTY nullptr\n\n";
 
-		for (auto p : Class.Properties)
+		for (auto& p : Class.Properties)
 		{
-			FString varTypeId = GetVariableType(p);
+			FString varTypeId = GetVariableType(p.typeName);
 			if (varTypeId == "EVT_END")
 			{
 				std::cerr << "WARNING: invalid property '" << Class.name.c_str() << "::" << p.name.c_str() << "'!\n";
@@ -321,101 +414,54 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 
 			if (varTypeId == "EVT_ARRAY")
 			{
-				FString ArrayTypeName = p.fullTypename;
+				FString ArrayTypeName = GetFullTypename(p);
 				/*if (p.nestedTemplateType.IsEmpty())
 					ArrayTypeName += p.typeName + (p.bPointer ? "*" : "") + ">";
 				else
 					ArrayTypeName += p.nestedTemplateType + "<" + p.typeName + (p.bPointer ? "*" : "") + ">>";*/
 
-				FString objTypeName;
-				if (p.nestedTemplateType.IsEmpty())
+				FString objTypeName = GetFullTypename(p.templateArgs[0]);
+				/*if (p.nestedTemplateType.IsEmpty())
 					objTypeName = p.typeName + (p.bPointer ? "*" : "");
 				else
-					objTypeName = p.nestedTemplateType + "<" + p.typeName + (p.bPointer ? "*" : "") + ">";
+					objTypeName = p.nestedTemplateType + "<" + p.typeName + (p.bPointer ? "*" : "") + ">";*/
+
+				FString arrayAccessor = "(*(" + ArrayTypeName + "*)ptr)";
+
+				FString type = GetVariableType(p.templateArgs[0].typeName);
+				stream << "static FArrayType _arrayType_" << p.name.c_str() << " {\n ";
+				stream << "\t[](void* ptr, void* data) { " << arrayAccessor.c_str() << ".Add(*(" << objTypeName.c_str() << "*)data); },\n";		// Add(T&)
+				stream << "\t[](void* ptr) { " << arrayAccessor.c_str() << ".Add(); },\n";															// Add()
+				stream << "\t[](void* ptr, SizeType i) { " << arrayAccessor.c_str() << ".Erase(" << arrayAccessor.c_str() << ".At(i)); },\n";	// Erase(iterator)
+				stream << "\t[](void* ptr) { " << arrayAccessor.c_str() << ".Clear(); },\n";													// Clear()
+				stream << "\t[](void* ptr, SizeType i) { " << arrayAccessor.c_str() << ".Resize(i); }, \n";										// Resize(size_t)
+				stream << "\t[](void* ptr) { return " << arrayAccessor.c_str() << ".Size(); }, \n";												// Size()
+				stream << "\t[](void* ptr) { return " << arrayAccessor.c_str() << ".Capacity(); }, \n";											// Capacity()
+				stream << "\t[](void* ptr) { return (void*)" << arrayAccessor.c_str() << ".Data(); }, \n";										// Data()
+				stream << "\t[](void* ptr, SizeType i) { return (void*)&*(" << arrayAccessor.c_str() << ".At(i)); } \n";						// At(size_t)
+				stream << "};\n\n";
+			}
 
 				FString type = GetVariableType(p, true);
-				/*stream << "static FArrayHelper _arrayHelper_" << p.name.c_str() << "{\n ";
+				stream << "static FArrayHelper _arrayHelper_" << p.name.c_str() << "{\n ";
 				stream << "\t[](void* ptr) { (*(" << ArrayTypeName.c_str() << "*)ptr).Add(" << (p.bPointer ? FString(");") : (type == "EVT_OBJECT_PTR" ? ");" : p.typeName + "());")).c_str() << " },\n";
 				stream << "\t[](void* ptr, SizeType i) { (*(" << ArrayTypeName.c_str() << "*)ptr).Erase(" << "(*(" << ArrayTypeName.c_str() << "*)ptr).At(i)); },\n";
 				stream << "\t[](void* ptr) { (*(" << ArrayTypeName.c_str() << "*)ptr).Clear(); },\n";
 				stream << "\t[](void* ptr) { return (*(" << ArrayTypeName.c_str() << "*)ptr).Size(); }, \n";
 				stream << "\t[](void* ptr) { return (void*)(*(" << ArrayTypeName.c_str() << "*)ptr).Data(); }, \n";
 				stream << "\t" << type.c_str() << ", \n";
-				stream << "\tsizeof(" << objTypeName.c_str() << ")\n};\n\n";*/
-
-				FString helperName = "FArrayHelper_" + Class.name + "_" + p.name;
-
-				stream << "class " << helperName.c_str() << " : public FArrayHelper\n{\npublic:\n";
-				stream << "\t" << helperName.c_str() << "() { ";
-				stream << " objType = {" << type.c_str() << ", " << GetTypeId(p) << ", EVT_NULL, 0, " << p.bConst << ", " << p.bRef << ", " << p.bPointer << " }; ";
-				stream << "objSize = sizeof(" << objTypeName.c_str() << "); }\n\n";
-				//stream << "\tvoid AddEmpty(void* ptr) final { ";
-
-				stream << "\tvoid AddEmpty(void* ptr) final { (*(" << ArrayTypeName.c_str() << "*)ptr).Add(" << (p.bPointer ? FString(");") : (type == "EVT_OBJECT_PTR" ? ");" : p.typeName + "());")).c_str() << " };\n";
-				stream << "\tvoid Erase(void* ptr, SizeType i) final { (*(" << ArrayTypeName.c_str() << "*)ptr).Erase(" << "(*(" << ArrayTypeName.c_str() << "*)ptr).At(i)); };\n";
-				stream << "\tvoid Clear(void* ptr) final { (*(" << ArrayTypeName.c_str() << "*)ptr).Clear(); };\n";
-				stream << "\tSizeType Size(void* ptr) final { return (*(" << ArrayTypeName.c_str() << "*)ptr).Size(); }; \n";
-				stream << "\tvoid* Data(void* ptr) final { return (void*)(*(" << ArrayTypeName.c_str() << "*)ptr).Data(); }; \n";
-				stream << "} static _arrayHelper_" << p.name.c_str() << ";\n\n";
+				stream << "\tsizeof(" << objTypeName.c_str() << ")\n};\n\n";
 			}
 
 			// MetaData
 			bool bHasMeta = false;
 			FString metaName = "_" + Class.name + "_" + p.name + "_Meta";
 			{
-				auto uiMinI = p.macro.ArgIndex("UIMin");
-				auto uiMaxI = p.macro.ArgIndex("UIMax");
 				auto catI = p.macro.ArgIndex("Category");
 
-				bHasMeta = uiMinI != -1 || uiMaxI != -1 || catI != -1 || p.macro.Arguments.Size() != 0;
+				bHasMeta = catI != -1 || p.macro.Arguments.Size() != 0;
 				if (bHasMeta)
-				{
-					stream << "#if IS_DEV\n";
-
-					stream << "static TPair<FString, FString> " << metaName.c_str() << "_Tags[]" << "{\n";
-					for (auto& arg : p.macro.Arguments)
-						stream << "\t{ \"" << arg.Key.c_str() << "\", \"" << arg.Value.c_str() << "\" },\n";
-
-					stream << "};\n\n";
-
-					stream << "static FPropertyMeta " << metaName.c_str() << " {\n";
-					stream << "\t\"" << (uiMinI != -1 ? p.macro.Arguments[uiMinI].Value.c_str() : "") << "\",\n";
-					stream << "\t\"" << (uiMaxI != -1 ? p.macro.Arguments[uiMaxI].Value.c_str() : "") << "\",\n";
-					stream << "\t\"" << (catI != -1 ? p.macro.Arguments[catI].Value.c_str() : "") << "\",\n";
-					stream << "\t\"\",\n";
-
-					stream << "\t" << std::to_string(p.macro.Arguments.Size()) << ",\n";
-					stream << "\t" << metaName.c_str() << "_Tags\n";
-					
-					/*if (onEditI != -1)
-					{
-						FString func = p.macro.Arguments[onEditI].Value;
-						CppFunction* f = Class.GetFunction(func);
-						if (!f)
-						{
-							std::cerr << "error: unkown function '" << func.c_str() << "'!\n";
-							stream << "\tnullptr\n";
-						}
-						else if (f->Arguments.Size() > 0)
-						{
-							std::cerr << "error: OnEditFunc cannot take in arguments!\n";
-							stream << "\tnullptr\n";
-						}
-						else
-						{
-							stream << "\t&" << Class.name.c_str() << "::exec" << func.c_str() << "\n";
-						}
-					}
-					else
-						stream << "\tnullptr\n";*/
-
-					stream << "};\n\n";
-
-					stream << "#define " << metaName.c_str() << "_Ptr &" << metaName.c_str() << "\n";
-					stream << "#else\n";
-					stream << "#define " << metaName.c_str() << "_Ptr nullptr\n";
-					stream << "#endif\n";
-				}
+					WriteMetaType(stream, metaName, p.macro);
 			}
 
 			FString displayName;
@@ -428,14 +474,15 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			FString tags;
 			if (p.bPointer)
 				tags += " VTAG_TYPE_POINTER |";
-			if (SizeType i = p.macro.ArgIndex("EditorVisible"); i != -1)
-				tags += " VTAG_EDITOR_VISIBLE |";
-			if (SizeType i = p.macro.ArgIndex("Editable"); i != -1)
-				tags += " VTAG_EDITOR_EDITABLE |";
-			if (SizeType i = p.macro.ArgIndex("DontSerialize"); i == -1)
-				tags += " VTAG_SERIALIZABLE |";
 			if (p.bStatic)
 				tags += " VTAG_STATIC |";
+
+			for (auto& flag : sVariableFlags)
+			{
+				SizeType i = p.macro.ArgIndex(flag.first);
+				if ((i != -1 && !flag.second.bInverse) || (i == -1 && flag.second.bInverse))
+					tags += " " + flag.second.flag + " |";
+			}
 
 			if (!tags.IsEmpty())
 				tags.Erase(tags.last());
@@ -455,19 +502,21 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			else
 				stream << "offsetof(" << Class.name.c_str() << ", " << p.name.c_str() << "), ";
 			
-			stream << "sizeof(" << p.fullTypename.c_str();
+			stream << "sizeof(" << GetFullTypename(p).c_str();
 			stream << "), ";
 
 			stream << (bHasMeta ? (metaName + "_Ptr, ").c_str() : "nullptr, ");
 
 			if (varTypeId == "EVT_ARRAY")
-				stream << "&_arrayHelper_" << p.name.c_str();
+				stream << "&_arrayType_" << p.name.c_str();
 			else
 				stream << "nullptr";
-			
-			stream << ", " << std::to_string(p.name.Hash());
-			stream << ", 2";
 
+			stream << ", " << p.name.Hash() << "ull" // Type ID
+				<< ", " << (p.bPrivate ? 0 : 2) // protection lvl
+				<< ", " << p.templateArgs.Size()	// number of templates
+				<< ", " << templateArray.c_str();	// template array
+			
 			stream << ")\n";
 
 			stream << "#undef CLASS_NEXT_PROPERTY\n"
@@ -502,36 +551,46 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 
 				for (auto& arg : f.Arguments)
 				{
-					FString typeId = GetVariableType(arg);
-					if (typeId == "EVT_END" || typeId == "EVT_ARRAY" || typeId == "EVT_MAP")
+					FString typeId = GetVariableType(arg.typeName);
+					if (typeId == "EVT_END")
 					{
 						std::cerr << "ERROR: invalid function arg '" << arg.name.c_str() << "'  '" << Class.name.c_str() << "::" << f.name.c_str() << "'!\n";
 						continue;
 					}
 
-					/*FString flags = "VTAG_NONE";
-					if (arg.bPointer)
-						flags += " | VTAG_TYPE_POINTER";*/
-
-					FString objType = "nullptr";
-					if (typeId == "EVT_CLASS")
-						objType = arg.typeName + "::StaticClass()";
-					else if (typeId == "EVT_STRUCT")
-						objType = arg.typeName + "::StaticStruct()";
-
-					//stream << "\t{ \"" << arg.name.c_str() << "\", " << typeId.c_str() << ", " << flags.c_str() << ", " << objType.c_str() << " },\n";
-
-					stream << "\t{ \"" << arg.name.c_str() << "\", { " << typeId.c_str() << ", " << GetTypeId(arg) << ", EVT_NULL, 0, " << arg.bConst << ", " << arg.bRef << ", " << arg.bPointer << " } },\n";
+					stream << "\t{ \"" << arg.name.c_str() << "\", ";
+					WriteArgType(stream, arg);
+					stream << " },\n";
 				}
 
-				stream << "};\n\n";
+				stream << "};\n";
 			}
+
+			// MetaData
+			bool bHasMeta = f.macro.Arguments.Size() > 0;
+			FString metaName = "_" + Class.name + "_" + f.name + "_Meta";
+			if (bHasMeta)
+				WriteMetaType(stream, metaName, f.macro);
+
+			FString returnTemplateArr = "nullptr";
+			if (f.returnValue.templateArgs.Size() > 0)
+			{
+				returnTemplateArr = "_" + Class.name + "_" + f.name + "_ReturnValueTemplates";
+				WriteArgTypeTemplateArray(stream, f.returnValue, returnTemplateArr);
+			}
+
+			FString returnTypeName = "_" + Class.name + "_" + f.name + "_ReturnType";
+			stream << "\nstatic FArgType " << returnTypeName.c_str() << " = ";
+			WriteArgType(stream, f.returnValue, returnTemplateArr);
+			stream << ";\n\n";
 
 			stream << "DECLARE_FUNCTION_PROPERTY("
 				<< Class.name.c_str() << ", \""
 				<< displayName.c_str() << "\", \""
 				<< f.comment.c_str() << "\", "
 				<< f.name.c_str() << ", "
+				<< f.name.Hash() << "ull, "
+				<< (f.bPrivate ? 0 : 2) << ", "
 				<< "&" << Class.name.c_str() << "::exec" << f.name.c_str() << ", "
 				<< "FFunction::" << CmdType.c_str();
 			if (f.Arguments.Size() > 0)
@@ -539,45 +598,16 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			else
 				stream << ", nullptr, 0, ";
 
-			//for (auto& arg : f.Arguments)
-			//{
-			//	FString typeId = GetVariableType(arg);
-			//	if (typeId == "EVT_END" || typeId == "EVT_ARRAY" || typeId == "EVT_MAP")
-			//	{
-			//		std::cerr << "ERROR: invalid function arg '" << arg.name.c_str() << "'  '" << Class.name.c_str() << "::" << f.name.c_str() << "'!\n";
-			//		continue;
-			//	}
+			//WriteArgType(stream, f.returnValue, returnTemplateArr);
+			stream << returnTypeName.c_str() << ", ";
 
-			//	FString flags = "VTAG_NONE";
-			//	if (arg.bPointer)
-			//		flags += " | VTAG_TYPE_POINTER";
+			stream << (bHasMeta ? (metaName + "_Ptr, ").c_str() : "nullptr, ");
 
-			//	FString objType = "nullptr";
-			//	if (typeId == "EVT_CLASS")
-			//		objType = arg.typeName + "::StaticClass()";
-			//	else if (typeId == "EVT_STRUCT")
-			//		objType = arg.typeName + "::StaticStruct()";
-
-			//	stream << "{ \"" << arg.name.c_str() << "\", " << typeId.c_str() << ", " << flags.c_str() << ", " << objType.c_str() << " }, ";
-			//}
-
-			FString funcFlags = "FunctionFlags_NONE";
+			FString funcFlags = "FTAG_NONE";
 			if (f.macro.ArgIndex("NoEntityInput") == -1)
-				funcFlags += " | FunctionFlags_ALLOW_AS_INPUT";
-			if (f.macro.ArgIndex("ScriptCallable") != -1)
-				funcFlags += " | FunctionFlags_SCRIPT_CALLABLE";
-			if (f.macro.ArgIndex("ScriptVirtual") != -1)
-				funcFlags += " | FunctionFlags_SCRIPT_VIRTUAL";
-			if (f.bStatic)
-				funcFlags += " | FunctionFlags_STATIC";
+				funcFlags += " | FTAG_ALLOW_AS_INPUT";
 
-			//stream << (f.bStatic ? "1" : "0") << ", " << funcFlags.c_str() << ")\n";
-			stream << funcFlags.c_str();
-			stream << ", " << std::to_string(f.name.Hash()) << ", 2, ";
-
-			stream << GetVariableType(f.returnType).c_str() << ", " << GetTypeId(f.returnType);
-
-			stream << ")\n";
+			stream << funcFlags.c_str() << ")\n";
 			stream << "#undef CLASS_NEXT_FUNCTION\n" << "#define CLASS_NEXT_FUNCTION &EVALUATE_FUNCTION_NAME(" << Class.name.c_str() << ", " << f.name.c_str() << ")\n\n";
 		}
 
@@ -619,9 +649,8 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			<< "\t\tcppName = \"" << Class.name.c_str() << "\";\n"
 			<< "\t\tsize = sizeof(" << Class.name.c_str() << ");\n"
 			<< "\t\tnumProperties = " << std::to_string(Class.Properties.Size()) << ";\n"
-			<< "\t\tPropertyList = CLASS_NEXT_PROPERTY;\n"
-			<< "\t\tbIsClass = " << (Class.classMacro.type != FMacro::STRUCT ? "true" : "false") << ";\n"
-			<< "\t\tid = " << Class.name.Hash() << ";\n";
+			<< "\t\tPropertyList = CLASS_NEXT_PROPERTY;\n";
+			//<< "\t\tbIsClass = " << (Class.classMacro.type != FMacro::STRUCT ? "true" : "false") << ";\n";
 
 		if (bHasTags)
 		{
@@ -631,42 +660,55 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			stream << "#endif\n";
 		}
 
-		if (auto i = Class.classMacro.ArgIndex("MetaExtension"); Class.classMacro.type == FMacro::ASSET && Class.classMacro.ArgIndex("Abstract") == -1)
-		{
-			if (i != -1)
-				stream << "\t\tmetaExt = \"" << Class.classMacro.Arguments[i].Value.c_str() << "\";\n";
-				//std::cerr << "error: type of asset must have extension type specified!";
-			//else
+		stream << "\t\tconstructor = [](void* obj) { ";
 
-			auto importI = Class.classMacro.ArgIndex("ImportableAs");
-			if (importI != -1)
-				stream << "\t\timportableAs = \"" << Class.classMacro.Arguments[importI].Value.c_str() << "\";\n";
-		}
+		bool bCanInstantiate = Class.classMacro.ArgIndex("Abstract") == -1;
+		if (bCanInstantiate)
+			stream << "new(obj) " << Class.name.c_str() << "(); };\n";
+		else 
+			stream << "};\n";
+
+		// extension is deprecated
+		//if (auto i = Class.classMacro.ArgIndex("Extension"); Class.classMacro.type == FMacro::ASSET && Class.classMacro.ArgIndex("Abstract") == -1)
+		//{
+		//	if (i == -1);
+		//		//std::cerr << "error: type of asset must have extension type specified!";
+		//	else
+		//		stream << "\t\textension = \"" << Class.classMacro.Arguments[i].Value.c_str() << "\";\n";
+
+		//	auto importI = Class.classMacro.ArgIndex("ImportableAs");
+		//	if (importI != -1)
+		//		stream << "\t\timportableAs = \"" << Class.classMacro.Arguments[importI].Value.c_str() << "\";\n";
+		//}
+
+		if (Class.baseName.IsEmpty() || Class.name == "CObject")
+			stream << "\t\tbaseType = nullptr;\n";
+		else if (Class.classMacro.type == FMacro::STRUCT)
+			stream << "\t\tbaseType = " << Class.baseName.c_str() << "::StaticStruct();\n";
+		else
+			stream << "\t\tbaseType = " << Class.baseName.c_str() << "::StaticClass();\n";
+
+		stream << "\t\tflags =";
+
+		FString flags = " CTAG_NATIVE |";
+		if (Class.classMacro.type != FMacro::STRUCT)
+			flags += " CTAG_CLASS |";
+		if (Class.classMacro.ArgIndex("Abstract") != -1)
+			flags += " CTAG_ABSTRACT |";
+		if (Class.classMacro.ArgIndex("Hidden") != -1)
+			flags += " CTAG_HIDDEN |";
+
+		if (!flags.IsEmpty())
+			flags.Erase(flags.last() - 1, flags.end());
+		else
+			flags = " CTAG_NONE";
+
+		stream << flags.c_str() << ";\n";
 
 		if (Class.classMacro.type != FMacro::STRUCT)
 		{
-			//bool bBaseClass = ClassExists(Class.baseName);
-			bool bBaseClass = Class.name != "CObject";
-			stream << "\t\tBaseClass = " << (bBaseClass ? (Class.baseName + "::StaticClass()").c_str() : "nullptr") << ";\n"
-				<< "\t\tnumFunctions = " << std::to_string(Class.Functions.Size()) << ";\n"
-				<< "\t\tFunctionList = CLASS_NEXT_FUNCTION;\n"
-				<< "\t\tflags =";
-
-			FString flags = "";
-
-			if (Class.classMacro.ArgIndex("Abstract") != -1)
-				flags += " CTAG_ABSTRACT |";
-			if (Class.classMacro.ArgIndex("Hidden") != -1)
-				flags += " CTAG_HIDDEN |";
-			if (Class.classMacro.ArgIndex("Static") != -1)
-				flags += " CTAG_STATIC |";
-
-			if (!flags.IsEmpty())
-				flags.Erase(flags.last() - 1, flags.end());
-			else
-				flags = " CTAG_NONE";
-
-			stream << flags.c_str() << ";\n";
+			stream << "\t\tnumFunctions = " << std::to_string(Class.Functions.Size()) << ";\n"
+				<< "\t\tFunctionList = CLASS_NEXT_FUNCTION;\n";
 
 			if (Class.classMacro.type == FMacro::ASSET)
 			{
@@ -685,10 +727,13 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			if (Class.classMacro.type == FMacro::ASSET)
 				stream << "\t\t" << moduleGetter.c_str() << ".RegisterFAsset(this);\n";
 
-			stream << "\t}\n\tCObject* Instantiate() override { return " << (bCanInstantiate ? (FString("new ") + Class.name + "()").c_str() : "nullptr") << "; }\n};\n";
+			//stream << "\t}\n\tCObject* Instantiate() override { return " << (bCanInstantiate ? (FString("new ") + Class.name + "()").c_str() : "nullptr") << "; }\n};\n";
 		}
 		else
-			stream << "\t\t" << moduleGetter.c_str() << ".RegisterFStruct(this);\n\t}\n};\n";
+			stream << "\t\t" << moduleGetter.c_str() << ".RegisterFStruct(this);\n";
+
+		stream << "\t}\n"
+			<< "};\n\n";
 
 		stream << objectTypeName.c_str() << " __" << objectTypeName.c_str() << "_Instance;\n";
 
@@ -728,7 +773,7 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			{
 				FString typeName;
 				if (it->bTemplateType)
-					typeName = it->templateTypename + "<" + it->typeName + ">";
+					typeName = it->typeName + "<" + it->templateArgs[0].typeName + ">"; // TODO: support nested templates
 				else
 					typeName = it->typeName;
 

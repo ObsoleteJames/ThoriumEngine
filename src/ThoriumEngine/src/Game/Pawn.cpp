@@ -14,6 +14,8 @@ void CPawn::OnPossessed(const TObjectPtr<CPawnController>& controller)
 			auto cam = GetComponent<CCameraComponent>();
 			if (cam)
 				cam->MakePrimary();
+			else
+				CONSOLE_LogWarning("CPawn", "Couldn't find camera component on pawn!");
 		}
 	}
 }

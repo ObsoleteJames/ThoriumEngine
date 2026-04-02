@@ -61,6 +61,9 @@ public:
 	inline FColor operator+(float v) const { return FColor(r + v, g + v, b + v, a); }
 	inline FColor operator-(float v) const { return FColor(r - v, g - v, b - v, a); }
 
+	inline bool operator==(const FColor& v) const { return r == v.r && g == v.g && b == v.b && a == v.a; }
+	inline bool operator!=(const FColor& v) const { return !(*this == v); }
+
 public:
 	PROPERTY(Editable)
 	float r;

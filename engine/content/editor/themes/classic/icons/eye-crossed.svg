@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="64"
+   height="48"
+   viewBox="0 0 16.933333 12.7"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
+   sodipodi:docname="eye-crossed.svg"
+   inkscape:export-filename="F:\MyProjects\VS_Projects\ThoriumEngine\engine\content\editor\themes\default\icons\eye-crossed.png"
+   inkscape:export-xdpi="24.000002"
+   inkscape:export-ydpi="24.000002"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="true"
+     units="px"
+     inkscape:zoom="11.313709"
+     inkscape:cx="28.682018"
+     inkscape:cy="26.870056"
+     inkscape:window-width="2560"
+     inkscape:window-height="1372"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid1039" />
+  </sodipodi:namedview>
+  <defs
+     id="defs2">
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect1242"
+       is_visible="true"
+       lpeversion="1"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false" />
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect1156"
+       is_visible="true"
+       lpeversion="1"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false" />
+    <inkscape:path-effect
+       effect="bspline"
+       id="path-effect957"
+       is_visible="true"
+       lpeversion="1"
+       weight="33.333333"
+       steps="2"
+       helper_size="0"
+       apply_no_weight="true"
+       apply_with_weight="true"
+       only_selected="false" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g829"
+       transform="translate(0,-2.2489585)">
+      <path
+         id="path1154"
+         style="color:#000000;fill:#cccccc;fill-opacity:1;stroke-width:3.77953;-inkscape-stroke:none"
+         d="m 32,15.841797 c -3.315377,-8.9e-5 -6.632693,0.690707 -9.927734,2.066406 -6.59012,2.751415 -13.0427194,8.167781 -19.4746098,13.539063 L 3.0585938,32 2.5976562,32.554688 c 2.872536,2.398858 5.7494222,4.803513 8.6406248,6.978515 l 7.882813,-6.128906 C 19.071593,32.942752 19.044922,32.474976 19.044922,32 c 0,-7.169749 5.785329,-12.955078 12.955078,-12.955078 1.596695,0 3.124388,0.289216 4.535156,0.814453 l 3.449219,-2.681641 C 37.330305,16.288906 34.663693,15.841868 32,15.841797 Z m 13.173828,3.630859 -4.148437,3.226563 c 2.423998,2.352421 3.929687,5.645704 3.929687,9.300781 0,7.169749 -5.785329,12.955078 -12.955078,12.955078 -4.814663,0 -9.000995,-2.611048 -11.234375,-6.496094 l -5.251953,4.085938 c 2.173873,1.411538 4.35841,2.628283 6.558594,3.546875 6.590083,2.751398 13.267825,2.752123 19.857422,0 C 48.519207,43.3397 54.971965,37.924699 61.402344,32.554688 L 60.957031,32.017578 60.978516,32 60.957036,31.98242 61.402349,31.447264 C 56.030465,26.961204 50.643627,22.443252 45.173828,19.472656 Z m -8.076172,6.283203 -12.394531,9.640625 c 1.319473,2.840661 4.16473,4.660072 7.296875,4.666016 4.452796,0 8.0625,-3.609704 8.0625,-8.0625 -6.85e-4,-2.42095 -1.089212,-4.713453 -2.964844,-6.244141 z"
+         transform="scale(0.26458333)"
+         sodipodi:nodetypes="sscccccssccsccssccssccccccccccc" />
+      <path
+         style="fill:#c9c9c9;fill-opacity:1;stroke:#cccccc;stroke-width:1.32292;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="M 14.552083,3.96875 2.6458333,13.229167"
+         id="path2272"
+         sodipodi:nodetypes="cc" />
+    </g>
+  </g>
+</svg>

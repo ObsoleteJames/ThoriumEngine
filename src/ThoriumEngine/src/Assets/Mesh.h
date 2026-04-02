@@ -3,8 +3,8 @@
 #include "Math/Vectors.h"
 #include "Math/Bounds.h"
 
-class IVertexBuffer;
-class IIndexBuffer;
+class IGBuffer;
+//class IIndexBuffer;
 
 struct FVertex
 {
@@ -14,7 +14,16 @@ struct FVertex
 	FVector color;
 	float uv1[2];
 	float uv2[2];
+};
 
+struct FSkinnedVertex
+{
+	FVector position;
+	FVector normal;
+	FVector tangent;
+	FVector color;
+	float uv1[2];
+	float uv2[2];
 	int bones[4];
 	float boneInfluence[4];
 };
@@ -29,15 +38,17 @@ struct ENGINE_API FMesh
 	};
 
 public:
-	TObjectPtr<IVertexBuffer> vertexBuffer;
-	TObjectPtr<IIndexBuffer> indexBuffer;
+	TObjectPtr<IGBuffer> vertexBuffer;
+	TObjectPtr<IGBuffer> indexBuffer;
 
-	uint32 numIndices;
-	uint32 numVertices;
-	uint32 materialIndex;
+	uint32 numIndices = 0;
+	uint32 numVertices = 0;
+	uint32 materialIndex = 0;
 
 	uint8 topologyType = TOPOLOGY_TRIANGLES;
-	FString meshName;
+	bool bSkinnedMesh = false;
+
+	//FString meshName;
 
 	FBounds bounds;
 
@@ -46,11 +57,11 @@ public:
 
 public:
 	// This is only used for saving new mesh data.
-	SizeType numVertexData;
+	SizeType numVertexData = 0;
 	FVertex* vertexData = nullptr;
 
-	SizeType numIndexData;
+	SizeType numIndexData = 0;
 	uint* indexData = nullptr;
 
-	SizeType meshDataOffset;
+	SizeType meshDataOffset = 0;
 };

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Rendering/Framebuffer.h"
-#include "DirectXRenderer.h"
+#include "DirectXInterface.h"
 
 class CWindow;
 
@@ -38,7 +38,7 @@ public:
 class ENGINE_API DirectXDepthBuffer : public IDepthBuffer
 {
 public:
-	DirectXDepthBuffer(FDepthBufferInfo data);
+	DirectXDepthBuffer(FDepthBufferDesc data);
 	virtual ~DirectXDepthBuffer();
 
 	virtual void Resize(int width, int height) override;

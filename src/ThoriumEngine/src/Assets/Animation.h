@@ -5,12 +5,17 @@
 #include "Math/Transform.h"
 #include "Animation.generated.h"
 
-ENUM()
-enum EKeyframeType
+enum EKeyframeType : uint8
 {
 	KEYFRAME_INVALID	META(Name = "Invalid"),
 	KEYFRAME_BONE		META(Name = "Bone"),
 	KEYFRAME_PROPERTY	META(Name = "Object Property")
+};
+
+enum EKeyframeBehaviour : uint8
+{
+	KEYFRAME_INTERP_CONSTANT,
+	KEYFRAME_INTERP_LINEAR,
 };
 
 STRUCT()
@@ -19,24 +24,31 @@ struct ENGINE_API FKeyframe
 	GENERATED_BODY()
 
 public:
+	float time;
+
+	FTransform keyBone;
+
+	// 8 byte variable for object properties
+	// a keyframe can only edit integers, bools, and floats.
+	SizeType keyProperty; 
+};
+
+STRUCT()
+struct ENGINE_API FAnimChannel
+{
+	GENERATED_BODY()
+
+public:
 	EKeyframeType type;
+	EKeyframeBehaviour behaviour;
 
 	FClass* targetClass = nullptr;
-	
+
 	// Bone/Property name
 	// for properties the format is: "variableName", "structName.variableName", "componentName.variableName", e.g. "root.position.x"
 	FString targetName;
 
-	int frame;
-
-	union
-	{
-		FTransform keyBone;
-
-		// 8 byte variable for object properties
-		// a keyframe can only edit integers, bools, and floats.
-		SizeType keyProperty; 
-	};
+	TArray<FKeyframe> keyframes;
 };
 
 CLASS(Extension = ".thanim", ImportableAs = ".fbx;.gltf;.glb")
@@ -51,13 +63,22 @@ public:
 	inline void SetFrameRate(float f) { frameRate = f; }
 
 	inline int FrameCount() const { return numFrames; }
+	inline float Length() const { return length; }
 
-	TArray<FKeyframe>* GetKeyframes(int frame) const;
+	// add a new channel, returns null if it already exists
+	FAnimChannel* AddChannel(const FString& key);
+	FAnimChannel* GetChannel(const FString& key) const;
+	inline const FAnimChannel* GetChannel(int index) const { return &channels[index]; }
 
-	int GetNextFrame(int index);
-	int GetPreviousFrame(int index);
+	void ClearChannels();
 
-	bool AddKeyframe(int frame, const FKeyframe& keyframe);
+	int GetKeyframeIndex(const FAnimChannel* channel, float time);
+	int GetNextKeyframeIndex(const FAnimChannel* channel, float time);
+	int GetNextKeyframeIndex(const FAnimChannel* channel, int prevIndex);
+
+	inline SizeType NumChannels() const { return channels.Size(); }
+
+	void CalculateFrameCount();
 
 protected:
 	void OnInit(IBaseFStream* stream) final;
@@ -66,20 +87,9 @@ protected:
 	void OnLoad(IBaseFStream* stream, uint8 lodLevel) final;
 
 private:
-	void GenerateFrameIndex();
-
-	int SearchNext(int index);
-	int SearchPrevious(int index);
-
-private:
 	float frameRate = 30.f;
+	float length = 0;
 	int numFrames = 0;
 
-	// frame index - keyframes
-	TMap<int, TArray<FKeyframe>> frames;
-
-	// for quick searching of next/previous frames.
-	// if the index is on a frame, the next value will be that frame.
-	// key = previous, value = next.
-	TArray<TPair<int, int>> frameIndex;
+	TArray<FAnimChannel> channels;
 };

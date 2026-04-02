@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Rendering/Shader.h"
-#include "DirectXRenderer.h"
+#include "DirectXInterface.h"
 
 class ENGINE_API DirectXShader : public IShader
 {
@@ -19,6 +19,18 @@ class ENGINE_API DirectXVertexShader : public IShader
 public:
 	DirectXVertexShader(CShaderSource* shader, FString path);
 	virtual ~DirectXVertexShader();
+
+public:
+	ID3D11VertexShader* shader;
+	ID3D11InputLayout* inputLayout;
+
+};
+
+class ENGINE_API DirectXSkinnedVertexShader : public IShader
+{
+public:
+	DirectXSkinnedVertexShader(CShaderSource* shader, FString path);
+	virtual ~DirectXSkinnedVertexShader();
 
 public:
 	ID3D11VertexShader* shader;

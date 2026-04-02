@@ -25,10 +25,10 @@ public:
 	static inline EShapeType Type() { return SHAPE_BOX; }
 
 public:
-	PROPERTY(EditAnywhere)
+	PROPERTY(Editable)
 	FVector center;
 
-	PROPERTY(EditAnywhere)
+	PROPERTY(Editable)
 	FVector size;
 };
 
@@ -41,10 +41,10 @@ public:
 	static inline EShapeType Type() { return SHAPE_SPHERE; }
 
 public:
-	PROPERTY(EditAnywhere)
+	PROPERTY(Editable)
 	FVector center;
 
-	PROPERTY(EditAnywhere)
+	PROPERTY(Editable)
 	float radius;
 };
 
@@ -57,10 +57,10 @@ public:
 	static inline EShapeType Type() { return SHAPE_PLANE; }
 
 public:
-	PROPERTY(EditAnywhere)
+	PROPERTY(Editable)
 	FVector center;
 
-	PROPERTY(EditAnywhere)
+	PROPERTY(Editable)
 	FVector2 size;
 };
 
@@ -73,13 +73,13 @@ public:
 	static inline EShapeType Type() { return SHAPE_CAPSULE; }
 
 public:
-	PROPERTY(EditAnywhere)
+	PROPERTY(Editable)
 	FVector center;
 
-	PROPERTY(EditAnywhere)
+	PROPERTY(Editable)
 	float radius;
 
-	PROPERTY(EditAnywhere)
+	PROPERTY(Editable)
 	float height;
 };
 

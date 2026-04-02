@@ -1,0 +1,67 @@
+
+class CTestPlayed : CPawn
+{
+public:
+	void Init() override
+	{
+		base.Init();
+
+		camera = AddComponent(type_id(CCameraComponent));
+		camera.Attach(RootComponent());
+		camera.SetPosition({ y = 1.7 });
+	}
+
+	void SetupInput(CInputManager input) override
+	{
+		input.BindAxis("LookX", this, LookYaw, EInputMode.GAME_ONLY);
+		input.BindAxis("LookY", this, LookPitch, EInputMode.GAME_ONLY);
+	}
+
+	void Update() override
+	{	
+		base.Update();
+
+		camera.SetRotation(FQuaternion.Euler(look));
+
+		var curPos = RootComponent().GetPosition();
+
+		velocity += FVector.Rotate(moveInput, FQuaternion.Euler(FVector(0, look.y, 0)));
+		velocity *= 0.8;
+
+		RootComponent().SetPosition(curPos + velocity);
+
+		moveInput = FVector();
+	}
+
+private:
+	void LookYaw(float v)
+	{
+		look.y += v * mouseSensitivity;
+	}
+
+	void LookPitch(float v)
+	{
+		look.x += v * mouseSensitivity;
+	}
+
+	void MoveForward(float v)
+	{
+		moveInput += FVector.Forward * v;
+	}
+
+	void MoveStrafe(float v)
+	{
+		moveInput += FVector.Right * v;
+	}
+
+public:
+	@editable; @readOnly;
+	float mouseSensitivity = 0;
+
+private:
+	CCameraComponent camera = null;
+	FVector look;
+
+	FVector velocity;
+	FVector moveInput;
+}

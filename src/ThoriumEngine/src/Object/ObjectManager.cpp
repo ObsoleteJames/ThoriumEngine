@@ -5,11 +5,38 @@
 #include "Module.h"
 #include <Util/Assert.h>
 
+#include <shared_mutex>
+
 TMap<FGuid, CObject*> CObjectManager::Objects;
 TArray<CObject*> CObjectManager::ObjectsToDelete;
 
+static std::shared_mutex objMutex;
+
+#define ALLOCATE_COBJECT(size, align) (CObject*)(malloc(size))
+
+ENGINE_API CObject* CreateObject(FClass* type, CObject* parent, const FString& _name)
+{
+	std::unique_lock<std::shared_mutex> lock(objMutex);
+	if (type->Flags() & CTAG_ABSTRACT)
+		return nullptr;
+
+	//CObject* obj = type->Instantiate();
+	CObject* obj = ALLOCATE_COBJECT(type->Size(), 8);
+	type->constructor(obj);
+
+	obj->SetOwner(parent);
+
+	FString name = _name;
+	if (name.IsEmpty())
+		name = GetUniqueObjectName(type);
+
+	obj->SetName(name);
+	return obj;
+}
+
 CObject* CObjectManager::FindObject(const FString& name)
 {
+	std::shared_lock<std::shared_mutex> lock(objMutex);
 	for (auto obj : Objects)
 		if (obj.second->Name() == name)
 			return obj.second;
@@ -19,6 +46,7 @@ CObject* CObjectManager::FindObject(const FString& name)
 
 CObject* CObjectManager::FindObject(SizeType id)
 {
+	std::shared_lock<std::shared_mutex> lock(objMutex);
 	auto it = Objects.find(id);
 	if (it == Objects.end())
 		return nullptr;
@@ -28,6 +56,7 @@ CObject* CObjectManager::FindObject(SizeType id)
 
 CObject* CObjectManager::FindObject(FClass* type)
 {
+	std::shared_lock<std::shared_mutex> lock(objMutex);
 	for (auto obj : Objects)
 		if (obj.second->GetClass() == type)
 			return obj.second;
@@ -37,6 +66,7 @@ CObject* CObjectManager::FindObject(FClass* type)
 
 TArray<CObject*> CObjectManager::FindObjects(FClass* type)
 {
+	std::shared_lock<std::shared_mutex> lock(objMutex);
 	TArray<CObject*> r;
 	for (auto obj : Objects)
 		if (obj.second->GetClass() == type)
@@ -47,6 +77,7 @@ TArray<CObject*> CObjectManager::FindObjects(FClass* type)
 
 void CObjectManager::IdChanged(CObject* obj, SizeType oldId)
 {
+	std::unique_lock<std::shared_mutex> lock(objMutex);
 	auto it = Objects.find(oldId);
 	
 	THORIUM_ASSERT(it != Objects.end(), "Failed to change object ID, original ID index couldn't be located!");
@@ -60,6 +91,10 @@ bool CObjectManager::DeleteObject(CObject* obj, bool bNoErase)
 	if (obj->bMarkedForDeletion)
 		return false;
 
+	obj->bMarkedForDeletion = true;
+	obj->_ObjectDelete();
+
+	std::unique_lock<std::shared_mutex> lock(objMutex);
 	if (!bNoErase)
 	{
 		auto it = Objects.find(obj->id);
@@ -71,12 +106,10 @@ bool CObjectManager::DeleteObject(CObject* obj, bool bNoErase)
 		}
 		Objects.erase(it);
 	}
-	obj->bMarkedForDeletion = true;
-
-	obj->OnDelete();
 
 	if (obj->users == 0)
 	{
+		lock.unlock();
 		delete obj;
 		return true;
 	}
@@ -87,6 +120,7 @@ bool CObjectManager::DeleteObject(CObject* obj, bool bNoErase)
 
 void CObjectManager::RegisterObject(CObject* obj)
 {
+	//std::unique_lock<std::shared_mutex> lock(objMutex);
 	for (auto it = Objects.find(obj->Id()); it != Objects.end(); it = Objects.find(obj->Id()))
 		obj->id = FGuid();
 
@@ -95,6 +129,7 @@ void CObjectManager::RegisterObject(CObject* obj)
 
 void CObjectManager::Update()
 {
+	std::unique_lock<std::shared_mutex> lock(objMutex);
 	for (auto it = ObjectsToDelete.rbegin(); it != ObjectsToDelete.rend(); it++)
 	{
 		if (it->users == 0)
@@ -116,7 +151,9 @@ void CObjectManager::Update()
 	{
 		if (it->second->users <= 0 && !it->second->bIndestructible)
 		{
+			lock.unlock();
 			DeleteObject(it->second, true);
+			lock.lock();
 			Objects.erase(it++);
 		}
 		else
@@ -124,16 +161,55 @@ void CObjectManager::Update()
 	}
 }
 
+void CObjectManager::Shutdown()
+{
+	Update();
+
+	for (auto it = ObjectsToDelete.rbegin(); it != ObjectsToDelete.rend(); it++)
+		delete *it;
+
+	for (auto it = Objects.rbegin(); it != Objects.rend(); it++)
+	{
+		// Clear all object pointers to prevent referencing deleted objects.
+		CObject* obj = it->second;
+
+		FClass* clas = obj->GetClass();
+		while (clas)
+		{
+			const FProperty* prop = clas->GetPropertyList();
+			while (prop)
+			{
+				if (prop->type == EVT_OBJECT_PTR)
+				{
+					*(SizeType*)((SizeType)obj + prop->offset) = 0;
+				}
+
+				prop = prop->next;
+			}
+
+			clas = clas->GetBaseClass();
+		}
+
+		delete it->second;
+	}
+
+	ObjectsToDelete.Clear();
+	Objects.clear();
+}
+
 void CObjectManager::DeleteObjectsFromModule(CModule* module)
 {
 	auto objs = Objects;
+	std::unique_lock<std::shared_mutex> lock(objMutex);
 	for (auto obj : objs)
 	{
 		for (auto c : module->Classes)
 		{
 			if (obj.second->GetClass() == c.second)
 			{
+				lock.unlock();
 				delete obj.second;
+				lock.lock();
 
 				Objects.erase(obj.first);
 				break;
@@ -147,7 +223,9 @@ void CObjectManager::DeleteObjectsFromModule(CModule* module)
 		{
 			if (it->GetClass() == c.second)
 			{
+				lock.unlock();
 				delete *it;
+				lock.lock();
 
 				ObjectsToDelete.Erase(it);
 				break;

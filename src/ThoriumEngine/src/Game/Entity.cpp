@@ -34,7 +34,7 @@ CEntityComponent* CEntity::AddComponent(FClass* type, const FString& name)
 
 CEntityComponent* CEntity::AddComponent(FClass* type, SizeType id)
 {
-	CEntityComponent* comp = (CEntityComponent*)CreateObject(type, name);
+	CEntityComponent* comp = (CEntityComponent*)CreateObject(type);
 	if (!comp)
 		return nullptr;
 
@@ -84,11 +84,8 @@ CEntityComponent* CEntity::GetComponent(FClass* type, const FString& name)
 
 CEntityComponent* CEntity::GetComponent(SizeType id)
 {
-	for (auto& comp : components)
-	{
-		if (comp.first == id)
-			return comp.second;
-	}
+	if (auto& it = components.find(id); it != components.end())
+		return it->second;
 	return nullptr;
 }
 
@@ -105,13 +102,21 @@ void CEntity::RemoveComponent(CEntityComponent* comp)
 	}
 }
 
+void CEntity::SetEntityId(SizeType id)
+{
+	world->entities.erase(entityId);
+	world->entities[id] = this;
+	
+	entityId = id;
+}
+
 FOutputBinding& CEntity::AddOutput()
 {
 	boundOutputs.Add();
 	return *boundOutputs.last();
 }
 
-FBounds CEntity::GetBounds()
+FBounds CEntity::GetBounds() const
 {
 	FBounds r;
 	for (auto comp : components)
@@ -122,9 +127,24 @@ FBounds CEntity::GetBounds()
 	return r;
 }
 
+void CEntity::MakeStatic()
+{
+	type = ENTITY_STATIC;
+	GetWorld()->RemoveDynamicEntity(this);
+}
+
+void CEntity::MakeDynamic()
+{
+	type = ENTITY_DYNAMIC;
+	GetWorld()->RegisterDynamicEntity(this);
+}
+
 void CEntity::Init()
 {
 	rootComponent = AddComponent<CSceneComponent>("root");
+
+	if (bRequireUpdate)
+		world->OnUpdate.Bind(this, &CEntity::DoUpdate);
 }
 
 void CEntity::PostInit()
@@ -146,13 +166,13 @@ void CEntity::OnStop()
 
 void CEntity::Update(double dt)
 {
-	for (auto& comp : components)
-		comp.second->Update(dt);
+	//for (auto& comp : components)
+	//	comp.second->Update(dt);
 }
 
-void CEntity::Serialize(FMemStream& out)
+void CEntity::Serialize(FMemStream& out, const FSerializeSettings& settings)
 {
-	BaseClass::Serialize(out);
+	BaseClass::Serialize(out, settings);
 
 	SizeType numComponents = components.size();
 	out << &numComponents;
@@ -160,20 +180,20 @@ void CEntity::Serialize(FMemStream& out)
 	for (auto& comp : components)
 	{
 		// Write component class typename
-		out << comp.second->GetClass()->GetInternalName();
+		//out << comp.second->GetClass()->GetInternalName();
 
 		// Write the components name. this already gets written by the default serializer
 		// but we need it earlier in order to write to the correct component when loading.
-		out << comp.second->Name();
+		//out << comp.second->Name();
 
-		FMemStream compOut;
-		comp.second->Serialize(compOut);
+		//bool bUserCreated = comp.second->IsUserCreated();
+		//out << &bUserCreated;
 
 		SizeType id = comp.first;
 		out << &id;
 
-		bool bUserCreated = comp.second->IsUserCreated();
-		out << &bUserCreated;
+		FMemStream compOut;
+		comp.second->Serialize(compOut, settings);
 
 		SizeType compDataSize = compOut.Size();
 		out << &compDataSize;
@@ -189,69 +209,52 @@ void CEntity::Load(FMemStream& in)
 	SizeType numComponents;
 	in >> &numComponents;
 
-	TArray<TPair<CEntityComponent*, FMemStream>> comps;
-	comps.Resize(numComponents);
+	//TArray<TPair<CEntityComponent*, FMemStream>> comps;
+	//comps.Resize(numComponents);
 
 	for (SizeType i = 0; i < numComponents; i++)
 	{
-		FString classTypename;
-		in >> classTypename;
-
-		FString compName;
-		in >> compName;
-
 		SizeType compId;
 		in >> &compId;
-
-		bool bUserCreated = false;
-		in >> &bUserCreated;
 
 		SizeType compDataSize;
 		in >> &compDataSize;
 
-		FClass* compClass = CModuleManager::GetClass(classTypename);
-		if (!compClass)
+		CEntityComponent* comp = GetComponent(compId);
+		if (!comp)
 		{
-			CONSOLE_LogWarning("CEntity", "Serialized component has unkown class '" + classTypename + "', loading for entity " + Name() + ".");
 			in.Seek(compDataSize, SEEK_CUR);
 			continue;
 		}
 
-		CEntityComponent* comp = nullptr;
-		if (!bUserCreated)
-		{
-			comp = GetComponent(compClass, compName);
+		//FMemStream data;
+		//data.Resize(compDataSize);
+		//in.Read(data.Data(), compDataSize);
 
-			if (comp)
-			{
-				components.erase(comp->compId);
-				components[compId] = comp;
-			}
-		}
-		if (!comp)
-			comp = AddComponent(compClass, compId);
-
-		comp->compId = compId;
-		comps[i].Key = comp;
-		comps[i].Value.Resize(compDataSize);
-		in.Read(comps[i].Value.Data(), compDataSize);
+		comp->Load(in);
 	}
 
-	for (SizeType i = 0; i < numComponents; i++)
-	{
-		comps[i].Key->Load(comps[i].Value);
-		comps[i].Key->SetOwner(this);
-		if (comps[i].Key->bEditorOnly && !gIsEditor)
-			RemoveComponent(comps[i].Key);
-	}
+	//for (SizeType i = 0; i < numComponents; i++)
+	//{
+	//	comps[i].Key->Load(comps[i].Value);
+	//	comps[i].Key->SetOwner(this);
+	//	if (comps[i].Key->bEditorOnly && !gIsEditor)
+	//		RemoveComponent(comps[i].Key);
+	//}
 }
 
 void CEntity::OnDelete()
 {
 	auto comps = components;
-	for (auto it = comps.rbegin(); it != comps.rend(); it++)
+	for (auto it = comps.begin(); it != comps.end(); it++)
 		it->second->Delete();
 	components.clear();
+
+	if (type == ENTITY_DYNAMIC)
+		world->RemoveDynamicEntity(this);
+
+	if (bRequireUpdate)
+		world->OnUpdate.RemoveAll(this);
 
 	FWorldRegisterer::UnregisterEntity(world, this);
 }
@@ -268,4 +271,10 @@ void CEntity::FireOutput(const FString& output)
 			GetWorld()->GetEntityIOManager()->FireEvent(this, i);
 		}
 	}
+}
+
+void CEntity::DoUpdate(double dt)
+{
+	if (bIsEnabled)
+		Update(dt);
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DirectXRenderer.h"
+#include "DirectXInterface.h"
 #include "Rendering/Texture.h"
 #include "Assets/TextureAsset.h"
 
@@ -32,8 +32,10 @@ public:
 	virtual ~DirectXTextureCube();
 
 public:
-	ID3D11Texture3D* tex = nullptr;
+	ID3D11Texture2D* tex = nullptr;
 	ID3D11ShaderResourceView* view = nullptr;
 	ID3D11SamplerState* sampler = nullptr;
+
+	ETextureFormat format;
 
 };

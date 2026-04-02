@@ -18,7 +18,8 @@
 
 class CObject;
 
-ENGINE_API CObject* CreateObject(FClass* type, const FString& name = "");
+ENGINE_API CObject* CreateObject(FClass* type, CObject* parent = nullptr, const FString& name = "");
+inline CObject* CreateObject(FClass* type, const FString& name) { return CreateObject(type, nullptr, name); }
 ENGINE_API FString GetUniqueObjectName(FClass* type);
 
 template<typename T>
@@ -49,6 +50,16 @@ public:
 	virtual FString GetModule() const = 0;
 };
 
+enum EObjectPtrType
+{
+	OBJPTR_GENERIC,
+	//OBJPTR_OWNER_REF, // reference to the object that owns this object
+	OBJPTR_ASSET_REF,
+	OBJPTR_WORLD_ENTITY_REF,
+	OBJPTR_WORLD_ENTITY_COMP_REF, // reference to a component on another entity
+	OBJPTR_ENTITY_COMP_REF, // reference to a component on this entity (or the owning entity if this is a component)
+};
+
 template<typename T>
 class TObjectPtr
 {
@@ -60,6 +71,8 @@ public:
 
 	bool IsValid();
 	bool IsValid() const;
+
+	inline T* Get() const { return (T*)ptr; }
 
 	inline operator T*() const { return (T*)ptr; }
 	inline TObjectPtr<T>& operator=(T*);
@@ -102,6 +115,12 @@ inline TObjectPtr<TTo> CastChecked(const TObjectPtr<TFrom>& obj)
 	return nullptr;
 }
 
+struct FSerializeSettings
+{
+	bool bSerializeAllProperties = false; // If false, only edited properties will be serialized.
+	bool bSaveGame = false; // If true, only properties marked with SaveGame will be serialized.
+};
+
 /**
  * Base class for all Objects.
  */
@@ -139,7 +158,7 @@ public:
 	inline SizeType Id() const { return id; }
 	void SetId(SizeType _id);
 
-	virtual void Serialize(FMemStream& out);
+	virtual void Serialize(FMemStream& out, const FSerializeSettings& settings = FSerializeSettings());
 	virtual void Load(FMemStream& in);
 
 	virtual void PostLoad() {}
@@ -153,18 +172,17 @@ public:
 	TObjectPtr<T> GetOwner() const { return Owner ? Cast<T>(Owner) : nullptr; }
 
 private:
-	void SerializeProperty(FMemStream& out, uint type, const FProperty* p, SizeType offset, void* object);
-	bool LoadProperty(FMemStream& in, uint type, const FProperty* p, SizeType offset, void* object);
+	//void SerializeProperty(FMemStream& out, uint type, const FProperty* p, SizeType offset, void* object);
+	//bool LoadProperty(FMemStream& in, uint type, const FProperty* p, SizeType offset, void* object);
+
+	void _ObjectDelete();
 
 protected:
-	void SerializeProperties(FMemStream& out, FStruct* structType, void* object);
-	void LoadProperties(FMemStream& in, FStruct* structType, void* object);
+	//void SerializeProperties(FMemStream& out, FStruct* structType, void* object);
+	//void LoadProperties(FMemStream& in, FStruct* structType, void* object);
 
 protected:
 	virtual void OnDelete() {}
-
-	FUNCTION(MulticastRpc, NoEntityInput)
-	void OnNetDelete();
 
 	template<typename T>
 	void BindEvent(TEvent<>& event, void(T::*func)()) { eventBindings.Add({ event.Bind(this, func), event }); }

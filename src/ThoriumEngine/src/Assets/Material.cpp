@@ -1,6 +1,7 @@
 
 #include "Material.h"
 #include "Rendering/Renderer.h"
+#include "Rendering/GraphicsInterface.h"
 #include "Rendering/Buffers.h"
 #include "TextureAsset.h"
 #include "Console.h"
@@ -132,7 +133,7 @@ void CMaterial::OnInit(IBaseFStream* stream)
 	if (shader)
 	{
 		if (gRenderer)
-			gpuBuffer = gRenderer->CreateShaderBuffer(nullptr, shader->bufferSize);
+			gpuBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, (uint)shader->bufferSize, nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
 
 		Validate();
 		bInitialized = true;
@@ -205,6 +206,7 @@ void CMaterial::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 		if (t.tex)
 			t.tex->Load(lodLevel);
 	}
+	SetLodLevel(lodLevel, true);
 }
 
 void CMaterial::Unload(uint8 lodLevel)
@@ -243,7 +245,8 @@ void CMaterial::SetShader(const FString& shaderName)
 	}
 
 	if (gRenderer)
-		gpuBuffer = gRenderer->CreateShaderBuffer(nullptr, shader->bufferSize);
+		gpuBuffer = gGHI->CreateBuffer({ TH_BUFFER_TYPE_SHADER_BUFFER, (uint)shader->bufferSize, nullptr, 0, TH_BUFFER_FLAGS_CPU_WRITE });
+		//gpuBuffer = gGHI->CreateShaderBuffer(nullptr, shader->bufferSize);
 
 	Validate();
 
@@ -437,7 +440,7 @@ void CMaterial::Validate()
 	for (auto it = properties.rbegin(); it != properties.rend(); it++)
 	{
 		bool bExists = GetShaderProperty(*it) != nullptr;
-		
+
 		if (!bExists)
 			properties.Erase(it);
 	}

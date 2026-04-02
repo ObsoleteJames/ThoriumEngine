@@ -2,6 +2,7 @@
 #include "TextureAsset.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Texture.h"
+#include "Rendering/GraphicsInterface.h"
 #include "Console.h"
 #include <mutex>
 #include <chrono>
@@ -77,7 +78,8 @@ public:
 
 	void PushData() override
 	{
-		tex->curMipMapLevel = currentMipMap;
+		//tex->curMipMapLevel = currentMipMap;
+		tex->streamingUpdateMipLevel(currentMipMap);
 		if (data && targetTex)
 			targetTex->UpdateData(data, currentMipMap);
 		//CONSOLE_LogInfo("Updated Texture with MipMap: " + FString::ToString(currentMipMap));
@@ -145,8 +147,8 @@ void CTexture::OnInit(IBaseFStream* stream)
 
 	curMipMapLevel = numMipmaps;
 
-	if (numMipmaps > 1 && gRenderer)
-		tex = gRenderer->CreateTexture2D(nullptr, numMipmaps, width, height, ToTextureFormat(format), filteringType);
+	if (numMipmaps > 1 && gGHI)
+		tex = gGHI->CreateTexture2D(nullptr, numMipmaps, width, height, ToTextureFormat(format), filteringType);
 
 	bLoading = false;
 	bInitialized = true;
@@ -178,13 +180,13 @@ void CTexture::OnSave(IBaseFStream* stream)
 
 void CTexture::Init(void* data, int width, int height, ETextureAssetFormat format /*= THTX_FORMAT_RGBA8_UINT*/, ETextureFilter filter)
 {
-	if (!gRenderer)
+	if (!gGHI)
 		return;
 
 	if (tex)
 		delete tex;
 
-	tex = gRenderer->CreateTexture2D(data, width, height, ToTextureFormat(format), filter);
+	tex = gGHI->CreateTexture2D(data, width, height, ToTextureFormat(format), filter);
 	bInitialized = true;
 }
 
@@ -211,9 +213,10 @@ void CTexture::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 	if (tex)
 		delete tex;
 
-	if (gRenderer)
-		tex = gRenderer->CreateTexture2D(data, width, height, ToTextureFormat(format), filteringType);
+	if (gGHI)
+		tex = gGHI->CreateTexture2D(data, width, height, ToTextureFormat(format), filteringType);
 	curMipMapLevel = 0;
+	SetLodLevel(lodLevel, true);
 }
 
 void CTexture::Unload(uint8 lodLevel)
@@ -256,6 +259,7 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 	}
 
 	format = settings.format;
+	filteringType = settings.filter;
 
 	if (format >= THTX_FORMAT_AUTO)
 	{
@@ -359,7 +363,7 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 	for (int i = 0; i < numMipmaps; i++)
 		_d[i] = (void*)mipMaps[i].Key;
 
-	tex = gRenderer->CreateTexture2D(_d, numMipmaps, width, height, ToTextureFormat(format), filteringType);
+	tex = gGHI->CreateTexture2D(_d, numMipmaps, width, height, ToTextureFormat(format), filteringType);
 	curMipMapLevel = 0;
 
 	texSaveMipMaps = mipMaps.Data();
@@ -369,7 +373,7 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 	for (auto& mp : mipMaps)
 		free(mp.Key);
 
-	CFStream sdkStream = File()->GetSdkStream("wb");
+	CFStream sdkStream = File()->GetSdkStream(".meta", "wb");
 	if (sdkStream.IsOpen())
 	{
 		sdkStream << file;
@@ -429,6 +433,12 @@ CTexture* CTexture::CreateFromImage(const FString& file)
 uint8 CTexture::GetFileVersion() const
 {
 	return THTEX_VERSION;
+}
+
+void CTexture::streamingUpdateMipLevel(int mip)
+{
+	curMipMapLevel = mip;
+	SetLodLevel((uint8)mip, true);
 }
 
 bool CTexture::IsLoaded(uint8 lod) const

@@ -59,16 +59,18 @@ public:
 
 	virtual FBounds Bounds() const;
 
-protected:
 	virtual void UpdateWorldTransform(bool bUpdateChildren = true);
 
+protected:
 	virtual void OnDelete() override;
+
+	virtual void Load(FMemStream& stream) override;
 
 private:
 	PROPERTY()
 	TObjectPtr<CSceneComponent> parent;
 
-	PROPERTY()
+	//PROPERTY()
 	TArray<TObjectPtr<CSceneComponent>> children;
 
 	PROPERTY(OnEditFunc = UpdateWorldTransform)

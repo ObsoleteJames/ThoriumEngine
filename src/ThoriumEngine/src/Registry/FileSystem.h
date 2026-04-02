@@ -65,12 +65,14 @@ public:
 	FFile* FindFile(const FString& path) const;
 	FFile* CreateFile(const FString& path);
 
-	bool MoveFile(FFile* file, const FString& destination);
-	inline bool MoveFile(const FString& file, const FString& destination) { return MoveFile(FindFile(file), destination); }
+	// Rename the file. does not change file extention.
+	bool RenameFile(FFile* file, const FString& newPath);
+	inline bool RenameFile(const FString& file, const FString& newPath) { return RenameFile(FindFile(file), newPath); }
 
-	bool MoveDirectory(FDirectory* dir, const FString& destination);
-	inline bool MoveDirectory(const FString& dir, const FString& destination) { return MoveDirectory(FindDirectory(dir), destination); }
-	
+	// rename the specfied Directory, will move the directory if the new path is in a different location.
+	bool RenameDir(FDirectory* dir, const FString& newPath);
+	inline bool RenameDir(const FString& dir, const FString& newPath) { return RenameDir(FindDirectory(dir), newPath); }
+
 	inline FDirectory* GetRootDir() { return &root; }
 
 	inline const FString& GetSdkPath() const { return sdkPath; }
@@ -118,9 +120,9 @@ public:
 		return new CFStream(mod->Path() + "/" + Path(), mode);
 	}
 
-	CFStream GetSdkStream(const char* mode);
+	CFStream GetSdkStream(const char* ext, const char* mode);
 
-	inline FString GetSdkPath() const { if (mod->HasSdkContent()) { return mod->GetSdkPath() + "/" + Path() + ".meta"; } return FString(); }
+	inline FString GetSdkPath(const char* extension) const { if (mod->HasSdkContent()) { return mod->GetSdkPath() + "/" + Path() + extension; } return FString(); }
 
 private:
 	FString name;
@@ -144,12 +146,18 @@ public:
 	static FMod* MountMod(const FString& modPath, const FString& modName = FString(), const FString& sdkPath = FString());
 	static bool UnmountMod(FMod* mod);
 
+	// Scans for any new or deleted files in all mods.
+	static void Refresh();
+
 	static bool IsBlacklisted(const FString& path);
 
 	static inline const TArray<FMod*>& GetMods() { return Mods; }
 
 	static void SetCurrentPath(const FString& path);
 	static FString GetCurrentPath();
+
+	// converts a relative path to an absolute path
+	static FString Absolute(const FString&);
 
 	static void OSCreateDirectory(const FString& path);
 
@@ -159,6 +167,7 @@ public:
 
 private:
 	static void MountDir(FMod* mod, const FString& path, FDirectory* dir);
+	static void RefreshDir(FMod* mod, const FString& path, FDirectory* dir);
 
 private:
 	//TArray<FFile> Files;

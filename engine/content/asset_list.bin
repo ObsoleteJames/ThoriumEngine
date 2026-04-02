@@ -1,0 +1,14 @@
+
+{
+
+	541864987654168435
+	{
+		path: "sounds/dunno.mp3"
+		type: "CMp3Asset"
+	}
+	12450457834759473469
+	{
+		path: "sounds/beep.wav"
+		type: "CWavAsset"
+	}
+}

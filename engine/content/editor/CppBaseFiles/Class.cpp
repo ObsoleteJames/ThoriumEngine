@@ -1,7 +1,7 @@
 
-#include "$(CLASS_HEADER).h"
+#include "${CLASS_HEADER_INCLUDE}.h"
 
-$(CLASS_NAME)::$(CLASS_NAME)()
+${CLASS_NAME}::${CLASS_NAME}()
 {
 	
 }

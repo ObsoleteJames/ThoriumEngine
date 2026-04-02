@@ -7,7 +7,24 @@
 
 class CAnimGraphInstance;
 class CAnimationGraph;
+class CAnimation;
 class CModelComponentProxy;
+class IAnimationProxy;
+
+ENUM()
+enum EModelCompAnimator
+{
+	MODEL_ANIMATE_ANIMATION META(Name = "Animation File"),
+	MODEL_ANIMATE_ANIMGRAPH META(Name = "Animation Graph")
+};
+
+struct FLightmapInfo
+{
+	SizeType meshIndex;
+	int lightmapIndex;
+	FVector2 lightmapOffset;
+	FVector2 lightmapScale;
+};
 
 CLASS()
 class ENGINE_API CModelComponent : public CPrimitiveComponent
@@ -21,8 +38,10 @@ public:
 	CModelComponent();
 
 	void SetModel(const FString& file);
+
 	void SetModel(TObjectPtr<CModelAsset> model);
 	void SetAnimationGraph(CAnimationGraph* animGraph);
+	void SetAnimation(CAnimation* anim);
 
 	inline TObjectPtr<CModelAsset> GetModel() const { return model; }
 	inline const TArray<TObjectPtr<CMaterial>>& GetMaterials() const { return materials; }
@@ -50,8 +69,15 @@ public:
 
 	FTransform GetBoneModelTransform(int bone) const;
 
+	FUNCTION()
+	void ResetAnimation();
+
+	CPrimitiveProxy* PrimitiveProxy() const override { return (CPrimitiveProxy*)renderProxy; }
+
 protected:
 	virtual void Load(FMemStream& in) override;
+
+	void Update(double dt) override;
 
 private:
 	FUNCTION()
@@ -60,14 +86,23 @@ private:
 	void SetupPhysics();
 
 private:
-	PROPERTY(Editable, Category = Rendering, OnEditFunc = OnModelEdit)
+	PROPERTY(Editable, Category = Rendering, ValidateFunc = OnModelEdit)
 	TObjectPtr<CModelAsset> model;
 
 	PROPERTY(Editable, Category = Rendering)
 	TArray<TObjectPtr<CMaterial>> materials;
-
+	
 	PROPERTY(Editable, Category = Rendering)
 	bool bCastShadows = true;
+
+	PROPERTY(Editable, Category = Animation)
+	EModelCompAnimator animationType = MODEL_ANIMATE_ANIMATION;
+
+	PROPERTY(Editable, Category = Animation, VisibleCondition = "animationType == MODEL_ANIMATE_ANIMATION")
+	TObjectPtr<CAnimation> animationAsset;
+
+	PROPERTY(Editable, Category = Animation, VisibleCondition = "animationType == MODEL_ANIMATE_ANIMGRAPH")
+	TObjectPtr<CAnimationGraph> animationGraph;
 
 	CModelComponentProxy* renderProxy = nullptr;
 
@@ -81,5 +116,10 @@ private:
 
 	TArray<FMatrix> boneMatrices; // cache for skeletal animation
 
+	// Info for lightmap data. data is provided by the owning world.
+	TArray<FLightmapInfo> lightmapInfo;
+
 	TArray<TObjectPtr<IPhysicsBody>> physBodies;
+
+	IAnimationProxy* animProxy = nullptr;
 };

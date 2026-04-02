@@ -7,6 +7,7 @@
 
 class CPrimitiveProxy;
 class CLightProxy;
+enum ELightBakeMode;
 
 CLASS(Name = "Point Light")
 class ENGINE_API CPointLightComponent : public CSceneComponent
@@ -24,11 +25,14 @@ public:
 	PROPERTY(Editable)
 	float range = 10.f;
 
-	PROPERTY(Editable)
+	PROPERTY(Editable, UIType = Color)
 	FVector color = FVector(1.f);
 
 	PROPERTY(Editable)
 	bool bCastShadows = true;
+
+	PROPERTY(Editable)
+	ELightBakeMode bakingMode;
 
 private:
 	CLightProxy* lightProxy;
