@@ -12,55 +12,112 @@ struct FScriptFunction;
 
 enum class EThOpCode
 {
-	INT = 0xFF, // Interrupt, stops code execution
+	BRK = 0xFF, // Debug break
 	NOP = 0x0F,
 	RET,		// return from function.
+	THROW,		// throw an exception.
 
 	JMP, // jump
-	JNP, // jump if
+	JMP_EQ, // jump if non zero
+	JMP_NQ, // jump if zero
 
 	ADD,
 	SUB,
 	MUL,
 	DIV,
 
-	SHIFT_LEFT,
-	SHIFT_RIGHT,
+	SHL, // shift left once
+	SHR, // shift right once
+
+	SHLI, // shift left by index
+	SHRI, // shift right by index
 
 	AND,
 	OR,
 	NOT,
 	XOR,
 
-	CALL, // call a function
+	CMP_EQ, // compare equal
+	CMP_NE, // compare not equal
+	CMP_LT, // compare less than
+	CMP_GT, // compare greater than
+	CMP_LE, // compare less than or equal
+	CMP_GE, // compare greater than or equal
 
-	CAST, // object casting
+	CONV_I1, // convert to int8
+	CONV_I2, // convert to int16
+	CONV_I4, // convert to int32
+	CONV_I8, // convert to int64
+	CONV_U1, // convert to uint8
+	CONV_U2, // convert to uint16
+	CONV_U4, // convert to uint32
+	CONV_U8, // convert to uint64
 
-	PUSH_VAR_A,	// immediate
-	PUSH_VAR_B,	// from local var
-	PUSH_VAR_C,	// from object variable
-	PUSH_VAR_D,	// from function argument
-	PUSH_VAR_E,	// from stack
-	PUSH_VAR_F,	// from register
-	PUSH_VAR_G, // push return value onto stack
-	PUSH_VAR_H, // from object variable (for structs)
+	CONV_F4, // convert to float
+	CONV_F8, // convert to double
 
-	POP_VAR_A, // pop into register
-	POP_VAR_B, // pop into object variable
-	POP_VAR_C, // pop into local var
+	CALL, // call a function on object
+	CALL_S, // call a static function
+	CALL_I, // call function ptr
 
-	MK_VAR, // make a local variable
-	RM_VAR, // remove local variable
+	CAST, // cast object to immediate type
+	CAST_T, // cast object to type
 
-	MOVE_A, // move immediate value into register
-	MOVE_B, // move value from local variable into register  
-	MOVE_C, // move value of variable from object into register
-	MOVE_D, // move value in stack into register
-	MOVE_E, // move value in register into register
-	MOVE_F, // move value in register into object variable.
-	MOVE_G, // move value in register into local variable.
-	MOVE_H, // move immediate value into object variable.
-	MOVE_I, // move immediate value into local variable.
+	SIZEOF, // push the size of the type onto the stack
+	TYPEOF, // push the type metadata ptr onto the stack
+
+	LDARG, // load function argument[uint8 <i>] onto the stack
+	LDARG_1, // load function argument 1 onto the stack
+	LDARG_2, // load function argument 2 onto the stack
+	LDARG_3, // load function argument 3 onto the stack
+	LDARG_4, // load function argument 4 onto the stack
+	LDARGA,  // load function argument adress onto the stack
+
+	LDC_I4, // load immediate as int32 onto the stack
+	LDC_I4_0, // load 0 as int32 onto the stack
+	LDC_I4_1, // load 1 as int32 onto the stack
+	LDC_I4_N1, // load -1 as int32 onto the stack
+	
+	LDC_I8, // load immediate as int64 onto the stack
+	LDC_I8_0, // load 0 as int64 onto the stack
+	LDC_I8_1, // load 1 as int64 onto the stack
+	LDC_I8_N1, // load -1 as int64 onto the stack
+
+	LDC_F4, // load immediate as float onto the stack
+	LDC_F8, // load immediate as double onto the stack
+
+	LDC_T, // load immediate as T onto the stack
+
+	LDFLD, // load the field of an object onto the stack
+	LDFLDA, // load the address of a field of an object onto the stack
+
+	LDSFLD, // load static field onto the stack
+	LDSFLDA, // load the address of a static field onto the stack
+
+	LDLOC, // load local var[uint8 <i>] onto the stack
+	LDLOC_1, // load local var 1 onto the stack
+	LDLOC_2, // load local var 2 onto the stack
+	LDLOC_3, // load local var 3 onto the stack
+	LDLOC_4, // load local var 4 onto the stack
+
+	LDSTR, // load immediate string onto the stack
+
+	LDRV, // load the return value onto the stack
+	LDOP, // load the value of the last operation onto the stack
+
+	STARG, // pop value to the argument at index
+
+	STFLD, // pop value to field of an object
+	STSFLD, // pop value to static field
+
+	STPTR, // pop value to memory at ptr
+	STPTR_REF, // pop object ref into memory at ptr
+
+	STLOC, // pop value into local variable at index
+	STLOC_0, // pop value into local variable 1
+	STLOC_1, // pop value into local variable 2
+	STLOC_2, // pop value into local variable 3
+	STLOC_3, // pop value into local variable 4
 };
 
 struct FThsProperty

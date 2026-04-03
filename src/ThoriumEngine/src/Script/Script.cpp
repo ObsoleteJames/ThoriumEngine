@@ -8,57 +8,9 @@
 #define SCRIPT_LogWarning(msg) CONSOLE_LogWarning("ElectronRuntime", func->cppName + " - " + msg)
 #define SCRIPT_LogInfo(msg) CONSOLE_LogInfo("ElectronRuntime", func->cppName + " - " + msg)
 
-//switch ()
-//{
-//case EVT_NULL:
-//	break;
-//case EVT_VOID:
-//	break;
-//case EVT_STRUCT:
-//	break;
-//case EVT_CLASS:
-//	break;
-//case EVT_STRING:
-//	break;
-//case EVT_ENUM:
-//	break;
-//case EVT_ARRAY:
-//	break;
-//case EVT_OBJECT_PTR:
-//	break;
-//case EVT_CLASS_PTR:
-//	break;
-//case EVT_STRUCT_PTR:
-//	break;
-//case EVT_ENUM_PTR:
-//	break;
-//case EVT_FLOAT:
-//	break;
-//case EVT_DOUBLE:
-//	break;
-//case EVT_INT:
-//	break;
-//case EVT_INT8:
-//	break;
-//case EVT_INT16:
-//	break;
-//case EVT_INT64:
-//	break;
-//case EVT_UINT:
-//	break;
-//case EVT_UINT8:
-//	break;
-//case EVT_UINT16:
-//	break;
-//case EVT_UINT64:
-//	break;
-//case EVT_BOOL:
-//	break;
-//}
-
 bool PopIntoVariable(size_t& pc, FVariable& var, FFrame& stack, const uint8_t* byteCode)
 {
-	switch (var.type)
+	switch (var.type.type)
 	{
 	case EVT_OBJECT_PTR:
 		var.data.Resize(sizeof(SizeType));

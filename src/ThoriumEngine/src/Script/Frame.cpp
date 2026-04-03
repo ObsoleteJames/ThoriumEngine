@@ -7,9 +7,15 @@ FStack::FStack(uint32 _size) : size(_size), rsp(0)
 	stack = (uint8*)malloc(_size);
 }
 
+FStack::FStack(void* data, uint32 _size) : size(_size), rsp(0), bOwnsStack(false)
+{
+	stack = (uint8*)data;
+}
+
 FStack::~FStack()
 {
-	free(stack);
+	if (bOwnsStack)
+		free(stack);
 }
 
 void FStack::Push(void* data, SizeType size)
@@ -52,6 +58,10 @@ FString FStack::PopString()
 }
 
 FFrame::FFrame(uint32 stackSize) : FStack(stackSize)
+{
+}
+
+FFrame::FFrame(void* stackBuff, uint32 stackSize) : FStack(stackBuff, stackSize)
 {
 }
 

@@ -13,6 +13,7 @@ struct FStack
 {
 public:
 	FStack(uint32 _size = STACK_DEFAULT_SIZE);
+	FStack(void* data, uint32 size);
 
 	~FStack();
 
@@ -44,6 +45,7 @@ protected:
 	uint32 size;
 	uint32 rsp; // pointer to the top of the stack
 	uint8* stack = nullptr;
+	uint8 bOwnsStack = true;
 };
 
 #define STACK_POP_VAR(type, var, stack) type var; \
@@ -51,8 +53,7 @@ protected:
 
 struct FVariable
 {
-	EDataType type;
-	size_t typeId;
+	FArgType type;
 	size_t size;
 	TArray<uint8_t> data;
 };
@@ -61,6 +62,7 @@ struct FFrame : public FStack
 {
 public:
 	FFrame(uint32 stackSize = STACK_DEFAULT_SIZE);
+	FFrame(void* stackBuff, uint32 stackSize);
 
 	void Clear();
 
@@ -72,16 +74,16 @@ public:
 	void PopStackIndex();
 
 public:
-	uint64 registers[4];
+	//uint64 registers[4];
 
 	FVariable returnValue;
+	uint64 lastOperationValue;
 
-	// wether the last operation was true or false
-	bool lastOperationValue;
+	// list of all the types on the stack, in order.
+	TArray<FArgType> stackTypes;
 
 private:
 	TArray<FVariable> localVars;
 	uint lvc = 0; // local vars count
 	uint lvi = 0; // local vars index
-
 };

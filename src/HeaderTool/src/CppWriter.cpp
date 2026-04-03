@@ -442,15 +442,11 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 				stream << "};\n\n";
 			}
 
-				FString type = GetVariableType(p, true);
-				stream << "static FArrayHelper _arrayHelper_" << p.name.c_str() << "{\n ";
-				stream << "\t[](void* ptr) { (*(" << ArrayTypeName.c_str() << "*)ptr).Add(" << (p.bPointer ? FString(");") : (type == "EVT_OBJECT_PTR" ? ");" : p.typeName + "());")).c_str() << " },\n";
-				stream << "\t[](void* ptr, SizeType i) { (*(" << ArrayTypeName.c_str() << "*)ptr).Erase(" << "(*(" << ArrayTypeName.c_str() << "*)ptr).At(i)); },\n";
-				stream << "\t[](void* ptr) { (*(" << ArrayTypeName.c_str() << "*)ptr).Clear(); },\n";
-				stream << "\t[](void* ptr) { return (*(" << ArrayTypeName.c_str() << "*)ptr).Size(); }, \n";
-				stream << "\t[](void* ptr) { return (void*)(*(" << ArrayTypeName.c_str() << "*)ptr).Data(); }, \n";
-				stream << "\t" << type.c_str() << ", \n";
-				stream << "\tsizeof(" << objTypeName.c_str() << ")\n};\n\n";
+			FString templateArray = "nullptr";
+			if (p.templateArgs.Size() > 0)
+			{
+				templateArray = "_" + Class.name + "_" + p.name + "_Template";
+				WriteArgTypeTemplateArray(stream, p, templateArray);
 			}
 
 			// MetaData
