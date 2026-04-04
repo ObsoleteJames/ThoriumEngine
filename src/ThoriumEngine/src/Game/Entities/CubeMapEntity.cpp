@@ -16,4 +16,5 @@ void CCubeMapEntity::Init()
 	billboard->SetSprite(CAssetManager::GetAsset<CTexture>("editor/icons/env_cubemap.thasset"));
 	billboard->SetScale(FVector(0.36f));
 	billboard->bEditorOnly = true;
+	billboard->renderLayer = R_LAYER_EDITOR;
 }

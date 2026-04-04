@@ -44,7 +44,7 @@ public:
 
 	FVector2 Rotate(float degrees) const;
 
-	inline FVector2 operator-() { return FVector2(-x, -y); }
+	inline FVector2 operator-() const { return FVector2(-x, -y); }
 
 	FVector2& operator+=(const FVector2& right);
 	FVector2& operator-=(const FVector2& right);
@@ -117,7 +117,7 @@ public:
 	FVector Sin() const { return FVector(FMath::Sin(x), FMath::Sin(y), FMath::Sin(z)); }
 	FVector Tan() const { return FVector(); }
 
-	inline FVector operator-() { return FVector(-x, -y, -z); }
+	inline FVector operator-() const { return FVector(-x, -y, -z); }
 
 	inline FVector WithX(float v) const { return FVector(v, y, z); }
 	inline FVector WithY(float v) const { return FVector(x, v, z); }

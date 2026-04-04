@@ -18,9 +18,12 @@ public:
 		OBJ_POINTER,
 
 		VECTOR,
+		QUAT,
 		COLOR,
 		STRING,
-		CLASS
+		CLASS,
+		BYTE_ARRAY,
+		STRING_ARRAY
 	};
 
 	FVariant(const FVariant&);
@@ -34,10 +37,14 @@ public:
 	explicit FVariant(CObject* v);
 
 	explicit FVariant(const FVector& v);
+	explicit FVariant(const FQuaternion& v);
 	explicit FVariant(const FColor& v);
 	explicit FVariant(const FString& v);
 	explicit FVariant(const char* v);
 	explicit FVariant(FClass* v);
+
+	explicit FVariant(const TArray<uint8>& v);
+	explicit FVariant(const TArray<FString>& v);
 
 	int AsInt() const;
 	bool AsBool() const;
@@ -47,9 +54,13 @@ public:
 	CObject* AsObjectPointer() const;
 
 	FVector AsVector() const;
+	FQuaternion AsQuat() const;
 	FColor AsColor() const;
 	FString AsString() const;
 	FClass* AsClass() const;
+
+	TArray<uint8> AsByteArray();
+	TArray<FString> AsStringArray();
 
 	inline EType Type() const { return type; }
 
@@ -81,9 +92,13 @@ private:
 
 		// Objects
 		FVector uVector;
+		FQuaternion uQuat;
 		FColor uColor;
 		FString uString;
 		FClass* uClass;
+
+		TArray<uint8> uByteArray;
+		TArray<FString> uStringArray;
 	};
 
 	EType type;

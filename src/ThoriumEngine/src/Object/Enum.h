@@ -7,7 +7,7 @@
 *  Useful for byte flags, where the enum values are defined as bitmasks.
 * 
 *  T is the enum type.
-*  T2 is the underlying type of the enum, defaulting to int.
+*  T2 is the underlying type of the enum, defaulting to uint8.
 */
 template<typename T, typename T2 = uint8>
 class TEnumInt

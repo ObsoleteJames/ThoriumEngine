@@ -16,4 +16,5 @@ void CPointLightEntity::Init()
 	billboard->sprite = CAssetManager::GetAsset<CTexture>("editor/icons/PointLight.thasset");
 	billboard->SetScale(FVector(0.36f));
 	billboard->bEditorOnly = true;
+	billboard->renderLayer = R_LAYER_EDITOR;
 }

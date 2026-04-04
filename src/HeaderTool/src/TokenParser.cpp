@@ -141,13 +141,25 @@ int TryReadProperty(std::vector<FToken>::iterator it, CppProperty& out, bool bIs
 	int i = 0;
 	for (;;i++)
 	{
-		if (it[i].type == FToken::Seperator || it[i].type == FToken::ParenthesisClose)
+		if (!bIsTemplate)
 		{
-			if (out.typeName.IsEmpty())
-				out.typeName = it[i - 2].text;
+			if (it[i].type == FToken::Seperator || it[i].type == FToken::ParenthesisClose)
+			{
+				if (out.typeName.IsEmpty())
+					out.typeName = it[i - 2].text;
 
-			out.name = it[i - 1].text;
-			break;
+				out.name = it[i - 1].text;
+				break;
+			}
+		}
+		else
+		{
+			if (it[i].type == FToken::Seperator)
+			{
+				if (out.typeName.IsEmpty())
+					out.typeName = it[i - 1].text;
+				break;
+			}
 		}
 
 		if (it[i].type == FToken::ParenthesisOpen)

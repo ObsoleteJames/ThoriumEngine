@@ -34,6 +34,8 @@ public:
 	// Add the two transforms together
 	FTransform operator*(const FTransform&) const;
 
+	FTransform Inverse() const;
+
 	FMatrix ToMatrix() const;
 
 	static FTransform Lerp(const FTransform& a, const FTransform& b, float t);

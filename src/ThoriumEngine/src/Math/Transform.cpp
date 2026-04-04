@@ -24,6 +24,15 @@ FTransform FTransform::operator*(const FTransform& t) const
 	return r;
 }
 
+FTransform FTransform::Inverse() const
+{
+	FTransform r;
+	r.rotation = rotation.Invert();
+	r.scale = FVector(1.f) / scale;
+	r.position = -position;
+	return r;
+}
+
 FMatrix FTransform::ToMatrix() const
 {
 	return (FMatrix(1.f).Translate(position) * rotation).Scale(scale);
