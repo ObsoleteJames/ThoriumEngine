@@ -339,12 +339,12 @@ void FMatrix::Decompose(FVector& outPos, FVector& outScale, FQuaternion& outRot,
 
 FMatrix FMatrix::Perspective(float fov, float aspectRatio, float nearPlane, float farPlane)
 {
-	return (FMatrix)glm::perspectiveLH_NO(fov, aspectRatio, nearPlane, farPlane);
+	return (FMatrix)glm::perspectiveLH_ZO(fov, aspectRatio, nearPlane, farPlane);
 }
 
 FMatrix FMatrix::Orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane)
 {
-	return (FMatrix)glm::orthoLH_NO(left, right, bottom, top, nearPlane, farPlane);
+	return (FMatrix)glm::orthoLH_ZO(left, right, bottom, top, nearPlane, farPlane);
 }
 
 FMatrix FMatrix::LookAt(const FVector& pos, const FVector& target, const FVector& up)
