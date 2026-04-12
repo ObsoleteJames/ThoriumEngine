@@ -59,5 +59,10 @@
 		<file>icons/select-overlay.png</file>
 		<file>icons/view-gizmos.png</file>
 		<file>icons/translate-worldspace.png</file>
+		<file>icons/rview-lit.svg</file>
+		<file>icons/rview-unlit.svg</file>
+		<file>icons/rview-diffuse.svg</file>
+		<file>icons/rview-wireframe.svg</file>
+		<file>icons/rview-normal.svg</file>
     </qresource>
 </RCC>
