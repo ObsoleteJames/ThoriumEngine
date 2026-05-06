@@ -839,8 +839,24 @@ bool CEngine::LoadAddonConfig(const FString& path, FAddon& out)
 
 void CEngine::LoadMandatoryAddons()
 {
-	LoadCoreAddon("jolt_physics");
-	LoadCoreAddon("sdl3");
+	auto* file = CFileSystem::FindFile("config/platform_" + SSystem::GetPlatformName() + ".cfg");
+	if (!file)
+	{
+		CONSOLE_LogError("CEngine", "Failed to find platform config file for '" + SSystem::GetPlatformName() + "'!");
+		return;
+	}
+
+	FKeyValue kv(file->FullPath());
+	
+	auto* arr = kv.GetArray("mandatory_addons", false);
+	if (arr)
+	{
+		for (auto& addon : *arr)
+			LoadCoreAddon(addon);
+	}
+
+	//LoadCoreAddon("jolt_physics");
+	//LoadCoreAddon("sdl3");
 }
 
 void CEngine::UnloadWorld()
