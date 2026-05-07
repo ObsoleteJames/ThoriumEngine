@@ -209,8 +209,9 @@ FFile* FMod::FindFile(const FString& path) const
 
 FFile* FMod::CreateFile(const FString& path)
 {
-	if (CFileSystem::IsBlacklisted(path))
-		return nullptr;
+	// allow for creating blacklisted folders.
+	//if (CFileSystem::IsBlacklisted(path))
+	//	return nullptr;
 
 	FString dirPath = path;
 	if (dirPath[0] == '/' || dirPath[0] == '\\')
@@ -507,8 +508,9 @@ void CFileSystem::RefreshDir(FMod* mod, const FString& path, FDirectory* dir)
 				goto _FileExists;
 		}
 
-		if (IsBlacklisted(entry.path().filename().generic_string().c_str()))
-			continue;
+		// Ignoring these is not such a good idea, as these files still need to be referenced, instead the Editor should hide them from the user.
+		//if (IsBlacklisted(entry.path().filename().generic_string().c_str()))
+		//	continue;
 
 		FFile* file = new FFile();
 		file->mod = mod;

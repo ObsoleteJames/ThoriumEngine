@@ -99,7 +99,7 @@ void CEngine::Init()
 
 	// Create default implementations for physics and audio.
 	CreatePhysicsApi(CModuleManager::FindClass("CJoltPhysicsApi"));
-	CreateAudioInterface(CModuleManager::FindClass("CSdlAudioInterface"));
+	//CreateAudioInterface(CModuleManager::FindClass("CSdlAudioInterface"));
 
 	CWindow::Init();
 
@@ -839,15 +839,14 @@ bool CEngine::LoadAddonConfig(const FString& path, FAddon& out)
 
 void CEngine::LoadMandatoryAddons()
 {
-	auto* file = CFileSystem::FindFile("config/platform_" + SSystem::GetPlatformName() + ".cfg");
-	if (!file)
+	FString file = engineMod->Path() + "/config/platform_" + SSystem::GetPlatformName() + ".cfg";
+	FKeyValue kv(file);
+	if (!kv.IsOpen())
 	{
-		CONSOLE_LogError("CEngine", "Failed to find platform config file for '" + SSystem::GetPlatformName() + "'!");
+		CONSOLE_LogError("CEngine", "Failed to open platform config file!\n" + file);
 		return;
 	}
 
-	FKeyValue kv(file->FullPath());
-	
 	auto* arr = kv.GetArray("mandatory_addons", false);
 	if (arr)
 	{
