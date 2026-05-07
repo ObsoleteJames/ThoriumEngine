@@ -426,20 +426,14 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 	{
 		if (entry.is_directory())
 		{
-			auto dirName = entry.path().stem();
-			//if (dirName == "bin")
-			//	continue;
-			//if (dirName == "config")
-			//	continue;
-			//if (dirName == "addons")
-			//	continue;
+			auto dirName = entry.path().filename();
 
 			//if (IsBlacklisted(dirName.generic_string().c_str()))
 			//	continue;
 
 			dir->directories.Add(new FDirectory());
 			FDirectory* newDir = dir->directories.last();
-			newDir->name = entry.path().stem().generic_string().c_str();
+			newDir->name = dirName.generic_string().c_str();
 			newDir->parent = dir;
 			MountDir(mod, _path + "/" + newDir->GetName(), newDir);
 			continue;
@@ -475,10 +469,10 @@ void CFileSystem::RefreshDir(FMod* mod, const FString& path, FDirectory* dir)
 	{
 		if (entry.is_directory())
 		{
-			auto dirName = entry.path().stem();
+			auto dirName = entry.path().filename();
 			
-			if (IsBlacklisted(dirName.generic_string().c_str()))
-				continue;
+			//if (IsBlacklisted(dirName.generic_string().c_str()))
+			//	continue;
 
 			// check if this dir already exists
 			for (auto d : dir->directories)
