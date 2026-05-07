@@ -434,8 +434,8 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 			//if (dirName == "addons")
 			//	continue;
 
-			if (IsBlacklisted(dirName.generic_string().c_str()))
-				continue;
+			//if (IsBlacklisted(dirName.generic_string().c_str()))
+			//	continue;
 
 			dir->directories.Add(new FDirectory());
 			FDirectory* newDir = dir->directories.last();
@@ -448,8 +448,8 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 		if (!entry.is_regular_file())
 			continue;
 
-		if (IsBlacklisted(entry.path().filename().generic_string().c_str()))
-			continue;
+		//if (IsBlacklisted(entry.path().filename().generic_string().c_str()))
+		//	continue;
 
 		if (entry.path().extension() == ".pak")
 			continue; // TDOO: Load pak file.
