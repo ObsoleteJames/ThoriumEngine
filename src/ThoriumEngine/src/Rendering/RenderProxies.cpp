@@ -15,10 +15,14 @@ void CCameraProxy::CalculateMatrix(float aspectRatio)
 {
 	view = FMatrix(1.f).Translate(position) * rotation;
 	view = view.Inverse();
-	if (!bOrthographic)
-		projection = FMatrix::Perspective(FMath::Radians(fov), aspectRatio, nearPlane, farPlane);
+	if (bOrthographic)
+	{
+		float halfHeight = FMath::Radians(fov);
+		float halfWidth = halfHeight * aspectRatio;
+		projection = FMatrix::Orthographic(-halfWidth, halfWidth, -halfHeight, halfHeight, nearPlane, farPlane);
+	}
 	else
-		projection = FMatrix::Orthographic(-(fov * aspectRatio), fov * aspectRatio, -(fov), fov, nearPlane, farPlane);
+		projection = FMatrix::Perspective(FMath::Radians(fov), aspectRatio, nearPlane, farPlane);
 }
 
 FMeshBuilder::FMeshBuilder(TArray<FRenderMesh>* output) : meshes(output)

@@ -78,6 +78,8 @@ FString GetVariableType(const FString& typeName)
 		return "EVT_ARRAY";
 	if (typeName == "TClassPtr")
 		return "EVT_CLASS_PTR";
+	if (typeName == "TEnumInt")
+		return "EVT_ENUM";
 	if (typeName == "TMap" || typeName == "TUnorderedMap")
 		return "EVT_MAP";
 	if (typeName == "void")
@@ -404,6 +406,7 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 		for (auto& p : Class.Properties)
 		{
 			FString varTypeId = GetVariableType(p.typeName);
+			bool bIsEnumInt = p.typeName == "TEnumInt";
 			if (varTypeId == "EVT_END")
 			{
 				std::cerr << "WARNING: invalid property '" << Class.name.c_str() << "::" << p.name.c_str() << "'!\n";
@@ -443,7 +446,7 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 			}
 
 			FString templateArray = "nullptr";
-			if (p.templateArgs.Size() > 0)
+			if (p.templateArgs.Size() > 0 && !bIsEnumInt) // in the event that the type is a TEnumInt we ignore the template arguments since they are only used to determine the enum type and can be ignored.
 			{
 				templateArray = "_" + Class.name + "_" + p.name + "_Template";
 				WriteArgTypeTemplateArray(stream, p, templateArray);
@@ -489,7 +492,7 @@ void CParser::WriteGeneratedCpp(const FHeaderData& data)
 				<< displayName.c_str() << "\", "
 				<< p.name.c_str() << ", \""
 				<< p.comment.c_str() << "\", \""
-				<< p.typeName.c_str() << "\", "
+				<< (bIsEnumInt ? p.templateArgs[0].typeName.c_str() : p.typeName.c_str()) << "\", "
 				<< varTypeId.c_str() << ","
 				<< tags.c_str() << ", ";
 

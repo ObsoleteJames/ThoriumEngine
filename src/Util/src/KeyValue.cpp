@@ -389,7 +389,7 @@ bool FKeyValue::_tryReadAscii()
 		if (macroValues.Size() > 0 && *macroValues.last() == false)
 			continue;
 
-		for (auto i = 0; i != line.size(); i++)
+		for (auto i = 0; i < line.size(); i++)
 		{
 			char ch = line[i];
 			if (ch == '\n')
@@ -432,6 +432,17 @@ bool FKeyValue::_tryReadAscii()
 
 				bPrevSpace = true;
 				continue;
+			}
+
+			if (bInQuotes && ch == '\\')
+			{
+				char ch2 = line[i + 1];
+				if (ch2 == '\"' || ch2 == '\'')
+				{
+					i++;
+					curValue += ch2;
+					continue;
+				}
 			}
 
 			if (ch == '"' || ch == '\'')

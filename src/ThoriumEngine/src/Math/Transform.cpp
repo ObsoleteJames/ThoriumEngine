@@ -19,8 +19,26 @@ FTransform FTransform::operator*(const FTransform& t) const
 {
 	FTransform r;
 	r.position = (t.rotation.Rotate(position) * t.scale) + t.position;
-	r.rotation = t.rotation * rotation;
+	r.rotation = (t.rotation * rotation).Normalized();
 	r.scale = scale * t.scale;
+	return r;
+}
+
+FTransform FTransform::operator+(const FTransform& t) const
+{
+	FTransform r;
+	r.position = position + t.position;
+	r.rotation = (t.rotation * rotation).Normalized();
+	r.scale = scale * t.scale;
+	return r;
+}
+
+FTransform FTransform::Inverse() const
+{
+	FTransform r;
+	r.rotation = rotation.Invert();
+	r.scale = FVector(1.f) / scale;
+	r.position = -position;
 	return r;
 }
 

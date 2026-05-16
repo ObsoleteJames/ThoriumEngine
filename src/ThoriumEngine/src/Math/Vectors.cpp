@@ -339,12 +339,12 @@ void FMatrix::Decompose(FVector& outPos, FVector& outScale, FQuaternion& outRot,
 
 FMatrix FMatrix::Perspective(float fov, float aspectRatio, float nearPlane, float farPlane)
 {
-	return (FMatrix)glm::perspectiveLH_NO(fov, aspectRatio, nearPlane, farPlane);
+	return (FMatrix)glm::perspectiveLH_ZO(fov, aspectRatio, nearPlane, farPlane);
 }
 
 FMatrix FMatrix::Orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane)
 {
-	return (FMatrix)glm::orthoLH_NO(left, right, bottom, top, nearPlane, farPlane);
+	return (FMatrix)glm::orthoLH_ZO(left, right, bottom, top, nearPlane, farPlane);
 }
 
 FMatrix FMatrix::LookAt(const FVector& pos, const FVector& target, const FVector& up)
@@ -400,10 +400,16 @@ FRay FRay::MouseToRay(CCameraProxy* cam, FVector2 mouse, FVector2 wndSize)
 	float mouseY = y / ((float)h * 0.5f) - 1.f;
 
 	FMatrix invVP = (cam->projection * cam->view).Inverse();
-	glm::vec4 screenPos = glm::vec4(mouseX, mouseY, 1.f, 1.f);
-	glm::vec4 worldPos = (glm::mat4)invVP * screenPos;
+	//glm::vec4 screenPos = glm::vec4(mouseX, mouseY, 1.f, 1.f);
+	//glm::vec4 worldPos = (glm::mat4)invVP * screenPos;
 
-	FVector dir = glm::normalize(glm::vec3(worldPos));
+	glm::vec4 pNear = glm::vec4(mouseX, mouseY, -1.f, 1.f);
+	glm::vec4 pFar = glm::vec4(mouseX, mouseY, 1.f, 1.f);
 
-	return { cam->position, dir };
+	glm::vec4 worldNear = (glm::mat4)invVP * pNear;
+	glm::vec4 worldFar = (glm::mat4)invVP * pFar;
+
+	FVector dir = glm::normalize((glm::vec3(worldFar) / worldFar.w) - (glm::vec3(worldNear) / worldNear.w));
+
+	return { glm::vec3(worldNear) / worldNear.w, dir };
 }

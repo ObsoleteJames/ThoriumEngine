@@ -11,4 +11,5 @@ void CPlayerStart::Init()
 	mdl->SetModel("models/Dummy/Dummy.thasset");
 	mdl->SetMaterial("models/Dummy/DummyMatGreen.thasset");
 	mdl->bEditorOnly = true;
+	mdl->renderLayer = R_LAYER_EDITOR;
 }

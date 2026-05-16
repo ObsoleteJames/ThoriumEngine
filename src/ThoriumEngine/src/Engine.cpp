@@ -99,7 +99,7 @@ void CEngine::Init()
 
 	// Create default implementations for physics and audio.
 	CreatePhysicsApi(CModuleManager::FindClass("CJoltPhysicsApi"));
-	CreateAudioInterface(CModuleManager::FindClass("CSdlAudioInterface"));
+	//CreateAudioInterface(CModuleManager::FindClass("CSdlAudioInterface"));
 
 	CWindow::Init();
 
@@ -839,8 +839,23 @@ bool CEngine::LoadAddonConfig(const FString& path, FAddon& out)
 
 void CEngine::LoadMandatoryAddons()
 {
-	LoadCoreAddon("jolt_physics");
-	LoadCoreAddon("sdl3");
+	FString file = engineMod->Path() + "/config/platform_" + SSystem::GetPlatformName() + ".cfg";
+	FKeyValue kv(file);
+	if (!kv.IsOpen())
+	{
+		CONSOLE_LogError("CEngine", "Failed to open platform config file!\n" + file);
+		return;
+	}
+
+	auto* arr = kv.GetArray("mandatory_addons", false);
+	if (arr)
+	{
+		for (auto& addon : *arr)
+			LoadCoreAddon(addon);
+	}
+
+	//LoadCoreAddon("jolt_physics");
+	//LoadCoreAddon("sdl3");
 }
 
 void CEngine::UnloadWorld()

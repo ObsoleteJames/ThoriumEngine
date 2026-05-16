@@ -51,9 +51,9 @@ void CSceneComponent::SetWorldScale(const FVector& s)
 void CSceneComponent::SetWorldRotation(const FQuaternion& rot)
 {
 	if (parent)
-		rotation = rot * parent->GetWorldRotation().Conjugate();
+		rotation = (rot * parent->GetWorldRotation().Conjugate()).Normalized();
 	else
-		rotation = rot;
+		rotation = rot.Normalized();
 
 	UpdateWorldTransform();
 }
@@ -141,7 +141,7 @@ void CSceneComponent::UpdateWorldTransform(bool bUpdateChildren)
 	if (parent)
 	{
 		worldTransform.position = (parent->GetWorldRotation().Rotate(position) * parent->GetWorldScale()) + parent->GetWorldPosition();
-		worldTransform.rotation = parent->GetWorldRotation() * rotation;
+		worldTransform.rotation = (parent->GetWorldRotation() * rotation).Normalized();
 		worldTransform.scale = parent->GetWorldScale() * scale;
 	}
 	else

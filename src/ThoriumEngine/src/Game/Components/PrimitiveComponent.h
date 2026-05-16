@@ -2,6 +2,7 @@
 
 #include "SceneComponent.h"
 #include "Game/Entity.h"
+#include "Object/Enum.h"
 #include "PrimitiveComponent.generated.h"
 
 class IPhysicsBody;
@@ -58,7 +59,7 @@ public:
 	bool bEnableGravity = true;
 
 	PROPERTY(Editable, Category = Rendering)
-	ERenderLayer renderLayer = R_LAYER_DEFAULT;
+	TEnumInt<ERenderLayer, uint16> renderLayer = R_LAYER_DEFAULT;
 
 protected:
 	TObjectPtr<IPhysicsBody> physicsBody;

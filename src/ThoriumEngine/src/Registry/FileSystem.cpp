@@ -209,8 +209,9 @@ FFile* FMod::FindFile(const FString& path) const
 
 FFile* FMod::CreateFile(const FString& path)
 {
-	if (CFileSystem::IsBlacklisted(path))
-		return nullptr;
+	// allow for creating blacklisted folders.
+	//if (CFileSystem::IsBlacklisted(path))
+	//	return nullptr;
 
 	FString dirPath = path;
 	if (dirPath[0] == '/' || dirPath[0] == '\\')
@@ -425,20 +426,14 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 	{
 		if (entry.is_directory())
 		{
-			auto dirName = entry.path().stem();
-			//if (dirName == "bin")
-			//	continue;
-			//if (dirName == "config")
-			//	continue;
-			//if (dirName == "addons")
-			//	continue;
+			auto dirName = entry.path().filename();
 
-			if (IsBlacklisted(dirName.generic_string().c_str()))
-				continue;
+			//if (IsBlacklisted(dirName.generic_string().c_str()))
+			//	continue;
 
 			dir->directories.Add(new FDirectory());
 			FDirectory* newDir = dir->directories.last();
-			newDir->name = entry.path().stem().generic_string().c_str();
+			newDir->name = dirName.generic_string().c_str();
 			newDir->parent = dir;
 			MountDir(mod, _path + "/" + newDir->GetName(), newDir);
 			continue;
@@ -447,8 +442,8 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 		if (!entry.is_regular_file())
 			continue;
 
-		if (IsBlacklisted(entry.path().filename().generic_string().c_str()))
-			continue;
+		//if (IsBlacklisted(entry.path().filename().generic_string().c_str()))
+		//	continue;
 
 		if (entry.path().extension() == ".pak")
 			continue; // TDOO: Load pak file.
@@ -474,10 +469,10 @@ void CFileSystem::RefreshDir(FMod* mod, const FString& path, FDirectory* dir)
 	{
 		if (entry.is_directory())
 		{
-			auto dirName = entry.path().stem();
+			auto dirName = entry.path().filename();
 			
-			if (IsBlacklisted(dirName.generic_string().c_str()))
-				continue;
+			//if (IsBlacklisted(dirName.generic_string().c_str()))
+			//	continue;
 
 			// check if this dir already exists
 			for (auto d : dir->directories)
@@ -507,8 +502,9 @@ void CFileSystem::RefreshDir(FMod* mod, const FString& path, FDirectory* dir)
 				goto _FileExists;
 		}
 
-		if (IsBlacklisted(entry.path().filename().generic_string().c_str()))
-			continue;
+		// Ignoring these is not such a good idea, as these files still need to be referenced, instead the Editor should hide them from the user.
+		//if (IsBlacklisted(entry.path().filename().generic_string().c_str()))
+		//	continue;
 
 		FFile* file = new FFile();
 		file->mod = mod;

@@ -69,6 +69,12 @@ FString SSystem::GetDocumentsPath()
 	return FString(r);
 }
 
+ENGINE_API FString SSystem::GetPlatformName()
+{
+	// by default this will be the same as the platform name defined in the build system, but this allows it to be changed at runtime if needed.
+	return PLATFORM_NAME;
+}
+
 FString SSystem::OpenFileDialog(const char* filter)
 {
 	OPENFILENAMEA ofn;

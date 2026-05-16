@@ -139,6 +139,8 @@ public:
 
 	inline TObjectPtr<CObject> GetOwner() const { return owner; }
 
+	inline ERenderLayer GetLayers() const { return layers; }
+
 protected:
 	TObjectPtr<CObject> owner;
 

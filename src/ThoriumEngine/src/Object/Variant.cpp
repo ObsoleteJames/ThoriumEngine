@@ -1,3 +1,4 @@
+
 #include <string>
 #include <cstdlib>
 #include <cerrno>
@@ -28,6 +29,9 @@ FVariant::FVariant(const FVariant& o) : type(o.type)
 	case VECTOR:
 		new (&uVector) FVector(o.uVector);
 		break;
+	case QUAT:
+		new (&uQuat) FQuaternion(o.uQuat);
+		break;
 	case COLOR:
 		new (&uColor) FColor(o.uColor);
 		break;
@@ -36,6 +40,12 @@ FVariant::FVariant(const FVariant& o) : type(o.type)
 		break;
 	case CLASS:
 		uClass = o.uClass;
+		break;
+	case BYTE_ARRAY:
+		new (&uByteArray) TArray<uint8>(o.uByteArray);
+		break;
+	case STRING_ARRAY:
+		new (&uStringArray) TArray<FString>(o.uStringArray);
 		break;
 	}
 }
@@ -54,6 +64,8 @@ FVariant::FVariant(CObject* v) : uObjPointer(v ? v->Id() : 0), type(OBJ_POINTER)
 
 FVariant::FVariant(const FVector& v) : uVector(v), type(VECTOR) {}
 
+FVariant::FVariant(const FQuaternion& v) : uQuat(v), type(QUAT) {}
+
 FVariant::FVariant(const FColor& v) : uColor(v), type(COLOR) {}
 
 FVariant::FVariant(const FString& v) : uString(v), type(STRING) {}
@@ -61,6 +73,10 @@ FVariant::FVariant(const FString& v) : uString(v), type(STRING) {}
 FVariant::FVariant(const char* v) : uString(v), type(STRING) {}
 
 FVariant::FVariant(FClass* v) : uClass(v), type(CLASS) {}
+
+FVariant::FVariant(const TArray<uint8>& v) : uByteArray(v), type(BYTE_ARRAY) {}
+
+FVariant::FVariant(const TArray<FString>& v) : uStringArray(v), type(STRING_ARRAY) {}
 
 FVariant::~FVariant()
 {
@@ -127,6 +143,14 @@ FVector FVariant::AsVector() const
 	return FVector();
 }
 
+FQuaternion FVariant::AsQuat() const
+{
+	if (type == QUAT)
+		return uQuat;
+
+	return FQuaternion();
+}
+
 FColor FVariant::AsColor() const
 {
 	if (type == COLOR)
@@ -151,6 +175,22 @@ FClass* FVariant::AsClass() const
 	return nullptr;
 }
 
+TArray<uint8> FVariant::AsByteArray()
+{
+	if (type == BYTE_ARRAY)
+		return uByteArray;
+
+	return TArray<uint8>();
+}
+
+TArray<FString> FVariant::AsStringArray()
+{
+	if (type == STRING_ARRAY)
+		return uStringArray;
+
+	return TArray<FString>();
+}
+
 FString FVariant::ToString() const
 {
 	switch (type)
@@ -169,12 +209,42 @@ FString FVariant::ToString() const
 		return "CObject(" + FString::ToString(uObjPointer) + ")";
 	case VECTOR:
 		return ("FVector(" + std::to_string(uVector.x) + ", " + std::to_string(uVector.y) + ", " + std::to_string(uVector.z) + ")").c_str();
+	case QUAT:
+		return ("FQuat(" + std::to_string(uQuat.x) + ", " + std::to_string(uQuat.y) + ", " + std::to_string(uQuat.z) + ", " + std::to_string(uQuat.w) + ")").c_str();
 	case COLOR:
 		return ("FColor(" + std::to_string(uColor.r) + ", " + std::to_string(uColor.g) + ", " + std::to_string(uColor.b) + ", " + std::to_string(uColor.a) + ")").c_str();
 	case STRING:
 		return uString;
 	case CLASS:
 		return uClass ? uClass->GetInternalName() : FString();
+	case BYTE_ARRAY:
+		{
+			FString r = "FByteArray{";
+			for (int i = 0; i < uByteArray.Size(); i++)
+			{
+				char buff[24];
+				std::sprintf(buff, "0x%x", uByteArray[i]);
+				r += buff;
+				if (i + 1 < uByteArray.Size())
+					r += ", ";
+			}
+			r += "}";
+			return r;
+		}
+		break;
+	case STRING_ARRAY:
+		{
+			FString r = "FStringArray{";
+			for (int i = 0; i < uStringArray.Size(); i++)
+			{
+				r += "\"" + uStringArray[i] + "\"";
+				if (i + 1 < uByteArray.Size())
+					r += ", ";
+			}
+			r += "}";
+			return r;
+		}
+		break;
 	}
 
 	return FString();
@@ -233,6 +303,25 @@ FVariant FVariant::FromString(const FString& inStr)
 		}
 	}
 
+	if (inStr.Find("FQuat(") == 0)
+	{
+		FString inner = inStr;
+		inner.Erase(inner.begin(), inner.begin() + inner.Find("(") + 1);
+		inner.EraseAll(')');
+		inner.EraseAll(' ');
+		auto vals = inner.Split(',');
+		if (vals.Size() >= 4)
+		{
+			float x = std::stof(std::string(vals[0].c_str()));
+			float y = std::stof(std::string(vals[1].c_str()));
+			float z = std::stof(std::string(vals[2].c_str()));
+			float w = std::stof(std::string(vals[3].c_str()));
+			new (&out.uQuat) FQuaternion(x, y, z, w);
+			out.type = QUAT;
+			return out;
+		}
+	}
+
 	if (inStr.Find("FColor(") == 0)
 	{
 		FString inner = inStr;
@@ -252,6 +341,66 @@ FVariant FVariant::FromString(const FString& inStr)
 			out.type = COLOR;
 			return out;
 		}
+	}
+
+	if (inStr.Find("FByteArray{") == 0)
+	{
+		FString inner = inStr;
+		inner.Erase(inner.begin(), inner.begin() + inner.Find("{") + 1);
+		inner.EraseAll('}');
+		inner.EraseAll(' ');
+		auto vals = inner.Split(',');
+		new (&out.uByteArray) TArray<uint8>(vals.Size());
+		for (int i = 0; i < vals.Size(); i++)
+		{
+			uint64 value = std::stoull(vals[i].c_str(), nullptr, 16);
+			out.uByteArray[i] = (uint8)value;
+		}
+		return out;
+	}
+
+	if (inStr.Find("FStringArray{") == 0)
+	{
+		FString inner = inStr;
+		inner.Erase(inner.begin(), inner.begin() + inner.Find("{") + 1);
+		inner.Erase(inner.last());
+
+		new (&out.uStringArray) TArray<FString>();
+		bool bInQoutes = false;
+		FString v;
+		for (int i = 0; i < inner.Size(); i++)
+		{
+			char ch = inner[i];
+			if (!bInQoutes && (ch == ','))
+			{
+				out.uStringArray.Add(v);
+				v.Clear();
+			}
+
+			if (bInQoutes && ch == '\\')
+			{
+				char ch2 = inner[i + 1];
+				if (ch2 == '\"' || ch2 == '\'')
+				{
+					i++;
+					v += ch2;
+					continue;
+				}
+			}
+
+			if (ch == '"' || ch == '\'')
+			{
+				bInQoutes ^= 1;
+				continue;
+			}
+
+			if (bInQoutes)
+				v += ch;
+		}
+		if (!v.IsEmpty())
+			out.uStringArray.Add(v);
+
+		return out;
 	}
 
 	if (inStr.IsNumber())

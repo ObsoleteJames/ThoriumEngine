@@ -16,6 +16,8 @@ namespace SSystem
 
 	ENGINE_API FString GetDocumentsPath();
 
+	ENGINE_API FString GetPlatformName();
+
 	/// ------ Files ------
 
 	ENGINE_API FString OpenFileDialog(const char* filter);
@@ -38,6 +40,7 @@ namespace SSystem
 	inline void OpenFile(const FString& path = FString()) { return OpenFile(path.c_str()); }
 
 	/// ------ Clipboard ------
+
 	ENGINE_API void SetClipboardData(const FString& txt = FString());
 	ENGINE_API FString GetClipboardData();
 }

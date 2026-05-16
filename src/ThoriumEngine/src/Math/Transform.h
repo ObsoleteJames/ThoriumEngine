@@ -31,8 +31,12 @@ public:
 	// Rotate
 	inline FTransform operator*(const FQuaternion& rot) const { return FTransform(position, rotation * rot, scale); }
 
-	// Add the two transforms together
+	// Multiply the two transforms
 	FTransform operator*(const FTransform&) const;
+
+	FTransform operator+(const FTransform&) const;
+
+	FTransform Inverse() const;
 
 	FMatrix ToMatrix() const;
 

@@ -22,10 +22,12 @@ public:
 		meshes.Clear();
 		bVisible = model->IsVisible() && model->GetModel();
 		bCastShadows = model->CastShadows();
-		if (model->GetWorld()->IsActive() && model->bEditorOnly)
-			bVisible = false;
+		//if (model->GetWorld()->IsActive() && model->bEditorOnly)
+		//	bVisible = false;
 		if (!bVisible)
 			return;
+
+		layers = model->renderLayer;
 
 		CRenderScene* scene = Cast<CModelComponent>(owner)->GetWorld()->GetRenderScene();
 		CCameraProxy* camera = scene ? scene->GetPrimaryCamera() : nullptr;

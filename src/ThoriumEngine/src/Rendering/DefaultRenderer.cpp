@@ -296,6 +296,10 @@ void CDefaultRenderer::RenderCamera(CRenderScene* scene, CCameraProxy* camera)
 		if (!primitive->IsVisible())
 			continue;
 
+		// don't render if the primitive isn't in any of the layers the camera renders.
+		if ((primitive->GetLayers() & camera->layers) == 0)
+			continue;
+
 		if (!camera->bOrthographic && !primitive->DoFrustumCull(sceneInfo.camMatrix))
 			continue;
 
@@ -988,6 +992,9 @@ void CDefaultRenderer::RenderShadowMaps(CRenderScene* scene)
 	for (auto* primitive : scene->GetPrimitives())
 	{
 		if (!primitive->IsVisible() || !primitive->CastShadows())
+			continue;
+
+		if ((primitive->GetLayers() & scene->GetPrimaryCamera()->layers) == 0)
 			continue;
 
 		//dynamicMeshes.Add({ primitive, FMeshBuilder() });

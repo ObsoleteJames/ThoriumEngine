@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   version="1.2"
+   viewBox="0 0 100 100"
+   width="100"
+   height="100"
+   id="svg7"
+   sodipodi:docname="rview-normal.svg"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <defs
+     id="defs11">
+    <linearGradient
+       id="linearGradient8"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop7" />
+      <stop
+         style="stop-color:#00ff00;stop-opacity:1;"
+         offset="1"
+         id="stop8" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient6"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop5" />
+      <stop
+         style="stop-color:#ff0000;stop-opacity:1;"
+         offset="1"
+         id="stop6" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient4"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop3" />
+      <stop
+         style="stop-color:#0000ff;stop-opacity:1;"
+         offset="1"
+         id="stop4" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4"
+       id="linearGradient2"
+       x1="125.09457"
+       y1="-25.116564"
+       x2="17.689718"
+       y2="82.288284"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient6"
+       id="linearGradient5"
+       gradientUnits="userSpaceOnUse"
+       x1="-4.2453737"
+       y1="-3.1558809"
+       x2="81.490807"
+       y2="82.580299" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient8"
+       id="linearGradient7"
+       gradientUnits="userSpaceOnUse"
+       x1="75.454956"
+       y1="94.938454"
+       x2="26.437033"
+       y2="10.036921" />
+  </defs>
+  <sodipodi:namedview
+     id="namedview9"
+     pagecolor="#474747"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="true"
+     showgrid="false"
+     inkscape:zoom="5.0150525"
+     inkscape:cx="49.451127"
+     inkscape:cy="60.119011"
+     inkscape:window-width="1641"
+     inkscape:window-height="1325"
+     inkscape:window-x="867"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg7"
+     inkscape:showpageshadow="2"
+     inkscape:deskcolor="#d1d1d1" />
+  <title
+     id="title2">half-cross-upper-svg</title>
+  <style
+     id="style4">
+		.s0 { fill: #c0c0c0 } 
+	</style>
+  <metadata
+     id="metadata927">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>half-cross-upper-svg</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <circle
+     style="display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+     id="path1"
+     cx="50"
+     cy="50"
+     r="45" />
+  <circle
+     style="mix-blend-mode:lighten;fill:url(#linearGradient2);stroke:none;stroke-width:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+     id="circle2"
+     cx="50"
+     cy="50"
+     r="45" />
+  <circle
+     style="mix-blend-mode:lighten;fill:url(#linearGradient5);stroke:none;stroke-width:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+     id="circle4"
+     cx="50"
+     cy="50"
+     r="45" />
+  <circle
+     style="display:inline;mix-blend-mode:lighten;fill:url(#linearGradient7);stroke:none;stroke-width:4;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+     id="circle6"
+     cx="50"
+     cy="50"
+     r="45" />
+</svg>

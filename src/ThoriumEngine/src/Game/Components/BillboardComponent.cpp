@@ -17,8 +17,8 @@ void CBillboardComponent::Init()
 		void FetchData() override
 		{
 			bVisible = comp->IsVisible();
-			if (comp->bEditorOnly && comp->GetWorld()->IsActive())
-				bVisible = false;
+			//f (comp->bEditorOnly && comp->GetWorld()->IsActive()) // this has been made redundant by the render layer system.
+			//	bVisible = false;
 
 			if (!bVisible)
 				return;
@@ -28,6 +28,8 @@ void CBillboardComponent::Init()
 
 			mat->SetTexture("vBaseColor", sprite);
 			mat->LoadTextures(0);
+
+			layers = comp->renderLayer;
 
 			transform.position = comp->GetWorldPosition();
 			transform.scale = comp->GetWorldScale();
