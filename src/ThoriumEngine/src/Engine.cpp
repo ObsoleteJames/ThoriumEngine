@@ -126,7 +126,8 @@ void CEngine::Init()
 
 	if (!inputManager)
 		inputManager = CreateObject<CInputManager>();
-	inputManager->SetInputWindow(gameWindow);
+	//inputManager->SetInputWindow(gameWindow);
+	inputManager->AddInputDevice(gameWindow->GetInputDevice());
 
 	InitImGui();
 

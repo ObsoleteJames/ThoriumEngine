@@ -3,6 +3,7 @@
 #include "Engine.h"
 #include "Game/GameInstance.h"
 #include "Game/Components/CameraComponent.h"
+#include "Game/Input/InputManager.h"
 
 void CPawn::OnPossessed(const TObjectPtr<CPawnController>& controller)
 {
@@ -28,4 +29,10 @@ void CPawn::OnUnposses()
 void CPawn::SetupInput(CInputManager* inputManager)
 {
 
+}
+
+void CPawn::OnDelete()
+{
+	BaseClass::OnDelete();
+	gEngine->InputManager()->UnbindPawn(this);
 }

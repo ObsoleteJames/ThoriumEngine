@@ -7,6 +7,11 @@
 #include "InputManager.generated.h"
 
 class CPlayerController;
+class CPawn;
+class IInputDevice;
+class IInputEvent;
+class CKeyEvent;
+class CMouseEvent;
 
 ENUM()
 enum class EInputMode
@@ -21,7 +26,7 @@ struct FInputActionBinding
 	FString actionName;
 	EInputAction activactionAction;
 
-	TObjectPtr<CPlayerController> player;
+	TObjectPtr<CPawn> pawn;
 	TDelegate<> binding;
 	EInputMode layer;
 };
@@ -30,7 +35,7 @@ struct FInputAxisBinding
 {
 	FString axisName;
 
-	TObjectPtr<CPlayerController> player;
+	TObjectPtr<CPawn> pawn;
 	TDelegate<float> binding;
 	EInputMode layer;
 };
@@ -41,7 +46,7 @@ struct FInputKeyBinding
 	EInputMod mods;
 	EInputAction activactionAction;
 
-	TObjectPtr<CPlayerController> player;
+	TObjectPtr<CPawn> pawn;
 	TDelegate<> binding;
 	EInputMode layer;
 };
@@ -61,7 +66,7 @@ public:
 	TArray<FInputActionBinding> bindings;
 
 public:
-	void FireBindings(EInputAction action);
+	void FireBindings(IInputDevice* device, EInputAction action);
 };
 
 struct FInputAxisKey
@@ -80,7 +85,7 @@ public:
 	float cache;
 
 public:
-	void FireBindings();
+	void FireBindings(IInputDevice* device);
 };
 
 CLASS()
@@ -89,7 +94,11 @@ class ENGINE_API CInputManager : public CObject
 	GENERATED_BODY()
 
 public:
+	UTIL_DEPRECATED("SetInputWindow is no longer used, use AddInputDevice instead!")
 	virtual void SetInputWindow(IBaseWindow* window);
+
+	virtual void AddInputDevice(IInputDevice* device);
+	virtual void RemoveInputDevice(IInputDevice* device);
 
 	virtual void LoadConfig();
 	virtual void SaveConfig();
@@ -100,11 +109,18 @@ public:
 	virtual void RegisterPlayer(CPlayerController* player);
 	virtual void RemovePlayer(CPlayerController* player);
 
+	void AssignPlayerDevice(CPlayerController* target, IInputDevice* device);
+	void UnassignPlayerDevice(IInputDevice* device);
+	void UnassignAllDevices();
+
 	virtual void SetInputMode(EInputMode mode);
 	inline EInputMode GetInputMode() const { return inputMode; }
 
 	void SetShowCursor(bool b);
 	inline bool CursorVisible() const { return bShowCursor; }
+
+	void SetAutoAssignDevices(bool b) { bAutoAssignDevices = b; }
+	inline bool AutoAssignDevices() const { return bAutoAssignDevices; }
 	
 	inline bool InputEnabled() const { return bEnableInput; }
 	inline void SetInputEnabled(bool b) { bEnableInput = b; }
@@ -130,23 +146,40 @@ public:
 	template<typename T>
 	void BindKey(EKeyCode key, EInputAction action, EInputMod mods, T* target, void(T::* func)(), EInputMode layer = EInputMode::GAME_ONLY);
 
+	void UnbindPawn(CPawn* pawn);
+
 	inline bool IsKeyPressed(EKeyCode key) const { return (bool)keyStates[(int)key]; }
 	inline bool IsMousePressed(EMouseButton btn) const { return (bool)mouseStates[(int)btn]; }
 
-protected:
-	void OnCharEvent(uint key);
-	void KeyEvent(EKeyCode key, EInputAction action, EInputMod mod);
+public: // Delegates
+	TDelegate<IInputDevice*> onInputDeviceAdded;
+	TDelegate<IInputDevice*> onInputDeviceRemoved;
 
-	void OnCursorMove(double x, double y);
-	void OnMouseButton(EMouseButton btn, EInputAction action, EInputMod mod);
+	// Invoked when an input event is fired from any input device.
+	// this is called before the event is processed by the input manager, so it can be used to intercept input events before they reach the player controllers.
+	TDelegate<IInputDevice*, IInputEvent*> onInputEvent;
+
+protected:
+	void CharEvent(IInputDevice* device, CKeyEvent* event);
+	void KeyEvent(IInputDevice* device, CKeyEvent* event);
+
+	void CursorMove(IInputDevice* device, CMouseEvent* event);
+	void MouseButton(IInputDevice* device, CMouseEvent* event);
+
+	virtual void HandleInputEvent(IInputDevice* device, IInputEvent* event);
 
 	void OnDelete() override;
 
 protected:
 	bool bEnableInput = true;
 	bool bShowCursor = true;
+	bool bAutoAssignDevices = true;
 	EInputMode inputMode;
-	IBaseWindow* inputWindow = nullptr;
+
+	TArray<TObjectPtr<CPlayerController>> players;
+	TArray<TObjectPtr<IInputDevice>> inputDevices;
+
+	IInputDevice* keyboardDevice = nullptr;
 
 	TArray<FInputKeyBinding> keyBindings;
 	TArray<FInputAction> actions;
@@ -171,7 +204,7 @@ void CInputManager::BindAction(FString name, EInputAction aAction, T* target, vo
 	FInputActionBinding& ab = *action->bindings.last();
 	ab.actionName = name;
 	ab.activactionAction = aAction;
-	ab.player = Cast<CPlayerController>(target->GetController());
+	ab.pawn = Cast<CPawn>(target);
 	ab.binding.Bind(target, func);
 	ab.layer = layer;
 }
@@ -186,7 +219,7 @@ void CInputManager::BindAxis(FString name, T* target, void(T::* func)(float), EI
 	axis->bindings.Add();
 	FInputAxisBinding& ab = *axis->bindings.last();
 	ab.axisName = name;
-	ab.player = Cast<CPlayerController>(target->GetController());
+	ab.pawn = Cast<CPawn>(target);
 	ab.binding.Bind(target, func);
 	ab.layer = layer;
 }
@@ -199,7 +232,7 @@ void CInputManager::BindKey(EKeyCode key, EInputAction action, EInputMod mods, T
 	ab.key = (uint16)key;
 	ab.activactionAction = action;
 	ab.mods = mods;
-	ab.player = Cast<CPlayerController>(target->GetController());
+	ab.pawn = Cast<CPawn>(target);
 	ab.binding.Bind(target, func);
 	ab.layer = layer;
 }

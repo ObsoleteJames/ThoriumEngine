@@ -8,32 +8,46 @@
 #include "Game/Pawn.h"
 #include "Game/UserInterface/Canvas.h"
 #include "Console.h"
+#include "InputDevice.h"
 
 #include <set>
 #include <Util/KeyValue.h>
 
 void CInputManager::SetInputWindow(IBaseWindow* window)
 {
-	if (inputWindow == window)
-		return;
+	CONSOLE_LogWarning("CInputManager", "SetInputWindow is no longer used, use AddInputDevice instead!");
+}
 
-	if (inputWindow)
+void CInputManager::AddInputDevice(IInputDevice* device)
+{
+	inputDevices.Add(device);
+
+	if (bAutoAssignDevices)
 	{
-		inputWindow->OnKeyEvent.RemoveAll(this);
-		inputWindow->OnCharEvent.RemoveAll(this);
-		inputWindow->OnCursorMove.RemoveAll(this);
-		inputWindow->OnMouseButton.RemoveAll(this);
+		// if there's only one player then that player gets input from all devices
+		if (players.Size() == 1)
+			device->assignedPlayer = players[0];
+		else if (players.Size() > 1)
+			device->assignedPlayer = *players.last();
 	}
 
-	inputWindow = window;
+	if ((device->GetDeviceType() & Input_Keyboard) && !keyboardDevice)
+		keyboardDevice = device;
 
-	window->OnKeyEvent.Bind(this, &CInputManager::KeyEvent);
+	device->onInputEvent.Bind(this, [=](IInputEvent* event) { HandleInputEvent(device, event); });
+	onInputDeviceAdded.Invoke(device);
+}
 
-	window->OnCharEvent.Bind(this, &CInputManager::OnCharEvent);
-	window->OnCursorMove.Bind(this, &CInputManager::OnCursorMove);
-	window->OnMouseButton.Bind(this, &CInputManager::OnMouseButton);
+void CInputManager::RemoveInputDevice(IInputDevice* device)
+{
+	auto it = inputDevices.Find(device);
+	if (it != inputDevices.end())
+		inputDevices.Erase(it);
 
-	SetInputMode(inputMode);
+	if (keyboardDevice == device)
+		keyboardDevice = nullptr;
+
+	device->onInputEvent.RemoveAll(this);
 }
 
 void CInputManager::LoadConfig()
@@ -150,21 +164,21 @@ void CInputManager::BuildInput()
 	{
 		for (auto& k : a.keys)
 		{
-			if (k.type == 0)
+			if (k.type == 0) // Key
 			{
 				if (k.bNegate)
 					a.cache += -(float)keyStates[k.key];
 				else
 					a.cache += keyStates[k.key];
 			}
-			else if (k.type == 1)
+			else if (k.type == 1) // mouseKey
 			{
 				if (k.bNegate)
 					a.cache += -(float)mouseStates[k.key];
 				else
 					a.cache += mouseStates[k.key];
 			}
-			else if (k.type == 2)
+			else if (k.type == 2) // mouseAxis (position)
 				a.cache += k.key == 1 ? mouseDelta.x : k.key == 2 ? mouseDelta.y : 0.f;
 		}
 	}
@@ -176,7 +190,7 @@ void CInputManager::BuildInput()
 	{
 		for (auto& a : axis)
 		{
-			a.FireBindings();
+			a.FireBindings(keyboardDevice);
 		}
 	}
 }
@@ -189,28 +203,61 @@ void CInputManager::ClearCache()
 
 void CInputManager::RegisterPlayer(CPlayerController* player)
 {
-	auto* pawn = player->GetPawn();
-	pawn->SetupInput(this);
+	// Moved to CGameMode::SpawnPlayer
+	//auto* pawn = player->GetPawn();
+	//pawn->SetupInput(this);
+
+	players.Add(player);
+
+	if (bAutoAssignDevices)
+	{
+		if (players.Size() == 1)
+		{
+			for (auto& d : inputDevices)
+				d->assignedPlayer = player;
+		}
+		else if (players.Size() > 1)
+		{
+			for (auto& d : inputDevices)
+				if (d->assignedPlayer == nullptr)
+					d->assignedPlayer = player;
+		}
+	}
 }
 
 void CInputManager::RemovePlayer(CPlayerController* player)
 {
-	for (auto& action : actions)
-	{
-		for (auto it = action.bindings.rbegin(); it != action.bindings.rend(); it++)
-		{
-			if (it->player == player)
-				action.bindings.Erase(it);
-		}
-	}
-	for (auto& a : axis)
-	{
-		for (auto it = a.bindings.rbegin(); it != a.bindings.rend(); it++)
-		{
-			if (it->player == player)
-				a.bindings.Erase(it);
-		}
-	}
+	CPawn* pawn = player->GetPawn();
+	if (pawn)
+		UnbindPawn(pawn);
+
+	// clear device assignments for this player
+	for (auto& d : inputDevices)
+		if (d->assignedPlayer == player)
+			d->assignedPlayer = nullptr;
+
+	auto it = players.Find(player);
+	if (it != players.end())
+		players.Erase(it);
+}
+
+void CInputManager::AssignPlayerDevice(CPlayerController* target, IInputDevice* device)
+{
+	if (device->assignedPlayer != nullptr)
+		CONSOLE_LogInfo("CInputManager", "Input Device '" + device->Name() + "' has been re-assigned");
+
+	device->assignedPlayer = target;
+}
+
+void CInputManager::UnassignPlayerDevice(IInputDevice* device)
+{
+	device->assignedPlayer = nullptr;
+}
+
+void CInputManager::UnassignAllDevices()
+{
+	for (auto& d : inputDevices)
+		d->assignedPlayer = nullptr;
 }
 
 void CInputManager::SetInputMode(EInputMode mode)
@@ -226,8 +273,8 @@ void CInputManager::SetInputMode(EInputMode mode)
 void CInputManager::SetShowCursor(bool b)
 {
 	bShowCursor = b;
-	if (inputWindow)
-		inputWindow->SetCursorMode(bShowCursor ? ECursorMode::NORMAL : ECursorMode::DISABLED);
+	//if (inputWindow)
+	//	inputWindow->SetCursorMode(bShowCursor ? ECursorMode::NORMAL : ECursorMode::DISABLED);
 }
 
 FInputAction* CInputManager::GetAction(const FString& name)
@@ -250,36 +297,64 @@ FInputAxis* CInputManager::GetAxis(const FString& name)
 
 void CInputManager::CopyState(CInputManager* other)
 {
-	SetInputWindow(other->inputWindow);
+	//SetInputWindow(other->inputWindow);
 
 	bEnableInput = other->bEnableInput;
 	bShowCursor = other->bShowCursor;
+	bAutoAssignDevices = other->bAutoAssignDevices;
 	inputMode = other->inputMode;
 
 	keyBindings = other->keyBindings;
 	actions = other->actions;
 	axis = other->axis;
 
+	players = other->players;
+	inputDevices = other->inputDevices;
+	keyboardDevice = other->keyboardDevice;
+
 	SetInputMode(inputMode);
 
 	CONSOLE_LogInfo("CInputManager", "Input manager copied state");
 }
 
-void CInputManager::KeyEvent(EKeyCode key, EInputAction action, EInputMod mod)
+void CInputManager::UnbindPawn(CPawn* pawn)
+{
+	for (auto& action : actions)
+	{
+		for (auto it = action.bindings.rbegin(); it != action.bindings.rend(); it++)
+		{
+			if (it->pawn == pawn)
+				action.bindings.Erase(it);
+		}
+	}
+	for (auto& a : axis)
+	{
+		for (auto it = a.bindings.rbegin(); it != a.bindings.rend(); it++)
+		{
+			if (it->pawn == pawn)
+				a.bindings.Erase(it);
+		}
+	}
+}
+
+void CInputManager::CharEvent(IInputDevice* device, CKeyEvent* event)
+{
+	// TODO: invoke event to UI.
+}
+
+void CInputManager::KeyEvent(IInputDevice* device, CKeyEvent* event)
 {
 	if (!bEnableInput)
 		return;
 
-	CKeyEvent event(key, action, mod);
-
-	keyStates[(SizeType)key] = action != IE_RELEASE;
+	keyStates[(SizeType)event->Key()] = (event->Action() != IE_RELEASE);
 
 	if (inputMode != EInputMode::GAME_ONLY)
 	{
 		//std::set<int, CCanvas*> canvass;
 		//for (auto c : gEngine->GameInstance()->GetGlobalCanvass())
 		//	canvass.emplace(c->ZOrder(), c);
-
+		
 		//for (auto p : gEngine->GameInstance()->GetPlayers())
 		//{
 		//	for (auto c : p->GetPlayerController()->GetCanvass())
@@ -299,8 +374,11 @@ void CInputManager::KeyEvent(EKeyCode key, EInputAction action, EInputMod mod)
 
 	for (auto& a : keyBindings)
 	{
-		if (a.key == (uint16)key && a.mods == mod && a.activactionAction == action)
+		if (a.key == (uint16)event->Key() && a.mods == event->Mods() && a.activactionAction == event->Action())
 		{
+			if (a.pawn != device->assignedPlayer->GetPawn())
+				continue;
+
 			if (a.layer != inputMode && a.layer != EInputMode::GAME_UI)
 				continue;
 
@@ -312,57 +390,83 @@ void CInputManager::KeyEvent(EKeyCode key, EInputAction action, EInputMod mod)
 	{
 		for (auto& k : a.keys)
 		{
-			if (k.type == 0 && k.key == (uint16)key && k.mods == mod)
+			if (k.type == 0 && k.key == (uint16)event->Key() && k.mods == event->Mods())
 			{
-				a.FireBindings(action);
+				a.FireBindings(device, event->Action());
 			}
 		}
 	}
 }
 
-void CInputManager::OnCharEvent(uint key)
+void CInputManager::CursorMove(IInputDevice* device, CMouseEvent* event)
 {
-
+	mousePos = event->GetMousePos();
 }
 
-void CInputManager::OnCursorMove(double x, double y)
-{
-	mousePos = FVector2((float)x, (float)y);
-}
-
-void CInputManager::OnMouseButton(EMouseButton btn, EInputAction action, EInputMod mod)
+void CInputManager::MouseButton(IInputDevice* device, CMouseEvent* event)
 {
 	if (!bEnableInput)
 		return;
 
-	mouseStates[(SizeType)btn] = action != IE_RELEASE;
+	mouseStates[(SizeType)event->Button()] = (event->Action() != IE_RELEASE);
 
 	for (auto& a : actions)
 	{
 		for (auto& k : a.keys)
 		{
-			if (k.type == 1 && k.key == (uint16)btn && k.mods == mod)
+			if (k.type == 1 && k.key == (uint16)event->Button() && k.mods == event->Mods())
 			{
-				a.FireBindings(action);
+				a.FireBindings(device, event->Action());
 			}
 		}
 	}
 }
 
-void CInputManager::OnDelete()
+void CInputManager::HandleInputEvent(IInputDevice* device, IInputEvent* event)
 {
-	BaseClass::OnDelete();
+	onInputEvent.Invoke(device, event);
 
-	inputWindow->OnKeyEvent.RemoveAll(this);
-	inputWindow->OnCharEvent.RemoveAll(this);
-	inputWindow->OnCursorMove.RemoveAll(this);
-	inputWindow->OnMouseButton.RemoveAll(this);
+	// ignore the event if it's already been handled by onInputEvent.
+	if (event->Accepted())
+		return;
+
+	switch (event->Type())
+	{
+	case IInputEvent::KeyEvent:
+		KeyEvent(device, (CKeyEvent*)event);
+		break;
+
+	case IInputEvent::CharEvent:
+		CharEvent(device, (CKeyEvent*)event);
+		break;
+
+	case IInputEvent::MouseButton:
+		MouseButton(device, (CMouseEvent*)event);
+		break;
+
+	case IInputEvent::MouseMove:
+		CursorMove(device, (CMouseEvent*)event);
+		break;
+	}
 }
 
-void FInputAction::FireBindings(EInputAction action)
+void CInputManager::OnDelete()
+{
+	for (auto& d : inputDevices)
+		d->onInputEvent.RemoveAll(this);
+
+	inputDevices.Clear();
+
+	BaseClass::OnDelete();
+}
+
+void FInputAction::FireBindings(IInputDevice* device, EInputAction action)
 {
 	for (auto& b : bindings)
 	{
+		if (b.pawn != device->GetAssignedPlayer()->GetPawn())
+			continue;
+
 		if (b.layer != gEngine->InputManager()->GetInputMode() && b.layer != EInputMode::GAME_UI)
 			continue;
 
@@ -371,10 +475,13 @@ void FInputAction::FireBindings(EInputAction action)
 	}
 }
 
-void FInputAxis::FireBindings()
+void FInputAxis::FireBindings(IInputDevice* device)
 {
 	for (auto& b : bindings)
 	{
+		if (b.pawn != device->GetAssignedPlayer()->GetPawn())
+			continue;
+
 		if (b.layer != gEngine->InputManager()->GetInputMode() && b.layer != EInputMode::GAME_UI)
 			continue;
 

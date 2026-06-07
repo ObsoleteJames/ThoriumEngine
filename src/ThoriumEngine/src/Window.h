@@ -8,6 +8,7 @@
 
 struct GLFWwindow;
 class ISwapChain;
+class IInputDevice;
 
 ENUM()
 enum class EKeyCode
@@ -186,6 +187,8 @@ public:
 
 	virtual void SetCursorMode(const ECursorMode& cm) {}
 
+	virtual IInputDevice* GetInputDevice() = 0;
+
 	inline bool IsGlfwWindow() const { return bIsGlfwWindow; }
 
 public:
@@ -225,6 +228,8 @@ public:
 	virtual void* GetNativeHandle();
 
 	virtual void SetCursorMode(const ECursorMode& cm);
+
+	IInputDevice* GetInputDevice() override;
 
 	void SetWindowMode(EWindowMode WindowMode, int targetMonitor = 0);
 	
@@ -283,6 +288,8 @@ protected:
 	GLFWwindow* nativeHandle;
 
 	ISwapChain* swapChain;
+
+	TObjectPtr<IInputDevice> inputDevice;
 
 	static TArray<CWindow*> windows;
 };

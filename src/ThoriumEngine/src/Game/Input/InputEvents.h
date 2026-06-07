@@ -3,32 +3,52 @@
 #include "Window.h"
 #include "Math/Vectors.h"
 
-class CKeyEvent
+class ENGINE_API IInputEvent
 {
 public:
-	CKeyEvent(EKeyCode k, EInputAction a, EInputMod m) : key(k), action(a), mods(m), bConsumed(false) {}
+	enum EType
+	{
+		KeyEvent = 1,
+		CharEvent, // character events, used for input fields
+		MouseButton,
+		MouseMove,
+		GamepadButton,
+		GamepadAxis,
+	};
 
-	void Accept() { bConsumed = true; }
+public:
+	IInputEvent() = default;
+
+	inline void Accept() { bConsumed = true; }
 	inline bool Accepted() const { return bConsumed; }
+
+	inline uint8 Type() const { return type; }
+
+protected:
+	bool bConsumed = false;
+	uint8 type = 0;
+	uint32 deviceId;
+};
+
+class ENGINE_API CKeyEvent : public IInputEvent
+{
+public:
+	CKeyEvent(EKeyCode k, EInputAction a, EInputMod m, IInputEvent::EType type) : key(k), action(a), mods(m) { this->type = type; }
 
 	inline EKeyCode Key() const { return key; }
 	inline EInputAction Action() const { return action; }
 	inline EInputMod Mods() const { return mods; }
 
 private:
-	bool bConsumed;
 	EKeyCode key;
 	EInputAction action;
 	EInputMod mods;
 };
 
-class CMouseEvent
+class ENGINE_API CMouseEvent : public IInputEvent
 {
 public:
-	CMouseEvent(EMouseButton b, EInputAction a, EInputMod m, FVector2 mp) : btn(b), action(a), mods(m), mousePos(mp), bConsumed(false) {}
-
-	void Accept() { bConsumed = true; }
-	inline bool Accepted() const { return bConsumed; }
+	CMouseEvent(EMouseButton b, EInputAction a, EInputMod m, FVector2 mp, IInputEvent::EType type) : btn(b), action(a), mods(m), mousePos(mp) { this->type = type; }
 
 	inline EMouseButton Button() const { return btn; }
 	inline EInputAction Action() const { return action; }
@@ -36,10 +56,7 @@ public:
 
 	inline const FVector2& GetMousePos() const { return mousePos; }
 
-	inline bool IsMoveEvent() { return btn == EMouseButton::NONE; }
-
 private:
-	bool bConsumed;
 	EMouseButton btn;
 	EInputAction action;
 	EInputMod mods;

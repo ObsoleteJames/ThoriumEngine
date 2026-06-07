@@ -20,6 +20,9 @@ public:
 
 	virtual void SetupInput(CInputManager* inputManager);
 
+protected:
+	void OnDelete() override;
+
 private:
 	TObjectPtr<CPawnController> controller;
 

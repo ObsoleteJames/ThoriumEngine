@@ -43,6 +43,9 @@ void CGameMode::OnPlayerJoined(CPlayer* player)
 	controller->SetOwner(player);
 	playerControllers.Add(controller);
 
+	if (player->IsLocalPlayer())
+		gEngine->InputManager()->RegisterPlayer(controller);
+
 	SpawnPlayer(player);
 }
 
@@ -57,7 +60,9 @@ void CGameMode::OnPlayerDisconnect(CPlayer* player)
 	if (player->IsLocalPlayer())
 		gEngine->InputManager()->RemovePlayer(player->GetPlayerController());
 
-	player->GetPawn()->Delete();
+	if (player->GetPawn())
+		player->GetPawn()->Delete();
+
 	auto oldPC = player->GetPlayerController();
 	player->SetPlayerController(nullptr);
 	oldPC->Delete();
@@ -76,7 +81,7 @@ void CGameMode::SpawnPlayer(CPlayer* player)
 	player->GetPlayerController()->Possess(pawn);
 
 	if (player->IsLocalPlayer())
-		gEngine->InputManager()->RegisterPlayer(player->GetPlayerController());
+		pawn->SetupInput(gEngine->InputManager());
 
 	FVector pos;
 	FQuaternion rot;

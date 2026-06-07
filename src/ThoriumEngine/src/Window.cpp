@@ -9,6 +9,8 @@
 #include "Rendering/Framebuffer.h"
 #include "Misc/FileHelper.h"
 #include "ThirdParty/stb_image.h"
+#include "Game/Input/InputDevice.h"
+#include "Game/Input/InputEvents.h"
 
 #include <Util/Assert.h>
 
@@ -28,6 +30,16 @@ void CWindow::UpdateWindowRect()
 
 TArray<CWindow*> CWindow::windows;
 
+class CWindowInputDevice : public IInputDevice
+{
+public:
+	CWindowInputDevice(int id)
+	{
+		deviceType = Input_Keyboard | Input_Mouse;
+		deviceId = id;
+	}
+};
+
 CWindow::CWindow(int w, int h, int x, int y, const FString& title, EWindowMode mode)
 {
 	windowTitle = title;
@@ -42,6 +54,8 @@ CWindow::CWindow(int w, int h, int x, int y, const FString& title, EWindowMode m
 	nativeHandle = glfwCreateWindow(w, h, title.c_str(), nullptr, nullptr);
 	THORIUM_ASSERT(nativeHandle, "Failed to create window");
 
+	inputDevice = new CWindowInputDevice((int)nativeHandle);
+
 	WindowedRect.x = x;
 	WindowedRect.y = y;
 	WindowedRect.w = w;
@@ -55,18 +69,30 @@ CWindow::CWindow(int w, int h, int x, int y, const FString& title, EWindowMode m
 		w->mouseX = x;
 		w->mouseY = y;
 		w->OnCursorMove.Invoke(x, y);
+
+		CMouseEvent event(EMouseButton::NONE, IE_PRESS, IM_NONE, FVector2(x, y), IInputEvent::MouseMove);
+		w->inputDevice->onInputEvent.Invoke(&event);
 	});
 	glfwSetKeyCallback((GLFWwindow*)nativeHandle, [](GLFWwindow* wnd, int key, int scancode, int action, int mods) {
 		CWindow* w = GetWindowFromHandle(wnd);
 		w->OnKeyEvent.Invoke((EKeyCode)key, (EInputAction)action, (EInputMod)mods);
+
+		CKeyEvent event((EKeyCode)key, (EInputAction)action, (EInputMod)mods, IInputEvent::KeyEvent);
+		w->inputDevice->onInputEvent.Invoke(&event);
 	});
 	glfwSetCharCallback((GLFWwindow*)nativeHandle, [](GLFWwindow* wnd, uint k) {
 		CWindow* w = GetWindowFromHandle(wnd);
 		w->OnCharEvent.Invoke(k);
+
+		CKeyEvent event((EKeyCode)k, IE_PRESS, IM_NONE, IInputEvent::CharEvent);
+		w->inputDevice->onInputEvent.Invoke(&event);
 	});
 	glfwSetMouseButtonCallback((GLFWwindow*)nativeHandle, [](GLFWwindow* wnd, int button, int action, int mods) {
 		CWindow* w = GetWindowFromHandle(wnd);
 		w->OnMouseButton.Invoke((EMouseButton)button, (EInputAction)action, (EInputMod)mods);
+
+		CMouseEvent event((EMouseButton)button, (EInputAction)action, (EInputMod)mods, FVector2(), IInputEvent::MouseButton);
+		w->inputDevice->onInputEvent.Invoke(&event);
 	});
 
 	glfwSetWindowSizeCallback((GLFWwindow*)nativeHandle, [](GLFWwindow* window, int width, int height) {
@@ -114,6 +140,11 @@ void CWindow::SetCursorMode(const ECursorMode& cm)
 		glfwSetInputMode((GLFWwindow*)nativeHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		break;
 	}
+}
+
+IInputDevice* CWindow::GetInputDevice()
+{
+	return inputDevice;
 }
 
 void CWindow::SetWindowMode(EWindowMode WindowMode, int targetMonitor)
