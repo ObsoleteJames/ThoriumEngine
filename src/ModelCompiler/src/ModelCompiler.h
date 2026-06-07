@@ -3,6 +3,16 @@
 #include <Util/Core.h>
 #include "Assets/ModelAsset.h"
 
+#ifdef _WIN32
+#ifdef MODELCOMPILER_DLL
+#define MDLCOMPILER_API __declspec(dllexport)
+#else
+#define MDLCOMPILER_API __declspec(dllimport)
+#endif
+#else
+#define EDITOR_API
+#endif
+
 namespace Assimp 
 { 
 	class Importer; 
@@ -13,14 +23,14 @@ class aiAnimation;
 class aiNode;
 class aiBone;
 
-struct FMeshFile
+struct MDLCOMPILER_API FMeshFile
 {
 	FString file;
 	FString name;
 	FTransform transform;
 	FVector rotation; // fuck quaternions man.
 
-	Assimp::Importer* importer;
+	Assimp::Importer* importer = nullptr;
 	const aiScene* scene = nullptr;
 	bool bLoadFailed = false; // wether the aiScene failed to load.
 };
@@ -32,7 +42,7 @@ enum EColliderImportType
 	COLLIDER_COMPLEX
 };
 
-struct FModelCompileSettings
+struct MDLCOMPILER_API FModelCompileSettings
 {
 	bool bCreateMaterials = false;
 	bool bImportTextures = false;
@@ -43,13 +53,13 @@ struct FModelCompileSettings
 	EColliderImportType bUseMeshesAsCollision = COLLIDER_COMPLEX;
 };
 
-struct FAnimationImportSettings
+struct MDLCOMPILER_API FAnimationImportSettings
 {
 	FString mod;
 	FString path;
 };
 
-class CModelCompiler
+class MDLCOMPILER_API CModelCompiler
 {
 public:
 	CModelCompiler() = default;
@@ -57,6 +67,13 @@ public:
 	inline void SetModel(CModelAsset* model) { mdl = model; }
 
 	bool Compile(CModelAsset* mdl, FMeshFile* meshFiles, int numMeshFiles, const FModelCompileSettings& settings = FModelCompileSettings());
+
+	/*
+	*	Compile the model using the .meta file, usually located in the sdk_content folder.
+	* 
+	*   if bFullRecompile is false then only the meshes will be compiled.
+	*/
+	bool CompileFromCfgFile(CModelAsset* mdl, const FString& file, bool bFullRecompile = true);
 
 	/*
 	 *	Generates LOD groups based on names of meshes.
@@ -71,9 +88,16 @@ public:
 
 	bool ExportAnimation(aiAnimation* anim, const FAnimationImportSettings& settings);
 
+	inline const FString& GetError() const { return error; }
+
 private:
 	void CompileNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, TArray<TPair<int, aiBone*>>& outBones);
 
+	SizeType GetMeshIndex(const FString& name);
+	FMaterial* GetMaterial(const FString& name);
+
 private:
 	CModelAsset* mdl;
+
+	FString error;
 };

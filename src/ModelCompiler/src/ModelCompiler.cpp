@@ -1,7 +1,9 @@
 
 #include "ModelCompiler.h"
 #include "Assets/Animation.h"
+#include "Assets/Material.h"
 #include "Rendering/GraphicsInterface.h"
+#include "Object/Variant.h"
 
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -15,6 +17,9 @@ void LoadMeshFile(FMeshFile& m)
 
 	//if (!m.bImportTangents)
 	flags |= aiProcess_CalcTangentSpace;
+
+	if (!m.importer)
+		m.importer = new Assimp::Importer();
 
 	m.scene = m.importer->ReadFile(m.file.c_str(), flags);
 	if (!m.scene)
@@ -41,7 +46,7 @@ aiMatrix4x4 GetNodeWorldTransform(aiNode* node)
 
 bool CModelCompiler::Compile(CModelAsset* _mdl, FMeshFile* meshFiles, int numMeshFiles, const FModelCompileSettings& settings)
 {
-	mdl = _mdl;
+	SetModel(_mdl);
 
 	TArray<FMaterial> oldMats = mdl->materials;
 
@@ -73,11 +78,25 @@ bool CModelCompiler::Compile(CModelAsset* _mdl, FMeshFile* meshFiles, int numMes
 
 				FMaterial mat;
 				mat.name = sMat->GetName().C_Str();
-				if (mat.name.IsEmpty())
-					mat.name = "Material_" + FString::ToString(i);
 
 				if (settings.bCreateMaterials)
 				{
+					if (mat.name.IsEmpty())
+						mat.name = "Material_" + FString::ToString(i);
+
+					FString matPath = mdl->File()->Path() + "/";
+					if (!settings.materialsOut.IsEmpty())
+						matPath += settings.materialsOut + "/";
+					matPath += mat.name + ".thasset";
+
+					if (!CAssetManager::GetAssetData(matPath))
+					{
+						auto matObj = CAssetManager::CreateAsset<CMaterial>(matPath, mdl->File()->Mod()->Name());
+
+
+					}
+					else
+						mat.path = matPath;
 				}
 
 				mdl->materials.Add(mat);
@@ -199,7 +218,10 @@ bool CModelCompiler::Compile(CModelAsset* _mdl, FMeshFile* meshFiles, int numMes
 			boneOffset = mdl->skeleton.bones.Size();
 		}
 		else
+		{
+			error = file.importer->GetErrorString();
 			return false;
+		}
 	}
 
 	for (auto& mat : mdl->materials)
@@ -217,13 +239,125 @@ bool CModelCompiler::Compile(CModelAsset* _mdl, FMeshFile* meshFiles, int numMes
 
 	mdl->CalculateBounds();
 	mdl->UpdateBoneMatrices();
+	return true;
+}
+
+bool CModelCompiler::CompileFromCfgFile(CModelAsset* _mdl, const FString& file, bool bFullRecompile)
+{
+	SetModel(_mdl);
+
+	FKeyValue cfg(file);
+	if (!cfg.IsOpen())
+	{
+		error = "Failed to open config file '" + file + "'";
+		return false;
+	}
+
+	auto* cmeshes = cfg.GetCategory("meshes");
+	if (!cmeshes || cmeshes->GetCategories().Size() == 0)
+	{
+		error = "Config file has no meshes listed";
+		return false;
+	}
+
+	TArray<FMeshFile> meshes;
+	meshes.Reserve(cmeshes->GetCategories().Size());
+	
+	for (auto* m : cmeshes->GetCategories())
+	{
+		FMeshFile data{};
+		data.file = *m->GetValue("file");
+		data.name = m->GetName();
+
+		data.transform.position = FVariant::FromString(*m->GetValue("position")).AsVector();
+		data.transform.scale = FVariant::FromString(*m->GetValue("scale")).AsVector();
+		data.transform.rotation = FQuaternion::EulerAngles(FVariant::FromString(*m->GetValue("rotation")).AsVector());
+
+		if (data.transform.scale == FVector::zero)
+			data.transform.scale = FVector::one;
+
+		meshes.Add(data);
+	}
+
+	if (!Compile(mdl, meshes.Data(), meshes.Size()))
+		return false;
+
+	if (!bFullRecompile)
+		return true;
+
+	// Compile bodygroups, lodgroups, and materials from the cfg file
+	auto* bodyGroups = cfg.GetCategory("bodygroups");
+	if (bodyGroups)
+	{
+		mdl->bodyGroups.Clear();
+		for (auto bodyGroup : bodyGroups->GetCategories())
+		{
+			FBodyGroup bg{};
+			bg.name = bodyGroup->GetName();
+
+			for (auto& option : bodyGroup->GetArrays())
+			{
+				FBodyGroupOption o{};
+				o.name = option.Key;
+
+				for (auto& m : option.Value)
+					if (auto i = GetMeshIndex(m); i != -1)
+						o.meshIndices.Add(i);
+			}
+		}
+	}
+
+	auto* lods = cfg.GetCategory("lods");
+	if (lods)
+	{
+		mdl->numLODs = 0;
+	
+		int lastLod = -1;
+		for (int i = 0; i < 6; i++)
+		{
+			auto* lod = lods->GetArray("lod" + FString::ToString(i));
+			if (!lod)
+				continue;
+
+			if (lastLod != i - 1)
+			{
+				error = "Invalid LODs, missing lod" + FString::ToString(i - 1);
+				return false;
+			}
+			lastLod = i;
+			mdl->numLODs++;
+
+			for (auto& l : *lod)
+				if (auto m = GetMeshIndex(l); m != -1)
+					mdl->LODs[i].meshIndices.Add(m);
+
+			mdl->LODs[i].distanceBias = lods->GetValue("lod" + FString::ToString(i) + "_distance")->AsFloat();
+		}
+	}
+
+	auto* mats = cfg.GetCategory("materials");
+	if (mats)
+	{
+		FString _default = *mats->GetValue("_default");
+		for (auto& m : mats->GetValues())
+		{
+			if (auto* mat = GetMaterial(m.Key); mat != nullptr)
+				mat->path = m.Value;
+		}
+
+		// default material for any that doesn't have a name set.
+		for (auto& m : mdl->GetMaterials())
+			if (m.name.IsEmpty() || m.path.IsEmpty())
+				m.path = _default;
+	}
+	
+	// TODO: add colliders
 
 	return true;
 }
 
 void CModelCompiler::CompileNode(FMeshFile& file, const aiScene* scene, aiNode* node, SizeType& meshOffset, SizeType& matOffset, TArray<TPair<int, aiBone*>>& outBones)
 {
-
 	for (uint i = 0; i < node->mNumMeshes; i++)
 	{
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -388,6 +522,26 @@ void CModelCompiler::CompileNode(FMeshFile& file, const aiScene* scene, aiNode* 
 
 	for (int i = 0; i < node->mNumChildren; i++)
 		CompileNode(file, scene, node->mChildren[i], meshOffset, matOffset, outBones);
+}
+
+SizeType CModelCompiler::GetMeshIndex(const FString& name)
+{
+	for (int i = 0; i < mdl->meshNames.Size(); i++)
+	{
+		if (mdl->meshNames[i] == name)
+			return i;
+	}
+
+	return -1;
+}
+
+FMaterial* CModelCompiler::GetMaterial(const FString& name)
+{
+	for (auto& m : mdl->GetMaterials())
+		if (m.name == name)
+			return &m;
+
+	return nullptr;
 }
 
 bool CModelCompiler::GenerateLODGroups(FString suffix /*= "_LOD"*/)
