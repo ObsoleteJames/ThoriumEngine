@@ -137,6 +137,8 @@ void CEngine::Init()
 	//worldRenderScene->SetCamera(CreateObject<CCameraComponent>());
 
 	LoadWorld(activeGame.startupScene);
+
+	Events::OnEnginePostInit.Invoke();
 }
 
 void CEngine::InitTerminal()

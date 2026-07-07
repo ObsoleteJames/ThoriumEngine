@@ -34,6 +34,8 @@ void CInputManager::AddInputDevice(IInputDevice* device)
 	if ((device->GetDeviceType() & Input_Keyboard) && !keyboardDevice)
 		keyboardDevice = device;
 
+	CONSOLE_LogInfo("CInputManager", "Input Device Added: '" + device->Name() + "' (Type: " + FString::ToString(device->GetDeviceType()) + ", ID: " + FString::ToString(device->GetDeviceId()) + ")");
+
 	device->onInputEvent.Bind(this, [=](IInputEvent* event) { HandleInputEvent(device, event); });
 	onInputDeviceAdded.Invoke(device);
 }
@@ -46,6 +48,8 @@ void CInputManager::RemoveInputDevice(IInputDevice* device)
 
 	if (keyboardDevice == device)
 		keyboardDevice = nullptr;
+
+	CONSOLE_LogInfo("CInputManager", "Input Device Removed: '" + device->Name() + "' (Type: " + FString::ToString(device->GetDeviceType()) + ", ID: " + FString::ToString(device->GetDeviceId()) + ")");
 
 	device->onInputEvent.RemoveAll(this);
 }
