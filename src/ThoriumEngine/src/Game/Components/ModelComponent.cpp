@@ -165,7 +165,7 @@ void CModelComponent::SetModel(TObjectPtr<CModelAsset> m)
 
 	UpdateSkeletonMatrix();
 
-	if (GetWorld()->IsActive())
+	//if (GetWorld()->IsActive())
 		SetupPhysics();
 
 	//for (auto& matPath : mats)
@@ -280,8 +280,54 @@ void CModelComponent::Init()
 
 void CModelComponent::OnStart()
 {
-	SetupPhysics();
+	//SetupPhysics();
+	if (physicsBody)
+	{
+		if (bWeldToParent)
+		{
+			auto* p = GetParent();
+			while (p)
+			{
+				if (auto* primitve = Cast<CPrimitiveComponent>(p); primitve)
+				{
+					//physWorld->CreateConstraint(EConstraint::FIXED, physicsBody, primitive->physicsBody);
+					bHasParentBody = true;
+					break;
+				}
+
+				p = p->GetParent();
+			}
+		}
+		else
+			// Detach from the parent.
+			Detach();
+	}
+
 	ResetAnimation();
+}
+
+void CModelComponent::Load(FMemStream& in)
+{
+	BaseClass::Load(in);
+
+	if (model)
+	{
+		bounds = model->CalculateBounds();
+
+		UpdateSkeletonMatrix();
+		SetupPhysics();
+	}
+}
+
+void CModelComponent::Update(double dt)
+{
+	BaseClass::Update(dt);
+
+	if (animProxy)
+	{
+		animProxy->Update(dt);
+		UpdateSkeletonMatrix();
+	}
 }
 
 void CModelComponent::OnDelete()
@@ -392,25 +438,6 @@ void CModelComponent::ResetAnimation()
 		animProxy = new CAnimationProxy(this, model, &skeleton, animationAsset);
 }
 
-void CModelComponent::Load(FMemStream& in)
-{
-	BaseClass::Load(in);
-
-	if (model)
-		SetModel(model);
-}
-
-void CModelComponent::Update(double dt)
-{
-	BaseClass::Update(dt);
-
-	if (animProxy)
-	{
-		animProxy->Update(dt);
-		UpdateSkeletonMatrix();
-	}
-}
-
 void CModelComponent::OnModelEdit()
 {
 	SetModel(model);
@@ -445,27 +472,6 @@ void CModelComponent::SetupPhysics()
 			if (!physicsBody)
 			{
 				physicsBody = body;
-
-				if (bWeldToParent)
-				{
-					auto* p = GetParent();
-					while (p)
-					{
-						if (auto* primitve = Cast<CPrimitiveComponent>(p); primitve)
-						{
-							//physWorld->CreateConstraint(EConstraint::FIXED, physicsBody, primitive->physicsBody);
-							bHasParentBody = true;
-							break;
-						}
-
-						p = p->GetParent();
-					}
-				}
-				else
-				{
-					// Detach from the parent.
-					Detach();
-				}
 			}
 			else
 			{
