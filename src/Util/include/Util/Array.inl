@@ -257,17 +257,29 @@ void TArray<T>::Reserve(SizeType size, bool bCopy /*= true*/)
 	_data = (T*)malloc(_capacity * sizeof(T));
 	//_data = new T[_capacity]();
 
-	if (oldData && oldCap > 0 && _size > 0 && bCopy)
-	{
-		if constexpr (std::is_move_constructible<T>::value)
-			for (SizeType i = 0; i < _size; i++)
-				new (&_data[i]) T(std::move(oldData[i]));
-		else
-			memcpy(_data, oldData, _size * sizeof(T));
-	}
-	
 	if (oldData)
+	{
+		if (_size > 0)
+		{
+			if constexpr (std::is_move_constructible<T>::value && !std::is_trivially_copyable<T>::value)
+			{
+				for (SizeType i = 0; i < _size; i++)
+					new (&_data[i]) T(std::move(oldData[i]));
+			}
+			else if constexpr (std::is_copy_constructible<T>::value && !std::is_trivially_copyable<T>::value)
+			{
+				for (SizeType i = 0; i < _size; i++)
+					new (&_data[i]) T(oldData[i]);
+			}
+			else
+				memcpy(_data, oldData, _size * sizeof(T));
+		
+			if constexpr (std::is_destructible<T>::value && !std::is_trivially_copyable<T>::value)
+				for (SizeType i = 0; i < _size; i++)
+					oldData[i].~T();
+		}
 		free(oldData);
+	}
 }
 
 template<typename T>
