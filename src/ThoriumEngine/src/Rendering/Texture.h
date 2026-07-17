@@ -1,5 +1,8 @@
 #pragma once
 
+enum EBufferFlags : uint;
+enum ETextureFilter : uint;
+
 enum ETextureFormat
 {
 	TEXTURE_FORMAT_INVALID,
@@ -26,6 +29,19 @@ enum ETextureType
 	TextureType_Framebuffer
 };
 
+struct FTextureDescriptor
+{
+	uint8 type;
+	uint width;
+	uint height;
+	uint mipLevels;
+	uint arraySize;
+	ETextureFormat format;
+	ETextureFilter filter;
+	EBufferFlags flags;
+	void** data;
+};
+
 class ENGINE_API IBaseTexture
 {
 public:
@@ -35,9 +51,12 @@ public:
 
 	inline void GetSize(int& w, int& h) const { w = width; h = height; }
 
+	inline const FTextureDescriptor& GetDescriptor() const { return desc; }
+
 protected:
 	ETextureType type;
 
+	FTextureDescriptor desc;
 	int width = 0;
 	int height = 0;
 };
@@ -47,13 +66,14 @@ class ENGINE_API ITexture2D : public IBaseTexture
 public:
 	virtual ~ITexture2D() = default;
 
-	virtual void UpdateData(void* data, int mipmapLevel) = 0;
+	virtual void UpdateData(void* data, int mipmapLevel, int slice = 0) = 0;
 
 };
 
-class ENGINE_API ITextureCube : public IBaseTexture
-{
-public:
-	virtual ~ITextureCube() = default;
-
-};
+// Merged with ITexture2D
+//class ENGINE_API ITextureCube : public IBaseTexture
+//{
+//public:
+//	virtual ~ITextureCube() = default;
+//
+//};

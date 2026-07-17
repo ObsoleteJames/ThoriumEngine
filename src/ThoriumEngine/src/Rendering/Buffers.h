@@ -4,7 +4,7 @@
 #include "Object/Object.h"
 #include "Buffers.generated.h"
 
-enum EBufferFlags
+enum EBufferFlags : uint
 {
 	TH_BUFFER_FLAGS_NONE = 0,
 	TH_BUFFER_FLAGS_CPU_READ = 1 << 0,

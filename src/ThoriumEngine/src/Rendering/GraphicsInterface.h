@@ -30,13 +30,9 @@ public:
 	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, ETextureFormat format, ETextureFilter filter = THTX_FILTER_LINEAR) = 0;
 	virtual IFrameBuffer* CreateFrameBuffer(int width, int height, int numMipMaps, ETextureFormat format, ETextureFilter filter = THTX_FILTER_LINEAR) = 0;
 
-	virtual ITexture2D* CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter) = 0;
-	virtual ITexture2D* CreateTexture2D(void** data, int numMipMaps, int width, int height, ETextureFormat format, ETextureFilter filter) = 0;
-	virtual ITextureCube* CreateTextureCube(void* data, int width, int height, ETextureFormat format, ETextureFilter filter) = 0;
-
+	virtual ITexture2D* CreateTexture2D(const FTextureDescriptor& tex) = 0;
+	
 	virtual void CopyResource(ITexture2D* source, ITexture2D* destination) = 0;
-	virtual void CopyResource(ITextureCube* source, ITextureCube* destination) = 0;
-	virtual void CopyResource(ITextureCube* source, ITexture2D* destination, int targetFace) = 0;
 	virtual void CopyResource(IFrameBuffer* source, ITexture2D* destination) = 0;
 	virtual void CopyResource(IFrameBuffer* source, IFrameBuffer* destination) = 0;
 	virtual void CopyResource(IDepthBuffer* source, ITexture2D* destination) = 0;

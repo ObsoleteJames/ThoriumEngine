@@ -15,7 +15,7 @@
 #include <atomic>
 #include <chrono>
 
-#define RESOURCE_THREAD_COUNT 2
+#define RESOURCE_THREAD_COUNT 1
 
 TUnorderedMap<SizeType, CAsset*> CAssetManager::allocatedAssets;
 TUnorderedMap<SizeType, FAssetData> CAssetManager::availableAssets;
@@ -203,6 +203,7 @@ void CAssetManager::Update()
 	streamMutex.unlock();
 }
 
+// Runs in asset streaming thread.
 void CAssetManager::StreamAssets()
 {
 	using namespace std::chrono_literals;
@@ -220,13 +221,14 @@ void CAssetManager::StreamAssets()
 		IAssetStreamingProxy* obj = streamingAssets[index];
 		index++;
 		index %= streamingAssets.Size();
-		streamMutex.unlock();
 
-		if (obj->bFinished)
+		if (!obj || obj->bFinished)
 		{
 			//std::this_thread::sleep_for(1ms);
+			streamMutex.unlock();
 			continue;
 		}
+		streamMutex.unlock();
 
 		if (!obj->bFinished && !obj->bLoading)
 		{

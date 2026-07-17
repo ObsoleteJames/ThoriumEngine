@@ -409,31 +409,9 @@ IFrameBuffer* DirectXInterface::CreateFrameBuffer(int width, int height, int num
 	return new DirectXFrameBuffer(width, height, numMipMaps, format, filter);
 }
 
-ITexture2D* DirectXInterface::CreateTexture2D(void* data, int width, int height, ETextureFormat format, ETextureFilter filter)
+ITexture2D* DirectXInterface::CreateTexture2D(const FTextureDescriptor& tex)
 {
-	auto* t = new DirectXTexture2D(data, width, height, format, filter);
-	if (!t->tex || !t->view || !t->sampler)
-	{
-		delete t;
-		return nullptr;
-	}
-	return t;
-}
-
-ITexture2D* DirectXInterface::CreateTexture2D(void** data, int numMipMaps, int width, int height, ETextureFormat format, ETextureFilter filter)
-{
-	auto* t = new DirectXTexture2D(data, numMipMaps, width, height, format, filter);
-	if (!t->tex || !t->view || !t->sampler)
-	{
-		delete t;
-		return nullptr;
-	}
-	return t;
-}
-
-ITextureCube* DirectXInterface::CreateTextureCube(void* data, int width, int height, ETextureFormat format, ETextureFilter filter)
-{
-	auto* t = new DirectXTextureCube(data, width, height, format, filter);
+	auto* t = new DirectXTexture2D(tex);
 	if (!t->tex || !t->view || !t->sampler)
 	{
 		delete t;
@@ -448,18 +426,6 @@ void DirectXInterface::CopyResource(ITexture2D* source, ITexture2D* destination)
 	DirectXTexture2D* d = (DirectXTexture2D*)destination;
 
 	deviceContext->CopyResource(d->tex, s->tex);
-}
-
-void DirectXInterface::CopyResource(ITextureCube* source, ITextureCube* destination)
-{
-	DirectXTextureCube* s = (DirectXTextureCube*)source;
-	DirectXTextureCube* d = (DirectXTextureCube*)destination;
-
-	deviceContext->CopyResource(d->tex, s->tex);
-}
-
-void DirectXInterface::CopyResource(ITextureCube* source, ITexture2D* destination, int targetFace)
-{
 }
 
 void DirectXInterface::CopyResource(IFrameBuffer* source, ITexture2D* destination)
@@ -708,19 +674,13 @@ void DirectXInterface::SetShaderBuffer(IGBuffer* buffer, int _register)
 
 void DirectXInterface::SetShaderResource(IBaseTexture* texture, int _register)
 {
-	if (texture->Type() == TextureType_2D)
+	if (texture->Type() != TextureType_Framebuffer)
 	{
 		DirectXTexture2D* tex = (DirectXTexture2D*)texture;
 		deviceContext->PSSetShaderResources(_register, 1, &tex->view);
 		deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
 	}
-	else if (texture->Type() == TextureType_Cube)
-	{
-		DirectXTextureCube* tex = (DirectXTextureCube*)texture;
-		deviceContext->PSSetShaderResources(_register, 1, &tex->view);
-		deviceContext->PSSetSamplers(_register, 1, &tex->sampler);
-	}
-	else if (texture->Type() == TextureType_Framebuffer)
+	else
 	{
 		DirectXFrameBuffer* tex = (DirectXFrameBuffer*)texture;
 		deviceContext->PSSetShaderResources(_register, 1, &tex->view);

@@ -24,7 +24,7 @@ enum ETextureAssetFormat
 };
 
 ENUM()
-enum ETextureFilter
+enum ETextureFilter : uint
 {
 	THTX_FILTER_LINEAR,
 	THTX_FILTER_POINT,

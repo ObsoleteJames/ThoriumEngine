@@ -40,7 +40,7 @@ CRenderScene::CRenderScene(int fbWidth /*= 1280*/, int fbHeight /*= 720*/) : pri
 
 	depth = gGHI->CreateDepthBuffer({ widthB, heightB, TH_DBF_D24_S8, 1, false });
 
-	depthTex = gGHI->CreateTexture2D(nullptr, widthB, heightB, TEXTURE_FORMAT_R24G8, THTX_FILTER_POINT);
+	depthTex = gGHI->CreateTexture2D({ TextureType_2D, (uint)widthB, (uint)heightB, 1, 1, TEXTURE_FORMAT_R24G8, THTX_FILTER_POINT, TH_BUFFER_FLAGS_NONE, nullptr });
 
 #if IS_DEV
 	debugRender = new CDebugRenderer();
@@ -100,7 +100,7 @@ void CRenderScene::ResizeBuffers(int width, int height)
 
 	depth->Resize(widthB, heightB);
 	delete depthTex;
-	depthTex = gGHI->CreateTexture2D(nullptr, widthB, heightB, TEXTURE_FORMAT_R24G8, THTX_FILTER_POINT);
+	depthTex = gGHI->CreateTexture2D({ TextureType_2D, (uint)widthB, (uint)heightB, 1, 1, TEXTURE_FORMAT_R24G8, THTX_FILTER_POINT, TH_BUFFER_FLAGS_NONE, nullptr });
 }
 
 bool CRenderScene::RayCast(const FVector& raypos, const FVector& dir, FPrimitiveHitInfo* outHit, float maxDistance /*= 0.f*/)

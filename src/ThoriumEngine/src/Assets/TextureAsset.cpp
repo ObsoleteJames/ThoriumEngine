@@ -146,7 +146,17 @@ void CTexture::OnInit(IBaseFStream* stream)
 	curMipMapLevel = numMipmaps;
 
 	if (numMipmaps > 1 && gGHI)
-		tex = gGHI->CreateTexture2D(nullptr, numMipmaps, width, height, ToTextureFormat(format), filteringType);
+	{
+		FTextureDescriptor desc{};
+		desc.arraySize = 1;
+		desc.mipLevels = numMipmaps;
+		desc.data = nullptr;
+		desc.width = width;
+		desc.height = height;
+		desc.format = ToTextureFormat(format);
+		desc.filter = filteringType;
+		tex = gGHI->CreateTexture2D(desc);
+	}
 
 	bLoading = false;
 	bInitialized = true;
@@ -184,7 +194,22 @@ void CTexture::Init(void* data, int width, int height, ETextureAssetFormat forma
 	if (tex)
 		delete tex;
 
-	tex = gGHI->CreateTexture2D(data, width, height, ToTextureFormat(format), filter);
+	void* datas[] = {
+		data
+	};
+
+	FTextureDescriptor desc{};
+	desc.arraySize = 1;
+	desc.mipLevels = 1;
+	desc.data = datas;
+	desc.width = width;
+	desc.height = height;
+	desc.format = ToTextureFormat(format);
+	desc.filter = filter;
+	tex = gGHI->CreateTexture2D(desc);
+
+	this->format = format;
+	filteringType = filter;
 	bInitialized = true;
 }
 
@@ -212,7 +237,22 @@ void CTexture::OnLoad(IBaseFStream* stream, uint8 lodLevel)
 		delete tex;
 
 	if (gGHI)
-		tex = gGHI->CreateTexture2D(data, width, height, ToTextureFormat(format), filteringType);
+	{
+		void* datas[] = {
+			data
+		};
+
+		FTextureDescriptor desc{};
+		desc.arraySize = 1;
+		desc.mipLevels = 1;
+		desc.data = datas;
+		desc.width = width;
+		desc.height = height;
+		desc.format = ToTextureFormat(format);
+		desc.filter = filteringType;
+		tex = gGHI->CreateTexture2D(desc);
+	}
+
 	curMipMapLevel = 0;
 	SetLodLevel(lodLevel, true);
 }
@@ -357,11 +397,25 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 		tex = nullptr;
 	}
 
+	// Create texture object
+	{
+		FTextureDescriptor desc{};
+		desc.arraySize = 1;
+		desc.mipLevels = numMipmaps;
+		desc.data = nullptr;
+		desc.width = width;
+		desc.height = height;
+		desc.format = ToTextureFormat(format);
+		desc.filter = filteringType;
+		tex = gGHI->CreateTexture2D(desc);
+	}
+
 	void** _d = (void**)alloca(sizeof(void*) * numMipmaps);
 	for (int i = 0; i < numMipmaps; i++)
 		_d[i] = (void*)mipMaps[i].Key;
 
-	tex = gGHI->CreateTexture2D(_d, numMipmaps, width, height, ToTextureFormat(format), filteringType);
+	//tex = gGHI->CreateTexture2D(_d, numMipmaps, width, height, ToTextureFormat(format), filteringType);
+
 	curMipMapLevel = 0;
 
 	texSaveMipMaps = mipMaps.Data();
