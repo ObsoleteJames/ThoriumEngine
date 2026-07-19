@@ -2,6 +2,7 @@
 
 #include "Renderer.h"
 
+class IGraphicsInterface;
 extern ENGINE_API IGraphicsInterface* GetGraphicsInterface(EGraphicsApi api = EGraphicsApi::DEFAULT);
 
 class ENGINE_API IGraphicsInterface

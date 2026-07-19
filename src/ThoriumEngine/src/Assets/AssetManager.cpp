@@ -177,15 +177,15 @@ void CAssetManager::Update()
 		return;
 	}
 
-	for (int i = 0; i < streamingAssets.Size(); i++)
+	for (int i = streamingAssets.Size(); i > 0; i--)
 	{
-		IAssetStreamingProxy* obj = streamingAssets[i];
+		IAssetStreamingProxy* obj = streamingAssets[i-1];
 		if (obj->bDirty)
 			obj->PushData();
 
 		if (obj->bFinished && !obj->bLoading)
 		{
-			streamingAssets.Erase(streamingAssets.begin() + i);
+			streamingAssets.Erase(streamingAssets.begin() + (i - 1));
 			delete obj;
 		}
 	}
@@ -218,13 +218,15 @@ void CAssetManager::StreamAssets()
 			continue;
 		}
 
+		if (index >= streamingAssets.Size())
+			index = 0;
+
 		IAssetStreamingProxy* obj = streamingAssets[index];
 		index++;
 		index %= streamingAssets.Size();
 
 		if (!obj || obj->bFinished)
 		{
-			//std::this_thread::sleep_for(1ms);
 			streamMutex.unlock();
 			continue;
 		}
@@ -609,8 +611,10 @@ bool CAssetManager::RegisterNewAsset(CAsset* asset, const FString& p, const FStr
 
 void CAssetManager::StreamAsset(IAssetStreamingProxy* proxy)
 {
-	std::unique_lock<std::shared_mutex> lock(resourceMutex);
+	//std::unique_lock<std::shared_mutex> lock(resourceMutex); <- the wrong mutex. this was causing crashes :)
+	streamMutex.lock();
 	streamingAssets.Add(proxy);
+	streamMutex.unlock();
 }
 
 CAsset* CAssetManager::AllocateAsset(FAssetClass* type, SizeType id)

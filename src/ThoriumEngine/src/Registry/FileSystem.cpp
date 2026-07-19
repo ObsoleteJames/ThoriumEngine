@@ -453,6 +453,7 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 
 		file->name = entry.path().stem().generic_string().c_str();
 		file->extension = entry.path().extension().generic_string().c_str();
+		file->size = std::filesystem::file_size(entry);
 		file->dir = dir;
 		dir->files.Add(file);
 	}

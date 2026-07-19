@@ -29,6 +29,21 @@ struct FBufferDescriptor
 	uint32 flags;
 };
 
+struct FMappedResource
+{
+	void* data;
+	uint rowPitch;
+	uint depthPitch;
+};
+
+enum EResourceMapType
+{
+	TH_RESOURCE_MAP_READ = 1,
+	TH_RESOURCE_MAP_WRITE,
+	TH_RESOURCE_MAP_READ_WRITE,
+	TH_RESOURCE_MAP_WRITE_DISCARD
+};
+
 CLASS(Abstract)
 class ENGINE_API IGBuffer : public CObject
 {

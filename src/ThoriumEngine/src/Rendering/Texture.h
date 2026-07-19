@@ -1,6 +1,7 @@
 #pragma once
 
-enum EBufferFlags : uint;
+#include "Buffers.h"
+
 enum ETextureFilter : uint;
 
 enum ETextureFormat
@@ -67,6 +68,9 @@ public:
 	virtual ~ITexture2D() = default;
 
 	virtual void UpdateData(void* data, int mipmapLevel, int slice = 0) = 0;
+
+	virtual void Map(FMappedResource* outData, EResourceMapType type, int mip = 0, int slice = 0) = 0;
+	virtual void Unmap(int mip = 0, int slice = 0) = 0;
 
 };
 

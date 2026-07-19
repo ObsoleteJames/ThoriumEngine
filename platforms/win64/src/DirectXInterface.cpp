@@ -412,7 +412,7 @@ IFrameBuffer* DirectXInterface::CreateFrameBuffer(int width, int height, int num
 ITexture2D* DirectXInterface::CreateTexture2D(const FTextureDescriptor& tex)
 {
 	auto* t = new DirectXTexture2D(tex);
-	if (!t->tex || !t->view || !t->sampler)
+	if (!t->tex)
 	{
 		delete t;
 		return nullptr;

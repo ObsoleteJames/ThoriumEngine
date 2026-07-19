@@ -12,6 +12,9 @@ public:
 
 	void UpdateData(void* data, int mipmapLevel, int slice) override;
 
+	void Map(FMappedResource* outData, EResourceMapType type, int mip, int slice) override;
+	void Unmap(int mip, int slice) override;
+
 	void UpdateView();
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC CreateViewDesc(int mipLevel);

@@ -18,7 +18,6 @@ DirectXTexture2D::DirectXTexture2D(const FTextureDescriptor& d)
 	texd.Format = DirectXInterface::GetDXTextureFormat(desc.format).Key;
 	texd.SampleDesc.Count = 1;
 	texd.SampleDesc.Quality = 0;
-	texd.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
 	if (desc.flags & TH_BUFFER_FLAGS_CPU_READ)
 		texd.Usage = D3D11_USAGE_STAGING;
@@ -27,6 +26,9 @@ DirectXTexture2D::DirectXTexture2D(const FTextureDescriptor& d)
 	else
 		texd.Usage = D3D11_USAGE_DEFAULT;
 
+	if (texd.Usage != D3D11_USAGE_STAGING)
+		texd.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	
 	if (desc.flags & TH_BUFFER_FLAGS_CPU_READ)
 		texd.CPUAccessFlags |= D3D11_CPU_ACCESS_READ;
 	if (desc.flags & TH_BUFFER_FLAGS_CPU_WRITE)
@@ -67,27 +69,30 @@ DirectXTexture2D::DirectXTexture2D(const FTextureDescriptor& d)
 
 	//GetDirectXRenderer()->deviceContext->UpdateSubresource(tex, 0, nullptr, data, pitch, 0);
 
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = CreateViewDesc(0);
-	hr = GetDirectXRenderer()->device->CreateShaderResourceView(tex, &srvDesc, &view);
-	if (FAILED(hr))
+	if (texd.Usage != D3D11_USAGE_STAGING)
 	{
-		CONSOLE_LogError("ITexture", "Failed to create DirectX SRV");
-		return;
-	}
+		D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = CreateViewDesc(0);
+		hr = GetDirectXRenderer()->device->CreateShaderResourceView(tex, &srvDesc, &view);
+		if (FAILED(hr))
+		{
+			CONSOLE_LogError("ITexture", "Failed to create DirectX SRV");
+			return;
+		}
 
-	D3D11_SAMPLER_DESC samplerDesc{};
-	samplerDesc.Filter = desc.filter == THTX_FILTER_LINEAR ? D3D11_FILTER_MIN_MAG_MIP_LINEAR : (desc.filter == THTX_FILTER_POINT ? D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR : D3D11_FILTER_ANISOTROPIC);
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.MaxAnisotropy = 8;
-	samplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS;
+		D3D11_SAMPLER_DESC samplerDesc{};
+		samplerDesc.Filter = desc.filter == THTX_FILTER_LINEAR ? D3D11_FILTER_MIN_MAG_MIP_LINEAR : (desc.filter == THTX_FILTER_POINT ? D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR : D3D11_FILTER_ANISOTROPIC);
+		samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		samplerDesc.MaxAnisotropy = 8;
+		samplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS;
 
-	hr = GetDirectXRenderer()->device->CreateSamplerState(&samplerDesc, &sampler);
-	if (FAILED(hr))
-	{
-		CONSOLE_LogError("ITexture", "Failed to create DirectX SamplerState");
-		return;
+		hr = GetDirectXRenderer()->device->CreateSamplerState(&samplerDesc, &sampler);
+		if (FAILED(hr))
+		{
+			CONSOLE_LogError("ITexture", "Failed to create DirectX SamplerState");
+			return;
+		}
 	}
 }
 
@@ -215,6 +220,23 @@ void DirectXTexture2D::UpdateData(void* p, int mipmapLevel, int slice)
 		suppliedMipMapData = desc.mipLevels - mipmapLevel;
 
 	UpdateView();
+}
+
+void DirectXTexture2D::Map(FMappedResource* outData, EResourceMapType type, int mip, int slice)
+{
+	int index = (slice * desc.mipLevels) + mip;
+	D3D11_MAPPED_SUBRESOURCE data;
+	GetDirectXRenderer()->deviceContext->Map(tex, index, (D3D11_MAP)type, 0, &data);
+
+	outData->data = data.pData;
+	outData->depthPitch = data.DepthPitch;
+	outData->rowPitch = data.RowPitch;
+}
+
+void DirectXTexture2D::Unmap(int mip, int slice)
+{
+	int index = (slice * desc.mipLevels) + mip;
+	GetDirectXRenderer()->deviceContext->Unmap(tex, index);
 }
 
 void DirectXTexture2D::UpdateView()

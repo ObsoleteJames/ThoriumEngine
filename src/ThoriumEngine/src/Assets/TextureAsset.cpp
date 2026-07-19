@@ -262,6 +262,15 @@ void CTexture::Unload(uint8 lodLevel)
 
 }
 
+template<typename T>
+T LinearToSRGB(T in, double gamma = 2.2)
+{
+	double srgbN = (double)in / 255.0;
+	double linear = std::pow(srgbN, gamma);
+
+	return (T)std::round(FMath::Clamp(linear * 255.0, 0.0, 255.0));
+}
+
 bool CTexture::Import(const FString& file, const FTextureImportSettings& settings)
 {
 	if (!this->file || bLoading)
@@ -329,6 +338,45 @@ bool CTexture::Import(const FString& file, const FTextureImportSettings& setting
 		height = h;
 		free(data);
 		data = newData;
+	}
+
+	// Convert to linear space
+	if (settings.sRGB)
+	{
+		switch (comp)
+		{
+		case 1:
+			for (int i = 0; i < width * height; i++)
+				((uint8*)data)[i] = LinearToSRGB(((uint8*)data)[i]);
+			break;
+		case 2:
+			for (int j = 0; j < width * height; j++)
+			{
+				int i = j * 2;
+				((uint8*)data)[i] = LinearToSRGB(((uint8*)data)[i]);
+				((uint8*)data)[i + 1] = LinearToSRGB(((uint8*)data)[i + 1]);
+			}
+			break;
+		case 3:
+			for (int j = 0; j < width * height; j++)
+			{
+				int i = j * 3;
+				((uint8*)data)[i] = LinearToSRGB(((uint8*)data)[i]);
+				((uint8*)data)[i + 1] = LinearToSRGB(((uint8*)data)[i + 1]);
+				((uint8*)data)[i + 2] = LinearToSRGB(((uint8*)data)[i + 2]);
+			}
+			break;
+		case 4:
+			for (int j = 0; j < width * height; j++)
+			{
+				int i = j * 4;
+				((uint8*)data)[i] = LinearToSRGB(((uint8*)data)[i]);
+				((uint8*)data)[i + 1] = LinearToSRGB(((uint8*)data)[i + 1]);
+				((uint8*)data)[i + 2] = LinearToSRGB(((uint8*)data)[i + 2]);
+				((uint8*)data)[i + 3] = LinearToSRGB(((uint8*)data)[i + 3]);
+			}
+			break;
+		}
 	}
 
 	// { Data, Size } - Highest to lowest

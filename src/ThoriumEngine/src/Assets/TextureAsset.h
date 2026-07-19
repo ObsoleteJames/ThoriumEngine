@@ -33,7 +33,8 @@ enum ETextureFilter : uint
 
 struct FTextureImportSettings
 {
-	uint numMipMaps = 12;
+	uint numMipMaps = 8;
+	bool sRGB = true;
 	ETextureAssetFormat format = THTX_FORMAT_AUTO_COMPRESSED;
 	ETextureFilter filter = THTX_FILTER_ANISOTROPIC;
 };
