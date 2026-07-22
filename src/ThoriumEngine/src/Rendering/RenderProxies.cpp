@@ -25,6 +25,20 @@ void CCameraProxy::CalculateMatrix(float aspectRatio)
 		projection = FMatrix::Perspective(FMath::Radians(fov), aspectRatio, nearPlane, farPlane);
 }
 
+FVector2 CCameraProxy::WorldSpaceToScreenPos(const FVector& position, const FVector2& screenSize)
+{
+	FMatrix pv = projection * view;
+	glm::vec4 clipPos = (glm::mat4)pv * glm::vec4((glm::vec3)position, 1.0f);
+
+	glm::vec3 ndc = glm::vec3(clipPos) / clipPos.w;
+
+	FVector2 r {
+		(ndc.x + 1.0f) * 0.5f * screenSize.x,
+		(1.0f - ndc.y) * 0.5f * screenSize.y,
+	};
+	return r;
+}
+
 FMeshBuilder::FMeshBuilder(TArray<FRenderMesh>* output) : meshes(output)
 {
 }

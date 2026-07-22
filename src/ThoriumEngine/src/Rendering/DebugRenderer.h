@@ -5,11 +5,13 @@
 #include "Math/Color.h"
 #include "Math/Transform.h"
 #include "Assets/Mesh.h"
+#include "Util/Pointer.h"
 
 class CMaterial;
 class CRenderScene;
 class CDebugRenderer;
 class CModelAsset;
+class FFont;
 
 //extern ENGINE_API CDebugRenderer* gDebugRenderer;
 
@@ -43,7 +45,7 @@ public:
 	inline void DrawBounds(const FBounds& bounds, const FColor& col, bool bOverlay = false, float time = 0.f) { DrawBox(FTransform(bounds.position, FQuaternion(), bounds.Size()), col, bOverlay ? (DebugDrawType_Overlay | DebugDrawType_Wireframe) : DebugDrawType_Wireframe, time); }
 	inline void DrawBounds(const FBounds& bounds, const FQuaternion& rot, const FColor& col, bool bOverlay = false, float time = 0.f) { DrawBox(FTransform(bounds.position, rot, bounds.Size()), col, bOverlay ? (DebugDrawType_Overlay | DebugDrawType_Wireframe) : DebugDrawType_Wireframe, time); }
 
-	void DrawText(const FVector2& screenPos, const FString& text, const FColor& col = FColor(), float time = 0.f);
+	void DrawText(const FVector2& screenPos, const FString& text, const FColor& col = FColor(), float scale = 1.f, float time = 0.f);
 	void DrawText3D(const FVector& pos, const FString& text, const FColor& col = FColor(), float time = 0.f, bool bOverlay = false);
 
 	// Set RenderScene for the next draw call, by default the gWorld's RenderScene is used.
@@ -106,6 +108,8 @@ private:
 	TObjectPtr<CModelAsset> cube;
 	TObjectPtr<CModelAsset> sphere;
 
+	TUniquePtr<FFont> fontDebug;
+
 	TArray<FVertex> lineDrawVertices;
 	TArray<FVertex> lineDrawOverlayVertices;
 
@@ -115,6 +119,7 @@ private:
 	TArray<FVertex> textDrawVertices;
 
 	TObjectPtr<CMaterial> matDebugLine;
+	TObjectPtr<CMaterial> matText;
 
 	CRenderScene* scene = nullptr;
 	TArray<FDebugDrawCmd> drawCalls;

@@ -43,6 +43,8 @@ public:
 	inline FVector GetRightVector() const { return rotation.Rotate({ 1.f, 0.f, 0.f }); }
 	inline FVector GetUpVector() const { return rotation.Rotate({ 0.f, 1.f, 0.f }); }
 
+	FVector2 WorldSpaceToScreenPos(const FVector& position, const FVector2& screenSize);
+
 public:
 	// the cameras render target, if null the scene's render target will be used.
 	IFrameBuffer* renderTarget = nullptr;

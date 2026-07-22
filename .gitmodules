@@ -4,3 +4,6 @@
 [submodule "src/dep/assimp"]
 	path = src/dep/assimp
 	url = https://github.com/assimp/assimp
+[submodule "src/dep/freetype"]
+	path = src/dep/freetype
+	url = https://gitlab.freedesktop.org/freetype/freetype

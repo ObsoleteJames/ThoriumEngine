@@ -6,11 +6,13 @@
 #include "GraphicsInterface.h"
 #include "RenderScene.h"
 #include "Game/World.h"
+#include "Font.h"
 
 //CDebugRenderer* gDebugRenderer;
 
 #define DR_VERTEX_LINEBUFFER_SIZE sizeof(FVertex) * 512
 #define DR_VERTEX_SOLIDBUFFER_SIZE sizeof(FVertex) * 4096
+#define DR_VERTEX_TEXT_SIZE sizeof(FVertex) * 4096
 
 CDebugRenderer::CDebugRenderer()
 {
@@ -19,6 +21,8 @@ CDebugRenderer::CDebugRenderer()
 
 	solidDrawVertices.Reserve(DR_VERTEX_SOLIDBUFFER_SIZE);
 	solidDrawOverlayVertices.Reserve(DR_VERTEX_SOLIDBUFFER_SIZE);
+
+	textDrawVertices.Reserve(DR_VERTEX_TEXT_SIZE);
 
 	FBufferDescriptor desc{};
 	desc.bufferSize = DR_VERTEX_LINEBUFFER_SIZE;
@@ -37,7 +41,6 @@ CDebugRenderer::CDebugRenderer()
 	lineOverlayMesh.bSkinnedMesh = false;
 
 	desc.bufferSize = DR_VERTEX_SOLIDBUFFER_SIZE;
-
 	solidMesh.vertexBuffer = gGHI->CreateBuffer(desc);
 	solidMesh.numVertices = 0;
 	solidMesh.topologyType = FMesh::TOPOLOGY_TRIANGLES;
@@ -47,6 +50,12 @@ CDebugRenderer::CDebugRenderer()
 	solidOverlayMesh.topologyType = FMesh::TOPOLOGY_TRIANGLES;
 	solidOverlayMesh.bSkinnedMesh = false;
 
+	desc.bufferSize = DR_VERTEX_TEXT_SIZE;
+	textMesh.vertexBuffer = gGHI->CreateBuffer(desc);
+	textMesh.numVertices = 0;
+	textMesh.topologyType = FMesh::TOPOLOGY_TRIANGLES;
+	textMesh.bSkinnedMesh = false;
+
 	cube = CAssetManager::GetAsset<CModelAsset>("models/Cube.thasset");
 	sphere = CAssetManager::GetAsset<CModelAsset>("models/Sphere.thasset");
 
@@ -54,6 +63,14 @@ CDebugRenderer::CDebugRenderer()
 	matDebugLine->SetName("DebugDrawLine");
 	matDebugLine->SetShader("Tools");
 	matDebugLine->SetInt("vType", 4);
+
+	fontDebug = new FFont(CFileSystem::FindFile("fonts/debug.ttf")->FullPath(), { 8, true });
+
+	matText = CreateObject<CMaterial>();
+	matText->SetName("Debug Text Mat");
+	matText->SetShader("Tools");
+	matText->SetInt("vType", 5);
+	matText->SetTexture("vBaseColor", fontDebug->GetAtlasTexture());
 
 	if (cube)
 		cube->Load(0);
@@ -198,10 +215,11 @@ void CDebugRenderer::DrawCone(const FVector& apex, const FQuaternion& rot, float
 	drawCalls.Add(cmd);
 }
 
-void CDebugRenderer::DrawText(const FVector2& screenPos, const FString& text, const FColor& col /*= FColor()*/, float time /*= 0.f*/)
+void CDebugRenderer::DrawText(const FVector2& screenPos, const FString& text, const FColor& col /*= FColor()*/, float scale, float time /*= 0.f*/)
 {
 	FTransform t;
 	t.position = screenPos;
+	t.scale = FVector(scale);
 
 	FDebugDrawCmd cmd{
 		FDebugDrawCmd::TEXT,
@@ -506,6 +524,23 @@ void CDebugRenderer::Render()
 			break;
 		case FDebugDrawCmd::TEXT:
 		{
+			FVector2 screenPos = it->transform.position.XY();
+			FVector2 scale = it->transform.scale.XY();
+
+			uint64 index = textDrawVertices.Size();
+			fontDebug->GenerateMesh(textDrawVertices, it->text.c_str());
+			uint64 end = textDrawVertices.Size();
+
+			for (uint64 i = index; i < end; i++)
+			{
+				textDrawVertices[i].color = { it->color.r, it->color.g, it->color.b };
+				textDrawVertices[i].position *= scale;
+				textDrawVertices[i].position += screenPos;
+
+				textDrawVertices.Add(textDrawVertices[i]);
+				textDrawVertices.last()->color = FVector::zero;
+				textDrawVertices.last()->position += FVector(1, 1, 0.5);
+			}
 		}
 			break;
 		}
@@ -533,6 +568,10 @@ void CDebugRenderer::Render()
 	solidOverlayMesh.numVertices = solidDrawOverlayVertices.Size();
 	solidDrawOverlayVertices.Clear();
 
+	textMesh.vertexBuffer->Update(DR_VERTEX_TEXT_SIZE, textDrawVertices.Data());
+	textMesh.numVertices = textDrawVertices.Size();
+	textDrawVertices.Clear();
+
 	FDrawMeshCmd cmd{};
 	cmd.mesh = &lineMesh;
 	cmd.material = matDebugLine;
@@ -552,6 +591,11 @@ void CDebugRenderer::Render()
 		scene->PushCommand(FRenderCommand(cmd, R_DEBUG_PASS));
 
 	cmd.mesh = &solidOverlayMesh;
+	if (cmd.mesh->numVertices > 0)
+		scene->PushCommand(FRenderCommand(cmd, R_DEBUG_OVERLAY_PASS));
+
+	cmd.mesh = &textMesh;
+	cmd.material = matText;
 	if (cmd.mesh->numVertices > 0)
 		scene->PushCommand(FRenderCommand(cmd, R_DEBUG_OVERLAY_PASS));
 }

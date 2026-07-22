@@ -566,7 +566,7 @@ void CWorld::LoadLightData()
 
 		// Convert to RGBA format
 		uint16* rgbaData = (uint16*)malloc(width * height * 4 * sizeof(uint16));
-		for (uint32 j = 0, k = 0; j < texelCount; j += 3, k += 4)
+		for (uint32 j = 0, k = 0; j + 3 < texelCount; j += 3, k += 4)
 		{
 			rgbaData[k] = data[j];			// R
 			rgbaData[k + 1] = data[j + 1];	// G

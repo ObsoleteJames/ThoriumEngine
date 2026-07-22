@@ -42,6 +42,17 @@ VS
 	{
 		PS_Input output = ProcessVertex(input);
 
+		if (vType == 5)
+		{
+			float4 outPos = float4(output.vPositionWs.xyz, 1.f);
+			outPos.xy /= vViewport;
+			outPos.xy = outPos.xy * 2.0f - 1.0f;
+			outPos.y = -outPos.y;
+
+			output.vPositionPs = outPos;
+			return output;
+		}
+
 		// if (vType == 3)
 		// {
 		// 	float4 outPos = float4(output.vPositionWs, 1.f);
@@ -64,6 +75,7 @@ PS
 	#define TYPE_SPRITE 2
 	#define TYPE_GIZMO 3
 	#define TYPE_SOLID 4
+	#define TYPE_TEXT 5
 
 	float4 DrawGrid(PS_Input input)
 	{
@@ -109,6 +121,10 @@ PS
 			break;
 		case TYPE_SOLID:
 			r = float4(input.vVertexColor, clamp(input.vTextureCoords.x, 0, 1));
+			break;
+		case TYPE_TEXT:
+			float t = SampleTexture2D(vBaseColor, input.vTextureCoords).r;
+			r = float4(input.vVertexColor, t > 0.5);
 			break;
 		}
 		if (r.a == 0.f)
