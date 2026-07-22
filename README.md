@@ -1,7 +1,14 @@
 # Thorium Engine
-3D game engine based on the Source engine and Unreal Engine
+A 3D game engine based on the Source Engine and Unreal Engine
 
 ![preview Image](preview.png)
+### Planned Features
+- Editable Meshes, including a modeling toolset for the editor.
+- Compute Shaders.
+- GPU Particle System.
+- Custom Scripting Language.
+- Render Graph, will replace the current rendering system.
+- Networking System.
 
 # Building
 Requirements
