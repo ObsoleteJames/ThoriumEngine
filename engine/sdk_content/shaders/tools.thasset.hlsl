@@ -125,6 +125,8 @@ PS
 		case TYPE_TEXT:
 			float t = SampleTexture2D(vBaseColor, input.vTextureCoords).r;
 			r = float4(input.vVertexColor, t > 0.5);
+			if (t < 0.5 && t > 0.43)
+				r = float4(0, 0, 0, 1);
 			break;
 		}
 		if (r.a == 0.f)

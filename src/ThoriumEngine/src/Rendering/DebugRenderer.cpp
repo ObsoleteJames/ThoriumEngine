@@ -64,7 +64,7 @@ CDebugRenderer::CDebugRenderer()
 	matDebugLine->SetShader("Tools");
 	matDebugLine->SetInt("vType", 4);
 
-	fontDebug = new FFont(CFileSystem::FindFile("fonts/debug.ttf")->FullPath(), { 8, true });
+	fontDebug = new FFont(CFileSystem::FindFile("fonts/debug.ttf")->FullPath(), { 8, true, true, 5 });
 
 	matText = CreateObject<CMaterial>();
 	matText->SetName("Debug Text Mat");
@@ -218,7 +218,7 @@ void CDebugRenderer::DrawCone(const FVector& apex, const FQuaternion& rot, float
 void CDebugRenderer::DrawText(const FVector2& screenPos, const FString& text, const FColor& col /*= FColor()*/, float scale, float time /*= 0.f*/)
 {
 	FTransform t;
-	t.position = screenPos;
+	t.position = { FMath::Floor(screenPos.x), FMath::Floor(screenPos.y), 0.f };
 	t.scale = FVector(scale);
 
 	FDebugDrawCmd cmd{
@@ -232,6 +232,19 @@ void CDebugRenderer::DrawText(const FVector2& screenPos, const FString& text, co
 		GetScene()
 	};
 	drawCalls.Add(cmd);
+}
+
+void CDebugRenderer::DrawText(const FVector2& screenPos, const FColor& col, const char* text, ...)
+{
+	const int buffSize = 128;
+	char* textBuff = (char*)alloca(buffSize);
+
+	va_list args;
+	va_start(args, text);
+	int size = vsnprintf(textBuff, buffSize, text, args);
+	va_end(args);
+
+	DrawText(screenPos, textBuff, col);
 }
 
 void CDebugRenderer::DrawText3D(const FVector& pos, const FString& text, const FColor& col /*= FColor()*/, float time /*= 0.f*/, bool bOverlay /*= false*/)
@@ -537,9 +550,9 @@ void CDebugRenderer::Render()
 				textDrawVertices[i].position *= scale;
 				textDrawVertices[i].position += screenPos;
 
-				textDrawVertices.Add(textDrawVertices[i]);
+				/*textDrawVertices.Add(textDrawVertices[i]);
 				textDrawVertices.last()->color = FVector::zero;
-				textDrawVertices.last()->position += FVector(1, 1, 0.5);
+				textDrawVertices.last()->position += FVector(1, 1, 0.5);*/
 			}
 		}
 			break;

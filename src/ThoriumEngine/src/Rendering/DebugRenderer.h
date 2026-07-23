@@ -46,6 +46,7 @@ public:
 	inline void DrawBounds(const FBounds& bounds, const FQuaternion& rot, const FColor& col, bool bOverlay = false, float time = 0.f) { DrawBox(FTransform(bounds.position, rot, bounds.Size()), col, bOverlay ? (DebugDrawType_Overlay | DebugDrawType_Wireframe) : DebugDrawType_Wireframe, time); }
 
 	void DrawText(const FVector2& screenPos, const FString& text, const FColor& col = FColor(), float scale = 1.f, float time = 0.f);
+	void DrawText(const FVector2& screenPos, const FColor& col, const char* text, ...);
 	void DrawText3D(const FVector& pos, const FString& text, const FColor& col = FColor(), float time = 0.f, bool bOverlay = false);
 
 	// Set RenderScene for the next draw call, by default the gWorld's RenderScene is used.
