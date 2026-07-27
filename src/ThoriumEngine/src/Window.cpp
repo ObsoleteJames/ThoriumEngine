@@ -94,6 +94,12 @@ CWindow::CWindow(int w, int h, int x, int y, const FString& title, EWindowMode m
 		CMouseEvent event((EMouseButton)button, (EInputAction)action, (EInputMod)mods, FVector2(), IInputEvent::MouseButton);
 		w->inputDevice->onInputEvent.Invoke(&event);
 	});
+	glfwSetScrollCallback((GLFWwindow*)nativeHandle, [](GLFWwindow* wnd, double x, double y) {
+		CWindow* w = GetWindowFromHandle(wnd);
+
+		CAxisEvent event(0, x, y, IInputEvent::MouseScroll);
+		w->inputDevice->onInputEvent.Invoke(&event);
+	});
 
 	glfwSetWindowSizeCallback((GLFWwindow*)nativeHandle, [](GLFWwindow* window, int width, int height) {
 		CWindow* w = GetWindowFromHandle(window);

@@ -141,7 +141,14 @@ void CInputManager::LoadConfig()
 				case 2:
 				{
 					FString v = *keys->GetValue("Key");
-					key.key = v == "MOUSE_X" ? 1 : v == "MOUSE_Y" ? 2 : 0;
+					if (v == "MOUSE_X")
+						key.key = 1;
+					else if (v == "MOUSE_Y")
+						key.key = 2;
+					else if (v == "SCROLL_X")
+						key.key = 3;
+					else if (v == "SCROLL_Y")
+						key.key = 4;
 				}
 					break;
 				}
@@ -426,6 +433,21 @@ void CInputManager::MouseButton(IInputDevice* device, CMouseEvent* event)
 	}
 }
 
+void CInputManager::MouseScroll(IInputDevice* device, CAxisEvent* event)
+{
+	for (auto& a : axis)
+	{
+		for (auto& k : a.keys)
+		{
+			if (k.type == 2 && k.key == 3) // X Axis
+				a.cache += event->GetX();
+
+			if (k.type == 2 && k.key == 4) // Y Axis
+				a.cache += event->GetY();
+		}
+	}
+}
+
 void CInputManager::HandleInputEvent(IInputDevice* device, IInputEvent* event)
 {
 	onInputEvent.Invoke(device, event);
@@ -450,6 +472,10 @@ void CInputManager::HandleInputEvent(IInputDevice* device, IInputEvent* event)
 
 	case IInputEvent::MouseMove:
 		CursorMove(device, (CMouseEvent*)event);
+		break;
+
+	case IInputEvent::MouseScroll:
+		MouseScroll(device, (CAxisEvent*)event);
 		break;
 	}
 }

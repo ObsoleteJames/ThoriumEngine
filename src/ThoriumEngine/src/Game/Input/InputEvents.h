@@ -12,6 +12,7 @@ public:
 		CharEvent, // character events, used for input fields
 		MouseButton,
 		MouseMove,
+		MouseScroll,
 		GamepadButton,
 		GamepadAxis,
 	};
@@ -62,4 +63,17 @@ private:
 	EInputMod mods;
 
 	FVector2 mousePos;
+};
+
+class ENGINE_API CAxisEvent : public IInputEvent
+{
+public:
+	CAxisEvent(uint16 key, float x, float y, IInputEvent::EType type) : key(key), x(x), y(y) { this->type = type; }
+
+	inline float GetX() const { return x; }
+	inline float GetY() const { return y; }
+
+private:
+	uint16 key;
+	float x, y;
 };

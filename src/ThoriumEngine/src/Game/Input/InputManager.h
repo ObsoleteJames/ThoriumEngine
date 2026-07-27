@@ -12,6 +12,7 @@ class IInputDevice;
 class IInputEvent;
 class CKeyEvent;
 class CMouseEvent;
+class CAxisEvent;
 
 ENUM()
 enum class EInputMode
@@ -165,6 +166,8 @@ protected:
 
 	void CursorMove(IInputDevice* device, CMouseEvent* event);
 	void MouseButton(IInputDevice* device, CMouseEvent* event);
+
+	void MouseScroll(IInputDevice* device, CAxisEvent* event);
 
 	virtual void HandleInputEvent(IInputDevice* device, IInputEvent* event);
 
