@@ -91,7 +91,7 @@ int CModuleManager::LoadModule(const FString& path, CModule** outPtr)
 
 	HMODULE wModule = LoadLibrary(path.c_str());
 	if (!wModule)
-		return 2;
+		return GetLastError();
 
 	GetModule_Func f = (GetModule_Func)GetProcAddress(wModule, "__GetModuleInstance");
 	if (!f)

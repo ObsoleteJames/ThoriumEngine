@@ -431,6 +431,10 @@ void CFileSystem::MountDir(FMod* mod, const FString& path, FDirectory* dir)
 			//if (IsBlacklisted(dirName.generic_string().c_str()))
 			//	continue;
 
+			// we don't want to mount the addons folder as they could potentially have a content folder of their own. 
+			if (dirName == "addons")
+				continue;
+
 			dir->directories.Add(new FDirectory());
 			FDirectory* newDir = dir->directories.last();
 			newDir->name = dirName.generic_string().c_str();
@@ -474,6 +478,10 @@ void CFileSystem::RefreshDir(FMod* mod, const FString& path, FDirectory* dir)
 			
 			//if (IsBlacklisted(dirName.generic_string().c_str()))
 			//	continue;
+
+			// we don't want to mount the addons folder as they could potentially have a content folder of their own. 
+			if (dirName == "addons")
+				continue;
 
 			// check if this dir already exists
 			for (auto d : dir->directories)

@@ -64,16 +64,20 @@ FRay CCameraComponent::MouseToRay(float x, float y, IBaseWindow* window)
 	int w, h;
 	window->GetSize(w, h);
 
-	y = h - y;
+	float viewportX = (float)x / w;
+	float viewportY = (float)y / h;
 
-	float mouseX = x / ((float)w * 0.5f) - 1.f;
-	float mouseY = y / ((float)h * 0.5f) - 1.f;
+	float ndcX = (viewportX * 2.f) - 1.f;
+	float ndcY = 1.f - (viewportY * 2.f);
 
-	FMatrix invVP = (projectionMat * viewMat).Inverse();
-	glm::vec4 screenPos = glm::vec4(mouseX, mouseY, 1.f, 1.f);
-	glm::vec4 worldPos = (glm::mat4)invVP * screenPos;
+	float fovRad = glm::radians(fov);
+	float tanHalfFov = glm::tan(fovRad * 0.5f);
+	float aspectRatio = (float)w / h;
 
-	FVector dir = glm::normalize(glm::vec3(worldPos));
+	FVector rayDir = GetForwardVector() +
+		(GetRightVector() * ndcX * aspectRatio * tanHalfFov) +
+		(GetUpVector() * ndcY * tanHalfFov);
+	rayDir = rayDir.Normalize();
 
-	return { GetWorldPosition(), dir };
+	return { GetWorldPosition(), rayDir };
 }

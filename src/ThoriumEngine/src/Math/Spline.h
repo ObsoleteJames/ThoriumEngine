@@ -11,9 +11,20 @@ struct ENGINE_API FSplinePoint
 
 public:
 	FVector position;
+	float roll = 0.f;
 
 	FVector controlPointA;
 	FVector controlPointB;
+};
+
+STRUCT()
+struct ENGINE_API FSplineSample
+{
+	GENERATED_BODY()
+
+public:
+	FVector pos;
+	float roll;
 };
 
 STRUCT()
@@ -31,8 +42,8 @@ public:
 
 	FSplinePoint* GetPoint(uint index);
 
-	FVector SampleAtT(float t);
-	FVector SampleAtDistance(float distance);
+	FSplineSample SampleAtT(float t);
+	FSplineSample SampleAtDistance(float distance);
 
 	FVector TangentAtT(float t);
 

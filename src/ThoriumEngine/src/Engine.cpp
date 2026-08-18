@@ -176,15 +176,6 @@ void CEngine::LoadGame()
 	FKeyValue gameinfo(kvPath);
 	THORIUM_ASSERT(gameinfo.IsOpen(), "Failed to open '" + kvPath + "'");
 
-// #if CONFIG_Debug
-// 	FString libPath = wGame + L"\\bin\\Debug\\" + wGame + L".dll";
-// #endif
-// #if CONFIG_Development
-// 	FString libPath = wGame + L"\\bin\\Development\\" + wGame + L".dll";
-// #endif
-// #if CONFIG_Release
-// 	FString libPath = wGame + L"\\bin\\" + wGame + L".dll";
-// #endif
 #if CONFIG_Release
 	FString libPath = wGame + ("/bin/" PLATFORM_NAME "/") + wGame + ".dll";
 #else
@@ -466,6 +457,13 @@ void CEngine::LoadAddon(FAddon& addon)
 
 	CONSOLE_LogInfo("CEngine", "Loading Addon '" + addon.name + "'");
 
+	// We might need to change this for other platforms.
+#if CONFIG_Release
+	FString libPath = addon.path + "/bin/" PLATFORM_NAME;
+#else
+	FString libPath = addon.path + "/bin/" PLATFORM_NAME "/" CONFIG_NAME;
+#endif
+
 	// first load the dependancies
 	for (auto& d : addon.dependencies)
 	{
@@ -476,12 +474,12 @@ void CEngine::LoadAddon(FAddon& addon)
 			// since this is a path, we have to truncate it into a name for the LoadFLibrary function.
 			// it's not actually necessary but it's just nicer.
 			FString libName = d.name;
-			if (auto i = libName.FindLastOf("\\/"); i != -1)
-				libName.Erase(libName.begin(), libName.begin() + i + 1);
-			if (auto i = libName.FindLastOf('.'); i != -1)
-				libName.Erase(libName.begin() + i, libName.end());
+			//if (auto i = libName.FindLastOf("\\/"); i != -1)
+			//	libName.Erase(libName.begin(), libName.begin() + i + 1);
+			//if (auto i = libName.FindLastOf('.'); i != -1)
+			//	libName.Erase(libName.begin() + i, libName.end());
 
-			if (d.instance = (void*)CModuleManager::LoadFLibrary(libName, addon.path + "/" + d.name); d.instance == nullptr)
+			if (d.instance = (void*)CModuleManager::LoadFLibrary(libName, libPath + "/" + d.name); d.instance == nullptr)
 			{
 				CONSOLE_LogError("CEngine", "Failed to load addon dependency (FDependency::LIBRARY)\n" + addon.path + "/" + d.name);
 			}
@@ -512,20 +510,15 @@ void CEngine::LoadAddon(FAddon& addon)
 
 	if (addon.bHasCode)
 	{
-		// We might need to change this for other platforms.
-#if CONFIG_Release
-		FString libPath = addon.path + "/bin/" PLATFORM_NAME "/" + addon.identity + ".dll";
-#else
-		FString libPath = addon.path + "/bin/" PLATFORM_NAME "/" CONFIG_NAME "/" + addon.identity + ".dll";
-#endif
-
 		CModule* lib;
-		if (int err = CModuleManager::LoadModule(libPath, &lib); err != 0)
+		FString modulePath = libPath + "/" + addon.identity + ".dll";
+
+		if (int err = CModuleManager::LoadModule(modulePath, &lib); err != 0)
 		{
 			if (err == 1)
-				CONSOLE_LogError("CEngine", "Failed to load addon module, file does not exist\n" + libPath);
+				CONSOLE_LogError("CEngine", "Failed to load addon module, file does not exist\n" + modulePath);
 			else
-				CONSOLE_LogError("CEngine", "Failed to load addon module, is the library compiled properly?\n" + libPath);
+				CONSOLE_LogError("CEngine", "Failed to load addon module, is the library compiled properly? err: " + FString::ToString(err) + "\n" + modulePath);
 		}
 		addon.module = lib;
 	}
@@ -856,9 +849,6 @@ void CEngine::LoadMandatoryAddons()
 		for (auto& addon : *arr)
 			LoadCoreAddon(addon);
 	}
-
-	//LoadCoreAddon("jolt_physics");
-	//LoadCoreAddon("sdl3");
 }
 
 void CEngine::UnloadWorld()

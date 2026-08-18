@@ -31,8 +31,8 @@ float FSpline::ComputeLength(int sampleCount)
 			float t = (float)ii / sampleCount;
 			t += float(i);
 
-			FVector a = SampleAtT(t);
-			FVector b = SampleAtT(t + (1.f / sampleCount));
+			FVector a = SampleAtT(t).pos;
+			FVector b = SampleAtT(t + (1.f / sampleCount)).pos;
 
 			float distance = FVector::Distance(a, b);
 			totalLength += distance;
@@ -49,7 +49,7 @@ FSplinePoint* FSpline::GetPoint(uint index)
 	return nullptr;
 }
 
-FVector FSpline::SampleAtT(float t)
+FSplineSample FSpline::SampleAtT(float t)
 {
 	int index = (int)FMath::Floor(t);
 
@@ -65,15 +65,15 @@ FVector FSpline::SampleAtT(float t)
 	FVector d = FVector::Lerp(a, b, t);
 	FVector e = FVector::Lerp(b, c, t);
 
-	return FVector::Lerp(d, e, t);
+	return { FVector::Lerp(d, e, t), 0 };
 }
 
-FVector FSpline::SampleAtDistance(float distance)
+FSplineSample FSpline::SampleAtDistance(float distance)
 {
 	if (float t = GetTFromDistance(distance); t > 0)
 		return SampleAtT(t);
 
-	return FVector::zero;
+	return { FVector::zero, 0.f };
 }
 
 FVector FSpline::TangentAtT(float t)
